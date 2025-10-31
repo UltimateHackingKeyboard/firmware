@@ -15,6 +15,7 @@
 #include "state_sync.h"
 #include "resend.h"
 #include "timer.h"
+#include "pin_wiring.h"
 
 // Thread definitions
 
@@ -39,7 +40,7 @@ static struct k_thread thread_data;
 
 // UART definitions
 
-const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
+const struct device *uart_dev = NULL;
 
 #define CRC_SALT 0x1234
 #define CRC_LEN 2
@@ -516,6 +517,12 @@ void testUart() {
 }
 
 void InitUart(void) {
+    if (PinWiringConfig->device_uart_bridge == NULL || PinWiringConfig->device_uart_bridge->device == NULL) {
+        return;
+    } else {
+        uart_dev = PinWiringConfig->device_uart_bridge->device;
+    }
+
     rxBuffer = MessengerQueue_AllocateMemory();
 
     uart_callback_set(uart_dev, uart_callback, NULL);
@@ -548,6 +555,14 @@ bool Uart_Availability(messenger_availability_op_t operation) {
 }
 
 void Uart_Enable() {
+    if (uart_dev == NULL) {
+        LogS("Uart is disabled!");
+        return;
+    }
+
     LogU("Enabling UART\n");
-    uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
+    int err = uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
+    if (err != 0) {
+        LogS("Failed to enable UART RX because %d\n", err);
+    }
 }

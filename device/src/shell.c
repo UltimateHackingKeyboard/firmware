@@ -20,8 +20,15 @@
 #include "mouse_keys.h"
 #include "config_manager.h"
 #include <zephyr/shell/shell_backend.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/shell/shell.h>
 #include "connections.h"
 #include "logger_priority.h"
+#include "pin_wiring.h"
+#include "device.h"
+#include "logger.h"
+#include "shell_backend_usb.h"
+#include "stubs.h"
 
 shell_t Shell = {
     .keyLog = 0,
@@ -45,18 +52,8 @@ void list_backends_by_iteration(void) {
 }
 
 void Shell_Execute(const char *cmd, const char *source) {
-    const char* backendName = "shell_uart";
-    const struct shell *sh = shell_backend_get_by_name(backendName);
-    if (!sh) {
-        printk("Error: %s backend not found\n", backendName);
-        list_backends_by_iteration();
-        return;
-    }
-    printk("Executing following command from %s: '%s'\n", source, cmd);
-    int err = shell_execute_cmd(sh, cmd);
-    if (err) {
-        printk("Error executing command: %d\n", err);
-    }
+    ShellBackend_Exec(cmd, source);
+    return;
 }
 
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
@@ -217,6 +214,12 @@ static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_shells(const struct shell *shell, size_t argc, char *argv[])
+{
+    ShellBackend_ListBackends();
+    return 0;
+}
+
 static void printMouseKeyState(mouse_kinetic_state_t* state) {
 
     int16_t multiplier = state->intMultiplier;
@@ -280,8 +283,80 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
-void InitShell(void)
+static int reinitShell(const struct device *const dev)
 {
+    int ret;
+    const struct shell *sh = NULL;
+
+    sh = shell_backend_uart_get_ptr();
+
+    if (!sh) {
+        LogS("Shell backend not found\n");
+        return -ENODEV;
+    }
+
+    if (!dev) {
+        LogS("Shell device is NULL\n");
+        return -ENODEV;
+    }
+    const struct device *const dev2 = DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
+
+    // (Re)initialize the shell
+    bool log_backend = true;
+    uint32_t level = 4U;
+    ret = shell_init(sh, dev2, sh->ctx->cfg.flags, log_backend, level);
+    if (ret < 0) {
+        LogS("Shell init failed: %d\n", ret);
+        return ret;
+    }
+
+    k_sleep(K_MSEC(10));
+
+    // Start the shell
+    ret = shell_start(sh);
+    if (ret < 0) {
+        LogS("Shell start failed: %d\n", ret);
+        return ret;
+    }
+
+    return 0;
+}
+
+static bool shellUninitialized = false;
+
+static void shell_uninit_cb(const struct shell *sh, int res) {
+    shellUninitialized = true;
+}
+
+void UninitShell(void)
+{
+    const struct shell *sh = NULL;
+
+    sh = shell_backend_uart_get_ptr();
+    shellUninitialized = false;
+
+	shell_uninit(sh, shell_uninit_cb);
+
+    while (!shellUninitialized) {
+        k_sleep(K_MSEC(10));
+    }
+}
+
+void ReinitShell(void) {
+    if (!DEVICE_IS_UHK80_RIGHT) {
+        return;
+    }
+
+    if (PinWiringConfig->device_uart_shell == NULL) {
+        return;
+    } else {
+        reinitShell(PinWiringConfig->device_uart_shell->device);
+    }
+}
+
+void InitShellCommands(void)
+{
+
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
         SHELL_CMD_ARG(keylog, NULL, "get/set key logging", cmd_uhk_keylog, 1, 1),
 #if !DEVICE_IS_UHK_DONGLE
@@ -310,7 +385,9 @@ void InitShell(void)
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
         SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 1, 2),
+        SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 }
+

@@ -2,6 +2,7 @@
 #define __SHELL_H__
 
 #include <stdint.h>
+#include <stdbool.h>
 
 // Typedefs:
 
@@ -20,7 +21,9 @@ extern shell_t Shell;
 
 // Functions:
 
-extern void InitShell(void);
+extern void UninitShell(void);
+extern void ReinitShell(void);
+extern void InitShellCommands(void);
 extern void Shell_Execute(const char *cmd, const char *source);
 
 #endif // SHELL_H__

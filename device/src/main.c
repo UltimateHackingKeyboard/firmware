@@ -6,6 +6,7 @@
 #include "bt_manager.h"
 #include "config_parser/config_globals.h"
 #include "ledmap.h"
+#include "pin_wiring.h"
 #include "round_trip_test.h"
 #include "shared/attributes.h"
 #include "zephyr/kernel.h"
@@ -157,15 +158,12 @@ void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
 
-    InitProxyLogBackend();
-
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
         flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitZephyrI2c();
         InitSpi();
 
         InitLeds();
@@ -187,6 +185,23 @@ void mainRuntime(void) {
 
     // has to be after bt_enable; has to be before ApplyConfig
     InitSettings();
+
+    // needs to be after InitSettings
+    if (DEVICE_IS_UHK80_RIGHT) {
+        PinWiring_UninitShell();
+        PinWiring_Suspend();
+
+        PinWiring_SelectRouting();
+        PinWiring_ConfigureRouting();
+
+        PinWiring_Resume();
+
+        ReinitShell();
+    }
+
+    // Needs to be after ReinitShell, probably
+    InitShellCommands();
+    InitProxyLogBackend();
 
     // read configurations
     {
@@ -224,9 +239,11 @@ void mainRuntime(void) {
         k_sleep(K_MSEC(5*1000));
     }
 
+
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
         InitUart();
+        InitZephyrI2c();
     }
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
@@ -243,8 +260,6 @@ void mainRuntime(void) {
     Messenger_Init();
 
     StateSync_Init();
-
-    InitShell();
 
     RoundTripTest_Init();
 

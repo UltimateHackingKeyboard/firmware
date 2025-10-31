@@ -33,6 +33,8 @@
 #include "macros/display.h"
 #include "attributes.h"
 #include "config_manager.h"
+#include "pin_wiring.h"
+#include "settings.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
@@ -167,8 +169,40 @@ ATTR_UNUSED static string_segment_t getKeymapLayerText() {
 #undef BUFFER_LENGTH
 }
 
+static string_segment_t getUartDebugModeText() {
+    static char buffer[4] = { [3] = 0 };
+
+    switch (PinWiring_ActualUartDebugMode) {
+        case UartDebugMode_NoDebug:
+            if (Cfg.UiStyle == UiStyle_Alternative) {
+                snprintf(buffer, 3, "%c%c", FontControl_NextCharWhite, 'u');
+            } else {
+                snprintf(buffer, 3, "");
+            }
+            break;
+        case UartDebugMode_I2CMode:
+            if (Cfg.UiStyle == UiStyle_Alternative) {
+                snprintf(buffer, 3, "%c%c", FontControl_NextCharWhite, 'i');
+            } else {
+                snprintf(buffer, 3, "");
+            }
+            break;
+        case UartDebugMode_DebugOverBridge:
+            snprintf(buffer, 3, "%c%c", FontControl_NextCharIcon12, FontIcon_Circle1);
+            break;
+        case UartDebugMode_DebugOverModules:
+            snprintf(buffer, 3, "%c%c", FontControl_NextCharIcon12, FontIcon_Circle2);
+            break;
+        default:
+            snprintf(buffer, 3, "");
+            break;
+    }
+
+    return (string_segment_t){ .start = buffer, .end = NULL };
+}
+
 static string_segment_t getLeftStatusText() {
-#define BUFFER_LENGTH 32
+#define BUFFER_LENGTH 40
     static char buffer [BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
     font_icons_t connectionIcon = FontIcon_CircleXmarkLarge;
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
@@ -178,12 +212,17 @@ static string_segment_t getLeftStatusText() {
             connectionIcon = FontIcon_SignalStream;
         }
     }
-    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %c%c%c %s",
+
+    string_segment_t uartDebugText = getUartDebugModeText();
+
+    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %s %c%c%c %s",
             // connection icon; always present
             (char)FontControl_NextCharIcon12, (char)connectionIcon,
             // pairing icon; sometimes present
             (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
             (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal,
+            // UART debug mode indicator; always present
+            uartDebugText.start,
             // recording icon; sometimes present
             MacroRecorder_IsRecording() ? getBlinkingColor() : FontControl_NextCharAndSpaceGone,
             (char)FontControl_NextCharIcon12, FontIcon_Video,
