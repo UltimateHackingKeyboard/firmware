@@ -214,6 +214,12 @@ static int cmd_uhk_trace(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_shells(const struct shell *shell, size_t argc, char *argv[])
+{
+    ShellBackend_ListBackends();
+    return 0;
+}
+
 static void printMouseKeyState(mouse_kinetic_state_t* state) {
 
     int16_t multiplier = state->intMultiplier;
@@ -324,7 +330,6 @@ static void shell_uninit_cb(const struct shell *sh, int res) {
 
 void UninitShell(void)
 {
-    int err;
     const struct shell *sh = NULL;
 
     sh = shell_backend_uart_get_ptr();
@@ -380,6 +385,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
         SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 1, 2),
+        SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

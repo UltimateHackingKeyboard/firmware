@@ -12,7 +12,9 @@
 
 // Functions:
 
+    void ShellBackend_Init(void);
     void ShellBackend_Exec(const char *cmd, const char* source);
+    void ShellBackend_ListBackends(void);
 
 #endif /* __SHELL_BACKEND_USB_H__ */
 
