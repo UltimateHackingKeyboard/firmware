@@ -1512,7 +1512,17 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
 #ifdef __ZEPHYR__
     k_panic();
 #else
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+    static volatile int a = 0;
+    static volatile int* b = NULL;
+    a = 3 / a;
+    a = *b;
+
+    LogS("Failed to crash deliberately.");
+
     NVIC_SystemReset();
+#pragma GCC diagnostic pop
 #endif
     return MacroResult_Finished;
 }
