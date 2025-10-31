@@ -9,6 +9,7 @@
 #include "macros/status_buffer.h"
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include "config_parser/config_globals.h"
 #include "debug.h"
 #include "macros/set_command.h"
@@ -16,6 +17,7 @@
 #include "str_utils.h"
 #include <math.h>
 #include <inttypes.h>
+#include "trace.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -169,7 +171,7 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
         }
     }
 
-    parser_context_t bakCtx = *ctx;
+    CTX_COPY(bakCtx, *ctx);
     macro_variable_t configVal = Macro_TryReadConfigVal(ctx);
 
     if (configVal.type != MacroVariableType_None) {
@@ -323,6 +325,10 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
 
 static macro_variable_t consumeValue(parser_context_t* ctx)
 {
+    if (*ctx->at == '$') {
+        TryExpandMacroTemplateOnce(ctx);
+    }
+
     switch (*ctx->at) {
         case '+':
             ConsumeWhiteAt(ctx, ctx->at+1);
@@ -642,7 +648,7 @@ static macro_variable_t consumeMultiplicativeExpression(parser_context_t* ctx)
     ConsumeWhite(ctx);
 
     while (true) {
-        parser_context_t opCtx = *ctx;
+        CTX_COPY(opCtx, *ctx);
         switch (*ctx->at) {
             case '*':
                 ConsumeWhiteAt(ctx, ctx->at+1);
@@ -671,7 +677,7 @@ static macro_variable_t consumeAdditiveExpression(parser_context_t* ctx)
     operator_t op;
 
     while (true) {
-        parser_context_t opCtx = *ctx;
+        CTX_COPY(opCtx, *ctx);
         switch (*ctx->at) {
             case '+':
                 ConsumeWhiteAt(ctx, ctx->at+1);
@@ -693,7 +699,7 @@ static macro_variable_t consumeAdditiveExpression(parser_context_t* ctx)
 static macro_variable_t consumeEqExpression(parser_context_t* ctx)
 {
     macro_variable_t accumulator = consumeAdditiveExpression(ctx);
-    parser_context_t opCtx = *ctx;
+    CTX_COPY(opCtx, *ctx);
     operator_t op;
 
     switch (*ctx->at) {
@@ -745,7 +751,7 @@ static macro_variable_t consumeAndExpression(parser_context_t* ctx)
     operator_t op;
 
     while (true) {
-        parser_context_t opCtx = *ctx;
+        CTX_COPY(opCtx, *ctx);
         if (ConsumeToken(ctx, "&&")) {
             op = Operator_And;
         } else {
@@ -762,7 +768,7 @@ static macro_variable_t consumeOrExpression(parser_context_t* ctx)
     operator_t op;
 
     while (true) {
-        parser_context_t opCtx = *ctx;
+        CTX_COPY(opCtx, *ctx);
         if (ConsumeToken(ctx, "||")) {
             op = Operator_Or;
         } else {
@@ -863,7 +869,9 @@ ATTR_UNUSED static void test(const char* command, macro_variable_t expectedResul
         .at = command,
         .begin = command,
         .end = command + strlen(command),
-        .macroState = NULL
+        .macroState = NULL,
+        .nestingLevel = 0,
+        .nestingBound = 0,
     };
     macro_variable_t res = Macros_ConsumeAnyValue(&ctx);
 
@@ -896,4 +904,37 @@ void MacroVariables_RunTests(void) {
     test("(!$bluetooth.enabled)", boolVar(!Cfg.Bt_Enabled), "Reads negation");
     LogU("  tests finished!\n");
 #endif
+}
+
+bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
+    ASSERT(*ctx->at == '$');
+
+    ctx->at++;
+
+    Trace_Printc("e1");
+
+    if (ConsumeToken(ctx, "macroArg")) {
+        ConsumeUntilDot(ctx);
+        uint8_t argId = Macros_ConsumeInt(ctx);
+        Macros_ReportErrorPrintf(ctx->at, "Macro argument expansion is not supported yet! Argument ID: %d", argId);
+        return true;
+    }
+    else if (ConsumeToken(ctx, "macroTemplate")) {
+        ConsumeUntilDot(ctx);
+        if (ConsumeToken(ctx, "test")) {
+            const char* arg = "3";
+            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
+            return success;
+        }
+        else if (ConsumeToken(ctx, "emoji")) {
+            const char* arg = "€";
+            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
+            return success;
+        } else {
+            Macros_ReportError("Expected valid template name!", ctx->at, ctx->end);
+            return true;
+        }
+    }
+    ctx->at--;
+    return false;
 }

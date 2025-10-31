@@ -296,7 +296,7 @@ static uint8_t consumeLayerKeymapId(parser_context_t* ctx)
     // Now since we allow toggling layers of other keymaps, we need to figure out the keymap.
     // This function does that from the layer id, which is parsed twice.
     // This is the first run and doesn't consume the token.
-    parser_context_t bakCtx = *ctx;
+    CTX_COPY(bakCtx, *ctx);
     if (ConsumeToken(&bakCtx, "last")) {
         return lastLayerKeymapIdx;
     }
@@ -1154,7 +1154,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
 
     bool insufficientNumberForAnyOrder = false;
     if (!fixedOrder) {
-        parser_context_t ctx2 = *ctx;
+        CTX_COPY(ctx2, *ctx);
         uint8_t totalArgs = 0;
         uint8_t argKeyId = 255;
         while((argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255 && ctx2.at < ctx2.end) {
@@ -1536,8 +1536,6 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
 
     power_mode_t mode = PowerMode_Awake;
 
-    parser_context_t ctxCopy = *ctx;
-
     if (false) { }
     else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
     else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
@@ -1546,7 +1544,7 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ManualShutDown; }
     else if (ConsumeToken(ctx, "autoShutdown")) { mode = PowerMode_AutoShutDown; }
     else {
-        Macros_ReportError("This mode is not available in this release:", ctxCopy.at, ctxCopy.at);
+        Macros_ReportError("This mode is not available in this release:", ctx->at, ctx->at);
     }
 
     if (Macros_DryRun || Macros_ParserError) {
@@ -1893,10 +1891,6 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
 
 static macro_result_t processCommand(parser_context_t* ctx)
 {
-    if (*ctx->at == '$') {
-        ctx->at++;
-    }
-
     const char* cmdTokEnd = TokEnd(ctx->at, ctx->end);
     if (cmdTokEnd > ctx->at && cmdTokEnd[-1] == ':') {
         //skip labels
@@ -1905,6 +1899,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             return MacroResult_Finished;
         }
     }
+
     while(ctx->at < ctx->end) {
         switch(*ctx->at) {
         case 'a':
@@ -2648,7 +2643,14 @@ macro_result_t Macros_ProcessCommandAction(void)
     const char* cmd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
     const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
 
-    parser_context_t ctx = { .macroState = S, .begin = cmd, .at = cmd, .end = cmdEnd };
+    parser_context_t ctx = {
+        .macroState = S,
+        .begin = cmd,
+        .at = cmd,
+        .end = cmdEnd,
+        .nestingLevel = 0,
+        .nestingBound = 0,
+    };
 
     ConsumeWhite(&ctx);
 

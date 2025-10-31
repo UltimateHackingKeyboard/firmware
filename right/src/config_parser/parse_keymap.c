@@ -241,7 +241,20 @@ static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *b
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor)
+static parser_error_t skipArgument(config_buffer_t *buffer, bool *wasArgument) {
+    if (wasArgument != NULL) {
+        *wasArgument = true;
+    }
+
+    uint16_t length = ReadCompactLength(buffer);
+    for (uint16_t i = 0; i < length; i++) {
+        //we don't care here, just discard them
+        ReadUInt8(buffer);
+    }
+    return ParserError_Success;
+}
+
+static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor, bool *wasArgument)
 {
     uint8_t keyActionType = ReadUInt8(buffer);
     key_action_t dummyKeyAction;
@@ -271,6 +284,9 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
             return parseOtherAction(keyAction, buffer);
         case SerializedKeyActionType_NoneBlock:
             return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor, parseMode);
+        case SerializedKeyActionType_Label:
+        case SerializedKeyActionType_Argument:
+            return skipArgument(buffer, wasArgument);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
@@ -297,14 +313,19 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         if (actionIdx < noneBlockUntil) {
             noneBlockAction(keyAction, &noneBlockColor, parseMode);
         } else {
+            bool wasArgument = false;
             uint8_t actionCountToNone = 0;
-            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionCountToNone, &noneBlockColor);
+            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionCountToNone, &noneBlockColor, &wasArgument);
 
             if (errorCode != ParserError_Success) {
                 return errorCode;
             }
 
             noneBlockUntil = actionIdx + actionCountToNone;
+
+            if (wasArgument) {
+                actionIdx--;
+            }
         }
     }
     /* default second touchpad action to right button */
