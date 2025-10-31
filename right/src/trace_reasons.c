@@ -1,5 +1,8 @@
 #include "trace_reasons.h"
 
+#include "MK22F51212.h"
+#include "logger.h"
+
 // RCM (Reset Control Module) registers - K22P121M120SF7
 #define RCM_SRS0    (*(volatile uint8_t*)0x4007F000)
 #define RCM_SRS1    (*(volatile uint8_t*)0x4007F001)
@@ -72,4 +75,44 @@ void Trace_ResetUhk60Reasons() {
     // Clear Low-Voltage Warning Flag by writing 1 to it
     PMC_LVDSC1 |= 0x40;
     PMC_LVDSC2 |= 0x40;
+
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk |  // Usage Fault
+        SCB_SHCSR_BUSFAULTENA_Msk |  // Bus Fault
+        SCB_SHCSR_MEMFAULTENA_Msk;
+}
+
+void LogFault(const char* label) {
+    LogS("=== %s Detected ===\n", label);
+
+    // Capture additional context
+    volatile uint32_t cfsr = SCB->CFSR;   // Configurable Fault Status Register
+    volatile uint32_t hfsr = SCB->HFSR;   // Hard Fault Status Register
+    volatile uint32_t mmfar = SCB->MMFAR; // Memory Management Fault Address Register
+    volatile uint32_t bfar = SCB->BFAR;   // Bus Fault Address Register
+
+    LogS("CFSR:  0x%08X\n", cfsr);
+    LogS("HFSR:  0x%08X\n", hfsr);
+    LogS("MMFAR: 0x%08X\n", mmfar);
+    LogS("BFAR:  0x%08X\n", bfar);
+    LogS("=== Going to reboot. ===\n", label);
+
+    NVIC_SystemReset();
+}
+
+// Cortex-M ARM exception handler
+void HardFault_Handler(void) {
+    LogFault("HardFault");
+}
+
+// Optionally add more specific fault handlers
+void MemManage_Handler(void) {
+    LogFault("MemManage Fault");
+}
+
+void BusFault_Handler(void) {
+    LogFault("BusFault");
+}
+
+void UsageFault_Handler(void) {
+    LogFault("UsageFault");
 }

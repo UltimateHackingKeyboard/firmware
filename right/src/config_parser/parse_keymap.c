@@ -17,6 +17,7 @@
 #include "error_reporting.h"
 #include "host_connection.h"
 #include "macros/status_buffer.h"
+#include "layer_switcher.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
