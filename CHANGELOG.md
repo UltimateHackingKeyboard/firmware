@@ -7,7 +7,7 @@ and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
 ## [15.3.0] - 2025-11-01
 
-Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**10.0**
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.**1.0** | Hardware Config: 1.0.0 | Smart Macros: 3.**10.0**
 
 Bug fixes:
 - Fix secondary role unblock mouse bug.
@@ -18,7 +18,7 @@ Bug fixes:
 
 New features:
 - Add runtime macro recording indicator for the UHK 80.
-- Add preliminary support for macro templates. (Key labels, parametrizable macros, Alt code expansion. Needs Agent support.)
+- Add preliminary support for macro templates. (Key labels, parametrizable macros, Alt code expansion. Needs Agent support.) `USERCONFIG:MINOR`
 - Add `set simulateLowResScrolling BOOL` macro command for compatibility with some applications. `SMARTMACROS:MINOR`
 - Increase effective length of runtime macros by employing better serialization strategy, to 512 keystrokes per runtime macro, and 1024 total.
 - Extend UHK 60 crash logging.
@@ -28,7 +28,6 @@ Power improvements:
 - Make the UHK 80 shut down the LED controllers when not in use.
 
 Misc:
-- Add `set devMode BOOL` macro command for debugging purposes. `SMARTMACROS:MINOR`
 - Implement dynamic pin control for UART.
 
 ## [15.2.0] - 2025-09-22
