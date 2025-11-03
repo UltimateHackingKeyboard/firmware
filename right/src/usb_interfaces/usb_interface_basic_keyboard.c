@@ -27,7 +27,7 @@ bool UsbBasicKeyboard_NumLockOn = false;
 bool UsbBasicKeyboard_ScrollLockOn = false;
 
 static bool needsResending = false;
-static uint8_t retries = 0;
+ATTR_UNUSED static uint8_t retries = 0;
 
 usb_hid_protocol_t usbBasicKeyboardProtocol;
 
@@ -386,7 +386,7 @@ bool UsbBasicKeyboard_FindFirstDifference(const usb_basic_keyboard_report_t* cur
             *result = 0xC0 | leftModsCurrent; // 1100 + 4 bits
             return true;
         }
-        
+
         // Check right modifiers (bits 4-7)
         uint8_t rightModsCurrent = (current->modifiers & 0xF0) >> 4;
         uint8_t rightModsPrevious = (previous->modifiers & 0xF0) >> 4;
@@ -395,7 +395,7 @@ bool UsbBasicKeyboard_FindFirstDifference(const usb_basic_keyboard_report_t* cur
             return true;
         }
     }
-    
+
     // Check scancode differences (bitfield only)
     for (uint8_t i = 0; i < UTILS_ARRAY_SIZE(current->bitfield); i++) {
         if (current->bitfield[i] != previous->bitfield[i]) {
@@ -415,6 +415,6 @@ bool UsbBasicKeyboard_FindFirstDifference(const usb_basic_keyboard_report_t* cur
                 }
         }
     }
-    
+
     return false; // No differences found
 }

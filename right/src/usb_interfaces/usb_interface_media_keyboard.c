@@ -9,7 +9,7 @@ static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
 
 static bool needsResending = false;
-static uint8_t retries = 0;
+ATTR_UNUSED static uint8_t retries = 0;
 
 static usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {

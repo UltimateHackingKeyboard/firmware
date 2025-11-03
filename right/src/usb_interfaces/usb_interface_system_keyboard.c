@@ -9,7 +9,7 @@
 #endif
 
 static bool needsResending = false;
-static uint8_t retries = 0;
+ATTR_UNUSED static uint8_t retries = 0;
 
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
