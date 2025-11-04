@@ -3,11 +3,13 @@
 #ifndef __ZEPHYR__
 #include "fsl_port.h"
 #include "bootloader/wormhole.h"
+#include "trace.h"
 
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;
     Wormhole.enumerationMode = EnumerationMode_NormalKeyboard;
+    Trace_Printc("RstButton");
     NVIC_SystemReset();
     // unreachable
 }

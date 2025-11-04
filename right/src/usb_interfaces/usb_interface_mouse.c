@@ -11,7 +11,7 @@
 #endif
 
 static bool needsResending = false;
-static uint8_t retries = 0;
+ATTR_UNUSED static uint8_t retries = 0;
 
 #include "usb_descriptors/usb_descriptor_mouse_report.h"
 

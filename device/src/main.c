@@ -157,6 +157,7 @@ static void detectSpinningEventLoop() {
 void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
+    // 5.1mA
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
@@ -166,12 +167,11 @@ void mainRuntime(void) {
     if (!DEVICE_IS_UHK_DONGLE) {
         InitSpi();
 
-        InitLeds();
+        InitLeds(); // +1.5mA; 6.6mA
 
 #if DEVICE_HAS_OLED
         InitOled();
 #endif // DEVICE_HAS_OLED
-
 
 #if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
@@ -231,20 +231,27 @@ void mainRuntime(void) {
         }
     }
 
+    // 6.6mA
+
     HID_SetGamepadActive(false);
-    USB_Enable(); // has to be after USB_SetSerialNumber
+    USB_Enable(); // +2.2mA, 8.8mA; has to be after USB_SetSerialNumber
+
+    // 8.8mA
 
     if (LastRunWasCrash) {
         printk("CRASH DETECTED, waiting for 5 seconds to allow Agent to reenumerate\n");
         k_sleep(K_MSEC(5*1000));
     }
 
+    // 8.8mA
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart();
-        InitZephyrI2c();
+        InitUart(); // +1.6mA
+        InitZephyrI2c(); // +0.6mA
     }
+
+    // 11mA
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     // has to be after InitSettings
