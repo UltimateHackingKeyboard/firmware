@@ -15,6 +15,11 @@
 #include "usb_protocol_handler.h"
 #include "wormhole.h"
 
+void MyNVIC_SystemReset(void) {
+    Trace_Printc("NvicReset");
+    __NVIC_SystemReset();
+};
+
 void Reboot(bool rebootPeripherals) {
     StateWormhole_Open();
     StateWormhole.wasReboot = true;
