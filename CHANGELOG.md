@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
-## [15.3.0] - 2025-11-01
+## [15.3.0] - 2025-11-04
 
 Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.**1** | Hardware Config: 1.0.0 | Smart Macros: 3.**10.0**
 
