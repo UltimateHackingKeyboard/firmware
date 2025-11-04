@@ -58,6 +58,21 @@
 #include "keyboard/battery_percent_calculator.h"
 #endif
 
+
+/**
+ * 5.1mA - base. Isn't that quite a lot? (Although this is on 5V usb - will be less on battery)
+ *-----------
+ * uart shell  +???
+ * Leds        +1.5mA
+ * USB         +2.2mA
+ * bridge uart +1.6mA
+ * i2c         +0.6mA
+ *------------
+ * total 11 mA
+ * -----------
+ *  This was measured on usb, right half, without module, jtag connected (and adding some 1-2 mA to the draw)
+ */
+
 k_tid_t Main_ThreadId = 0;
 
 static void sleepTillNextMs() {
