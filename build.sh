@@ -288,6 +288,14 @@ function performMcuxAction() {
     esac
 }
 
+function exitOnFail() {
+    if [ $1 -ne 0 ]
+    then
+        echo "Previous command failed with exit code $1"
+        exit $1
+    fi
+}
+
 function performZephyrAction() {
     DEVICE=$1
     ACTION=$2
@@ -306,20 +314,26 @@ function performZephyrAction() {
                     --pristine \
                     -- \
                     --preset $DEVICE
+                exit $?
 END
+            exitOnFail
             createCentralCompileCommands
             ;;
         make)
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 west build --build-dir $ROOT/device/build/$DEVICE device
+                exit $?
 END
+            exitOnFail
             ;;
         flash)
             export BUILD_DIR="$ROOT/device/build/$DEVICE"
             export DEVICE="$DEVICE"
             nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
                 west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
+                exit $?
 END
+            exitOnFail
             ;;
         flashUsb)
             west agent --build-dir $BUILD_DIR
