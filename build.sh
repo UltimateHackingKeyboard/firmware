@@ -271,19 +271,23 @@ function performMcuxAction() {
         build)
             rm -rf $BUILD_DIR
             west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" --pristine -- --preset "$VARIANT"
+            exitOnFail $?
 
             createCentralCompileCommands
             ;;
         make)
             west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" -- --preset "$VARIANT"
+            exitOnFail $?
             ;;
 
         flash)
             west flash --build-dir $BUILD_DIR
+            exitOnFail $?
             exit 1
             ;;
         flashUsb)
             west agent --build-dir $BUILD_DIR
+            exitOnFail $?
             ;;
     esac
 }
@@ -316,7 +320,7 @@ function performZephyrAction() {
                     --preset $DEVICE
                 exit $?
 END
-            exitOnFail
+            exitOnFail $?
             createCentralCompileCommands
             ;;
         make)
@@ -324,7 +328,7 @@ END
                 west build --build-dir $ROOT/device/build/$DEVICE device
                 exit $?
 END
-            exitOnFail
+            exitOnFail $?
             ;;
         flash)
             export BUILD_DIR="$ROOT/device/build/$DEVICE"
@@ -333,7 +337,7 @@ END
                 west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
                 exit $?
 END
-            exitOnFail
+            exitOnFail $?
             ;;
         flashUsb)
             west agent --build-dir $BUILD_DIR
