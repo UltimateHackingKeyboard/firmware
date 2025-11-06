@@ -190,6 +190,7 @@ void PowerMode_WakeHost() {
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
     StateWormhole_Open();
+    StateWormhole.wasReboot = true;
     StateWormhole.rebootToPowerMode = true;
     StateWormhole.restartPowerMode = CurrentPowerMode;
     NVIC_SystemReset();
