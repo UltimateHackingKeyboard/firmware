@@ -188,15 +188,15 @@ void mainRuntime(void) {
 
     // needs to be after InitSettings
     if (DEVICE_IS_UHK80_RIGHT) {
-        PinWiring_UninitShell();
-        PinWiring_Suspend();
+        // PinWiring_UninitShell();
+        // PinWiring_Suspend();
 
-        PinWiring_SelectRouting();
-        PinWiring_ConfigureRouting();
+        // PinWiring_SelectRouting();
+        // PinWiring_ConfigureRouting();
 
-        PinWiring_Resume();
+        // PinWiring_Resume();
 
-        ReinitShell();
+        // ReinitShell();
     }
 
     // Needs to be after ReinitShell, probably
