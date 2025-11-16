@@ -306,12 +306,14 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     slot_t slotId = ModuleIdToSlotId(moduleId);
     uint8_t noneBlockUntil = 0;
     rgb_t noneBlockColor = {0, 0, 0};
-    for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
+    uint8_t actionIdx = 0;
+    for (uint8_t i = 0; i < actionCount; i++) {
         key_action_t dummyKeyAction;
         key_action_t *keyAction = actionIdx < MAX_KEY_COUNT_PER_MODULE ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
 
         if (actionIdx < noneBlockUntil) {
             noneBlockAction(keyAction, &noneBlockColor, parseMode);
+            actionIdx++;
         } else {
             bool wasArgument = false;
             uint8_t actionCountToNone = 0;
@@ -323,8 +325,8 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 
             noneBlockUntil = actionIdx + actionCountToNone;
 
-            if (wasArgument) {
-                actionIdx--;
+            if (!wasArgument) {
+                actionIdx++;
             }
         }
     }
