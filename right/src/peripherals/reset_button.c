@@ -8,14 +8,24 @@
 #include "trace.h"
 #include "config_manager.h"
 #include "macros/status_buffer.h"
+#include "timer.h"
 
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     static uint8_t count = 0;
+    static uint8_t reinitCount = 0;
 
     if (count++ > 10) {
-        DisableIRQ(RESET_BUTTON_IRQ);
-        Macros_ReportError("Looks like spurious factory button activation. Disabling factory button. Please report this.", NULL, NULL);
+        if (reinitCount < 10) {
+            count=0;
+            reinitCount++;
+            uint32_t now = Timer_GetCurrentTime();
+            Macros_ReportErrorPrintf(NULL, "Uptime: %d. Looks like spurious factory button activation. Reinitializing the pullup.", now);
+            PORT_SetPinConfig(RESET_BUTTON_PORT, RESET_BUTTON_PIN, &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
+        } else {
+            Macros_ReportError("Disabling the reset button.", NULL, NULL);
+            DisableIRQ(RESET_BUTTON_IRQ);
+        }
     }
 
     // We are getting spurious activations, so check that it is pressed for at least some 20ms straight
