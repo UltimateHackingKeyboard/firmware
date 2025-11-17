@@ -8,14 +8,18 @@
 #include "trace.h"
 #include "config_manager.h"
 #include "macros/status_buffer.h"
+#include "config_manager.h"
+#include "timer.h"
 
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     static uint8_t count = 0;
 
-    if (count++ > 10) {
+    if (count++ > 20) {
         DisableIRQ(RESET_BUTTON_IRQ);
-        Macros_ReportError("Looks like spurious factory button activation. Disabling factory button. Please report this.", NULL, NULL);
+        if (Cfg.DevMode) {
+            Macros_ReportError("Uptime: %d. Looks like spurious factory button activation. Disabling the reset button.", NULL, NULL);
+        }
     }
 
     // We are getting spurious activations, so check that it is pressed for at least some 20ms straight
