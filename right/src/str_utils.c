@@ -194,6 +194,13 @@ bool ConsumeToken(parser_context_t* ctx, const char *b)
     return res;
 }
 
+void ConsumeAnyChar(parser_context_t* ctx) {
+    if (!isEnd(ctx)) {
+        ctx->at++;
+        consumeWhite(ctx);
+    }
+}
+
 bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)
 {
     const char* at = ctx->at;

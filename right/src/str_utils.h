@@ -66,6 +66,7 @@
     bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref);
     bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref);
     void ConsumeAnyIdentifier(parser_context_t* ctx);
+    void ConsumeAnyChar(parser_context_t* ctx);
     void UnconsumeWhite(parser_context_t* ctx);
     const char* ConsumedToken(parser_context_t* ctx);
     bool IsIdentifierChar(char c);
