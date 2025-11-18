@@ -281,12 +281,16 @@ function performMcuxAction() {
             ;;
 
         flash)
+            mutex lock
             west flash --build-dir $BUILD_DIR
+            mutex unlock
             exitOnFail $?
             exit 1
             ;;
         flashUsb)
+            mutex lock
             west agent --build-dir $BUILD_DIR
+            mutex unlock
             exitOnFail $?
             ;;
     esac
@@ -340,7 +344,9 @@ END
             exitOnFail $?
             ;;
         flashUsb)
+            mutex lock
             west agent --build-dir $BUILD_DIR
+            mutex unlock
             ;;
     esac
 }
