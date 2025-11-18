@@ -604,6 +604,15 @@ static void handleLayerChanges() {
     }
 }
 
+key_action_cached_t* RetrieveCurrentActiveAction(key_state_t *keyState) {
+    if (keyState < &KeyStates[0][0] || &KeyStates[SLOT_COUNT-1][MAX_KEY_COUNT_PER_MODULE-1] < keyState) {
+        return NULL;
+    }
+    uint8_t keyId = Utils_KeyStateToKeyId(keyState);
+    key_coordinates_t c = Utils_KeyIdToKeyCoordinates(keyId);
+    return &actionCache[c.slotId][c.inSlotId];
+}
+
 static void updateActionStates() {
     uint8_t previousMods = NativeKeyboardReports.basic.modifiers | NativeKeyboardReports.inputModifiers;
     UsbReportUpdater_ResetKeyboardReports(&NativeKeyboardReports);

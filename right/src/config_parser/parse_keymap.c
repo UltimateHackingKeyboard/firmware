@@ -18,6 +18,7 @@
 #include "host_connection.h"
 #include "macros/status_buffer.h"
 #include "layer_switcher.h"
+#include "str_utils.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -178,6 +179,7 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_bu
 
 static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
+    uint16_t actionOffset = buffer->offset-1;
     uint8_t macroIndex = ReadUInt8(buffer);
 
     if (macroIndex >= tempMacroCount) {
@@ -186,6 +188,7 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
     }
     keyAction->type = KeyActionType_PlayMacro;
     keyAction->playMacro.macroId = macroIndex;
+    keyAction->playMacro.offset = actionOffset;
     parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
@@ -221,17 +224,19 @@ static void noneBlockAction(key_action_t *keyAction, rgb_t* color, parse_mode_t 
     keyAction->colorOverridden = false;
 }
 
-static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t* color, parse_mode_t parseMode)
+static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t *color, parse_mode_t parseMode)
 {
-    if (actionCountToNone != NULL) {
-        *actionCountToNone = ReadUInt8(buffer);
+    if (color != NULL) {
+        if (actionCountToNone != NULL) {
+            *actionCountToNone = ReadUInt8(buffer);
 
-        // Parse color
-        key_action_t dummyAction;
-        parseKeyActionColor(&dummyAction, buffer);
-        color->red = dummyAction.color.red;
-        color->green = dummyAction.color.green;
-        color->blue = dummyAction.color.blue;
+            // Parse color
+            key_action_t dummyAction;
+            parseKeyActionColor(&dummyAction, buffer);
+            color->red = dummyAction.color.red;
+            color->green = dummyAction.color.green;
+            color->blue = dummyAction.color.blue;
+        }
     }
 
     if (*actionCountToNone > 0) {
@@ -241,12 +246,18 @@ static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *b
     return ParserError_Success;
 }
 
-static parser_error_t skipArgument(config_buffer_t *buffer, bool *wasArgument) {
+static parser_error_t parseArgumentAction(config_buffer_t *buffer, bool *wasArgument, string_segment_t *argument) {
+    uint16_t length = ReadCompactLength(buffer);
+
     if (wasArgument != NULL) {
         *wasArgument = true;
     }
 
-    uint16_t length = ReadCompactLength(buffer);
+    if (argument != NULL) {
+        argument->start = buffer->buffer + buffer->offset;
+        argument->end = argument->start + length;
+    }
+
     for (uint16_t i = 0; i < length; i++) {
         //we don't care here, just discard them
         ReadUInt8(buffer);
@@ -286,7 +297,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
             return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor, parseMode);
         case SerializedKeyActionType_Label:
         case SerializedKeyActionType_Argument:
-            return skipArgument(buffer, wasArgument);
+            return parseArgumentAction(buffer, wasArgument, NULL);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
@@ -543,4 +554,36 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     }
 
     return ParserError_Success;
+}
+
+string_segment_t ParseMacroArgument(uint16_t offset, uint8_t argumentNumber)
+{
+    string_segment_t result = { .start = NULL, .end = NULL };
+
+    // Create a config buffer reference with the given offset
+    // The offset points to the start of the PlayMacro action data (after the action type byte)
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    buffer.offset = offset;
+
+    // Dry run parse the PlayMacro action
+    key_action_t dummyKeyAction;
+    parseKeyAction(&dummyKeyAction, &buffer, ParseMode_DryRun, NULL, NULL, NULL);
+
+    for (uint8_t i = 1; i <= argumentNumber;) {
+        uint8_t actionType = ReadUInt8(&buffer);
+
+        if (actionType == SerializedKeyActionType_Argument || actionType == SerializedKeyActionType_Label) {
+            string_segment_t arg;
+            parseArgumentAction(&buffer, NULL, &arg);
+            if (i == argumentNumber && actionType == SerializedKeyActionType_Argument) {
+                return arg;
+            }
+            if (actionType == SerializedKeyActionType_Argument) {
+                i++;
+            }
+        } else {
+            return (string_segment_t){ .start = NULL, .end = NULL };
+        }
+    }
+    return (string_segment_t){ .start = NULL, .end = NULL };
 }

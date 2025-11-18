@@ -18,6 +18,7 @@
 #include <math.h>
 #include <inttypes.h>
 #include "trace.h"
+#include "usb_report_updater.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -906,6 +907,36 @@ void MacroVariables_RunTests(void) {
 #endif
 }
 
+static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
+    if (S->ms.currentMacroKey == NULL) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't have activation key assigned!", argNumber);
+        return false;
+    }
+
+    key_action_cached_t* action = RetrieveCurrentActiveAction(S->ms.currentMacroKey);
+
+    if (action == NULL) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because we failed to retrieve activation key action!", argNumber);
+        return false;
+    }
+
+    if (action->action.type != KeyActionType_PlayMacro) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. This doesn't seem to be a playMacro action?");
+        return false;
+    }
+
+    uint16_t offset = action->action.playMacro.offset;
+
+    string_segment_t str = ParseMacroArgument(offset, argNumber);
+
+    if (str.start == NULL) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
+        return false;
+    }
+
+    return PushParserContext(ctx, str.start, str.start, str.end);
+}
+
 bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     ASSERT(*ctx->at == '$');
 
@@ -916,7 +947,7 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     if (ConsumeToken(ctx, "macroArg")) {
         ConsumeUntilDot(ctx);
         uint8_t argId = Macros_ConsumeInt(ctx);
-        Macros_ReportErrorPrintf(ctx->at, "Macro argument expansion is not supported yet! Argument ID: %d", argId);
+        expandArgument(ctx, argId);
         return true;
     }
     else if (ConsumeToken(ctx, "macroTemplate")) {
