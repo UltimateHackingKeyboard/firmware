@@ -1,0 +1,70 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"name": "uhk-80",
+			"path": "device"
+		},
+		{
+			"name": "workspace",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"nrf-connect.applications": [
+			"${workspaceFolder}/device"
+		],
+		"nrf-connect.applicationOptions": {
+			"${workspaceFolder}/device": {
+				"flash": {
+					"softreset": true
+				}
+			}
+		},
+		"nrf-connect.boardRoots": [
+			"${workspaceFolder}/"
+		],
+		"files.associations": {
+			"*.h": "c",
+			"*.c": "c",
+			"*.hpp": "cpp",
+			"*.cpp": "cpp"
+		},
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"C_Cpp.workspaceParsingPriority": "high",
+		"C_Cpp.autoAddFileAssociations": false,
+		"cmake.useCMakePresets": "always",
+		"cmake.configureOnOpen": false,
+		"cmake.enableAutomaticKitScan": false,
+		"cmake.options.advanced": {
+			"build": {
+				"statusBarVisibility": "hidden"
+			},
+			"launch": {
+				"statusBarVisibility": "hidden"
+			},
+			"debug": {
+				"statusBarVisibility": "hidden"
+			}
+		},
+		"[json]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.formatOnSave": true
+		},
+		"[jsonc]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.formatOnSave": true
+		},
+		"task.allowAutomaticTasks": "on",
+		"firmware.startupSdk": "nrfsdk"
+	},
+	"extensions": {
+		"recommendations": [
+			"nordic-semiconductor.nrf-connect-extension-pack",
+			"ms-vscode.cpptools-extension-pack",
+			"ms-vscode.vscode-embedded-tools"
+		]
+	}
+}
