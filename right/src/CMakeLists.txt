@@ -21,6 +21,8 @@ if(IS_MCUX_SDK)
     # need to add header explicitly to avoid pulling in wrong SDK header
     # https://github.com/nxp-mcuxpresso/mcuxsdk-middleware-usb/issues/12
     mcux_add_source(SOURCES usb_device_config.h)
+else()
+    add_subdirectory(hid)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE

@@ -7,7 +7,6 @@
 #include "logger.h"
 #include "proxy_log_backend.h"
 #include "usb_log_buffer.h"
-#include "usb/usb.h"
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/shell/shell.h>
@@ -18,7 +17,6 @@
 #include "host_connection.h"
 #include "thread_stats.h"
 #include "trace.h"
-#include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
 #include <zephyr/shell/shell_backend.h>

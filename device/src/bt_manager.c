@@ -3,7 +3,7 @@
 #include "connections.h"
 #include "device_state.h"
 #include "event_scheduler.h"
-#include "usb/usb.h"
+#include "hid/config.h"
 #include "bt_advertise.h"
 #include "nus_client.h"
 #include "nus_server.h"
