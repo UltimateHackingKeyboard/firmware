@@ -1,0 +1,82 @@
+From 814d66eb88b04c1a4e3c85afaa0a559cd61576a1 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Wed, 19 Nov 2025 22:56:30 +0100
+Subject: [PATCH] allow coexistence with mcux usb stack
+
+---
+ c2usb/port/nxp/CMakeLists.txt | 4 ----
+ c2usb/port/nxp/mcux_mac.cpp   | 9 ++++++++-
+ c2usb/port/nxp/mcux_mac.hpp   | 2 ++
+ 3 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/c2usb/port/nxp/CMakeLists.txt b/c2usb/port/nxp/CMakeLists.txt
+index e14ad09..481e1dc 100644
+--- a/c2usb/port/nxp/CMakeLists.txt
++++ b/c2usb/port/nxp/CMakeLists.txt
+@@ -15,10 +15,6 @@ if(CONFIG_C2USB_MCUX_MAC)
+         PRIVATE
+             ${PROJECT_NAME}
+     )
+-    # since MCUX_COMPONENT_middleware.usb.device.controller.driver cannot be disabled
+-    mcux_project_remove_source(BASE_PATH ${SdkRootDirPath}/middleware/usb/device
+-        SOURCES usb_device_dci.c
+-    )
+ else()
+     set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+ endif()
+diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
+index 665f189..03b9a50 100644
+--- a/c2usb/port/nxp/mcux_mac.cpp
++++ b/c2usb/port/nxp/mcux_mac.cpp
+@@ -25,6 +25,7 @@ static IRQn_Type usb_irqn(int index)
+ 
+ void mcux_mac::init(const speeds& speeds)
+ {
++    notification_routing = true;
+     [[maybe_unused]] auto status = driver_.deviceInit(index_, this, &handle_);
+     assert(status == kStatus_USB_Success);
+ 
+@@ -290,6 +291,8 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+     }
+ }
+ 
++extern "C" usb_status_t _USB_DeviceNotificationTrigger(void* handle, void* msg);
++
+ extern "C" usb_status_t USB_DeviceNotificationTrigger(void* handle, void* msg)
+ {
+     assert(msg != nullptr);
+@@ -297,13 +300,17 @@ extern "C" usb_status_t USB_DeviceNotificationTrigger(void* handle, void* msg)
+     {
+         return kStatus_USB_InvalidHandle;
+     }
+-    else
++    else if (mcux_mac::notification_routing)
+     {
+         auto* mac = reinterpret_cast<mcux_mac*>(handle);
+         mac->process_notification(
+             *reinterpret_cast<const _usb_device_callback_message_struct*>(msg));
+         return kStatus_USB_Success;
+     }
++    else
++    {
++        return _USB_DeviceNotificationTrigger(handle, msg);
++    }
+ }
+ 
+ } // namespace usb::df::nxp
+diff --git a/c2usb/port/nxp/mcux_mac.hpp b/c2usb/port/nxp/mcux_mac.hpp
+index d2a6e3a..456c710 100644
+--- a/c2usb/port/nxp/mcux_mac.hpp
++++ b/c2usb/port/nxp/mcux_mac.hpp
+@@ -30,6 +30,8 @@ struct controller_interface;
+ class mcux_mac : public df::address_handle_mac
+ {
+   public:
++    static inline bool notification_routing{};
++
+     void process_notification(const ::_usb_device_callback_message_struct& message);
+ 
+     void handle_irq();
+-- 
+2.43.0
+
