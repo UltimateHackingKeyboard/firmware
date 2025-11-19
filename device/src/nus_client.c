@@ -16,7 +16,6 @@
 #include "key_states.h"
 #include "keyboard/oled/widgets/console_widget.h"
 #include "state_sync.h"
-#include "usb/usb_compatibility.h"
 #include "link_protocol.h"
 #include "messenger_queue.h"
 #include "debug.h"

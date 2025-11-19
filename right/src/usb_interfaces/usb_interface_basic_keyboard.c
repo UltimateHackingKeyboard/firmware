@@ -8,7 +8,7 @@
 #include "usb_report_updater.h"
 
 #ifdef __ZEPHYR__
-#include "usb/usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #endif
 
 #include "utils.h"

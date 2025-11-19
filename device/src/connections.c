@@ -10,7 +10,7 @@
 #include <zephyr/bluetooth/addr.h>
 #include "connections.h"
 #include "stubs.h"
-#include "usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #include "logger.h"
 #include <stdio.h>
 #include "config_manager.h"

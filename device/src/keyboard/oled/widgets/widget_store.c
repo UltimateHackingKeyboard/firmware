@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "device_state.h"
-#include "usb/usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #include "macros/status_buffer.h"
 #include "host_connection.h"
 #include "connections.h"

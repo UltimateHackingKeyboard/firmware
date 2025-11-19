@@ -1,8 +1,8 @@
 extern "C" {
-#include "usb.h"
 #include "connections.h"
 #include "device.h"
 #include "device_state.h"
+#include "hid/config.h"
 #include "key_states.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
@@ -11,8 +11,8 @@ extern "C" {
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "user_logic.h"
-#include <zephyr/kernel.h>
 #include <nrfx_power.h>
+#include <zephyr/kernel.h>
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -55,7 +55,8 @@ class multi_hid : public hid::multi_application {
     }
 
   private:
-    std::array<hid::application *, sizeof...(Args) + 1> app_array_{(&Args::ble_handle())..., nullptr};
+    std::array<hid::application *, sizeof...(Args) + 1> app_array_{
+        (&Args::ble_handle())..., nullptr};
     multi_hid() : multi_application({{}, 0, 0, 0}, app_array_)
     {
         static constexpr const auto desc = report_desc();
@@ -138,7 +139,9 @@ struct usb_manager {
                 usb::df::microsoft::xconfig(
                     usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
 
-        printk("USB config changing to %s\n", magic_enum::enum_name(conf).data() == NULL ? "NULL" : magic_enum::enum_name(conf).data());
+        printk("USB config changing to %s\n", magic_enum::enum_name(conf).data() == NULL
+                                                  ? "NULL"
+                                                  : magic_enum::enum_name(conf).data());
         if (conf == Hid_NoGamepad) {
             ms_enum_.set_config({});
             device_.set_config(base_config);
@@ -150,23 +153,24 @@ struct usb_manager {
     }
 
     usb_manager()
-     : mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)),
-        (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED) ?
-        usb::power::state::L2_SUSPEND : usb::power::state::L3_OFF}
+        : mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)),
+              (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED)
+                  ? usb::power::state::L2_SUSPEND
+                  : usb::power::state::L3_OFF}
     {
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
             using event = enum usb::df::device::event;
             if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
                 switch (dev.power_state()) {
-                    case usb::power::state::L2_SUSPEND:
-                        PowerMode_SetUsbAwake(false);
-                        break;
-                    case usb::power::state::L0_ON:
-                        PowerMode_SetUsbAwake(true);
-                        break;
-                    default:
-                        break;
-                    }
+                case usb::power::state::L2_SUSPEND:
+                    PowerMode_SetUsbAwake(false);
+                    break;
+                case usb::power::state::L0_ON:
+                    PowerMode_SetUsbAwake(true);
+                    break;
+                default:
+                    break;
+                }
             }
         });
     }

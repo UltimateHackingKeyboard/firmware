@@ -11,7 +11,7 @@
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
 #include "thread_stats.h"
-#include "usb/usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "module.h"

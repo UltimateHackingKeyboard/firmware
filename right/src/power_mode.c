@@ -8,7 +8,7 @@
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
-    #include "usb/usb.h"
+    #include "hid/config.h"
     #include "connections.h"
     #include "keyboard/key_scanner.h"
     #include "keyboard/charger.h"

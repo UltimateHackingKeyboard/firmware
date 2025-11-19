@@ -22,7 +22,6 @@
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "keyboard/oled/screens/screen_manager.h"
-#include "usb/usb.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/settings/settings.h>
 #include "bt_pair.h"

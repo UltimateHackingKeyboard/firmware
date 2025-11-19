@@ -22,7 +22,7 @@
 #include "peripherals/merge_sensor.h"
 #include "shell.h"
 #include "device.h"
-#include "usb/usb.h"
+#include "hid/config.h"
 #include "bt_conn.h"
 #include "settings.h"
 #include "flash.h"
