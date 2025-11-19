@@ -1,0 +1,25 @@
+From a62a08a60d97535713912db08310d7bbb7d8bb90 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Wed, 19 Nov 2025 22:54:33 +0100
+Subject: [PATCH] allow coexistence with c2usb
+
+---
+ device/usb_device_dci.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/device/usb_device_dci.c b/device/usb_device_dci.c
+index 84660bb..cf6262d 100644
+--- a/device/usb_device_dci.c
++++ b/device/usb_device_dci.c
+@@ -679,7 +679,7 @@ static usb_status_t USB_DeviceNotification(usb_device_struct_t *handle, usb_devi
+  *
+  * @return A USB error code or kStatus_USB_Success.
+  */
+-usb_status_t USB_DeviceNotificationTrigger(void *handle, void *msg)
++usb_status_t _USB_DeviceNotificationTrigger(void *handle, void *msg)
+ {
+     usb_device_struct_t *deviceHandle             = (usb_device_struct_t *)handle;
+     usb_device_callback_message_struct_t *message = (usb_device_callback_message_struct_t *)msg;
+-- 
+2.43.0
+
