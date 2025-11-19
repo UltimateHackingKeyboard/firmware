@@ -25,7 +25,7 @@
 #include "utils.h"
 #include "messenger.h"
 #include "state_sync.h"
-#include "usb/usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #include <stdint.h>
 #include <zephyr/kernel.h>
 #include "peripherals/merge_sensor.h"
