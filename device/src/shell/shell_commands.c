@@ -6,14 +6,13 @@
 #include "keyboard/oled/oled.h"
 #include "logger.h"
 #include "usb_log_buffer.h"
-#include "usb/usb.h"
+#include "hid/config.h"
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/shell/shell.h>
 #include "ledmap.h"
 #include "host_connection.h"
 #include "thread_stats.h"
 #include "trace.h"
-#include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
 #include "connections.h"

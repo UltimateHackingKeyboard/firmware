@@ -7,7 +7,7 @@
 #include "utils.h"
 
 #ifdef __ZEPHYR__
-#include "usb/usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #endif
 
 static bool needsResending = false;
