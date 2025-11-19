@@ -50,7 +50,7 @@
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
 #include "shell.h"
-#include "usb/usb_compatibility.h"
+#include "hid/usb_compatibility.h"
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"

@@ -1,5 +1,5 @@
-#ifndef __USB_HEADER__
-#define __USB_HEADER__
+#ifndef __HID_CONFIG_HEADER__
+#define __HID_CONFIG_HEADER__
 
 
 // Includes:
@@ -37,4 +37,4 @@
     void USB_SetSerialNumber(uint32_t serialNumber);
     void USB_RemoteWakeup(void);
 
-#endif // __USB_HEADER__
+#endif // __HID_CONFIG_HEADER__
