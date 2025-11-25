@@ -40,3 +40,5 @@ AllowShortFunctionsOnASingleLine: Inline
 AllowShortLambdasOnASingleLine: Inline
 ShortNamespaceLines: 1
 FixNamespaceComments: true
+InsertNewlineAtEOF: true
+KeepEmptyLinesAtEOF: true
