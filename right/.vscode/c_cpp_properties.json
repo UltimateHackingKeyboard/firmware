@@ -6,6 +6,21 @@
       "compileCommands": [
         "${workspaceFolder}/build/v2-release/compile_commands.json"
       ],
+      "includePath": [
+        "${workspaceFolder:right}/**",
+        "${workspaceFolder:firmware}/shared/*",
+        "${workspaceFolder:mcuxsdk}/**",
+        "${workspaceFolder:c2usb}/**"
+      ],
+      "browse": {
+        "path": [
+          "${workspaceFolder:right}",
+          "${workspaceFolder:firmware}/shared",
+          "${workspaceFolder:mcuxsdk}",
+          "${workspaceFolder:c2usb}"
+        ],
+        "limitSymbolsToIncludedHeaders": true
+      },
       "intelliSenseMode": "gcc-arm"
     }
   ]
