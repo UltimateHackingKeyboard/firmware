@@ -127,6 +127,10 @@ static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringTyp
         // (If there is an expansion, it is handled within a new context copy.)
         c = consumeCharOfTemplate(ctx, stringType, index);
         PopParserContext(ctx);
+
+        if (*index == 0) {
+            UnconsumeWhite(ctx);
+        }
         return c;
     } else {
         macro_variable_t res = Macros_ConsumeAnyValue(ctx);
