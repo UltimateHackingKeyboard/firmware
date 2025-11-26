@@ -366,7 +366,7 @@ static void clearScancodes()
     S->ms.reports.macroBasicKeyboardReport.modifiers = oldMods;
 }
 
-macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString)
+macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, parser_context_t* ctx)
 {
     const uint8_t maxGroupSize=3;
     static uint8_t currentReportSize=0;
@@ -387,11 +387,11 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
 
     // Precompute modifiers and scancode.
     if (S->as.dispatchData.textIdx != textLen) {
-        if (rawString) {
+        if (ctx == NULL) {
             character = text[S->as.dispatchData.textIdx];
         } else {
-            parser_context_t ctx = { .macroState = S, .begin = text, .at = text, .end = text+textLen, .nestingLevel = PARSER_CONTEXT_STACK_SIZE};
-            character = Macros_ConsumeCharOfString(&ctx, &stringOffsetCopy, &textIndexCopy, &textSubIndexCopy);
+
+            character = Macros_ConsumeCharOfString(ctx, &stringOffsetCopy, &textIndexCopy, &textSubIndexCopy);
 
             //make sure we write error only once
             if (Macros_ParserError) {
@@ -459,7 +459,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
     // Send the scancode.
     UsbBasicKeyboard_AddScancode(&S->ms.reports.macroBasicKeyboardReport, scancode);
     S->as.dispatchData.reportState = ++currentReportSize >= maxGroupSize ? REPORT_FULL : REPORT_PARTIAL;
-    if (rawString) {
+    if (ctx == NULL) {
         ++S->as.dispatchData.textIdx;
     } else {
         if (textIndexCopy == S->as.dispatchData.textIdx && textSubIndexCopy == S->as.dispatchData.subIndex && stringOffsetCopy == S->as.dispatchData.stringOffset) {
@@ -475,7 +475,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
 
 macro_result_t Macros_ProcessTextAction(void)
 {
-    return Macros_DispatchText(S->ms.currentMacroAction.text.text, S->ms.currentMacroAction.text.textLen, true);
+    return Macros_DispatchText(S->ms.currentMacroAction.text.text, S->ms.currentMacroAction.text.textLen, NULL);
 }
 
 static macro_action_t decodeKeyAndConsume(parser_context_t* ctx, macro_sub_action_t defaultSubAction)

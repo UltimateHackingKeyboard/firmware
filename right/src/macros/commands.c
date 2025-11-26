@@ -135,7 +135,7 @@ static macro_result_t writeNum(uint32_t a)
 
     uint8_t len = MAX(2, 10-at);
 
-    macro_result_t res = Macros_DispatchText(&num[10-len], len, true);
+    macro_result_t res = Macros_DispatchText(&num[10-len], len, NULL);
     if (res == MacroResult_Finished) {
         PostponerExtended_ConsumePendingKeypresses(1, true);
         return MacroResult_Finished;
@@ -949,7 +949,7 @@ static macro_result_t processWriteCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    macro_result_t res = Macros_DispatchText(ctx->at, ctx->end - ctx->at, false);
+    macro_result_t res = Macros_DispatchText(ctx->at, ctx->end - ctx->at, ctx);
 
     if (res & MacroResult_ActionFinishedFlag) {
         ctx->at = ctx->end;

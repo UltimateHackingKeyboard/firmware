@@ -364,7 +364,7 @@ macro_result_t Macros_ProcessPrintStatusCommand()
         return MacroResult_Finished;
     }
     printing = true;
-    macro_result_t res = Macros_DispatchText(Buf.data, Buf.len, true);
+    macro_result_t res = Macros_DispatchText(Buf.data, Buf.len, NULL);
     if (res == MacroResult_Finished) {
         Macros_ProcessClearStatusCommand(true);
         printing = false;
