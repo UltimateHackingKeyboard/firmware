@@ -150,7 +150,7 @@ COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
 COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
 COMMAND = set secondaryRole.advanced.safetyMargin <ms, higher value adjusts sensitivity towards primary role -50-50 (INT)>
 COMMAND = set secondaryRole.advanced.triggerByPress <trigger immediately on action key press (BOOL)>
-COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)
+COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)>
 COMMAND = set secondaryRole.advanced.triggerByMouse <trigger secondary role immediately on mouse move (BOOL)
 COMMAND = set secondaryRole.advanced.minimumHoldTime <ms, minimum time a key must be held before it can trigger secondary role 0-255 (INT)>
 COMMAND = set secondaryRole.advanced.doubletapToPrimary <hold primary on doubletap (BOOL)>
@@ -475,7 +475,7 @@ Commands:
 - `holdLayer LAYERID` mostly corresponds to the sequence `toggleLayer <layer>; delayUntilRelease; untoggleLayer`, except for more elaborate conflict resolution (releasing holds in incorrect order).
 - `holdKeymapLayer KEYMAPID LAYERID` just as holdLayer, but allows referring to layer of different keymap. This reloads the entire keymap, so it may be very inefficient.
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] [ primaryFromSameHalf | secondaryFromSameHalf ]... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Layer/Keymap loading manipulation / shared layers:
 
@@ -499,7 +499,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key and compares it to the `keyId`.
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] [ primaryFromSameHalf | secondaryFromSameHalf ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 - `ifHold/ifTap COMMAND` will wait until the key that activated the macro will be released or until holdTimeout elapses. Then it will either execute the command or skip it.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., Ctrl+c). By default, it timeouts with the activation key release.
@@ -539,7 +539,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy ] [ primaryFromSameHalf | secondaryFromSameHalf ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Modifiers
 
@@ -683,7 +683,7 @@ Internally, values are saved in one of the following types, and types are automa
 
   - `set secondaryRole.defaultStrategy [ simple | advanced ]` sets the default resolution strategy to be used. Furthermore, `ifPrimary/ifSecondary` can specify explicitly which strategy to use (e.g., `ifPrimary advancedStrategy final tapKey a`).
     - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role and then the action of the other key without any further delays. If there is no such other action, it performs primary role on the dual-role key release.
-    - `set secondaryRole.primaryFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role if the triggering key is from the same keyboard half.
+    - `set secondaryRole.primaryFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role if the triggering key is from the same keyboard half.  `ifPrimary/ifSecondary` can specify explicitly whether to trigger primary from same half using the argument `primaryFromSameHalf/secondaryFromSameHalf`.
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether the primary action or the secondary role should be activated when timeout is reached
