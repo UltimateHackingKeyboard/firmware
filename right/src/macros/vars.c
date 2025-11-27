@@ -908,26 +908,18 @@ void MacroVariables_RunTests(void) {
 }
 
 static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
-    if (S->ms.currentMacroKey == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't have activation key assigned!", argNumber);
-        return false;
+    if (S->ms.currentMacroArgumentOffset == 0) {
+        if (Macros_ValidationInProgress) {
+            // mark this action as failed, but don't report it. It will get validated in keymap run later
+            Macros_ParserError = true;
+            return false;
+        } {
+            Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argNumber);
+            return false;
+        }
     }
 
-    key_action_cached_t* action = RetrieveCurrentActiveAction(S->ms.currentMacroKey);
-
-    if (action == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because we failed to retrieve activation key action!", argNumber);
-        return false;
-    }
-
-    if (action->action.type != KeyActionType_PlayMacro) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. This doesn't seem to be a playMacro action?");
-        return false;
-    }
-
-    uint16_t offset = action->action.playMacro.offset;
-
-    string_segment_t str = ParseMacroArgument(offset, argNumber);
+    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argNumber);
 
     if (str.start == NULL) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);

@@ -2,6 +2,7 @@
 #include "config_parser/parse_macro.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "keymap.h"
 #include "layer_stack.h"
 #include "macros/commands.h"
 #include "macros/debug_commands.h"
@@ -404,7 +405,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, S->ms.currentMacroKeyStamp, parentSlotIndex, true);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, parentSlotIndex, true);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -418,11 +419,11 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, S->ms.currentMacroKeyStamp, 255, true);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, 255, true);
     return MacroResult_Finished;
 }
 
-uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot)
+uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot)
 {
     if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
@@ -437,6 +438,7 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8
     S->ms.currentMacroKey = keyState;
     S->ms.currentMacroKeyStamp = timestamp;
     S->ms.currentMacroStartTime = CurrentPostponedTime;
+    S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
 
     //this loads the first action and resets all adresses
@@ -447,11 +449,11 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8
 
 
 //partentMacroSlot == 255 means no parent
-uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction)
+uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, timestamp, parentMacroSlot);
+    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, timestamp, parentMacroSlot);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -475,6 +477,29 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t timestam
     return slotIndex;
 }
 
+void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset) {
+    uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255);
+
+    if (slotIndex == 255) {
+        S = NULL;
+        return;
+    }
+
+    scheduleSlot(slotIndex);
+
+    bool macroHasNotEnded = AllMacros[macroIndex].macroActionsCount;
+    while (macroHasNotEnded) {
+        if (S->ms.currentMacroAction.type == MacroActionType_Command) {
+            processCurrentMacroAction();
+            Macros_ParserError = false;
+        }
+
+        macroHasNotEnded = loadNextCommand() || loadNextAction();
+    }
+    endMacro();
+    S = NULL;
+}
+
 void Macros_ValidateAllMacros()
 {
     macro_state_t* oldS = S;
@@ -482,28 +507,19 @@ void Macros_ValidateAllMacros()
     memset(&Macros_SchedulerState, 0, sizeof Macros_SchedulerState);
     Macros_DryRun = true;
     Macros_ValidationInProgress = true;
+    // Validate macros without arguments
+    uint32_t t1 = Timer_GetCurrentTime();
+    LogU("Validating macros without arguments...\n");
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
-        uint8_t slotIndex = initMacro(macroIndex, NULL, 255, 255);
-
-        if (slotIndex == 255) {
-            S = NULL;
-            continue;
-        }
-
-        scheduleSlot(slotIndex);
-
-        bool macroHasNotEnded = AllMacros[macroIndex].macroActionsCount;
-        while (macroHasNotEnded) {
-            if (S->ms.currentMacroAction.type == MacroActionType_Command) {
-                processCurrentMacroAction();
-                Macros_ParserError = false;
-            }
-
-            macroHasNotEnded = loadNextCommand() || loadNextAction();
-        }
-        endMacro();
-        S = NULL;
+        Macros_ValidateMacro(macroIndex, 0);
     }
+    LogU("Validating macros with arguments...\n");
+    // Validate macros that have arguments
+    for (uint8_t keymapIndex = 0; keymapIndex < AllKeymapsCount; keymapIndex++) {
+        DryParseKeymap(keymapIndex);
+    }
+    uint32_t t2 = Timer_GetCurrentTime();
+    LogU("Validation completed in %d ms!\n", t2 - t1);
     Macros_ValidationInProgress = false;
     Macros_DryRun = false;
     Macros_SchedulerState = schedulerState;
@@ -514,7 +530,7 @@ uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestam
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, timestamp, 255);
+    uint8_t slotIndex = initMacro(index, keyState, 0, timestamp, 255);
 
     if (slotIndex == 255) {
         return slotIndex;
