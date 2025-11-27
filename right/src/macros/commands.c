@@ -1772,7 +1772,7 @@ static macro_result_t processProgressHueCommand()
 #undef C
 }
 
-static macro_result_t processValidateUserConfigCommand(parser_context_t* ctx)
+static macro_result_t processValidateMacrosCommand(parser_context_t* ctx)
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
@@ -2536,8 +2536,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             break;
         case 'v':
-            if (ConsumeToken(ctx, "validateUserConfig")) {
-                return processValidateUserConfigCommand(ctx);
+            if (ConsumeToken(ctx, "validateUserConfig") || ConsumeToken(ctx, "validateMacros")) {
+                return processValidateMacrosCommand(ctx);
             }
             else {
                 goto failed;
