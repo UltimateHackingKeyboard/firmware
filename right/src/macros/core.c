@@ -500,6 +500,12 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset) {
     S = NULL;
 }
 
+/**
+ * Current known limitations:
+ * - We check only actions that have arguments, therefore we don't catch missing arguments.
+ * - The validation takes hundreds of milliseconds, causing a short freeze when config is saved.
+ * - Errors don't report origin origin of the offsets.
+ */
 void Macros_ValidateAllMacros()
 {
     macro_state_t* oldS = S;
