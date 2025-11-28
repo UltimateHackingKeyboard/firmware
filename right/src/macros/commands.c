@@ -1900,7 +1900,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
         }
     }
 
-    while(ctx->at < ctx->end) {
+    while(ctx->at < ctx->end || !IsEnd(ctx)) {
         switch(*ctx->at) {
         case 'a':
             if (ConsumeToken(ctx, "activateKeyPostponed")) {
@@ -2677,7 +2677,7 @@ macro_result_t Macros_ProcessCommandAction(void)
     macroResult = processCommand(&ctx);
 #endif
 
-    if (ctx.at != ctx.end && !Macros_ParserError && Macros_DryRun) {
+    if ((ctx.at < ctx.end || !IsEnd(&ctx)) && !Macros_ParserError && Macros_DryRun) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
 

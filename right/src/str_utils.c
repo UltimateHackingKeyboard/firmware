@@ -101,6 +101,10 @@ static bool isEnd(parser_context_t* ctx) {
     return ctx->at >= ctx->end;
 }
 
+bool IsEnd(parser_context_t* ctx) {
+    return isEnd(ctx);
+}
+
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
