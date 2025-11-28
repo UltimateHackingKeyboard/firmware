@@ -25,6 +25,8 @@
 #include "eeprom.h"
 #endif
 
+#define TMP_DISABLE_POSITIONS return
+
 static bool printing;
 static bool containsWormholeData = false;
 static uint16_t consumeStatusCharReadingPos = 0;
@@ -195,6 +197,7 @@ void Macros_SetStatusChar(char n)
 
 static uint16_t findCurrentCommandLine()
 {
+    TMP_DISABLE_POSITIONS 0;
     if (S != NULL) {
         uint16_t lineCount = 1;
         for (const char* c = S->ms.currentMacroAction.cmd.text; c < S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin; c++) {
@@ -209,6 +212,7 @@ static uint16_t findCurrentCommandLine()
 
 static uint16_t findPosition(const char* arg)
 {
+    TMP_DISABLE_POSITIONS 0;
     if (arg == NULL || S == NULL) {
         return 1;
     }
@@ -224,6 +228,7 @@ static uint16_t findPosition(const char* arg)
 
 static void reportErrorHeader(const char* status, uint16_t pos)
 {
+    TMP_DISABLE_POSITIONS;
     if (S != NULL) {
         const char *name, *nameEnd;
         uint16_t lineCount = findCurrentCommandLine(status);
@@ -243,6 +248,7 @@ static void reportErrorHeader(const char* status, uint16_t pos)
 
 static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool reportPosition)
 {
+    TMP_DISABLE_POSITIONS;
     Macros_SetStatusString("> ", NULL);
     uint16_t l = Buf.len;
     Macros_SetStatusNumSpaced(line, false);
