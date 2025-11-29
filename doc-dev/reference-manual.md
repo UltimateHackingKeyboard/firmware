@@ -145,7 +145,6 @@ COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
 COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
 COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
 COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
-COMMAND = set secondaryRole.primaryFromSameHalf <prevents secondary role keys from triggering as secondary when the triggering key is from the same half of the keyboard (BOOL)>
 COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
 COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
 COMMAND = set secondaryRole.advanced.safetyMargin <ms, higher value adjusts sensitivity towards primary role -50-50 (INT)>
@@ -155,6 +154,7 @@ COMMAND = set secondaryRole.advanced.triggerByMouse <trigger secondary role imme
 COMMAND = set secondaryRole.advanced.minimumHoldTime <ms, minimum time a key must be held before it can trigger secondary role 0-255 (INT)>
 COMMAND = set secondaryRole.advanced.doubletapToPrimary <hold primary on doubletap (BOOL)>
 COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0-500 (INT)>
+COMMAND = set secondaryRole.advanced.primaryFromSameHalf <prevents secondary role keys from triggering as secondary when the triggering key is from the same half of the keyboard (BOOL)>
 COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, ~100/20 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, ~800/20 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
@@ -683,7 +683,6 @@ Internally, values are saved in one of the following types, and types are automa
 
   - `set secondaryRole.defaultStrategy [ simple | advanced ]` sets the default resolution strategy to be used. Furthermore, `ifPrimary/ifSecondary` can specify explicitly which strategy to use (e.g., `ifPrimary advancedStrategy final tapKey a`).
     - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role and then the action of the other key without any further delays. If there is no such other action, it performs primary role on the dual-role key release.
-    - `set secondaryRole.primaryFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role if the triggering key is from the same keyboard half.  `ifPrimary/ifSecondary` can specify explicitly whether to trigger primary from same half using the argument `primaryFromSameHalf/secondaryFromSameHalf`.
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether the primary action or the secondary role should be activated when timeout is reached
@@ -694,6 +693,7 @@ Internally, values are saved in one of the following types, and types are automa
       - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release and trigger-by-press behaviours, so that positive values favor primary role, while negative values favor secondary role. This works by adding the value to the action key (or subtracting from the dual role key). E.g., suppose trigger by release is active, and safetyMargin equal 50. Furthermore assume that dual-role key is released 30ms after the action key. Due to safety margin 50 being greater than 30, the dual-role key is still considered to be released first, and so primary role is activated.
       - `set secondaryRole.advanced.doubletapToPrimary BOOL` allows initiating hold of primary action by doubletap. (Useful if you want a dual key on space.)
       - `set secondaryRole.advanced.doubletapTime <ms, 200 (INT)>` configures the above timeout (measured press-to-press).
+      - `set secondaryRole.advanced.primaryFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role if the triggering key is from the same keyboard half.  `ifPrimary/ifSecondary` can specify explicitly whether to trigger primary from same half using the argument `primaryFromSameHalf/secondaryFromSameHalf`.
 
 - `macroEngine`
   - terminology:

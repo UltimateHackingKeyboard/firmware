@@ -354,7 +354,7 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
                 primaryFromSameHalf = false;
                 break;
             default:
-                primaryFromSameHalf = Cfg.SecondaryRoles_PrimaryFromSameHalf;
+                primaryFromSameHalf = Cfg.SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf;
                 break;
         }
         resolutionState = startResolution(keyState, strategy);

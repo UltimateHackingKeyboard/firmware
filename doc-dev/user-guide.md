@@ -477,7 +477,6 @@ Full set of advanced strategy config values follows (for copy-paste convenience)
 
 ```
 set secondaryRole.defaultStrategy advanced
-set secondaryRole.primaryFromSameHalf 0
 set secondaryRole.advanced.timeout 500
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
@@ -487,6 +486,7 @@ set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 set secondaryRole.advanced.minimumHoldTime 0
+set secondaryRole.advanced.primaryFromSameHalf 0
 ```
 
 The above configuration will trigger the secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger the secondary role.

@@ -316,6 +316,9 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
     }
+    else if (ConsumeToken(ctx, "primaryFromSameHalf")) {
+        ASSIGN_BOOL(Cfg.SecondaryRoles_PrimaryFromSameHalf);
+    }
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
     }
@@ -327,9 +330,6 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
     if (ConsumeToken(ctx, "defaultStrategy")) {
         DEFINE_NONE_LIMITS();
         ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
-    }
-    else if (ConsumeToken(ctx, "primaryFromSameHalf")) {
-        ASSIGN_BOOL(Cfg.SecondaryRoles_PrimaryFromSameHalf);
     }
     else if (ConsumeToken(ctx, "advanced")) {
         ConsumeUntilDot(ctx);
