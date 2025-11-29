@@ -996,7 +996,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     bool originalPostponing = S->ls->as.modifierPostpone;
     secondary_role_same_half_t fromSameHalf = SecondaryRole_DefaultFromSameHalf;
 
-    while(true)
+    while(true) {
         if (ConsumeToken(ctx, "simpleStrategy")) {
             strategy = SecondaryRoleStrategy_Simple;
         }
