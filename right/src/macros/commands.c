@@ -996,18 +996,23 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     bool originalPostponing = S->ls->as.modifierPostpone;
     secondary_role_same_half_t fromSameHalf = SecondaryRole_DefaultFromSameHalf;
 
-    if (ConsumeToken(ctx, "simpleStrategy")) {
-        strategy = SecondaryRoleStrategy_Simple;
-    }
-    else if (ConsumeToken(ctx, "advancedStrategy")) {
-        strategy = SecondaryRoleStrategy_Advanced;
-    }
+    while(true)
+        if (ConsumeToken(ctx, "simpleStrategy")) {
+            strategy = SecondaryRoleStrategy_Simple;
+        }
+        else if (ConsumeToken(ctx, "advancedStrategy")) {
+            strategy = SecondaryRoleStrategy_Advanced;
+        }
 
-    if (ConsumeToken(ctx, "primaryFromSameHalf")) {
-        fromSameHalf = SecondaryRole_PrimaryFromSameHalf;
-    }
-    else if (ConsumeToken(ctx, "secondaryFromSameHalf")) {
-        fromSameHalf = SecondaryRole_SecondaryFromSameHalf;
+        if (ConsumeToken(ctx, "primaryFromSameHalf")) {
+            fromSameHalf = SecondaryRole_PrimaryFromSameHalf;
+        }
+        else if (ConsumeToken(ctx, "secondaryFromSameHalf")) {
+            fromSameHalf = SecondaryRole_SecondaryFromSameHalf;
+        }
+        else {
+            break;
+        }
     }
 
     if (Macros_DryRun) {
