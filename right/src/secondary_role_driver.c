@@ -59,7 +59,7 @@
  */
 
 static bool resolutionCallerIsMacroEngine = false;
-static bool isPrimaryFromSameHalf = false;
+static bool primaryFromSameHalf = false;
 static key_state_t *resolutionKey;
 static secondary_role_state_t resolutionState;
 static uint32_t resolutionStartTime;
@@ -183,9 +183,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle trigger by press
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress) {
-        bool actionKeyWasPressedAndFromTheSameHalf = isPrimaryFromSameHalf && actionPress != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
+        bool actionKeyWasPressedAndFromTheSameHalf = primaryFromSameHalf && actionPress != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
 
-        if(actionKeyWasPressedAndFromTheSameHalf) {
+        if (actionKeyWasPressedAndFromTheSameHalf) {
             return SecondaryRoleState_Primary;
         }
         
@@ -213,7 +213,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     //handle trigger by release
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
-        bool actionKeyWasReleasedAndFromSameHalf = isPrimaryFromSameHalf && actionRelease != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
+        bool actionKeyWasReleasedAndFromSameHalf = primaryFromSameHalf && actionRelease != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
         
         if (actionKeyWasReleasedAndFromSameHalf) {
             return SecondaryRoleState_Primary;
@@ -262,7 +262,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
     if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
-        if (isPrimaryFromSameHalf) {
+        if (primaryFromSameHalf) {
             uint16_t actionKeyId = PostponerExtended_PendingId(0);
             uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
             if (Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId)) {
@@ -348,13 +348,13 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         resolutionCallerIsMacroEngine = isMacroResolution;
         switch (actionFromSameHalf) {
             case SecondaryRole_PrimaryFromSameHalf:
-                isPrimaryFromSameHalf = true;
+                primaryFromSameHalf = true;
                 break;
             case SecondaryRole_SecondaryFromSameHalf:
-                isPrimaryFromSameHalf = false;
+                primaryFromSameHalf = false;
                 break;
             default:
-                isPrimaryFromSameHalf = Cfg.SecondaryRoles_PrimaryFromSameHalf;
+                primaryFromSameHalf = Cfg.SecondaryRoles_PrimaryFromSameHalf;
                 break;
         }
         resolutionState = startResolution(keyState, strategy);

@@ -328,7 +328,7 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
         DEFINE_NONE_LIMITS();
         ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
     }
-    if (ConsumeToken(ctx, "primaryFromSameHalf")) {
+    else if (ConsumeToken(ctx, "primaryFromSameHalf")) {
         ASSIGN_BOOL(Cfg.SecondaryRoles_PrimaryFromSameHalf);
     }
     else if (ConsumeToken(ctx, "advanced")) {
