@@ -262,13 +262,6 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
     if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
-        if (primaryFromSameHalf) {
-            uint16_t actionKeyId = PostponerExtended_PendingId(0);
-            uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
-            if (Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId)) {
-                return SecondaryRoleState_Primary;
-            }
-        }
         KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SK"));
         return SecondaryRoleState_Secondary;
     } else if (PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/) {
