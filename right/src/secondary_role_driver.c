@@ -112,13 +112,13 @@ void SecondaryRoles_FakeActivation(secondary_role_result_t res)
  * TriggerByRelease = false
  */
 
-static void sleepTimeoutStrategy() {
+static void sleepTimeoutStrategy(uint16_t wakeTimeOffset) {
     //register wakeups
     if (resolutionCallerIsMacroEngine) {
         Macros_SleepTillKeystateChange();
-        Macros_SleepTillTime(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, "SecondaryRoles - Macros");
+        Macros_SleepTillTime(resolutionStartTime + wakeTimeOffset, "SecondaryRoles - Macros");
     } else {
-        EventScheduler_Schedule(resolutionStartTime + Cfg.SecondaryRoles_AdvancedStrategyTimeout, EventSchedulerEvent_NativeActions, "NativeActions - SecondaryRoles");
+        EventScheduler_Schedule(resolutionStartTime + wakeTimeOffset, EventSchedulerEvent_NativeActions, "NativeActions - SecondaryRoles");
     }
 }
 
@@ -145,6 +145,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - dualRolePressTime;
+    bool dualRoleWasHeldLongEnoughToBeAllowedSecondary = activeTime >= Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
+
+    if (dualRoleRelease != NULL && !dualRoleWasHeldLongEnoughToBeAllowedSecondary) {
+        return SecondaryRoleState_Primary;
+    }
 
     // handle timeout when action key is not pressed
     if (actionPress == NULL) {
@@ -162,11 +167,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
                 KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SC"));
                 return SecondaryRoleState_Secondary;
             default:
-                sleepTimeoutStrategy();
+                sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
                 return SecondaryRoleState_DontKnowYet;
             }
         } else {
-            sleepTimeoutStrategy();
+            sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
             return SecondaryRoleState_DontKnowYet;
         }
     }
@@ -175,7 +180,12 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress) {
         bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionPress->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
+
         if (actionKeyWasPressedButDualkeyNot || actionKeyWasPressedFirst) {
+            if(!dualRoleWasHeldLongEnoughToBeAllowedSecondary){
+                sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
+                return SecondaryRoleState_DontKnowYet;
+            }
             KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SE"));
             KEY_TIMING2(actionKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "SF"));
             return SecondaryRoleState_Secondary;
@@ -196,6 +206,10 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
 
         if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
+            if(!dualRoleWasHeldLongEnoughToBeAllowedSecondary){
+                sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
+                return SecondaryRoleState_DontKnowYet;
+            }
             KEY_TIMING2(actionKeyWasReleasedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SG"));
             KEY_TIMING2(actionKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "SH"));
             return SecondaryRoleState_Secondary;
@@ -224,7 +238,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         return SecondaryRoleState_Primary;
     }
 
-    sleepTimeoutStrategy();
+    sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
     return SecondaryRoleState_DontKnowYet;
 }
 
