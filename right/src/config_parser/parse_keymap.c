@@ -251,8 +251,8 @@ static parser_error_t parseArgumentAction(key_action_t *keyAction, config_buffer
     }
 
     if (argument != NULL) {
-        argument->start = buffer->buffer + buffer->offset;
-        argument->end = argument->start + length;
+        argument->start = (const char*)buffer->buffer + buffer->offset;
+        argument->end = (const char*)argument->start + length;
     }
 
     for (uint16_t i = 0; i < length; i++) {
@@ -589,15 +589,15 @@ string_segment_t ParseMacroArgument(uint16_t offset, uint8_t argumentNumber)
     parseKeyAction(&dummyKeyAction, actionType, &buffer, ParseMode_DryRun, NULL, NULL, NULL);
 
     for (uint8_t i = 1; i <= argumentNumber;) {
-        uint8_t actionType = ReadUInt8(&buffer);
+        serialized_key_action_type_t argType = ReadUInt8(&buffer);
 
-        if (actionType == SerializedKeyActionType_Argument || actionType == SerializedKeyActionType_Label) {
+        if (argType == SerializedKeyActionType_Argument || argType == SerializedKeyActionType_Label) {
             string_segment_t arg;
             parseArgumentAction(&dummyKeyAction, &buffer, NULL, &arg);
-            if (i == argumentNumber && actionType == SerializedKeyActionType_Argument) {
+            if (i == argumentNumber && argType == SerializedKeyActionType_Argument) {
                 return arg;
             }
-            if (actionType == SerializedKeyActionType_Argument) {
+            if (argType == SerializedKeyActionType_Argument) {
                 i++;
             }
         } else {

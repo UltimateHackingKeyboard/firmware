@@ -17,6 +17,7 @@
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_report_updater.h"
 #include "config_manager.h"
+#include "logger.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution
