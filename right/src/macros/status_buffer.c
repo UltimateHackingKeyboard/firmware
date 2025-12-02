@@ -197,7 +197,6 @@ void Macros_SetStatusChar(char n)
 
 static uint16_t findCurrentCommandLine()
 {
-    TMP_DISABLE_POSITIONS 0;
     if (S != NULL) {
         uint16_t lineCount = 1;
         for (const char* c = S->ms.currentMacroAction.cmd.text; c < S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin; c++) {
@@ -212,7 +211,6 @@ static uint16_t findCurrentCommandLine()
 
 static uint16_t findPosition(const char* arg)
 {
-    TMP_DISABLE_POSITIONS 0;
     if (arg == NULL || S == NULL) {
         return 1;
     }
@@ -228,7 +226,6 @@ static uint16_t findPosition(const char* arg)
 
 static void reportErrorHeader(const char* status, uint16_t pos)
 {
-    TMP_DISABLE_POSITIONS;
     if (S != NULL) {
         const char *name, *nameEnd;
         uint16_t lineCount = findCurrentCommandLine(status);
@@ -248,7 +245,6 @@ static void reportErrorHeader(const char* status, uint16_t pos)
 
 static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool reportPosition)
 {
-    TMP_DISABLE_POSITIONS;
     Macros_SetStatusString("> ", NULL);
     uint16_t l = Buf.len;
     Macros_SetStatusNumSpaced(line, false);
@@ -287,7 +283,11 @@ static void reportError(
         const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
         const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
-        reportCommandLocation(line, arg-startOfLine, startOfLine, endOfLine, argIsCommand);
+        if (arg < startOfLine || arg > endOfLine) {
+            Macros_SetStatusString("> Position not vailable here.\n", NULL);
+        } else {
+            reportCommandLocation(line, arg - startOfLine, startOfLine, endOfLine, argIsCommand);
+        }
     } else {
         if (arg != NULL && arg != argEnd) {
             Macros_SetStatusString(" ", NULL);
