@@ -10,14 +10,18 @@
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
 #include "macros/typedefs.h"
+#include "module.h"
 #include "postponer.h"
 #include <string.h>
+#include "slave_protocol.h"
 #include "str_utils.h"
 #include "timer.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_report_updater.h"
 #include "config_manager.h"
 #include "logger.h"
+#include "keyid_parser.h"
+#include "utils.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution
@@ -478,7 +482,8 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumen
     return slotIndex;
 }
 
-void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset) {
+void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasArgs, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx) {
+    bool wasValid = true;
     uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255);
 
     if (slotIndex == 255) {
@@ -492,6 +497,7 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset) {
     while (macroHasNotEnded) {
         if (S->ms.currentMacroAction.type == MacroActionType_Command) {
             processCurrentMacroAction();
+            wasValid &= !Macros_ParserError;
             Macros_ParserError = false;
         }
 
@@ -499,6 +505,17 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset) {
     }
     endMacro();
     S = NULL;
+
+    if (!wasValid && hasArgs && moduleId != 255 && keyIdx != 255 && keymapIdx != 255) {
+        if (!wasValid) {
+            uint8_t keyId = Utils_KeyCoordinatesToKeyId(ModuleIdToSlotId(moduleId), keyIdx);
+            const char* keyAbbrev = MacroKeyIdParser_KeyIdToAbbreviation(keyId);
+            const char* keymapAbbrev = AllKeymaps[keymapIdx].abbreviation;
+            uint8_t keymapAbbrevLen = AllKeymaps[keymapIdx].abbreviationLen;
+            const char* moduleName = ModuleIdToStr(moduleId);
+            Macros_ReportErrorPrintf(NULL, "> Bound at %.*s/%s/%s.\n", keymapAbbrevLen, keymapAbbrev, moduleName, keyAbbrev);
+        }
+    }
 }
 
 /**
@@ -518,7 +535,7 @@ void Macros_ValidateAllMacros()
     uint32_t t1 = Timer_GetCurrentTime();
     LogU("Validating macros without arguments...\n");
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
-        Macros_ValidateMacro(macroIndex, 0);
+        Macros_ValidateMacro(macroIndex, 0, false, 255, 255, 255);
     }
     LogU("Validating macros with arguments...\n");
     // Validate macros that have arguments

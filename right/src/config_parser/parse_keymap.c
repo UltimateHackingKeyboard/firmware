@@ -292,7 +292,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_key_act
     return ParserError_InvalidSerializedKeyActionType;
 }
 
-static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, parse_mode_t parseMode)
+static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t keymapIdx, parse_mode_t parseMode)
 {
     key_action_t dummyKeyAction;
     parser_error_t errorCode;
@@ -351,7 +351,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
             // validate previous action
             if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
                 //validate it
-                Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset);
+                Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx, keymapIdx);
             }
 
             // cache current action
@@ -369,9 +369,9 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     return ParserError_Success;
 }
 
-static parser_error_t parseModule(config_buffer_t *buffer, uint8_t moduleId, uint8_t layer, parse_mode_t parseMode)
+static parser_error_t parseModule(config_buffer_t *buffer, uint8_t moduleId, uint8_t layer, uint8_t keymapIdx, parse_mode_t parseMode)
 {
-    return parseKeyActions(layer, buffer, moduleId, parseMode);
+    return parseKeyActions(layer, buffer, moduleId, keymapIdx, parseMode);
 }
 
 static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer_id_t* parsedLayerId)
@@ -411,7 +411,7 @@ static void applyDefaultLeftModuleActions(uint8_t layer, parse_mode_t parseMode)
     }
 }
 
-static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
+static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, uint8_t keymapIdx, parse_mode_t parseMode)
 {
     if (parseMode != ParseMode_DryRun) {
         Cfg.LayerConfig[layer].layerIsDefined = true;
@@ -433,7 +433,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
         currentRightModuleWasRead |= ModuleIdToSlotId(moduleId) == SlotId_RightModule && IsModuleAttached(moduleId);
         currentLeftModuleWasRead |= ModuleIdToSlotId(moduleId) == SlotId_LeftModule && IsModuleAttached(moduleId);
 
-        errorCode = parseModule(buffer, moduleId, layer, parseMode);
+        errorCode = parseModule(buffer, moduleId, layer, keymapIdx, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -553,7 +553,7 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
             return errorCode;
         }
         interpretConfig(parseConfig, srcLayer, &dstLayer, &parseMode);
-        errorCode = parseLayer(buffer, dstLayer, parseMode);
+        errorCode = parseLayer(buffer, dstLayer, keymapIdx, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }

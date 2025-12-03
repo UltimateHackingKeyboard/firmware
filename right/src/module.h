@@ -73,5 +73,6 @@
     module_configuration_t* GetModuleConfiguration(int8_t moduleId);
     bool IsModuleAttached(module_id_t moduleId);
     slot_t ModuleIdToSlotId(module_id_t moduleId);
+    const char* ModuleIdToStr(module_id_t moduleId);
 
 #endif

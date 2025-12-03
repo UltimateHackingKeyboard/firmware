@@ -69,6 +69,12 @@ key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId)
     return (key_coordinates_t) { .slotId = keyId / 64, .inSlotId = keyId % 64, };
 }
 
+uint16_t Utils_KeyCoordinatesToKeyId(uint8_t slotId, uint8_t keyIdx)
+{
+    uint16_t keyId = slotId * 64 + keyIdx;
+    return keyId;
+}
+
 //TODO: Should probably be realized by the above KeyStateToKeyId
 void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx)
 {
