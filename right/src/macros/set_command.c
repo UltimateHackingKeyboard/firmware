@@ -42,6 +42,10 @@
 #include "init_peripherals.h"
 #endif
 
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+#include "keyboard/battery_manager.h"
+#endif
+
 #if DEVICE_HAS_OLED
 #include "keyboard/oled/oled.h"
 #endif
@@ -918,6 +922,21 @@ static macro_variable_t uiStyle(parser_context_t* ctx, set_command_action_t acti
     return noneVar();
 }
 
+static macro_variable_t setMaxVoltage(parser_context_t* ctx, set_command_action_t action) {
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+    uint32_t voltage = BatteryManager_StandardUse.maxVoltage;
+#else
+    uint32_t voltage = 4000;
+#endif
+
+    DEFINE_INT_LIMITS(0, 65535);
+    ASSIGN_INT(voltage);
+
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+    BatteryManager_SetMaxCharge(voltage);
+#endif
+    return noneVar();
+}
 
 static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
@@ -965,6 +984,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ConsumeUntilDot(ctx);
         return modLayerTriggers(ctx, action);
     }
+    else if (ConsumeToken(ctx, "maxVoltage")) {
+        return setMaxVoltage(ctx, action);
+    }
     else if (ConsumeToken(ctx, "diagonalSpeedCompensation")) {
         ASSIGN_BOOL(Cfg.DiagonalSpeedCompensation);
     }
@@ -983,6 +1005,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_INT2(Cfg.DebounceTimePress, Cfg.DebounceTimeRelease);
     }
     else if (ConsumeToken(ctx, "keystrokeDelay")) {
+
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.KeystrokeDelay);
     }
