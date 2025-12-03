@@ -48,6 +48,7 @@
     void InitCharger_Min(void);
     void Charger_PrintState();
     void Charger_UpdateBatteryState();
+    void Charger_UpdateBatteryCharging();
 
     bool Charger_EnableCharging(bool enabled);
 

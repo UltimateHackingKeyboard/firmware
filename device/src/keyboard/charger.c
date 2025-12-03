@@ -251,6 +251,17 @@ static uint16_t correctVoltage(uint16_t previousVoltage, bool previousCharging, 
     return voltage;
 }
 
+void Charger_UpdateBatteryCharging() {
+    bool stateChanged = false;
+    if (!stabilizationPause) {
+        bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
+        stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
+    }
+    if (stateChanged) {
+        StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
+    }
+}
+
 void Charger_UpdateBatteryState() {
     static uint32_t stabilizationPauseStartTime = 0;
     static bool stateChanged = false;
@@ -366,6 +377,7 @@ static void powerCallback(nrfx_power_usb_evt_t event) {
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     if (statsToIgnore > 0) {
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + 2*CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBatteryCharging, "ignored stat change");
         statsToIgnore--;
         return;
     }
