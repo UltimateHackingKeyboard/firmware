@@ -346,13 +346,13 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         }
 
         if (wasAction) {
-            actionIdx++;
-
             // validate previous action
             if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
                 //validate it
-                Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx, keymapIdx);
+                Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx-1, keymapIdx);
             }
+
+            actionIdx++;
 
             // cache current action
             currentAction = *keyAction;
@@ -361,6 +361,12 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
             currentActionHasArguments = true;
         }
     }
+    // validate previous action
+    if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
+        //validate it
+        Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx-1, keymapIdx);
+    }
+
     /* default second touchpad action to right button */
     if (parseMode != ParseMode_DryRun && moduleId == ModuleId_TouchpadRight) {
         CurrentKeymap[targetLayer][slotId][1].type = KeyActionType_Mouse;

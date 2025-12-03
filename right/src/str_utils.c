@@ -57,6 +57,9 @@ bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* 
     }
 }
 
+const parser_context_t* ViewContext(uint8_t level) {
+    return parserContextStack + level;
+}
 
 bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {

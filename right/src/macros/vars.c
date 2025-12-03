@@ -108,7 +108,7 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
         }
     }
     if (!numFound) {
-        Macros_ReportError("Numeric value expected", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Numeric value expected");
         return noneVar();
     }
 
@@ -121,7 +121,7 @@ macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
 {
     if (Macros_DryRun) {
         if (!IsIdentifierChar(*ctx->at)) {
-            Macros_ReportError("Identifier expected here:", ctx->at, ctx->at);
+            Macros_ReportErrorPos(ctx, "Identifier expected here:");
             return NULL;
         }
         ConsumeAnyIdentifier(ctx);
@@ -144,7 +144,7 @@ static macro_variable_t consumeVariable(parser_context_t* ctx)
 
     if (Macros_DryRun) {
         if (!IsIdentifierChar(*ctx->at)) {
-            Macros_ReportError("Identifier expected here:", ctx->at, ctx->at);
+            Macros_ReportErrorPos(ctx, "Identifier expected here:");
             return noneVar();
         }
         ConsumeAnyIdentifier(ctx);
@@ -176,13 +176,13 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     macro_variable_t configVal = Macro_TryReadConfigVal(ctx);
 
     if (configVal.type != MacroVariableType_None) {
-        Macros_ReportError("Name already taken by configuration value:", bakCtx.at,  bakCtx.end);
+        Macros_ReportErrorTok(ctx, "Name already taken by configuration value:");
         return NULL;
     }
 
     uint16_t len = IdentifierEnd(ctx) - ctx->at;
     if (len > 255) {
-        Macros_ReportError("Variable name too long:", ctx->at,  ctx->end);
+        Macros_ReportErrorTok(ctx, "Variable name too long:");
         return NULL;
     }
 
@@ -312,7 +312,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         ConsumeUntilDot(ctx);
         uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
         if (keyId == 255) {
-            Macros_ReportError("KeyId abbreviation expected", ctx->at, ctx->end);
+            Macros_ReportErrorTok(ctx, "KeyId abbreviation expected");
             return noneVar();
         }
         return intVar(keyId);
@@ -375,13 +375,13 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
         case '(':
             return consumeParenthessExpression(ctx);
         case '#':
-            Macros_ReportError("Registers were removed. Please, replace them with named variables. E.g., `setVar foo 1` and `$foo`.", ctx->at, ctx->at);
+            Macros_ReportErrorPos(ctx, "Registers were removed. Please, replace them with named variables. E.g., `setVar foo 1` and `$foo`.");
             return noneVar();
         case '%':
-            Macros_ReportError("`%` notation was removed. Please, replace it with $queuedKeyId.<index> notation. E.g., `$queuedKeyId.1`.", ctx->at, ctx->at);
+            Macros_ReportErrorPos(ctx, "`%` notation was removed. Please, replace it with $queuedKeyId.<index> notation. E.g., `$queuedKeyId.1`.");
             return noneVar();
         case '@':
-            Macros_ReportError("`@` notation was removed. Please, replace it with $currentAddress. E.g., `@3` with `$($currentAddress + 3)`.", ctx->at, ctx->at);
+            Macros_ReportErrorPos(ctx, "`@` notation was removed. Please, replace it with $currentAddress. E.g., `@3` with `$($currentAddress + 3)`.");
             return noneVar();
         default:
             goto failed;
@@ -391,7 +391,7 @@ failed:
     if (IsIdentifierChar(*ctx->at)) {
         Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '$%s'?", OneWord(ctx));
     } else {
-        Macros_ReportError("Could not parse", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Could not parse");
     }
     return noneVar();
 }
@@ -450,19 +450,19 @@ static float computeFloatOperation(float a, operator_t op, parser_context_t* opC
             return a*b;
         case Operator_Div:
             if (b == 0.0f) {
-                Macros_ReportError("Division by zero attempted!", opCtx->at, opCtx->at);
+                Macros_ReportErrorPos(opCtx, "Division by zero attempted!");
                 return 0;
             }
             return a/b;
         case Operator_Mod:
-            Macros_ReportError("Modulo is not supported for floats!", opCtx->at, opCtx->at);
+            Macros_ReportErrorPos(opCtx, "Modulo is not supported for floats!");
             return 1.0f;
         case Operator_Min:
             return MIN(a, b);
         case Operator_Max:
             return MAX(a, b);
         default:
-            Macros_ReportError("Unexpected operation: ", opCtx->at, opCtx->end);
+            Macros_ReportErrorTok(opCtx, "Unexpected operation: ");
             return 1.0f;
     }
 }
@@ -478,13 +478,13 @@ static int32_t computeIntOperation(int32_t a, operator_t op, parser_context_t* o
             return a*b;
         case Operator_Div:
             if (b == 0) {
-                Macros_ReportError("Division by zero attempted!", opCtx->at, opCtx->at);
+                Macros_ReportErrorPos(opCtx, "Division by zero attempted!");
                 return 0;
             }
             return a/b;
         case Operator_Mod:
             if (b == 0) {
-                Macros_ReportError("Modulo by zero attempted!", opCtx->at, opCtx->at);
+                Macros_ReportErrorPos(opCtx, "Modulo by zero attempted!");
                 return 0;
             }
             return a%b;
@@ -493,7 +493,7 @@ static int32_t computeIntOperation(int32_t a, operator_t op, parser_context_t* o
         case Operator_Max:
             return MAX(a, b);
         default:
-            Macros_ReportError("Unexpected operation: ", opCtx->at, opCtx->end);
+            Macros_ReportErrorTok(opCtx, "Unexpected operation: ");
             return 1;
     }
 }
@@ -514,7 +514,7 @@ static bool computeFloatEqOperation(float a, operator_t op, parser_context_t* op
         case Operator_Le:
             return a <= b;
         default:
-            Macros_ReportError("Unexpected operation: ", opCtx->at, opCtx->end);
+            Macros_ReportErrorTok(opCtx, "Unexpected operation: ");
             return false;
     }
 }
@@ -536,7 +536,7 @@ static bool computeIntEqOperation(int32_t a, operator_t op, parser_context_t* op
         case Operator_Le:
             return a <= b;
         default:
-            Macros_ReportError("Unexpected operation: ", opCtx->at, opCtx->end);
+            Macros_ReportErrorTok(opCtx, "Unexpected operation: ");
             return false;
     }
 }
@@ -553,7 +553,7 @@ static macro_variable_t computeBoolOperation(macro_variable_t a, operator_t op, 
         case Operator_Or:
             return boolVar(a.asBool || b.asBool);
         default:
-            Macros_ReportError("Unexpected operation: ", opCtx->at, opCtx->end);
+            Macros_ReportErrorTok(opCtx, "Unexpected operation: ");
             return noneVar();
     }
 }
@@ -622,7 +622,7 @@ static macro_variable_t consumeMinMaxOperation(parser_context_t* ctx, operator_t
 {
     if (!ConsumeToken(ctx, "("))
     {
-        Macros_ReportError("Expected parameter list.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Expected parameter list.");
         return noneVar();
     }
     macro_variable_t accumulator = consumeValue(ctx);
@@ -634,7 +634,7 @@ static macro_variable_t consumeMinMaxOperation(parser_context_t* ctx, operator_t
 
     if (!ConsumeToken(ctx, ")"))
     {
-        Macros_ReportError("Expected closing parenthess at the end of parameter list.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Expected closing parenthess at the end of parameter list.");
         return noneVar();
     }
 
@@ -792,7 +792,7 @@ static macro_variable_t consumeParenthessExpression(parser_context_t* ctx)
             return value;
         default:
             if (!Macros_ParserError) {
-                Macros_ReportError("Failed to parse expression, closing parenthess expected.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Failed to parse expression, closing parenthess expected.");
             }
             return noneVar();
     }
@@ -954,7 +954,7 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
             bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
             return success;
         } else {
-            Macros_ReportError("Expected valid template name!", ctx->at, ctx->end);
+            Macros_ReportErrorTok(ctx, "Expected valid template name!");
             return true;
         }
     }

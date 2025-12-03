@@ -92,6 +92,7 @@
 
     bool PushParserContext(parser_context_t* ctx, const char* begin, const char* at, const char* end);
     bool PopParserContext(parser_context_t* ctx);
+    const parser_context_t* ViewContext(uint8_t level);
 
 #ifdef __ZEPHYR__
     const char* Utils_DeviceIdToString(device_id_t deviceId);

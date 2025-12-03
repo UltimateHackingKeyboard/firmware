@@ -603,7 +603,7 @@ static unicode_sequence_t consumeUtf8InParentheses(parser_context_t* ctx) {
 
     if (!ConsumeToken(ctx, "("))
     {
-        Macros_ReportError("Expected parameter list.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Expected parameter list.");
         return sequence;
     }
 
@@ -615,7 +615,7 @@ static unicode_sequence_t consumeUtf8InParentheses(parser_context_t* ctx) {
     if (!ConsumeToken(ctx, ")"))
     {
         ConsumeAnyChar(ctx);
-        Macros_ReportError("Expected closing parenthess at the end of parameter list.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Expected closing parenthess at the end of parameter list.");
     }
 
     return sequence;

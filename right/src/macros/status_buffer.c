@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
+#include "config_parser/parse_keymap.h"
 #include "debug.h"
 #include "macros/core.h"
 #include "macros/scancode_commands.h"
@@ -13,6 +14,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include "macro_events.h"
+#include "str_utils.h"
 #include "wormhole.h"
 #include "trace.h"
 #include "utils.h"
@@ -218,10 +220,27 @@ static uint16_t findPosition(const char* arg)
     const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
     const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
 
-    if (startOfLine < arg || arg > endOfLine) {
+    if (arg < startOfLine || endOfLine < arg) {
         return 1;
     }
     return arg - startOfLine + 1;
+}
+
+static uint16_t findPositionCtx(const parser_context_t* ctx)
+{
+    if (ctx == NULL || S == NULL) {
+        return 1;
+    }
+
+    if (ctx->nestingLevel != 0) {
+        ctx = ViewContext(0);
+    }
+
+    if (ctx->at < ctx->begin || ctx->end < ctx->at) {
+        return 1;
+    }
+
+    return ctx->at - ctx->begin + 1;
 }
 
 static void reportErrorHeader(const char* status, uint16_t pos)
@@ -243,7 +262,7 @@ static void reportErrorHeader(const char* status, uint16_t pos)
     }
 }
 
-static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool reportPosition)
+static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool markPosition)
 {
     Macros_SetStatusString("> ", NULL);
     uint16_t l = Buf.len;
@@ -252,7 +271,7 @@ static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin
     Macros_SetStatusString(" | ", NULL);
     Macros_SetStatusString(begin, end);
     Macros_SetStatusString("\n", NULL);
-    if (reportPosition) {
+    if (markPosition) {
         Macros_SetStatusString("> ", NULL);
         for (uint8_t i = 0; i < l; i++) {
             Macros_SetStatusString(" ", NULL);
@@ -266,10 +285,28 @@ static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin
     }
 }
 
+static void reportLocationStackLevel(const parser_context_t* ctx, uint16_t line) {
+    uint16_t pos = ctx->at - ctx->begin;
+    bool positionIsValid = ctx->begin <= ctx->at && ctx->at <= ctx->end;
+    if (positionIsValid) {
+        reportCommandLocation(line, pos, ctx->begin, ctx->end, positionIsValid);
+    } else {
+        Macros_SetStatusString("> Position not vailable here.\n", NULL);
+    }
+}
+
+static void reportLocationStack(parser_context_t* ctx, uint16_t line) {
+    for (uint8_t level = 0; level < ctx->nestingLevel; level++) {
+        reportLocationStackLevel(ViewContext(level), line);
+    }
+    reportLocationStackLevel(ctx, line);
+}
+
 static void reportError(
     const char* err,
     const char* arg,
-    const char* argEnd
+    const char* argEnd,
+    parser_context_t* ctx
 ) {
     Macros_SetStatusString(err, NULL);
 
@@ -283,10 +320,12 @@ static void reportError(
         const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
         const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
-        if (arg < startOfLine || arg > endOfLine) {
-            Macros_SetStatusString("> Position not vailable here.\n", NULL);
-        } else {
+        if (startOfLine <= arg && arg <= endOfLine) {
             reportCommandLocation(line, arg - startOfLine, startOfLine, endOfLine, argIsCommand);
+        } else if (ctx != NULL) {
+            reportLocationStack(ctx, line);
+        } else {
+            Macros_SetStatusString("> Position not available here.\n", NULL);
         }
     } else {
         if (arg != NULL && arg != argEnd) {
@@ -303,7 +342,27 @@ void Macros_ReportError(const char* err, const char* arg, const char *argEnd)
     Macros_ParserError = true;
     indicateError();
     reportErrorHeader("Error", findPosition(arg));
-    reportError(err, arg, argEnd);
+    reportError(err, arg, argEnd, NULL);
+    MacroEvent_OnError();
+}
+
+void Macros_ReportErrorTok(parser_context_t* ctx, const char* err) {
+    //if this line of code already caused an error, don't throw another one
+    Macros_ParserError = true;
+    indicateError();
+    reportErrorHeader("Error", findPositionCtx(ctx));
+    const char* arg = ctx->at;
+    const char* argEnd = TokEnd(ctx->at, ctx->end);
+    reportError(err, arg, argEnd, ctx);
+    MacroEvent_OnError();
+}
+
+void Macros_ReportErrorPos(parser_context_t* ctx, const char* err) {
+    //if this line of code already caused an error, don't throw another one
+    Macros_ParserError = true;
+    indicateError();
+    reportErrorHeader("Error", findPositionCtx(ctx));
+    reportError(err, NULL, NULL, ctx);
     MacroEvent_OnError();
 }
 
@@ -314,7 +373,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     }
     indicateWarn();
     reportErrorHeader("Warning", findPosition(arg));
-    reportError(err, arg, argEnd);
+    reportError(err, arg, argEnd, NULL);
 }
 
 void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
@@ -328,7 +387,7 @@ void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
     indicateOut();
     if (pos != NULL) {
         reportErrorHeader("Out", findPosition(pos));
-        reportError(buffer, pos, pos);
+        reportError(buffer, pos, pos, NULL);
     } else {
         Macros_SetStatusString(buffer, NULL);
     }
@@ -351,7 +410,7 @@ void Macros_ReportErrorFloat(const char* err, float num, const char* pos)
     reportErrorHeader("Error", findPosition(pos));
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusFloat(num);
-    reportError("", pos, pos);
+    reportError("", pos, pos, NULL);
 }
 
 void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos)
@@ -361,7 +420,7 @@ void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos)
     reportErrorHeader("Error", findPosition(pos));
     Macros_SetStatusString(err, NULL);
     Macros_SetStatusNum(num);
-    reportError("", pos, pos);
+    reportError("", pos, pos, NULL);
 }
 
 macro_result_t Macros_ProcessPrintStatusCommand()

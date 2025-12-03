@@ -157,7 +157,7 @@ macro_result_t Macros_GoToLabel(parser_context_t* ctx)
         }
     }
 
-    Macros_ReportError("Label not found:", ctx->at, ctx->end);
+    Macros_ReportErrorTok(ctx, "Label not found:");
     S->ms.macroBroken = true;
 
     return MacroResult_Finished;
@@ -199,7 +199,7 @@ bool Macros_PushScope(parser_context_t* ctx)
         }
     }
     S->ms.macroBroken = true;
-    Macros_ReportError("Out of scope states. This means too many too deeply nested macros are running.", ctx->at, ctx->at);
+    Macros_ReportErrorPos(ctx, "Out of scope states. This means too many too deeply nested macros are running.");
     return false;
 }
 
@@ -211,7 +211,7 @@ bool Macros_PopScope(parser_context_t* ctx)
         S->ls->as.whileExecuting = false;
         return true;
     } else {
-        Macros_ReportError("Encountered unmatched brace", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Encountered unmatched brace");
         S->ms.macroBroken = true;
         return false;
     }
@@ -229,7 +229,7 @@ static bool findFreeScopeStateSlot()
         }
     }
     S->ms.macroBroken = true;
-    Macros_ReportError("Out of scope states. This means too many too deeply nested macros are running.", NULL, NULL);
+    Macros_ReportErrorPos(NULL, "Out of scope states. This means too many too deeply nested macros are running.");
     return false;
 }
 
@@ -242,7 +242,7 @@ static bool findFreeStateSlot()
             return true;
         }
     }
-    Macros_ReportError("Too many macros running at one time!", NULL, NULL);
+    Macros_ReportErrorPos(NULL, "Too many macros running at one time!");
     return false;
 }
 
@@ -507,14 +507,12 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasA
     S = NULL;
 
     if (!wasValid && hasArgs && moduleId != 255 && keyIdx != 255 && keymapIdx != 255) {
-        if (!wasValid) {
-            uint8_t keyId = Utils_KeyCoordinatesToKeyId(ModuleIdToSlotId(moduleId), keyIdx);
-            const char* keyAbbrev = MacroKeyIdParser_KeyIdToAbbreviation(keyId);
-            const char* keymapAbbrev = AllKeymaps[keymapIdx].abbreviation;
-            uint8_t keymapAbbrevLen = AllKeymaps[keymapIdx].abbreviationLen;
-            const char* moduleName = ModuleIdToStr(moduleId);
-            Macros_ReportErrorPrintf(NULL, "> Bound at %.*s/%s/%s.\n", keymapAbbrevLen, keymapAbbrev, moduleName, keyAbbrev);
-        }
+        uint8_t keyId = Utils_KeyCoordinatesToKeyId(ModuleIdToSlotId(moduleId), keyIdx);
+        const char* keyAbbrev = MacroKeyIdParser_KeyIdToAbbreviation(keyId);
+        const char* keymapAbbrev = AllKeymaps[keymapIdx].abbreviation;
+        uint8_t keymapAbbrevLen = AllKeymaps[keymapIdx].abbreviationLen;
+        const char* moduleName = ModuleIdToStr(moduleId);
+        Macros_ReportErrorPrintf(NULL, "> Bound at %.*s/%s/%s.\n", keymapAbbrevLen, keymapAbbrev, moduleName, keyAbbrev);
     }
 }
 
@@ -522,7 +520,6 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasA
  * Current known limitations:
  * - We check only actions that have arguments, therefore we don't catch missing arguments.
  * - The validation takes hundreds of milliseconds, causing a short freeze when config is saved.
- * - Errors don't report origin origin of the offsets.
  */
 void Macros_ValidateAllMacros()
 {
