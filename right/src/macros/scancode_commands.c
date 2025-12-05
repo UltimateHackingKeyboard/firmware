@@ -607,7 +607,7 @@ static unicode_sequence_t consumeUtf8InParentheses(parser_context_t* ctx) {
         return sequence;
     }
 
-    while (sequence.charCount < MAX_UNICODE_LENGTH && *ctx->at != ')') {
+    while (sequence.charCount < MAX_UNICODE_LENGTH && ctx->at < ctx->end && *ctx->at != ')') {
         sequence.chars[sequence.charCount++] = consumeUtf8(ctx);
         ConsumeWhite(ctx);
     }
@@ -615,7 +615,7 @@ static unicode_sequence_t consumeUtf8InParentheses(parser_context_t* ctx) {
     if (!ConsumeToken(ctx, ")"))
     {
         ConsumeAnyChar(ctx);
-        Macros_ReportErrorPos(ctx, "Expected closing parenthess at the end of parameter list.");
+        Macros_ReportErrorPos(ctx, "Expected closing parenthesis at the end of parameter list.");
     }
 
     return sequence;

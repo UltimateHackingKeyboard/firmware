@@ -236,7 +236,7 @@ static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *b
         }
     }
 
-    if (*actionCountToNone > 0) {
+    if (actionCountToNone != NULL && *actionCountToNone > 0) {
         noneBlockAction(keyAction, color, parseMode);
     }
 

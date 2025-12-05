@@ -291,7 +291,7 @@ static void reportLocationStackLevel(const parser_context_t* ctx, uint16_t line)
     if (positionIsValid) {
         reportCommandLocation(line, pos, ctx->begin, ctx->end, positionIsValid);
     } else {
-        Macros_SetStatusString("> Position not vailable here.\n", NULL);
+        Macros_SetStatusString("> Position not available here.\n", NULL);
     }
 }
 

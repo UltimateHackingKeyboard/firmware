@@ -634,7 +634,7 @@ static macro_variable_t consumeMinMaxOperation(parser_context_t* ctx, operator_t
 
     if (!ConsumeToken(ctx, ")"))
     {
-        Macros_ReportErrorPos(ctx, "Expected closing parenthess at the end of parameter list.");
+        Macros_ReportErrorPos(ctx, "Expected closing parenthesis at the end of parameter list.");
         return noneVar();
     }
 
@@ -792,7 +792,7 @@ static macro_variable_t consumeParenthessExpression(parser_context_t* ctx)
             return value;
         default:
             if (!Macros_ParserError) {
-                Macros_ReportErrorPos(ctx, "Failed to parse expression, closing parenthess expected.");
+                Macros_ReportErrorPos(ctx, "Failed to parse expression, closing parenthesis expected.");
             }
             return noneVar();
     }
@@ -913,7 +913,7 @@ static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
             // mark this action as failed, but don't report it. It will get validated in keymap run later
             Macros_ParserError = true;
             return false;
-        } {
+        } else {
             Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argNumber);
             return false;
         }
