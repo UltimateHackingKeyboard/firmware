@@ -73,11 +73,11 @@ typedef struct {
     trackpoint_drift_state_t drift;
     uint32_t lastClock;
     uint32_t diffUs;
-    uint16_t deltaX ;
-    uint16_t deltaY ;
-    uint16_t lastX ;
-    uint16_t lastY ;
-    uint8_t byte1 ;
+    uint16_t deltaX;
+    uint16_t deltaY;
+    uint16_t lastX;
+    uint16_t lastY;
+    uint8_t byte1;
     uint8_t errno;
     uint8_t serrno;
     uint8_t buffer;
@@ -553,10 +553,10 @@ void Module_OnScan(void)
 }
 
 static void resetState(ps2_driver_state_t* state) {
-    ps2State.phase = Phase_ResetBegin;
-    ps2State.bitId = 0;
-    ps2State.writingInProgress = false;
-    ps2State.errno = 0;
+    state->phase = Phase_ResetBegin;
+    state->bitId = 0;
+    state->writingInProgress = false;
+    state->errno = 0;
 }
 
 void Module_ModuleSpecificCommand(module_specific_command_t command)
