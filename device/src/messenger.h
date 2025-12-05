@@ -61,7 +61,6 @@
     void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);
     void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
     void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len);
-    bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operation);
 
     void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset);
     void Messenger_ProcessQueue();

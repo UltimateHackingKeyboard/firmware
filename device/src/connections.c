@@ -187,6 +187,8 @@ connection_type_t Connections_Type(connection_id_t connectionId) {
             return ConnectionType_NusRight;
         case ConnectionId_BtHid:
             return ConnectionType_BtHid;
+        case ConnectionId_MyModule:
+            return ConnectionType_UartModule;
         case ConnectionId_Count:
         case ConnectionId_Invalid:
             return ConnectionType_Unknown;
@@ -225,6 +227,8 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
             return ConnectionTarget_Host;
         case ConnectionId_BtHid:
             return ConnectionTarget_Host;
+        case ConnectionId_MyModule:
+            return ConnectionTarget_Module;
         case ConnectionId_Count:
         case ConnectionId_Invalid:
             return ConnectionTarget_None;
