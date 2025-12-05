@@ -12,6 +12,7 @@
 // Macros:
 
     #define HARDWARE_CONFIG_SIGNATURE_LENGTH 3
+    #define HARDWARE_CONFIG_KEYBOARD_NAME_MAX_LENGTH 32
 
 // Typedefs:
 
@@ -32,6 +33,8 @@
         uint32_t uniqueId;
         bool isVendorModeOn;
         bool isIso;
+        uint8_t keyboardNameLength;
+        char keyboardName[HARDWARE_CONFIG_KEYBOARD_NAME_MAX_LENGTH];
     } ATTR_PACKED hardware_config_t;
 
 // Variables:

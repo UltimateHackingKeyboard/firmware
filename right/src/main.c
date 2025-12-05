@@ -57,6 +57,8 @@ static void hardwareConfigurationReadFinished(void)
     if (IsFactoryResetModeEnabled()) {
         HardwareConfig->signatureLength = HARDWARE_CONFIG_SIGNATURE_LENGTH;
         strncpy(HardwareConfig->signature, "FTY", HARDWARE_CONFIG_SIGNATURE_LENGTH);
+        HardwareConfig->keyboardNameLength = 0;
+        HardwareConfig->keyboardName[0] = '\0';
     }
     EEPROM_LaunchTransfer(StorageOperation_Read, ConfigBufferId_StagingUserConfig, userConfigurationReadFinished);
 }

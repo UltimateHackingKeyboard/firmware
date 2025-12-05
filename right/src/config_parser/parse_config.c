@@ -91,10 +91,19 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 #endif
 
     uint32_t userConfigLength = DataModelVersion.major < 6 ? ReadUInt16(buffer) : ReadUInt32(buffer);
-    const char *deviceName = ReadString(buffer, &len);
+
+    uint16_t deviceNameLength = 0;
+    const char *deviceName;
+    if (DataModelVersion.major < 13) {
+        deviceName = ReadString(buffer, &deviceNameLength);
+    } else {
+        deviceNameLength = MIN(HardwareConfig->keyboardNameLength, HARDWARE_CONFIG_KEYBOARD_NAME_MAX_LENGTH);
+        deviceName = HardwareConfig->keyboardName;
+    }
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
     (void)deviceName;
+    (void)deviceNameLength;
     (void)doubleTapSwitchLayerTimeout;
 
     // LED brightness
