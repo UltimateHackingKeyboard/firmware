@@ -8,8 +8,8 @@
 #include "trace.h"
 #include "config_manager.h"
 #include "macros/status_buffer.h"
-#include "config_manager.h"
-#include "timer.h"
+
+
 
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
@@ -18,7 +18,7 @@ void RESET_BUTTON_IRQ_HANDLER(void)
     if (count++ > 20) {
         DisableIRQ(RESET_BUTTON_IRQ);
         if (Cfg.DevMode) {
-            Macros_ReportError("Uptime: %d. Looks like spurious factory button activation. Disabling the reset button.", NULL, NULL);
+            Macros_ReportErrorPrintf(NULL, "Uptime: %d. Looks like spurious factory button activation. Disabling the reset button.", Timer_GetCurrentTime());
         }
     }
 
