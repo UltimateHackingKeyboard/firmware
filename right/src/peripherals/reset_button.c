@@ -20,6 +20,7 @@ void RESET_BUTTON_IRQ_HANDLER(void)
         if (Cfg.DevMode) {
             Macros_ReportErrorPrintf(NULL, "Uptime: %d. Looks like spurious factory button activation. Disabling the reset button.", Timer_GetCurrentTime());
         }
+        return;
     }
 
     // We are getting spurious activations, so check that it is pressed for at least some 20ms straight
