@@ -309,6 +309,7 @@ COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
 COMMAND = set devMode BOOL
+COMMAND = set maxVoltage INT
 COMMAND = powerMode autoShutdown
 COMMAND = zephyr ZEPHYR_COMMAND
 ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger | ledtest BOOL | gamepad BOOL }

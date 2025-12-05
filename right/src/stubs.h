@@ -30,6 +30,7 @@
     extern void Oled_ShiftScreen();
     extern void ScreenManager_SwitchScreenEvent();
     extern void Charger_UpdateBatteryState();
+    extern void Charger_UpdateBatteryCharging();
     extern const rgb_t* PairingScreen_ActionColor(key_action_t* action);
     extern void Uart_Reenable();
     extern void Uart_Enable();

@@ -187,13 +187,15 @@ static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_
     uint16_t newMaxVoltage = voltage - 10;
 
     if (chargerStopped && !Cfg.BatteryStationaryMode) {
-        uint16_t minThreshold = 3800;
+        uint16_t minThreshold = BatteryManager_StandardUse.maxVoltage - 50;
         if (voltage > minThreshold) {
             BatteryManager_SetMaxCharge(newMaxVoltage);
             oldState = BatteryManagerAutomatonState_Charged;
             printk("Charger stopped at %dmV. Setting as new 100%%.\n", voltage);
             Charger_PrintState();
         } else {
+            BatteryManager_SetMaxCharge(BatteryManager_StandardUse.maxVoltage - 10);
+            oldState = BatteryManagerAutomatonState_Charged;
             printk("Charger stopped bellow %dmV. This is suspicious!\n", minThreshold);
             Charger_PrintState();
         }
@@ -247,6 +249,17 @@ static uint16_t correctVoltage(uint16_t previousVoltage, bool previousCharging, 
     }
 
     return voltage;
+}
+
+void Charger_UpdateBatteryCharging() {
+    bool stateChanged = false;
+    if (!stabilizationPause) {
+        bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
+        stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
+    }
+    if (stateChanged) {
+        StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
+    }
 }
 
 void Charger_UpdateBatteryState() {
@@ -364,6 +377,7 @@ static void powerCallback(nrfx_power_usb_evt_t event) {
 
 void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gpio_port_pins_t pins) {
     if (statsToIgnore > 0) {
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + 2*CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBatteryCharging, "ignored stat change");
         statsToIgnore--;
         return;
     }

@@ -10,6 +10,7 @@
     ATTRS void Oled_ShiftScreen() {};
     ATTRS void ScreenManager_SwitchScreenEvent() {};
     ATTRS void Charger_UpdateBatteryState() {};
+    ATTRS void Charger_UpdateBatteryCharging() {};
     ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
     ATTRS void Uart_Reenable() {};
     ATTRS void Uart_Enable() {};

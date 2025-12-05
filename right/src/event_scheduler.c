@@ -63,6 +63,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_UpdateBattery:
             Charger_UpdateBatteryState();
             break;
+        case EventSchedulerEvent_UpdateBatteryCharging:
+            Charger_UpdateBatteryCharging();
+            break;
         case EventSchedulerEvent_ShiftScreen:
             Oled_ShiftScreen();
             break;
