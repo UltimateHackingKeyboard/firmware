@@ -100,6 +100,7 @@
             } ATTR_PACKED switchKeymap;
             struct {
                 uint8_t macroId;
+                uint16_t offset;
             } ATTR_PACKED playMacro;
             struct {
                 connection_action_t command;

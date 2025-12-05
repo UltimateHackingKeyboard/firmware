@@ -57,6 +57,9 @@ bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* 
     }
 }
 
+const parser_context_t* ViewContext(uint8_t level) {
+    return parserContextStack + level;
+}
 
 bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd)
 {
@@ -99,6 +102,10 @@ static bool isEnd(parser_context_t* ctx) {
         /* everything was don in PopParserContext */
     };
     return ctx->at >= ctx->end;
+}
+
+bool IsEnd(parser_context_t* ctx) {
+    return isEnd(ctx);
 }
 
 static void consumeWhite(parser_context_t* ctx)
@@ -192,6 +199,13 @@ bool ConsumeToken(parser_context_t* ctx, const char *b)
         consumeWhite(ctx);
     }
     return res;
+}
+
+void ConsumeAnyChar(parser_context_t* ctx) {
+    if (!isEnd(ctx)) {
+        ctx->at++;
+        consumeWhite(ctx);
+    }
 }
 
 bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)

@@ -44,8 +44,9 @@ void SwitchKeymapById(uint8_t index, bool resetLayerStack)
         .mode = ParserRunDry ? ParseKeymapMode_DryRun : ParseKeymapMode_FullRun
     };
     CurrentKeymapIndex = index;
-    ValidatedUserConfigBuffer.offset = AllKeymaps[index].offset;
-    ParseKeymap(&ValidatedUserConfigBuffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    buffer.offset = AllKeymaps[index].offset;
+    ParseKeymap(&buffer, index, AllKeymapsCount, AllMacrosCount, parseConfig);
 #if DEVICE_HAS_OLED
     Widget_Refresh(&KeymapWidget);
     Widget_Refresh(&KeymapLayerWidget);
@@ -87,50 +88,66 @@ bool SwitchKeymapByAbbreviation(uint8_t length, const char *abbrev, bool resetLa
 
 void OverlayKeymap(uint8_t srcKeymap)
 {
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParseKeymapMode_OverlayKeymap,
     };
-    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
-    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    buffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+}
+
+
+void DryParseKeymap(uint8_t srcKeymap)
+{
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    parse_config_t parseConfig = (parse_config_t) {
+        .mode = ParseKeymapMode_DryRun,
+    };
+    buffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
 void OverlayLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
 {
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParseKeymapMode_OverlayLayer,
         .srcLayer = srcLayer,
         .dstLayer = dstLayer,
     };
-    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
-    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    buffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
 void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
 {
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParseKeymapMode_ReplaceLayer,
         .srcLayer = srcLayer,
         .dstLayer = dstLayer,
     };
-    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
-    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    buffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
 void ReplaceKeymap(uint8_t srcKeymap)
 {
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
     parse_config_t parseConfig = (parse_config_t) {
         .mode = ParseKeymapMode_ReplaceKeymap,
     };
-    ValidatedUserConfigBuffer.offset = AllKeymaps[srcKeymap].offset;
-    ParseKeymap(&ValidatedUserConfigBuffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    buffer.offset = AllKeymaps[srcKeymap].offset;
+    ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
 }
 
 string_segment_t GetKeymapName(uint8_t keymapId)
 {
     const char* name;
     uint16_t len;
-    ValidatedUserConfigBuffer.offset = AllKeymaps[keymapId].offset;
-    ParseKeymapName(&ValidatedUserConfigBuffer, &name, &len);
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    buffer.offset = AllKeymaps[keymapId].offset;
+    ParseKeymapName(&buffer, &name, &len);
     return (string_segment_t){ .start = name, .end = name + len };
 }
 

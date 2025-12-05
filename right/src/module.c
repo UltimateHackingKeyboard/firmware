@@ -42,3 +42,25 @@ slot_t ModuleIdToSlotId(module_id_t moduleId) {
             return 0;
     }
 }
+
+const char* ModuleIdToStr(module_id_t moduleId) {
+    switch (moduleId) {
+        case ModuleId_RightKeyboardHalf:
+            return "rightHalf";
+        case ModuleId_LeftKeyboardHalf:
+            return "leftHalf";
+        case ModuleId_KeyClusterLeft:
+            return "keycluster";
+        case ModuleId_TrackballRight:
+            return "trackball";
+        case ModuleId_TrackpointRight:
+            return "trackpoint";
+        case ModuleId_TouchpadRight:
+            return "touchpad";
+        case ModuleId_Dongle:
+            return "dongle";
+        default:
+            return "unknown";
+    }
+}
+
