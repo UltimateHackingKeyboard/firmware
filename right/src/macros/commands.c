@@ -1673,12 +1673,40 @@ static macro_result_t processRepeatForCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processTrackpointCommand(parser_context_t* ctx)
+{
+    module_specific_command_t command = 0;
+    if (ConsumeToken(ctx, "run")) {
+        command = ModuleSpecificCommand_RunTrackpoint;
+    }
+    else if (ConsumeToken(ctx, "signalData")) {
+        command = ModuleSpecificCommand_TrackpointSignalData;
+    }
+    else if (ConsumeToken(ctx, "signalClock")) {
+        command = ModuleSpecificCommand_TrackpointSignalClock;
+    }
+    else {
+        Macros_ReportError("Unrecognized trackpoint command:", ctx->at, ctx->end);
+    }
+
+    if (Macros_DryRun || Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    UhkModuleSlaveDriver_SendTrackpointCommand(command);
+
+    return MacroResult_Finished;
+}
+
+
 static macro_result_t processResetTrackpointCommand()
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    UhkModuleSlaveDriver_ResetTrackpoint();
+
+    UhkModuleSlaveDriver_SendTrackpointCommand(ModuleSpecificCommand_ResetTrackpoint);
+
     return MacroResult_Finished;
 }
 
@@ -2513,6 +2541,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "toggleKey")) {
                 return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Toggle, &S->ms.reports);
+            }
+            else if (ConsumeToken(ctx, "trackpoint")) {
+                return processTrackpointCommand(ctx);
             }
             else if (ConsumeToken(ctx, "trace")) {
                 if (!Macros_DryRun) {
