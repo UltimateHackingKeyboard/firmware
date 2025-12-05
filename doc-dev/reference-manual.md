@@ -8,7 +8,7 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - Most values in the following text are just recommended ranges. The firmware will usually accept even values outside these ranges.
 
-### Error handling
+### Error handling, troubleshooting, crash logs
 
 Whenever a garbled command is encountered, `ERR` will light up on the display, and details are appended to the error buffer. You can retrieve it by running a `printStatus` macro command over a focused text editor.
 
@@ -16,6 +16,12 @@ Errors have the following format:
 
 ```
 {Error|Warning} at <macro name> <action index>/<line>: <message>: <failed command>
+```
+
+If you are experiencing either crashes, or suspicious problems, you can enable logging and additional consistency checks by adding following settings into your `$onInit` macro:
+
+```
+set devMode true
 ```
 
 ## Macro events
@@ -33,10 +39,6 @@ Macro events allow hooking special behaviour, such as applying a specific config
     $onJoin
     $onSplit
 
-Please note that:
-  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
-  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
-
 I.e., if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR`, with content e.g.:
 
     set module.trackball.baseSpeed 0.5
@@ -44,6 +46,10 @@ I.e., if you want to customize the acceleration driver for your trackball module
     set module.trackball.xceleration 1.0
 
 (Also note, that the above will *not* restore original settings when you leave the keymap. You will need another macro event for that.)
+
+Regarding `$onScrollLockStateChange`, please note that:
+  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
+  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 
 ## Macro commands
 
@@ -88,6 +94,7 @@ COMMAND = holdLayerMax LAYERID <time in ms (INT)>
 COMMAND = holdKeymapLayer KEYMAPID LAYERID
 COMMAND = holdKeymapLayerMax KEYMAPID LAYERID <time in ms (INT)>
 COMMAND = overlayKeymap KEYMAPID
+COMMAND = replaceKeymap KEYMAPID
 COMMAND = overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
 COMMAND = replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>
 COMMAND = resolveNextKeyId
@@ -115,7 +122,7 @@ COMMAND = playMacro [<slot identifier (MACROID)>]
 COMMAND = {startMouse|stopMouse} {move DIRECTION|scroll DIRECTION|accelerate|decelerate}
 COMMAND = setVar <variable name (IDENTIFIER)> <value (PARENTHESSED_EXPRESSION)>
 COMMAND = {pressKey|holdKey|tapKey|releaseKey|toggleKey} [persistent] SHORTCUT
-COMMAND = tapKeySeq [persistent] [SHORTCUT]+
+COMMAND = tapKeySeq [persistent] [ SHORTCUT | KEY_SEQUENCE ]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
 COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
@@ -152,6 +159,7 @@ COMMAND = set mouseKeys.{move|scroll}.initialAcceleration <px/s, ~1700/20 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.deceleratedSpeed <px/s, ~200/10 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.acceleratedSpeed <px/s, ~1600/50 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.axisSkew <multiplier, 0.5-2.0 (FLOAT)>
+COMMAND = set simulateLowResScrolling BOOL
 COMMAND = set i2cBaudRate <baud rate, default 100000(INT)>
 COMMAND = set diagonalSpeedCompensation BOOL
 COMMAND = set chordingDelay <time in ms (INT)>
@@ -208,11 +216,12 @@ MODIFIER = postponeKeys
 MODIFIER = final
 MODIFIER = autoRepeat
 MODIFIER = oneShot
+TEMPLATE = $macroArg.<macro argument index (INT)>
 IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
 DIRECTION = {left|right|up|down}
-LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous
+LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous|current
 LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
-KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last
+KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last|current
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
 VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
@@ -236,6 +245,8 @@ SCANCODE = <en-US character (CHAR)> | SCANCODE_ABBREV
 SHORTCUT = <MODMASK-SCANCODE, e.g. LC-c (COMPOSITE_SHORTCUT)>
 SHORTCUT = <SCANCODE long abbreviation (SCANCODE)> 
 SHORTCUT = <MODMASK, e.g. LS for left shift(MODMASK)> 
+KEY_SEQUENCE = altCodeOf(<unicode character (CHAR)>) | uCodeOf(<unicode character (CHAR)>) 
+KEY_SEQUENCE = hexCodeOf(<unicode character (CHAR)>) | decCodeOf(<unicode character (CHAR)>)
 DISPLAY_LOCATION = abbrev | notification | leftStatus | rightStatus | keymap | layer | host
 COMPOSITE_SHORTCUT = MODMASK-SCANCODE
 SCANCODE_ABBREV = enter | escape | backspace | tab | space | minusAndUnderscore | equalAndPlus | openingBracketAndOpeningBrace | closingBracketAndClosingBrace
@@ -269,6 +280,7 @@ KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.
 KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton | rightFn2
 KEYID_ABBREV = escape | f1 | f2 | f3 | f4 | f5 | f6 |  f7 | f8 | f9 | f10 | f11 | f12
 KEYID_ABBREV = print | delete | insert | scrollLock | pause | home | pageUp | end | pageDown | previous | upArrow | next | leftArrow | downArrow | rightArrow
+KEYID_ABBREV = template
 MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
@@ -289,16 +301,18 @@ COMMAND = freeze
 COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus
-COMMAND = set setEmergencyKey KEYID
-COMMAND = validateUserConfig
+COMMAND = set emergencyKey KEYID
+COMMAND = validateMacros
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
 COMMAND = set devMode BOOL
+COMMAND = set maxVoltage INT
 COMMAND = powerMode autoShutdown
 COMMAND = zephyr ZEPHYR_COMMAND
+COMMAND = trackpoint { run | signalClock | signalData }
 ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger | ledtest BOOL | gamepad BOOL }
 ##############
 # DEPRECATED #
@@ -380,9 +394,14 @@ COMMAND = setEmergencyKey KEYID
   - **hold** means pressing the key, waiting until the key which activated the macro is released, and then releasing the key again. I.e., `holdKey <x>` is equivalent to `pressKey <x>; delayUntilRelease; releaseKey <x>`, while `tapKey <x>` is equivalent to `pressKey <x>; releaseKey <x>`.
   - **toggle** will check if the shortcut is pressed in this macro's reports. If it is, it will deactivate the shortcut, otherwise it will activate it. This always acts on persistent reports.
   - **persistent** argument will use global reports. These reports can be accessed from any macro and will not be cleared when the macro ends. This is useful for long-term key toggling. E.g., `toggleKey persistent LS` acts similar to caps lock.
-  - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`. E.g.:
-    - `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
-    - `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
+  - `tapKeySeq` can be used for executing custom sequences. The default action for each shortcut in the sequence is tap. Other actions can be specified using `MODMASK`.
+    - `altCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to windows alt code, e.g., `pLA np1 np2 np9 np3 np2 np0 rLA`
+    - `uCodeOf(<unicode character (CHAR)>)` will substitute a sequence corresponding to a linux Ctrl+u sequence, e.g., `CS-u 1 f 9 2 8 space`
+    - `hexCodeOf(<unicode character (CHAR)>)` will substitute just the internal hexadecimal code of the character, e.g., `1 f 9 2 8`
+    - `decCodeOf(<unicode character (CHAR)>)` will substitute just the internal decimal code of the character, e.g., `1 2 9 3 2 0`.
+    - e.g.: `CS-u 1 2 3 space` - control shift U + number + space - linux shortcut for a custom unicode character.
+    - e.g.: `pA- tab tab rA-` - tap alt tab twice to bring forward the second background window.
+    - e.g.: `uCodeOf(€)` - will type `CS-u 2 0 a c space`, which on ubuntu produces the euro sign (€).
   - `MODMASK` meaning:
     - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super, and Gui are the same thing.)
     - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).
@@ -467,6 +486,7 @@ These alterations will last only until keymap is reloaded. I.e., switching keyma
 - `replaceLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will replace one layer with a layer from another keymap. You can use this to share layers across keymaps. For instance, add `replaceLayer mod QWR fn` to your `$onKeymapChange QTY` macro event to "permanently" replace the mod layer of your QTY keymap by the fn layer of the QWR keymap
 - `overlayLayer <target layer (LAYERID)> <source keymap (KEYMAPID)> <source layer (LAYERID)>` will take defined actions from the source layer and apply them on the target layer. Assume `ARR base` layer contains just arrows on `ijkl` keys. Now, in your QWERTY layout, call `overlayLayer base ARR base` and you get QWERTY that has arrows on `ijkl`.
 - `overlayKeymap KEYMAPID` as `overlayLayer`, but overlays all layers by corresponding layers of the provided keymap.
+- `replaceKeymap KEYMAPID` as `replaceLayer`, but replaces all layers by corresponding layers of the provided keymap. This is very similar to `switchKeymap`, but is useful for `$onKeymapChange` magic.
 
 ### Postponing mechanisms.
 
@@ -572,6 +592,7 @@ Internally, values are saved in one of the following types, and types are automa
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set oneShotTimeout <time in ms, at most 65535>` sets the timeout for `oneShot` modifier. Zero means infinite.
+- `set simulateLowResScrolling BOOL` will make scroll events be sent in occasional large dents, producing results similar to low resolution scrolling. This does not change HID descriptors to low res scrolling.
 - `set mouseKeys.{move|scroll}.{...} INT` please refer to Agent for more details.
   - `initialSpeed` - the speed that is active when the key is pressed.
   - `initialAcceleration,baseSpeed` - when the mouse key is held, speed increases until it reaches baseSpeed.
@@ -702,6 +723,12 @@ Internally, values are saved in one of the following types, and types are automa
 - modifier layer triggers:
     - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
+- `set devMode BOOL`: mostly enables extra consistency checks and logs suspicious conditions as errors. At the moment of writing this: 
+  - crash logs
+  - event loop spinning
+  - freezes (from usb callbacks when Agent is connected)
+  - cursor jumps
+
 ### Argument parsing rules:
 
 - `INT` is parsed as a 32 bit signed integer and then assigned into the target variable. However, the target variable is often only 8 or 16 bit unsigned.
@@ -770,4 +797,3 @@ Rules:
 Modifier layers are meant to allow easy overriding of modifier scancodes. If you bind an action there, it will be activated from the base layer when the corresponding modifier is pressed. E.g., allowing different scancodes for shifted keys compared to non-shifted keys. As such, they are not really layers.
 
 These layers work through an elaborate setup of positive and negative sticky layer masks.
-

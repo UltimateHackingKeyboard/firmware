@@ -25,6 +25,7 @@
         EventSchedulerEvent_SwitchScreen,
         EventSchedulerEvent_ShiftScreen,
         EventSchedulerEvent_UpdateBattery,
+        EventSchedulerEvent_UpdateBatteryCharging,
         EventSchedulerEvent_Postponer,
         EventSchedulerEvent_NativeActions,
         EventSchedulerEvent_AgentLed,
@@ -44,7 +45,7 @@
         EventSchedulerEvent_CheckFwChecksums,
         EventSchedulerEvent_CheckDongleProtocolVersion,
         EventSchedulerEvent_PutBackToShutDown,
-        EventSchedulerEvent_BlinkBatteryIcon,
+        EventSchedulerEvent_BlinkStatusIcons,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

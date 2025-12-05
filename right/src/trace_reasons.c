@@ -1,6 +1,9 @@
 #include "trace_reasons.h"
 
-#ifndef __ZEPHYR__
+#include "MK22F51212.h"
+#include "logger.h"
+#include "trace.h"
+#include "wormhole.h"
 
 // RCM (Reset Control Module) registers - K22P121M120SF7
 #define RCM_SRS0    (*(volatile uint8_t*)0x4007F000)
@@ -21,13 +24,23 @@
 
 #define POWER_ON_RESET (RCM_SRS0 & 0x80)
 
-bool Trace_LooksLikeNaturalCauses(void) {
-    return (RCM_SRS0 & 0x80);
+bool Trace_ResetShouldBeIgnored(void) {
+    bool powerOnReset = (RCM_SRS0 & 0x80);
+    bool externalPinReset = (RCM_SRS0 & 0x40) && !StateWormhole.devMode;
+
+    if (externalPinReset) {
+        Trace_Printc("ExtPinRst");
+    }
+
+    return powerOnReset || externalPinReset;
 }
 
 void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t targetInterface)
 {
     LogTo(targetDeviceId, targetInterface, "=== K22P121M120SF7 Reset Cause Debug ===\n");
+
+    // RCM registers
+    // RCM_Type *rcm = RCM;  // Direct access to the peripheral
 
     // RCM registers
     LogTo(targetDeviceId, targetInterface, "RCM_SRS0:  0x%02X\n", RCM_SRS0);
@@ -64,5 +77,61 @@ void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t ta
     if (PMC_LVDSC2 & 0x80) LogTo(targetDeviceId, targetInterface, "Low-Voltage Warning Flag set\n");
 
     if (SCB_HFSR & 0x40000000) LogTo(targetDeviceId, targetInterface, "Forced HardFault detected\n");
+
+    // Hand-checked:
+    if (RCM_SRS1 & 0x04) LogTo(targetDeviceId, targetInterface,   "RCM_SRS1 0x04   Software reset\n");
+    if (PMC_LVDSC1 & 0x10) LogTo(targetDeviceId, targetInterface, "LVDSC1 0x10     Low Voltage Reset Enabled\n");
+    if (PMC_REGSC & 0x04) LogTo(targetDeviceId, targetInterface,  "RSGSC 0x04      Regulator is in run regulation\n");
+
 }
-#endif
+
+void Trace_ResetUhk60Reasons() {
+    // Clear sticky reset status registers
+    RCM_SSRS0 = 0xFF;  // Write 1 to clear each bit
+    RCM_SSRS1 = 0xFF;  // Write 1 to clear each bit
+
+    // Clear Low-Voltage Warning Flag by writing 1 to it
+    PMC_LVDSC1 |= 0x40;
+    PMC_LVDSC2 |= 0x40;
+
+    SCB->SHCSR |= SCB_SHCSR_USGFAULTENA_Msk |  // Usage Fault
+        SCB_SHCSR_BUSFAULTENA_Msk |  // Bus Fault
+        SCB_SHCSR_MEMFAULTENA_Msk;
+}
+
+void LogFault(const char* label) {
+    LogS("=== %s Detected ===\n", label);
+
+    // Capture additional context
+    volatile uint32_t cfsr = SCB->CFSR;   // Configurable Fault Status Register
+    volatile uint32_t hfsr = SCB->HFSR;   // Hard Fault Status Register
+    volatile uint32_t mmfar = SCB->MMFAR; // Memory Management Fault Address Register
+    volatile uint32_t bfar = SCB->BFAR;   // Bus Fault Address Register
+
+    LogS("CFSR:  0x%08X\n", cfsr);
+    LogS("HFSR:  0x%08X\n", hfsr);
+    LogS("MMFAR: 0x%08X\n", mmfar);
+    LogS("BFAR:  0x%08X\n", bfar);
+    LogS("=== Going to reboot. ===\n", label);
+
+    Trace_Printc("FaultReboot");
+    NVIC_SystemReset();
+}
+
+// Cortex-M ARM exception handler
+void HardFault_Handler(void) {
+    LogFault("HardFault");
+}
+
+// Optionally add more specific fault handlers
+void MemManage_Handler(void) {
+    LogFault("MemManage Fault");
+}
+
+void BusFault_Handler(void) {
+    LogFault("BusFault");
+}
+
+void UsageFault_Handler(void) {
+    LogFault("UsageFault");
+}

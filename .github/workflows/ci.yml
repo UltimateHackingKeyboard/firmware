@@ -9,11 +9,14 @@ on:
   pull_request:
     branches:
       - master*
+  workflow_dispatch:
 
 jobs:
   release:
     runs-on: ubuntu-22.04
     timeout-minutes: 25
+    env:
+      ARM_GCC_DIR: /usr
 
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +25,8 @@ jobs:
           submodules: recursive
 
       - name: Install build dependencies
-        run: sudo apt-get install -y gcc-arm-none-eabi
+        run: |
+          sudo apt-get install -y gcc-arm-none-eabi
 
       - name: Install west
         run: pip3 install --user -U west
@@ -36,6 +40,7 @@ jobs:
         uses: zephyrproject-rtos/action-zephyr-setup@v1
         with:
           app-path: firmware
+          manifest-file-name: west_nrfsdk.yml
           toolchains: arm-zephyr-eabi
           sdk-version: 0.16.8
 
@@ -48,7 +53,16 @@ jobs:
         run: west patch
 
       - name: West config
-        run: west config --local build.cmake-args -- "-Wno-dev"
+        run: |
+          west config build.cmake-args -- "-Wno-dev"
+          west config build.board_warn false
+          west config build.device_warn false
+
+      - name: mcuxsdk west setup
+        run: |
+          west config manifest.file west_mcuxsdk.yml
+          west update
+          west patch
 
       - name: Use Node.js (.nvmrc)
         uses: actions/setup-node@v4
@@ -75,6 +89,7 @@ jobs:
 
       - name: Run build-archiver
         uses: UltimateHackingKeyboard/build-archiver@v0.0.5
+        if: github.event.repository.fork == false
         with:
           FILE_PATTERN: "firmware/scripts/uhk-firmware-*.tar.gz"
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

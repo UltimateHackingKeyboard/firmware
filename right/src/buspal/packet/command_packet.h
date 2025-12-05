@@ -1,6 +1,9 @@
 #ifndef __COMMAND_PACKET_H__
 #define __COMMAND_PACKET_H__
 
+#include <stdint.h>
+#include "fsl_common.h"
+
 //! @brief Command/Data Packet constants.
 enum _command_packet_constants
 {

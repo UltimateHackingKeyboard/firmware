@@ -25,6 +25,10 @@
  *  - f071 - triangle-exclamation
  *  - f06b - gift
  *  - e0b1 - battery-low
+ *  - e0ee - circle-1
+ *  - e0ef - circle-2
+ *  - f03d - video
+ *  - f8ab - casette-tape
  *
  *  customs:
  *  - e000 - circle-xmark-large (custom)
@@ -48,7 +52,7 @@ fontforge -lang=ff -c 'Open($1); Generate($2);' otfs/Font\ Awesome\ Kit\ 4711ad2
 
 npx lv_font_conv --lv-font-name CustomIcons --format lvgl --bpp 4 -o icons_custom.c --size 12 --font ttfs/font_awesome_custom.ttf --range 0xe000-0xe009 --no-compress
 npx lv_font_conv --lv-font-name RegularIcons --format lvgl --bpp 4 -o icons_regular.c --size 12 --font ttfs/font_awesome_6_regular.ttf --range 0xf057,0xf8dd,0xf1e6,0xf071,0xf06b,0xf293,0xe0b1 --no-compress
-npx lv_font_conv --lv-font-name SolidIcons --format lvgl --bpp 4 -o icons_solid.c --size 12 --font ttfs/font_awesome_6_solid.ttf --range 0xe423,0xe422,0xf0e7 --no-compress
+npx lv_font_conv --lv-font-name SolidIcons --format lvgl --bpp 4 -o icons_solid.c --size 12 --font ttfs/font_awesome_6_solid.ttf --range 0xe423,0xe422,0xf0e7,0xe0ee,0xe0ef,0xf03d,0xf8ab --no-compress
 ```
 
  *  */

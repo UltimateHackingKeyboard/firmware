@@ -14,6 +14,8 @@
 #include "macros/status_buffer.h"
 #include "state_sync.h"
 #include "resend.h"
+#include "timer.h"
+#include "pin_wiring.h"
 
 // Thread definitions
 
@@ -38,7 +40,7 @@ static struct k_thread thread_data;
 
 // UART definitions
 
-const struct device *uart_dev = DEVICE_DT_GET(DT_NODELABEL(uart1));
+const struct device *uart_dev = NULL;
 
 #define CRC_SALT 0x1234
 #define CRC_LEN 2
@@ -315,14 +317,13 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_DISABLED:
         LogU("UART_RX_DISABLED\n");
-        CurrentTime = k_uptime_get();
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
 
     case UART_RX_STOPPED:
         LogU("UART_RX_STOPPED, because %d\n", evt->data.rx_stop.reason  );
-        CurrentTime = k_uptime_get();
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
+
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_ReenableUart, "reenable uart");
         break;
     }
 }
@@ -518,6 +519,12 @@ void testUart() {
 }
 
 void InitUart(void) {
+    if (PinWiringConfig->device_uart_bridge == NULL || PinWiringConfig->device_uart_bridge->device == NULL) {
+        return;
+    } else {
+        uart_dev = PinWiringConfig->device_uart_bridge->device;
+    }
+
     rxBuffer = MessengerQueue_AllocateMemory();
 
     uart_callback_set(uart_dev, uart_callback, NULL);
@@ -550,6 +557,14 @@ bool Uart_Availability(messenger_availability_op_t operation) {
 }
 
 void Uart_Enable() {
+    if (uart_dev == NULL) {
+        LogS("Uart is disabled!");
+        return;
+    }
+
     LogU("Enabling UART\n");
-    uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
+    int err = uart_rx_enable(uart_dev, rxbuf, BUF_SIZE, UART_TIMEOUT);
+    if (err != 0) {
+        LogS("Failed to enable UART RX because %d\n", err);
+    }
 }

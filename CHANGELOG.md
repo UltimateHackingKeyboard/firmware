@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [15.3.1] - 2025-11-16
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.1 | Hardware Config: 1.0.0 | Smart Macros: 3.10.0
+
+- Detect spurious reset button activations with UHK 60 and fix the consequent false crash log activations.
+
+## [15.3.0] - 2025-11-04
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.**1** | Hardware Config: 1.0.0 | Smart Macros: 3.**10.0**
+
+Bug fixes:
+- Fix secondary role unblock mouse bug.
+- Fix UHK 60 backlight sleep mode when connected to an USB HID-disabled power source. Implement UHK 60 USB-report-send fail timeout, at 128ms.
+- Fix stuck layer when switching keymaps. (When a held switch is not mapped in the new keymap while switching keymap.)
+- Fix UHK 60 lock/unlock blinking when waking it up with the S+F and J+L keys together.
+- Fix macro freezes when `ifShortcut` or `ifPrimary` was used with braces. `SMARTMACROS:PATCH`
+
+New features:
+- Add runtime macro recording indicator for the UHK 80.
+- Add preliminary support for macro templates. (Key labels, parametrizable macros, Alt code expansion. Needs Agent support.) `USERCONFIG:MINOR`
+- Add `set simulateLowResScrolling BOOL` macro command for compatibility with some applications. `SMARTMACROS:MINOR`
+- Increase effective length of runtime macros by employing better serialization strategy, to 512 keystrokes per runtime macro, and 1024 total.
+- Extend UHK 60 crash logging.
+
+Power improvements:
+- Make the key cluster module shut down the LED controller when not in use.
+- Make the UHK 80 shut down the LED controllers when not in use.
+
+Misc:
+- Implement dynamic pin control for UART.
+
+## [15.2.0] - 2025-09-22
+
+Device Protocol: 4.**17.0** | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**9.0**
+
+- Fix BLE pairing with Linux.
+- Always switch to newly paired BLE connections.
+- Suppress S, F and J, L scancodes for some time after sleep modeunlock.
+- Log suspicious conditions and crashes only when the `devMode` macro variable is enabled. `SMARTMACROS:MINOR`
+- Add the `replaceKeymap` command, and the `current` KEYID alias. `SMARTMACROS:MINOR`
+- Fix the `setLedTxt` dry run mode, which occasionally acted as a delay. `SMARTMACROS:PATCH`
+- Make `while` macro command yield after every iteration. `SMARTMACROS:PATCH`
+- Fix scope state reset and some control flow scenarios. `SMARTMACROS:PATCH`
+- Add a device protocol variable to disable firmware checksum check during firmware updates. `DEVICEPROTOCOL:MINOR`
+- Add command to read OLED content. `DEVICEPROTOCOL:MINOR`
+
+## [15.1.0] - 2025-07-31
+
+Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**8.0**
+
+- Fix the `replaceLayer`, `overlayLayer`, and `overlayKeymap` macro commands, which corrupted the keymap due to action compression. `SMARTMACROS:PATCH`
+- Fix the `postponeKeys` modifier that acted as `suppressMods`. `SMARTMACROS:PATCH`
+- Mitigate bridge cable disconnects caused by demanding macros.
+- Add the `switchHost lastSelected` argument to switch to the last manually selected host connection. `SMARTMACROS:MINOR`
+- Add the `reconnect` command to reconnect the current host connection. `SMARTMACROS:MINOR`
+- Add the `$currentTime` macro variable expansion. `SMARTMACROS:MINOR`
+- Make freeze detection and eventloop spin detection less likely to give false alarms.
+
 ## [15.0.1] - 2025-07-10
 
 Device Protocol: 4.16.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.7.0

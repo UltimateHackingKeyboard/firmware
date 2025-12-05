@@ -1,0 +1,67 @@
+From edcda8be37a5dbba0eeb01e97822358ac933ae24 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 12 Aug 2025 23:11:10 +0200
+Subject: [PATCH] zephyr: cmake fails early and with meaningful message
+
+---
+ boot/zephyr/CMakeLists.txt | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/boot/zephyr/CMakeLists.txt b/boot/zephyr/CMakeLists.txt
+index 3a340646..b51a729d 100644
+--- a/boot/zephyr/CMakeLists.txt
++++ b/boot/zephyr/CMakeLists.txt
+@@ -419,7 +419,7 @@ function(dt_get_parent node)
+   string(FIND "${${node}}" "/" pos REVERSE)
+ 
+   if(pos EQUAL -1)
+-    message(ERROR "Unable to get parent of node: ${${node}}")
++    message(FATAL_ERROR "Unable to get parent of node: ${${node}}")
+   endif()
+ 
+   string(SUBSTRING "${${node}}" 0 ${pos} ${node})
+@@ -427,7 +427,7 @@ function(dt_get_parent node)
+ endfunction()
+ 
+ if(CONFIG_BOOT_MAX_IMG_SECTORS_AUTO)
+-  dt_nodelabel(slot0_flash NODELABEL "slot0_partition")
++  dt_nodelabel(slot0_flash NODELABEL "slot0_partition" REQUIRED)
+   dt_prop(slot0_size PATH "${slot0_flash}" PROPERTY "reg" INDEX 1)
+   dt_get_parent(slot0_flash)
+   dt_get_parent(slot0_flash)
+@@ -442,7 +442,7 @@ if(CONFIG_BOOT_MAX_IMG_SECTORS_AUTO)
+   endif()
+ 
+   if(NOT CONFIG_SINGLE_APPLICATION_SLOT)
+-    dt_nodelabel(slot1_flash NODELABEL "slot1_partition")
++    dt_nodelabel(slot1_flash NODELABEL "slot1_partition" REQUIRED)
+     dt_prop(slot1_size PATH "${slot1_flash}" PROPERTY "reg" INDEX 1)
+     dt_get_parent(slot1_flash)
+     dt_get_parent(slot1_flash)
+@@ -472,12 +472,12 @@ endif()
+ if(SYSBUILD)
+   if(CONFIG_SINGLE_APPLICATION_SLOT OR CONFIG_BOOT_FIRMWARE_LOADER OR CONFIG_BOOT_SWAP_USING_SCRATCH OR CONFIG_BOOT_SWAP_USING_MOVE OR CONFIG_BOOT_UPGRADE_ONLY OR CONFIG_BOOT_DIRECT_XIP OR CONFIG_BOOT_RAM_LOAD)
+     # TODO: RAM LOAD support
+-    dt_nodelabel(slot0_flash NODELABEL "slot0_partition")
++    dt_nodelabel(slot0_flash NODELABEL "slot0_partition" REQUIRED)
+     dt_get_parent(slot0_flash)
+     dt_get_parent(slot0_flash)
+ 
+     if(NOT CONFIG_SINGLE_APPLICATION_SLOT)
+-      dt_nodelabel(slot1_flash NODELABEL "slot1_partition")
++      dt_nodelabel(slot1_flash NODELABEL "slot1_partition" REQUIRED)
+       dt_get_parent(slot1_flash)
+       dt_get_parent(slot1_flash)
+ 
+@@ -626,7 +626,7 @@ endif()
+ if(SYSBUILD AND CONFIG_PCD_APP)
+     # Sysbuild requires details of the RAM flash device are stored to the cache of MCUboot so
+     # that they can be read when running partition manager
+-    dt_nodelabel(ram_flash_dev NODELABEL flash_sim0)
++    dt_nodelabel(ram_flash_dev NODELABEL flash_sim0 REQUIRED)
+     dt_reg_addr(ram_flash_addr PATH ${ram_flash_dev})
+     dt_reg_size(ram_flash_size PATH ${ram_flash_dev})
+ 
+-- 
+2.43.0
+

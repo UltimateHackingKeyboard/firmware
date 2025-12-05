@@ -4,12 +4,14 @@
 #include "event_scheduler.h"
 #include "attributes.h"
 #include "macros/status_buffer.h"
+#include "utils.h"
 
 #ifdef __ZEPHYR__
 #include "usb/usb_compatibility.h"
 #endif
 
 static bool needsResending = false;
+ATTR_UNUSED static uint8_t retries = 0;
 
 #include "usb_descriptors/usb_descriptor_mouse_report.h"
 
@@ -178,7 +180,7 @@ void UsbMouseSendActiveReport(void)
 #else
     UsbReportUpdateSemaphore |= 1 << USB_MOUSE_INTERFACE_INDEX;
     usb_status_t status = UsbMouseAction();
-    if (status != kStatus_USB_Success) {
+    if (ShouldResendReport(status == kStatus_USB_Success, &retries)) {
         UsbReportUpdateSemaphore &= ~(1 << USB_MOUSE_INTERFACE_INDEX);
         EventVector_Set(EventVector_ResendUsbReports);
         needsResending = true;

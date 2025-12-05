@@ -6,6 +6,7 @@
 #include "bt_manager.h"
 #include "config_parser/config_globals.h"
 #include "ledmap.h"
+#include "pin_wiring.h"
 #include "round_trip_test.h"
 #include "shared/attributes.h"
 #include "zephyr/kernel.h"
@@ -57,6 +58,21 @@
 #include "keyboard/battery_percent_calculator.h"
 #endif
 
+
+/**
+ * 5.1mA - base. Isn't that quite a lot? (Although this is on 5V usb - will be less on battery)
+ *-----------
+ * uart shell  +???
+ * Leds        +1.5mA
+ * USB         +2.2mA
+ * bridge uart +1.6mA
+ * i2c         +0.6mA
+ *------------
+ * total 11 mA
+ * -----------
+ *  This was measured on usb, right half, without module, jtag connected (and adding some 1-2 mA to the draw)
+ */
+
 k_tid_t Main_ThreadId = 0;
 
 static void sleepTillNextMs() {
@@ -85,8 +101,7 @@ static void scheduleNextRun() {
         nextEventTime = EventScheduler_Process();
         eventIsValid = true;
     }
-    CurrentTime = k_uptime_get();
-    int32_t diff = nextEventTime - CurrentTime;
+    int32_t diff = nextEventTime - Timer_GetCurrentTime();
 
     Trace(')');
 
@@ -119,12 +134,16 @@ void Main_Wake() {
 }
 
 static void detectSpinningEventLoop() {
+    if (!Cfg.DevMode) {
+        return;
+    }
+
     const uint16_t maxEventsPerSecond = 300; //allow 5ms macro wait loops
     static uint32_t thisCheckTime = 0;
     static uint16_t eventCount = 0;
     static uint16_t spinPeriods = 0;
 
-    if (thisCheckTime == CurrentTime / 1024) {
+    if (thisCheckTime == Timer_GetCurrentTime() / 1024) {
         bool isMouseEvent = EventScheduler_Vector & (EventVector_MouseKeys | EventVector_MouseController | EventVector_SendUsbReports | EventVector_MacroEngine);
         if (!DEVICE_IS_UHK80_RIGHT || !isMouseEvent) {
             eventCount++;
@@ -145,7 +164,7 @@ static void detectSpinningEventLoop() {
         } else {
             spinPeriods = 0;
         }
-        thisCheckTime = CurrentTime / 1024;
+        thisCheckTime = Timer_GetCurrentTime() / 1024;
         eventCount = 0;
     }
 }
@@ -153,8 +172,7 @@ static void detectSpinningEventLoop() {
 void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
-
-    InitProxyLogBackend();
+    // 5.1mA
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
@@ -162,15 +180,13 @@ void mainRuntime(void) {
     }
 
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitZephyrI2c();
         InitSpi();
 
-        InitLeds();
+        InitLeds(); // +1.5mA; 6.6mA
 
 #if DEVICE_HAS_OLED
         InitOled();
 #endif // DEVICE_HAS_OLED
-
 
 #if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
@@ -184,6 +200,23 @@ void mainRuntime(void) {
 
     // has to be after bt_enable; has to be before ApplyConfig
     InitSettings();
+
+    // needs to be after InitSettings
+    if (DEVICE_IS_UHK80_RIGHT) {
+        PinWiring_UninitShell();
+        PinWiring_Suspend();
+
+        PinWiring_SelectRouting();
+        PinWiring_ConfigureRouting();
+
+        PinWiring_Resume();
+
+        ReinitShell();
+    }
+
+    // Needs to be after ReinitShell, probably
+    InitShellCommands();
+    InitProxyLogBackend();
 
     // read configurations
     {
@@ -213,18 +246,27 @@ void mainRuntime(void) {
         }
     }
 
+    // 6.6mA
+
     HID_SetGamepadActive(false);
-    USB_Enable(); // has to be after USB_SetSerialNumber
+    USB_Enable(); // +2.2mA, 8.8mA; has to be after USB_SetSerialNumber
+
+    // 8.8mA
 
     if (LastRunWasCrash) {
         printk("CRASH DETECTED, waiting for 5 seconds to allow Agent to reenumerate\n");
         k_sleep(K_MSEC(5*1000));
     }
 
+    // 8.8mA
+
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart();
+        InitUart(); // +1.6mA
+        InitZephyrI2c(); // +0.6mA
     }
+
+    // 11mA
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     // has to be after InitSettings
@@ -240,8 +282,6 @@ void mainRuntime(void) {
     Messenger_Init();
 
     StateSync_Init();
-
-    InitShell();
 
     RoundTripTest_Init();
 
@@ -260,7 +300,6 @@ void mainRuntime(void) {
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
-        CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EventloopTiming_Start());
@@ -269,12 +308,11 @@ void mainRuntime(void) {
         }
         scheduleNextRun();
         detectSpinningEventLoop();
-        UserLogic_LastEventloopTime = CurrentTime;
+        UserLogic_LastEventloopTime = Timer_GetCurrentTime();
     }
 #else
     while (true)
     {
-        CurrentTime = k_uptime_get();
         Messenger_ProcessQueue();
         RunUhk80LeftHalfLogic();
         scheduleNextRun();
@@ -293,7 +331,11 @@ int main(void) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
-        MacroStatusBuffer_InitFromWormhole();
+        if (StateWormhole.devMode) {
+            MacroStatusBuffer_InitFromWormhole();
+        } else {
+            MacroStatusBuffer_InitNormal();
+        }
         StateWormhole_Clean();
     } else {
         printk("Wormhole is closed\n");

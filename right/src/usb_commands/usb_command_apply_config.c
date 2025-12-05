@@ -109,7 +109,7 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
 
     uint8_t parseConfigStatus;
 
-    if (IsFactoryResetModeEnabled) {
+    if (IsFactoryResetModeEnabled()) {
         return UsbStatusCode_Success;
     }
 
@@ -128,6 +128,8 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
 
     if (!isBoot) {
         Macros_ValidateAllMacros();
+    } else {
+        isBoot = false;
     }
 
     MacroEvent_OnInit();
@@ -146,7 +148,6 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
     }
 
     SwitchKeymapById(DefaultKeymapIndex, true);
-    isBoot = false;
 
     return UsbStatusCode_Success;
 }

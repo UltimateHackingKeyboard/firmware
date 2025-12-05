@@ -102,10 +102,3 @@ void ThreadStats_Print(void) {
     }
     enabled = true;
 }
-
-#if DEBUG_THREAD_STATS
-void sys_trace_thread_switched_in_user(void) {
-    ThreadStats_Switch();
-}
-#endif
-

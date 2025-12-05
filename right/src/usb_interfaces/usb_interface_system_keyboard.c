@@ -2,12 +2,14 @@
 #include "usb_composite_device.h"
 #include "usb_report_updater.h"
 #include "event_scheduler.h"
+#include "utils.h"
 
 #ifndef UTILS_ARRAY_SIZE
 #define UTILS_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
 static bool needsResending = false;
+ATTR_UNUSED static uint8_t retries = 0;
 
 uint32_t UsbSystemKeyboardActionCounter;
 static usb_system_keyboard_report_t usbSystemKeyboardReports[2];
@@ -50,7 +52,7 @@ usb_status_t UsbSystemKeyboardAction(void)
 void UsbSystemKeyboardSendActiveReport(void) {
     UsbReportUpdateSemaphore |= 1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX;
     usb_status_t status = UsbSystemKeyboardAction();
-    if (status != kStatus_USB_Success) {
+    if (ShouldResendReport(status == kStatus_USB_Success, &retries)) {
         UsbReportUpdateSemaphore &= ~(1 << USB_SYSTEM_KEYBOARD_INTERFACE_INDEX);
         EventVector_Set(EventVector_ResendUsbReports);
         needsResending = true;

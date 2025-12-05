@@ -1,0 +1,9 @@
+manifest:
+  remotes:
+    - name: IntergatedCircuits
+      url-base: https://github.com/IntergatedCircuits
+  projects:
+    - name: c2usb
+      remote: IntergatedCircuits
+      revision: 4ab4ca1df2f363770a653d68683fd28c8e12b42a
+      submodules: true

@@ -168,7 +168,7 @@ static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerSwitcher_DoubleTapInterrupt(keyState);
         Macros_SignalInterrupt();
-        UsbReportUpdater_LastActivityTime = CurrentTime;
+        UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
     }
 }
 
@@ -412,6 +412,8 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             if (keyState->current != keyState->previous) {
                 applyToggleLayerAction(keyState, action);
             }
+            // also apply holds in order to process the cached action
+            applyLayerHolds(keyState, action);
             break;
         case KeyActionType_SwitchKeymap:
             if (KeyState_ActivatedNow(keyState)) {
@@ -422,7 +424,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, keyState->timestamp, 255, true);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->timestamp, 255, true);
             }
             break;
         case KeyActionType_Connections:
@@ -522,7 +524,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
     if (PostponerCore_EventsShouldBeQueued()) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
-        KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, CurrentTime, CurrentTime));
+        KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();
@@ -530,7 +532,7 @@ static void commitKeyState(key_state_t *keyState, bool active)
 
 static inline void preprocessKeyState(key_state_t *keyState)
 {
-    uint32_t currentTime = CurrentTime;
+    uint32_t currentTime = Timer_GetCurrentTime();
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
     if (keyState->debouncing && (uint8_t)(currentTime - keyState->timestamp) >= debounceTime) {
         keyState->debouncing = false;
@@ -639,9 +641,7 @@ static void updateActionStates() {
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
-                        Trace_Printc("y5");
-                        PowerMode_ActivateMode(PowerMode_Awake, false, false, "key pressed");
-                        Trace_Printc("y6");
+                        Trace_Printc("y4");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
@@ -778,7 +778,7 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
-            if(RuntimeMacroRecordingBlind) {
+            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
                 //just switch reports without sending the report
                 SwitchActiveUsbBasicKeyboardReport();
             } else {
@@ -786,8 +786,8 @@ static void sendActiveReports(bool resending) {
             }
             usbReportsChangedByAction = true;
             usbReportsChangedByAnything = true;
-            lastBasicReportTime = CurrentTime;
-            UsbReportUpdater_LastActivityTime = CurrentTime;
+            lastBasicReportTime = Timer_GetCurrentTime();
+            UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         }
     }
 
@@ -796,32 +796,32 @@ static void sendActiveReports(bool resending) {
         UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
         SwitchActiveUsbMediaKeyboardReport();
         SwitchActiveUsbSystemKeyboardReport();
-        UsbReportUpdater_LastActivityTime = CurrentTime;
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 #else
-    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+    if ((UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         UsbMediaKeyboardSendActiveReport();
-        UsbReportUpdater_LastActivityTime = CurrentTime;
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if (UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+    if ((UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         UsbSystemKeyboardSendActiveReport();
-        UsbReportUpdater_LastActivityTime = CurrentTime;
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 #endif
 
     bool usbMouseButtonsChanged = false;
-    if (UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) {
+    if ((UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
         // Macros_Printf("sm\n");
 
         UsbMouseSendActiveReport();
-        UsbReportUpdater_LastActivityTime = CurrentTime;
+        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
     }
@@ -839,7 +839,7 @@ static void sendActiveReports(bool resending) {
 
 static bool blockedByKeystrokeDelay() {
     static uint32_t postponedMasks = 0;
-    if (CurrentTime < lastBasicReportTime + Cfg.KeystrokeDelay) {
+    if (Timer_GetCurrentTime() < lastBasicReportTime + Cfg.KeystrokeDelay) {
         DISABLE_IRQ();
         postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
         EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_MainTriggers) | EventVector_KeystrokeDelayPostponing;
@@ -870,7 +870,7 @@ void UpdateUsbReports(void)
     printk("========== new UpdateUsbReports cycle ==========\n");
 #endif
 
-    UpdateUsbReports_LastUpdateTime = CurrentTime;
+    UpdateUsbReports_LastUpdateTime = Timer_GetCurrentTime();
     UsbReportUpdateCounter++;
 
     bool resending = EventVector_IsSet(EventVector_ResendUsbReports);

@@ -18,6 +18,7 @@
 #include "bt_defs.h"
 #include "user_logic.h"
 #include "trace.h"
+#include "config_manager.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
@@ -36,6 +37,10 @@
 #endif
 
 static void detectFreezes() {
+    if (!Cfg.DevMode) {
+        return;
+    }
+
     static bool alreadyLogged = 0;
     static uint32_t lastCheckTime = 0;
     static uint8_t lastCheckCount = 0;
@@ -84,5 +89,5 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     SetUsbTxBufferUint8(7, Macros_ConsumeStatusCharDirtyFlag);
     SetUsbTxBufferUint8(8, CurrentKeymapIndex);
 
-    LastUsbGetKeyboardStateRequestTimestamp = CurrentTime;
+    LastUsbGetKeyboardStateRequestTimestamp = Timer_GetCurrentTime();
 }

@@ -63,6 +63,8 @@
         LedDriverPhase_UpdateData,
         LedDriverPhase_SetLedBrightness,
         LedDriverPhase_UpdateChangedLedValues,
+        LedDriverPhase_EnterSleep,
+        LedDriverPhase_MaintainSleep,
     } led_driver_phase_t;
 
     typedef struct {
@@ -75,6 +77,8 @@
         uint8_t frameRegisterPwmFirst;
         uint8_t setShutdownModeNormalBufferLength;
         uint8_t *setShutdownModeNormalBuffer;
+        uint8_t setShutdownModeSleepBufferLength;
+        uint8_t *setShutdownModeSleepBuffer;
         uint8_t setupLedControlRegistersCommandLength;
         uint8_t setupLedControlRegistersCommand[LED_CONTROL_REGISTERS_COMMAND_LENGTH_MAX];
     } led_driver_state_t;

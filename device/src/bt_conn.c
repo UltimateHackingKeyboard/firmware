@@ -45,6 +45,9 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
+#define BT_REASON_INTENTIONAL_DISCONNECT BT_HCI_ERR_REMOTE_USER_TERM_CONN
+#define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
+
 static void disconnectAllHids();
 
 peer_t Peers[PeerCount] = {
@@ -260,16 +263,15 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
 }
 
 static void youAreNotWanted(struct bt_conn *conn) {
-// BT_HCI_ERR_REMOTE_USER_TERM_CONN
     static uint32_t lastAttemptTime = 0;
     uint32_t currentTime = k_uptime_get_32();
 
     if (currentTime - lastAttemptTime < 2000) {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)\n", GetPeerStringByConn(conn));
-        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
-        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
         BtConn_UnusedPeripheralConnectionCount(),
@@ -334,7 +336,7 @@ static uint8_t assignPeer(struct bt_conn* conn, uint8_t connectionId, uint8_t co
 
     if (peerId == PeerIdUnknown) {
         LOG_WRN("No peer slot available for connection %d\n", connectionId);
-        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        safeDisconnect(conn, BT_REASON_UNSPECIFIED);
         return PeerIdUnknown;
     }
 
@@ -481,7 +483,7 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
 
                 if (!isPairedConnection && DEVICE_IS_UHK80_RIGHT) {
                     LOG_INF("Unknown NUS trying to connect. Refusing!\n");
-                    safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+                    safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
                 }
                 return BT_GATT_ITER_STOP;
             }
@@ -517,6 +519,13 @@ static void connectUnknown(struct bt_conn *conn) {
 
 static void connected(struct bt_conn *conn, uint8_t err) {
     BT_TRACE_AND_ASSERT("bc1");
+
+    LOG_INF("Connected cb\n");
+
+    // Without this, linux pairing fails, because tiny 27 byte packets
+    // exhaust acl buffers easily
+    enableDataLengthExtension(conn);
+
     if (err) {
         LOG_WRN("Failed to connect to %s, err %u\n", GetPeerStringByConn(conn), err);
         BtManager_StartScanningAndAdvertising();
@@ -647,7 +656,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
             bt_conn_auth_cancel(conn);
-            // bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            // bt_conn_disconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
         } else {
             // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
             LOG_WRN("The connection (%s) isn't even connected! Ignoring.", GetPeerStringByConn(conn));
@@ -700,10 +709,13 @@ static void auth_passkey_entry(struct bt_conn *conn) {
 
     LOG_INF("Received passkey pairing inquiry.\n");
 
+    enableDataLengthExtension(conn);
+
     if (!auth_conn) {
         LOG_INF("Returning: no auth conn\n");
         return;
     }
+
 
     connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(bt_conn_get_dst(conn));
     bool isUhkPeerByAddr = isUhkDeviceConnection(Connections_Type(connectionId));
@@ -790,6 +802,8 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
             Bt_NewPairedDevice = true;
         }
 
+        HostConnections_SelectByHostConnIndex(connectionId - ConnectionId_HostConnectionFirst);
+
         // we have to connect from here, because central changes its address *after* setting security
         connectAuthenticatedConnection(conn, connectionId, connectionType);
     }
@@ -804,7 +818,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 }
 
 static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {
-    safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
     // gpt says you should unref here. Don't believe it!
 }
 
@@ -822,14 +836,14 @@ void BtConn_DisconnectOne(connection_id_t connectionId) {
 
     if (!conn) { return; }
 
-    safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+    safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
 }
 
 static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
     peer_t* peer = getPeerByConn(conn);
     if (!peer) {
         LOG_INF("     disconnecting unassigned connection %s\n", GetPeerStringByConn(conn));
-        safeDisconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
     }
 }
 
@@ -930,14 +944,14 @@ ATTR_UNUSED static void disconnectOldestHost() {
 
     if (oldestPeerId != PeerIdUnknown) {
         LOG_INF("Disconnecting oldest host %d\n", oldestPeerId);
-        safeDisconnect(Peers[oldestPeerId].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        safeDisconnect(Peers[oldestPeerId].conn, BT_REASON_INTENTIONAL_DISCONNECT);
     }
 }
 
 ATTR_UNUSED static void disconnectAllHids() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            safeDisconnect(Peers[peerId].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            safeDisconnect(Peers[peerId].conn, BT_REASON_INTENTIONAL_DISCONNECT);
         }
     }
 }

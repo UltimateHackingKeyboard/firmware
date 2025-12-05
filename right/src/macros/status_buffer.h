@@ -31,6 +31,8 @@
     void Macros_ClearStatus(bool force);
 
     void Macros_ReportError(const char* err, const char* arg, const char *argEnd);
+    void Macros_ReportErrorPos(parser_context_t* ctx, const char* err);
+    void Macros_ReportErrorTok(parser_context_t* ctx, const char* err);
     void Macros_ReportErrorPrintf(const char* pos, const char *fmt, ...);
     void Macros_ReportErrorNum(const char* err, int32_t num, const char* pos);
     void Macros_ReportErrorFloat(const char* err, float num, const char* pos);

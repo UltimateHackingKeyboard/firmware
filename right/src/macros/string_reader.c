@@ -18,6 +18,8 @@ typedef enum {
 } string_type_t;
 
 
+static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex);
+
 static char consumeExpressionCharOfInt(const macro_variable_t* variable, uint16_t* idx)
 {
     char buffer[20];
@@ -94,28 +96,63 @@ static char consumeExpressionCharOfBool(const macro_variable_t* variable, uint16
     }
 }
 
-static char consumeExpressionChar(parser_context_t* ctx, uint16_t* index)
+// Beware, this has high complexity
+static char consumeCharOfTemplate(parser_context_t* ctx, string_type_t stringType, uint16_t* index)
 {
-    macro_variable_t res = Macros_ConsumeAnyValue(ctx);
-    UnconsumeWhite(ctx);
-    char c;
+    uint16_t nestedIndex = 0;
+    uint16_t nestedSubIndex = 0;
 
-    switch (res.type) {
-        case MacroVariableType_Int:
-            c = consumeExpressionCharOfInt(&res, index);
-            break;
-        case MacroVariableType_Float:
-            c = consumeExpressionCharOfFloat(&res, index);
-            break;
-        case MacroVariableType_Bool:
-            c = consumeExpressionCharOfBool(&res, index);
-            break;
-        case MacroVariableType_None:
-            c = '?';
-            break;
-        default:
-            Macros_ReportErrorNum("Unrecognized variable type", res.type, ctx->at);
-            return '\0';
+    char c1 = '\0'; // char we are interested in
+    char c2 = '\a'; // next char to know if we reached the end
+
+    for (uint16_t i = 0; i < *index + 2 && c2; i++) {
+        c1 = c2;
+        c2 = Macros_ConsumeCharInString(ctx, stringType, ctx->at + nestedIndex, &nestedIndex, &nestedSubIndex);
+    }
+
+    if (c1 && c2) {
+        (*index)++;
+    } else {
+        *index = 0;
+    }
+
+    return c1;
+}
+
+static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index)
+{
+    char c;
+    if (TryExpandMacroTemplateOnce(ctx)) {
+        // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
+        // (If there is an expansion, it is handled within a new context copy.)
+        c = consumeCharOfTemplate(ctx, stringType, index);
+        PopParserContext(ctx);
+
+        if (*index == 0) {
+            UnconsumeWhite(ctx);
+        }
+        return c;
+    } else {
+        macro_variable_t res = Macros_ConsumeAnyValue(ctx);
+        UnconsumeWhite(ctx);
+
+        switch (res.type) {
+            case MacroVariableType_Int:
+                c = consumeExpressionCharOfInt(&res, index);
+                break;
+            case MacroVariableType_Float:
+                c = consumeExpressionCharOfFloat(&res, index);
+                break;
+            case MacroVariableType_Bool:
+                c = consumeExpressionCharOfBool(&res, index);
+                break;
+            case MacroVariableType_None:
+                c = '?';
+                break;
+            default:
+                Macros_ReportErrorNum("Unrecognized variable type", res.type, ctx->at);
+                return '\0';
+        }
     }
 
     if (Macros_ParserError) {
@@ -154,7 +191,8 @@ static char tryConsumeAnotherStringLiteral(parser_context_t* ctx, uint16_t* stri
 }
 
 bool Macros_CompareStringToken(parser_context_t* ctx, string_segment_t str) {
-    parser_context_t ctx2 = *ctx;
+    CTX_COPY(ctx2, *ctx);
+    ctx2.nestingBound = ctx->nestingLevel;
     uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
     const char* str2 = str.start;
 
@@ -186,15 +224,27 @@ void Macros_ConsumeStringToken(parser_context_t* ctx) {
     }
 }
 
+/**
+ * ctx->at: beginning of the string-typed argument
+ * stringOffset: beginning of the
+ *
+ * ```
+ * write 'Hello'" you $attribute $name!"
+ * ------> ctx->at
+ *       <-----> stringOffset
+ *              <----> index
+ *                   "greenish" = attribute
+ *                    <--> subIndex
+ * ```
+ **/
 char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, uint16_t* index, uint16_t* subIndex)
 {
-    const char* a = ctx->at;
-    const char* aEnd = ctx->end;
+    const char* at = ctx->at;
 
-    a += *stringOffset;
+    at += *stringOffset;
 
     string_type_t stringType;
-    switch (*a) {
+    switch (*at) {
         case '\'':
             stringType = StringType_SingleQuote;
             break;
@@ -210,42 +260,59 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
         (*index)++;
     }
 
-    a += *index;
+    at += *index;
 
-    if (a == aEnd) {
+    // (This is correct, we don't want a context pop here.)
+    if (at == ctx->end) {
         ctx->at = ctx->end;
         return '\0';
     }
 
-    switch(*a) {
+    char maybeRes = Macros_ConsumeCharInString(ctx, stringType, at, index, subIndex);
+
+    if (maybeRes == '\0') {
+        return tryConsumeAnotherStringLiteral(ctx, stringOffset, index, subIndex);
+    } else {
+        return maybeRes;
+    }
+}
+
+
+static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex)
+{
+    if (at >= ctx->end) {
+        return '\0';
+    }
+
+    switch(*at) {
         case '\\':
-            if (stringType == StringType_SingleQuote || a+1 == aEnd) {
+            if (stringType == StringType_SingleQuote || at+1 == ctx->end) {
                 goto normalChar;
             } else {
                 (*index)++;
-                a++;
-                switch (*a) {
+                at++;
+                switch (*at) {
                     case 'n':
                         (*index)++;
                         return '\n';
                     default:
                         (*index)++;
-                        return *a;
+                        return *at;
                 }
             }
         case '"':
             if (stringType == StringType_DoubleQuote) {
-                a++;
+                at++;
                 (*index)++;
-                return tryConsumeAnotherStringLiteral(ctx, stringOffset, index, subIndex);
+                return '\0';
             } else {
                 goto normalChar;
             }
         case '\'':
             if (stringType == StringType_SingleQuote) {
-                a++;
+                at++;
                 (*index)++;
-                return tryConsumeAnotherStringLiteral(ctx, stringOffset, index, subIndex);
+                return '\0';
             } else {
                 goto normalChar;
             }
@@ -255,18 +322,35 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
             if (stringType == StringType_SingleQuote) {
                 goto normalChar;
             } else {
-                parser_context_t ctx2 = { .macroState = ctx->macroState, .begin = ctx->begin, .at = a, .end = aEnd };
+                parser_context_t ctx2 = {
+                    .macroState = ctx->macroState,
+                    .begin = ctx->begin,
+                    .at = at,
+                    .end = ctx->end,
+                    .nestingLevel = ctx->nestingLevel,
+                    .nestingBound = ctx->nestingLevel,
+                };
                 ConsumeCommentsAsWhite(false);
-                char res = consumeExpressionChar(&ctx2, subIndex);
+                char res = consumeExpressionChar(&ctx2, stringType, subIndex);
                 ConsumeCommentsAsWhite(true);
+
+                if (ctx2.nestingLevel != ctx->nestingLevel) {
+                    Macros_ReportError("Macro template has overflown expression boundary! Undefined behavior coming!", ctx2.at, ctx2.end);
+                    while (ctx2.nestingLevel > ctx->nestingLevel && PopParserContext(&ctx2)) {
+                    }
+                    *index += 1;
+                    return '$';
+                }
+
                 if (*subIndex == 0) {
-                    *index += ctx2.at - a;
+                    *index += ctx2.at - at;
                 }
                 return res;
             }
         default:
         normalChar:
             (*index)++;
-            return *a;
+            return *at;
     }
 }
+

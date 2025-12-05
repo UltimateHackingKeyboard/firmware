@@ -1,26 +1,28 @@
 target_sources(${PROJECT_NAME} PRIVATE
     usb_command_apply_config.c
-    usb_command_draw_oled.c
-    usb_command_erase_ble_settings.c
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_draw_oled.c>
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_read_oled.c>
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_erase_ble_settings.c>
     usb_command_exec_macro_command.c
-    #usb_command_get_adc_value.c
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_exec_shell_command.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_get_adc_value.c>
     usb_command_get_debug_buffer.c
     usb_command_get_device_property.c
     usb_command_get_device_state.c
     usb_command_get_module_property.c
-    usb_command_get_new_pairings.c
-    #usb_command_get_slave_i2c_errors.c
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_get_new_pairings.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_get_slave_i2c_errors.c>
     usb_command_get_variable.c
-    #usb_command_jump_to_module_bootloader.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_jump_to_module_bootloader.c>
     usb_command_launch_storage_transfer.c
-    usb_command_pairing.c
+    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_pairing.c>
     usb_command_read_config.c
     usb_command_reenumerate.c
-    #usb_command_send_kboot_command_to_module.c
-    #usb_command_set_i2c_baudrate.c
-    #usb_command_set_led_pwm_brightness.c
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_send_kboot_command_to_module.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_i2c_baud_rate.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_led_pwm_brightness.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_test_led.c>
     usb_command_set_variable.c
     usb_command_switch_keymap.c
     usb_command_write_config.c
-    usb_command_exec_shell_command.c
 )

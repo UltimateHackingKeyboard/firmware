@@ -37,12 +37,13 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         logger_priority.c
         messenger_queue.c
         messenger.c
+        pin_wiring.c
         proxy_log_backend.c
         resend.c
         round_trip_test.c
         settings.c
         shell.c
-        stack_trace.c
+        shell_backend_usb.c
         state_sync.c
         thread_stats.c
     )

@@ -60,6 +60,7 @@ config USB_DEVICE_PRODUCT_VERSION
 configdefault BT_DIS_MANUF
     default USB_DEVICE_MANUFACTURER
 configdefault BT_DIS_MODEL
+    default "UHK 80 Right" if BOARD_UHK_80_RIGHT
     default USB_DEVICE_PRODUCT
 configdefault BT_DIS_PNP
     default y

@@ -70,7 +70,7 @@ static macro_result_t processDelay(uint32_t time)
         Macros_SleepTillTime(S->as.delayData.start + time, "Macros - delay");
         return MacroResult_Sleeping;
     } else {
-        S->as.delayData.start = CurrentTime;
+        S->as.delayData.start = Timer_GetCurrentTime();
         S->as.actionActive = true;
         return processDelay(time);
     }
@@ -135,7 +135,7 @@ static macro_result_t writeNum(uint32_t a)
 
     uint8_t len = MAX(2, 10-at);
 
-    macro_result_t res = Macros_DispatchText(&num[10-len], len, true);
+    macro_result_t res = Macros_DispatchText(&num[10-len], len, NULL);
     if (res == MacroResult_Finished) {
         PostponerExtended_ConsumePendingKeypresses(1, true);
         return MacroResult_Finished;
@@ -202,11 +202,15 @@ static uint8_t consumeKeymapId(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "last")) {
         return lastKeymapIdx;
-    } else {
+    }
+    if (ConsumeToken(ctx, "current")) {
+        return CurrentKeymapIndex;
+    }
+    else {
         uint8_t len = TokLen(ctx->at, ctx->end);
         uint8_t idx = FindKeymapByAbbreviation(len, ctx->at);
         if (idx == 0xFF) {
-            Macros_ReportError("Keymap not recognized:", ctx->at, ctx->at);
+            Macros_ReportErrorPos(ctx, "Keymap not recognized:");
         }
         ctx->at += len;
         ConsumeWhite(ctx);
@@ -281,14 +285,18 @@ uint8_t Macros_ConsumeLayerId(parser_context_t* ctx)
             break;
     }
 
-    Macros_ReportError("Unrecognized layer:", ctx->at, ctx->end);
+    Macros_ReportErrorTok(ctx, "Unrecognized layer:");
     return LayerId_Base;
 }
 
 
 static uint8_t consumeLayerKeymapId(parser_context_t* ctx)
 {
-    parser_context_t bakCtx = *ctx;
+    // Assume: `toggleLayer last`
+    // Now since we allow toggling layers of other keymaps, we need to figure out the keymap.
+    // This function does that from the layer id, which is parsed twice.
+    // This is the first run and doesn't consume the token.
+    CTX_COPY(bakCtx, *ctx);
     if (ConsumeToken(&bakCtx, "last")) {
         return lastLayerKeymapIdx;
     }
@@ -677,7 +685,7 @@ static macro_result_t processWhileCommand(parser_context_t* ctx)
         S->ls->as.whileExecuting = false;
 
         if (res & MacroResult_ActionFinishedFlag) {
-            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag;
+            return (res & ~MacroResult_ActionFinishedFlag) | MacroResult_InProgressFlag | MacroResult_YieldFlag;
         } else {
             return res;
         }
@@ -747,7 +755,7 @@ static macro_result_t processBluetoothCommand(parser_context_t *ctx)
     } else if (ConsumeToken(ctx, "noadvertise") || ConsumeToken(ctx, "noAdvertise")) {
         mode = PairingMode_Off;
     } else {
-        Macros_ReportError("Unrecognized argument:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Unrecognized argument:");
         return MacroResult_Finished;
     }
 
@@ -865,7 +873,7 @@ static macro_result_t processMouseCommand(parser_context_t* ctx, bool enable)
         baseAction = SerializedMouseAction_Decelerate;
     }
     else {
-        Macros_ReportError("Unrecognized argument:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Unrecognized argument:");
         return MacroResult_Finished;
     }
 
@@ -883,7 +891,7 @@ static macro_result_t processMouseCommand(parser_context_t* ctx, bool enable)
             dirOffset = 3;
         }
         else {
-            Macros_ReportError("Unrecognized argument:", ctx->at, ctx->end);
+            Macros_ReportErrorTok(ctx, "Unrecognized argument:");
             return MacroResult_Finished;
         }
     }
@@ -941,7 +949,7 @@ static macro_result_t processWriteCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    macro_result_t res = Macros_DispatchText(ctx->at, ctx->end - ctx->at, false);
+    macro_result_t res = Macros_DispatchText(ctx->at, ctx->end - ctx->at, ctx);
 
     if (res & MacroResult_ActionFinishedFlag) {
         ctx->at = ctx->end;
@@ -985,6 +993,7 @@ static macro_result_t processNoOpCommand()
 static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool negate)
 {
     secondary_role_strategy_t strategy = Cfg.SecondaryRoles_Strategy;
+    bool originalPostponing = S->ls->as.modifierPostpone;
 
     if (ConsumeToken(ctx, "simpleStrategy")) {
         strategy = SecondaryRoleStrategy_Simple;
@@ -1031,6 +1040,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
 conditionPassed:
     S->ls->as.currentIfSecondaryConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.modifierPostpone = originalPostponing;
     return processCommand(ctx);
 }
 
@@ -1079,7 +1089,7 @@ static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
         }
     }
 
-    if (CurrentTime - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
+    if (Timer_GetCurrentTime() - S->ms.currentMacroStartTime >= Cfg.HoldTimeout) {
         if (negate) {
             return MacroResult_Finished | MacroResult_ConditionFailedFlag;
         } else {
@@ -1099,6 +1109,8 @@ conditionPassed:
 
 static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negate, bool untilRelease)
 {
+    bool originalPostponing = S->ls->as.modifierPostpone;
+
     //parse optional flags
     bool consume = true;
     bool transitive = false;
@@ -1142,7 +1154,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
 
     bool insufficientNumberForAnyOrder = false;
     if (!fixedOrder) {
-        parser_context_t ctx2 = *ctx;
+        CTX_COPY(ctx2, *ctx);
         uint8_t totalArgs = 0;
         uint8_t argKeyId = 255;
         while((argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255 && ctx2.at < ctx2.end) {
@@ -1237,6 +1249,7 @@ conditionPassed:
     while(Macros_TryConsumeKeyId(ctx) != 255) { };
     S->ls->as.currentIfShortcutConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
+    S->ls->as.modifierPostpone = originalPostponing;
     return processCommand(ctx);
 }
 
@@ -1316,7 +1329,7 @@ static macro_result_t processOneShotCommand(parser_context_t* ctx) {
         return processCommand(ctx);
     }
 
-    if (Cfg.Macros_OneShotTimeout != 0 && CurrentTime >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
+    if (Cfg.Macros_OneShotTimeout != 0 && Timer_GetCurrentTime() >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
         S->ms.oneShotState = 0;
         return processCommand(ctx);
     }
@@ -1394,13 +1407,28 @@ static macro_result_t processOverlayLayerCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processReplaceKeymapCommand(parser_context_t* ctx)
+{
+    uint8_t srcKeymapId = consumeKeymapId(ctx);
+
+    if (Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    ReplaceKeymap(srcKeymapId);
+    return MacroResult_Finished;
+}
+
 static bool processIfKeyPendingAtCommand(parser_context_t* ctx, bool negate)
 {
     uint16_t idx = Macros_ConsumeInt(ctx);
     uint16_t key = Macros_TryConsumeKeyId(ctx);
 
     if (key == 255) {
-        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Failed to decode keyId.");
         return false;
     }
 
@@ -1416,7 +1444,7 @@ static bool processIfKeyActiveCommand(parser_context_t* ctx, bool negate)
     uint16_t keyid = Macros_TryConsumeKeyId(ctx);
 
     if (keyid == 255) {
-        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Failed to decode keyId.");
         return false;
     }
 
@@ -1443,7 +1471,7 @@ static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
     uint16_t keyid = Macros_TryConsumeKeyId(ctx);
 
     if (keyid == 255) {
-        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Failed to decode keyId.");
         return false;
     }
 
@@ -1479,11 +1507,22 @@ static macro_result_t processPanicCommand(parser_context_t* ctx) {
         return MacroResult_Finished;
     }
 
+    Trace_Printc("PretendedPanic");
+
 #ifdef __ZEPHYR__
     k_panic();
 #else
-    Trace_Printc("PretendedPanic");
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnull-dereference"
+    static volatile int a = 0;
+    static volatile int* b = NULL;
+    a = 3 / a;
+    a = *b;
+
+    LogS("Failed to crash deliberately.");
+
     NVIC_SystemReset();
+#pragma GCC diagnostic pop
 #endif
     return MacroResult_Finished;
 }
@@ -1497,8 +1536,6 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
 
     power_mode_t mode = PowerMode_Awake;
 
-    parser_context_t ctxCopy = *ctx;
-
     if (false) { }
     else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
     else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
@@ -1507,7 +1544,7 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ManualShutDown; }
     else if (ConsumeToken(ctx, "autoShutdown")) { mode = PowerMode_AutoShutDown; }
     else {
-        Macros_ReportError("This mode is not available in this release:", ctxCopy.at, ctxCopy.at);
+        Macros_ReportErrorTok(ctx, "This mode is not available in this release:");
     }
 
     if (Macros_DryRun || Macros_ParserError) {
@@ -1550,7 +1587,7 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
     key_state_t* key = Utils_KeyIdToKeyState(keyid);
 
     if (keyid == 255) {
-        Macros_ReportError("Failed to decode keyId.", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Failed to decode keyId.");
         return MacroResult_Finished;
     }
 
@@ -1636,12 +1673,40 @@ static macro_result_t processRepeatForCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processTrackpointCommand(parser_context_t* ctx)
+{
+    module_specific_command_t command = 0;
+    if (ConsumeToken(ctx, "run")) {
+        command = ModuleSpecificCommand_RunTrackpoint;
+    }
+    else if (ConsumeToken(ctx, "signalData")) {
+        command = ModuleSpecificCommand_TrackpointSignalData;
+    }
+    else if (ConsumeToken(ctx, "signalClock")) {
+        command = ModuleSpecificCommand_TrackpointSignalClock;
+    }
+    else {
+        Macros_ReportError("Unrecognized trackpoint command:", ctx->at, ctx->end);
+    }
+
+    if (Macros_DryRun || Macros_ParserError) {
+        return MacroResult_Finished;
+    }
+
+    UhkModuleSlaveDriver_SendTrackpointCommand(command);
+
+    return MacroResult_Finished;
+}
+
+
 static macro_result_t processResetTrackpointCommand()
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    UhkModuleSlaveDriver_ResetTrackpoint();
+
+    UhkModuleSlaveDriver_SendTrackpointCommand(ModuleSpecificCommand_ResetTrackpoint);
+
     return MacroResult_Finished;
 }
 
@@ -1735,7 +1800,7 @@ static macro_result_t processProgressHueCommand()
 #undef C
 }
 
-static macro_result_t processValidateUserConfigCommand(parser_context_t* ctx)
+static macro_result_t processValidateMacrosCommand(parser_context_t* ctx)
 {
     if (Macros_DryRun) {
         return MacroResult_Finished;
@@ -1854,10 +1919,6 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
 
 static macro_result_t processCommand(parser_context_t* ctx)
 {
-    if (*ctx->at == '$') {
-        ctx->at++;
-    }
-
     const char* cmdTokEnd = TokEnd(ctx->at, ctx->end);
     if (cmdTokEnd > ctx->at && cmdTokEnd[-1] == ':') {
         //skip labels
@@ -1866,7 +1927,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
             return MacroResult_Finished;
         }
     }
-    while(ctx->at < ctx->end) {
+
+    while(ctx->at < ctx->end || !IsEnd(ctx)) {
         switch(*ctx->at) {
         case 'a':
             if (ConsumeToken(ctx, "activateKeyPostponed")) {
@@ -1876,7 +1938,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processAutoRepeatCommand(ctx);
             }
             else if (ConsumeToken(ctx, "addReg")) {
-                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
                 return MacroResult_Finished;
             }
             else {
@@ -2244,19 +2306,19 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processIfShortcutCommand(ctx, true, false);
             }
             else if (ConsumeToken(ctx, "ifRegEq")) {
-                Macros_ReportError("Command was removed, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName == 1)`.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "ifNotRegEq")) {
-                Macros_ReportError("Command was removed, please use command similar to `if ($varName == 1)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName == 1)`.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "ifRegGt")) {
-                Macros_ReportError("Command was removed, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName >= 1)`.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "ifRegLt")) {
-                Macros_ReportError("Command was removed, please use command similar to `if ($varName >= 1)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName >= 1)`.");
                 return MacroResult_Finished;
             }
             else {
@@ -2265,7 +2327,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             break;
         case 'm':
             if (ConsumeToken(ctx, "mulReg")) {
-                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName*2)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName*2)`.");
                 return MacroResult_Finished;
             }
             else {
@@ -2348,12 +2410,15 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "replaceLayer")) {
                 return processReplaceLayerCommand(ctx);
             }
+            else if (ConsumeToken(ctx, "replaceKeymap")) {
+                return processReplaceKeymapCommand(ctx);
+            }
             else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
-                Macros_ReportError("Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.", NULL, NULL);
+                Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "resolveSecondary")) {
-                Macros_ReportError("Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.", NULL, NULL);
+                Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "resetConfiguration")) {
@@ -2435,23 +2500,23 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 processSuppressModsCommand();
             }
             else if (ConsumeToken(ctx, "setReg")) {
-                Macros_ReportError("Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "subReg")) {
-                Macros_ReportError("Command was removed, please use command similar to `setVar varName ($varName+1)`.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "setStatusPart")) {
-                Macros_ReportError("Command was removed, please use string interpolated setStatus.", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "Command was removed, please use string interpolated setStatus.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "switchKeymapLayer")) {
-    Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
+    Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "switchLayer")) {
-    Macros_ReportError("Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.", ctx->at, ctx->at);
+    Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.");
                 return MacroResult_Finished;
             }
             else if (ConsumeToken(ctx, "switchHost")) {
@@ -2477,6 +2542,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             else if (ConsumeToken(ctx, "toggleKey")) {
                 return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Toggle, &S->ms.reports);
             }
+            else if (ConsumeToken(ctx, "trackpoint")) {
+                return processTrackpointCommand(ctx);
+            }
             else if (ConsumeToken(ctx, "trace")) {
                 if (!Macros_DryRun) {
                     Trace_Print(LogTarget_ErrorBuffer, "Triggered by macro command");
@@ -2499,8 +2567,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             break;
         case 'v':
-            if (ConsumeToken(ctx, "validateUserConfig")) {
-                return processValidateUserConfigCommand(ctx);
+            if (ConsumeToken(ctx, "validateUserConfig") || ConsumeToken(ctx, "validateMacros")) {
+                return processValidateMacrosCommand(ctx);
             }
             else {
                 goto failed;
@@ -2514,7 +2582,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processWhileCommand(ctx);
             }
             else if (ConsumeToken(ctx, "writeExpr")) {
-                Macros_ReportError("writeExpr is now deprecated, please migrate to interpolated strings", ctx->at, ctx->at);
+                Macros_ReportErrorPos(ctx, "writeExpr is now deprecated, please migrate to interpolated strings");
                 return MacroResult_Finished;
             }
             else {
@@ -2555,7 +2623,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
             break;
         default:
         failed:
-            Macros_ReportError("Unrecognized command:", ctx->at, ctx->end);
+            Macros_ReportErrorTok(ctx, "Unrecognized command:");
             return MacroResult_Finished;
             break;
         }
@@ -2595,9 +2663,10 @@ static void jumpToMatchingBrace()
         }
     }
 
-    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
-
     Macros_DryRun = false;
+
+    // First reset the dry run, so that the following code performs state resets
+    Macros_LoadNextCommand() || Macros_LoadNextAction() || (S->ms.macroBroken = true);
 }
 
 macro_result_t Macros_ProcessCommandAction(void)
@@ -2605,7 +2674,14 @@ macro_result_t Macros_ProcessCommandAction(void)
     const char* cmd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
     const char* cmdEnd = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
 
-    parser_context_t ctx = { .macroState = S, .begin = cmd, .at = cmd, .end = cmdEnd };
+    parser_context_t ctx = {
+        .macroState = S,
+        .begin = cmd,
+        .at = cmd,
+        .end = cmdEnd,
+        .nestingLevel = 0,
+        .nestingBound = 0,
+    };
 
     ConsumeWhite(&ctx);
 
@@ -2620,9 +2696,9 @@ macro_result_t Macros_ProcessCommandAction(void)
     macro_result_t macroResult;
 
 #if (DEBUG_CHECK_MACRO_RUN_TIMES && defined(__ZEPHYR__))
-    uint32_t start = CurrentTime;
+    uint32_t start = Timer_GetCurrentTime();
     macroResult = processCommand(&ctx);
-    uint64_t end = CurrentTime;
+    uint64_t end = Timer_GetCurrentTime();
     uint32_t time = end - start;
     if (time > 20) {
         uint32_t cmdLength = (uint32_t)(cmdEnd - cmd);
@@ -2632,7 +2708,7 @@ macro_result_t Macros_ProcessCommandAction(void)
     macroResult = processCommand(&ctx);
 #endif
 
-    if (ctx.at != ctx.end && !Macros_ParserError && Macros_DryRun) {
+    if ((ctx.at < ctx.end || !IsEnd(&ctx)) && !Macros_ParserError && Macros_DryRun) {
         Macros_ReportWarn("Unprocessed input encountered.", ctx.at, ctx.at);
     }
 

@@ -13,7 +13,7 @@ typedef struct {
 
 void RoundTripTest_Init() {
     if (DEVICE_IS_UHK80_RIGHT && DEBUG_TEST_RTT) {
-        EventScheduler_Schedule(CurrentTime+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
+        EventScheduler_Schedule(Timer_GetCurrentTime()+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
     }
 }
 
@@ -22,7 +22,7 @@ void RoundTripTest_Run() {
         return;
     }
 
-    rtt_ping_t p = { .timestamp = CurrentTime };
+    rtt_ping_t p = { .timestamp = Timer_GetCurrentTime() };
 
     Messenger_Send(DeviceId_Uhk80_Left, MessageId_RoundTripTest, (uint8_t*)&p, sizeof(rtt_ping_t));
 }
@@ -36,7 +36,7 @@ void RoundTripTest_Receive(const uint8_t* data, uint16_t len) {
 
     if (DEVICE_IS_UHK80_RIGHT) {
         rtt_ping_t* p = (rtt_ping_t*)data;
-        RoundTripTime = CurrentTime - p->timestamp;
+        RoundTripTime = Timer_GetCurrentTime() - p->timestamp;
     }
 }
 

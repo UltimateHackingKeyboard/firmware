@@ -8,14 +8,15 @@
 #include "report_ids.h"
 #include "device.h"
 
-namespace hid::page {
+namespace hid::page
+{
 enum class ugl : uint8_t;
 template <>
-struct info<ugl> {
-    constexpr static page_id_t page_id = 0xFF00;
-    constexpr static usage_id_t max_usage_id = 0x0003;
-    constexpr static const char *name = "UGL";
-};
+constexpr inline auto get_info<ugl>()
+{
+    return info(0xFF00, 0x0003, "UGL",
+                [](hid::usage_id_t id) { return id ? "UHK {}" : nullptr; });
+}
 enum class ugl : uint8_t {
     COMMAND_APP = 0x0001,
     COMMAND_DATA_IN = 0x0002,

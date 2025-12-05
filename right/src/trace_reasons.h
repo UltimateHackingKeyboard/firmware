@@ -10,10 +10,8 @@
 
 // Functions:
 
-#ifndef __ZEPHYR__
     void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t targetInterface);
-    bool Trace_LooksLikeNaturalCauses(void);
-#endif
+    bool Trace_ResetShouldBeIgnored(void);
+    void Trace_ResetUhk60Reasons();
 
 #endif
-

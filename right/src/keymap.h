@@ -39,5 +39,7 @@
     void OverlayKeymap(uint8_t srcKeymap);
     void OverlayLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer);
     void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer);
+    void ReplaceKeymap(uint8_t srcKeymap);
+    void DryParseKeymap(uint8_t srcKeymap);
 
 #endif

@@ -7,6 +7,7 @@
     #include <stdbool.h>
     #include "layer.h"
     #include "parse_config.h"
+    #include "str_utils.h"
 
 // Macros:
 
@@ -29,6 +30,8 @@
         SerializedKeyActionType_Connections = 36,
         SerializedKeyActionType_Other = 37,
         SerializedKeyActionType_NoneBlock = 38,
+        SerializedKeyActionType_Label = 39,
+        SerializedKeyActionType_Argument = 40,
     } serialized_key_action_type_t;
 
     typedef enum {
@@ -100,6 +103,7 @@
         ParseKeymapMode_OverlayKeymap,
         ParseKeymapMode_OverlayLayer,
         ParseKeymapMode_ReplaceLayer,
+        ParseKeymapMode_ReplaceKeymap,
     } parse_keymap_mode_t;
 
     typedef enum {
@@ -126,5 +130,6 @@
 
     parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t keymapCount, uint8_t macroCount, parse_config_t parseConfig);
     parser_error_t ParseKeymapName(config_buffer_t* buffer, const char** name, uint16_t* len);
+    string_segment_t ParseMacroArgument(uint16_t offset, uint8_t macroIndex);
 
 #endif

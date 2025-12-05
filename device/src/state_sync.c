@@ -39,8 +39,8 @@
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
-#define STATE_SYNC_SEND_DELAY_HPRIO 5
-#define STATE_SYNC_SEND_DELAY_LPRIO 50
+#define STATE_SYNC_SEND_DELAY_HPRIO 2
+#define STATE_SYNC_SEND_DELAY_LPRIO 20
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
@@ -65,6 +65,8 @@ bool StateSync_BatteryBacklightPowersavingMode = false;
 bool StateSync_BlinkBatteryIcon = false;
 bool StateSync_BlinkLeftBatteryPercentage = false;
 bool StateSync_BlinkRightBatteryPercentage = false;
+
+bool StateSync_VersionCheckEnabled = true;
 
 static void wake(k_tid_t tid) {
     if (tid != 0) {
@@ -279,6 +281,10 @@ void receiveBacklight(sync_command_backlight_t *buffer) {
 void StateSync_CheckFirmwareVersions() {
     #if DEVICE_IS_UHK80_RIGHT
 
+    if (!StateSync_VersionCheckEnabled) {
+        return;
+    }
+
     uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftKeyboardHalf);
     uhk_module_state_t *moduleState = &UhkModuleStates[driverId];
 
@@ -323,13 +329,14 @@ void StateSync_CheckFirmwareVersions() {
 void StateSync_CheckDongleProtocolVersion() {
     host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
     if (hostConnection->type == HostConnectionType_Dongle) {
-        if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
+        if (RemoteDongleProtocolVersion.major == 0) {
+            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(ActiveHostConnectionId));
+        } else if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
             LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
-            return;
         } else {
             LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
                     GetPeerStringByConnId(ActiveHostConnectionId),
@@ -337,6 +344,7 @@ void StateSync_CheckDongleProtocolVersion() {
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
         }
+        // Cancel the scheduled check if this was called manually.
         EventScheduler_Unschedule(EventSchedulerEvent_CheckDongleProtocolVersion);
     }
 }
@@ -505,7 +513,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         if (!isLocalUpdate) {
             RemoteDongleProtocolVersion = *(version_t*)data;
             // This should prevent the check from being printed multiple times.
-            EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
+            EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync received dongle protocol version");
         }
         break;
     case StateSyncPropertyId_ZeroDummy:
@@ -514,7 +522,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_BatteryStationaryMode:
         //for both local and remote
         printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
-        EventScheduler_Schedule(CurrentTime + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
         break;
     case StateSyncPropertyId_PowerMode:
         if (!isLocalUpdate) {
@@ -936,7 +944,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_PowerMode);
         invalidateProperty(StateSyncPropertyId_BatteryStationaryMode);
         // Wait sufficiently log so the firmware check isnt triggered during firmware upgrade
-        EventScheduler_Reschedule(CurrentTime + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + 2*60*1000, EventSchedulerEvent_CheckFwChecksums, "Reset left right link");
     }
     if (DEVICE_ID == DeviceId_Uhk80_Left) {
         invalidateProperty(StateSyncPropertyId_Battery);
@@ -961,7 +969,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         RemoteDongleProtocolVersion = (version_t){0, 0, 0};
-        EventScheduler_Reschedule(CurrentTime+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
+        EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
     }
 }
 

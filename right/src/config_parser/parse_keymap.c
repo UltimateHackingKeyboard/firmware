@@ -9,6 +9,7 @@
 #include "ledmap.h"
 #include "led_display.h"
 #include "config_manager.h"
+#include "macros/core.h"
 #include "module.h"
 #include "parse_keymap.h"
 #include "slave_protocol.h"
@@ -17,6 +18,8 @@
 #include "error_reporting.h"
 #include "host_connection.h"
 #include "macros/status_buffer.h"
+#include "layer_switcher.h"
+#include "str_utils.h"
 
 #ifdef __ZEPHYR__
 #include "state_sync.h"
@@ -177,6 +180,7 @@ static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_bu
 
 static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffer_t *buffer)
 {
+    uint16_t actionOffset = buffer->offset-1;
     uint8_t macroIndex = ReadUInt8(buffer);
 
     if (macroIndex >= tempMacroCount) {
@@ -185,6 +189,7 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
     }
     keyAction->type = KeyActionType_PlayMacro;
     keyAction->playMacro.macroId = macroIndex;
+    keyAction->playMacro.offset = actionOffset;
     parseKeyActionColor(keyAction, buffer);
     return ParserError_Success;
 }
@@ -209,10 +214,6 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
 
 static void noneBlockAction(key_action_t *keyAction, rgb_t* color, parse_mode_t parseMode)
 {
-    if(parseMode == ParseMode_DryRun || parseMode == ParseMode_Overlay) {
-        return;
-    }
-
     keyAction->type = KeyActionType_None;
     keyAction->color.red = color->red;
     keyAction->color.green = color->green;
@@ -220,37 +221,49 @@ static void noneBlockAction(key_action_t *keyAction, rgb_t* color, parse_mode_t 
     keyAction->colorOverridden = false;
 }
 
-static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t* color, parse_mode_t parseMode)
+static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t *color, parse_mode_t parseMode)
 {
-    if (actionCountToNone != NULL) {
-        *actionCountToNone = ReadUInt8(buffer);
+    if (color != NULL) {
+        if (actionCountToNone != NULL) {
+            *actionCountToNone = ReadUInt8(buffer);
 
-        // Parse color
-        key_action_t dummyAction;
-        parseKeyActionColor(&dummyAction, buffer);
-        color->red = dummyAction.color.red;
-        color->green = dummyAction.color.green;
-        color->blue = dummyAction.color.blue;
+            // Parse color
+            key_action_t dummyAction;
+            parseKeyActionColor(&dummyAction, buffer);
+            color->red = dummyAction.color.red;
+            color->green = dummyAction.color.green;
+            color->blue = dummyAction.color.blue;
+        }
     }
 
-    if (*actionCountToNone > 0) {
+    if (actionCountToNone != NULL && *actionCountToNone > 0) {
         noneBlockAction(keyAction, color, parseMode);
     }
 
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor)
-{
-    uint8_t keyActionType = ReadUInt8(buffer);
-    key_action_t dummyKeyAction;
+static parser_error_t parseArgumentAction(key_action_t *keyAction, config_buffer_t *buffer, bool *wasArgument, string_segment_t *argument) {
+    uint16_t length = ReadCompactLength(buffer);
 
-    if(parseMode == ParseMode_DryRun) {
-        keyAction = &dummyKeyAction;
-    } else if (parseMode == ParseMode_Overlay && keyActionType == SerializedKeyActionType_None) {
-        keyAction = &dummyKeyAction;
+    if (wasArgument != NULL) {
+        *wasArgument = true;
     }
 
+    if (argument != NULL) {
+        argument->start = (const char*)buffer->buffer + buffer->offset;
+        argument->end = (const char*)argument->start + length;
+    }
+
+    for (uint16_t i = 0; i < length; i++) {
+        //we don't care here, just discard them
+        ReadUInt8(buffer);
+    }
+    return ParserError_Success;
+}
+
+static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_key_action_type_t keyActionType, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor, bool *wasArgument)
+{
     switch (keyActionType) {
         case SerializedKeyActionType_None:
             return parseNoneAction(keyAction, buffer);
@@ -270,14 +283,18 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, config_buffer_t *b
             return parseOtherAction(keyAction, buffer);
         case SerializedKeyActionType_NoneBlock:
             return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor, parseMode);
+        case SerializedKeyActionType_Label:
+        case SerializedKeyActionType_Argument:
+            return parseArgumentAction(keyAction, buffer, wasArgument, NULL);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
     return ParserError_InvalidSerializedKeyActionType;
 }
 
-static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, parse_mode_t parseMode)
+static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t keymapIdx, parse_mode_t parseMode)
 {
+    key_action_t dummyKeyAction;
     parser_error_t errorCode;
     uint16_t actionCount = ReadCompactLength(buffer);
 
@@ -289,23 +306,67 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     slot_t slotId = ModuleIdToSlotId(moduleId);
     uint8_t noneBlockUntil = 0;
     rgb_t noneBlockColor = {0, 0, 0};
-    for (uint8_t actionIdx = 0; actionIdx < actionCount; actionIdx++) {
-        key_action_t dummyKeyAction;
-        key_action_t *keyAction = actionIdx < MAX_KEY_COUNT_PER_MODULE ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
+    uint8_t actionIdx = 0;
+    key_action_t currentAction = {};
+    bool currentActionHasArguments = false;
+    for (uint8_t i = 0; i < actionCount; i++) {
+        bool isNoneActionInNoneBlock = actionIdx < noneBlockUntil;
 
-        if (actionIdx < noneBlockUntil) {
-            noneBlockAction(keyAction, &noneBlockColor, parseMode);
+        serialized_key_action_type_t keyActionType;
+
+        if (isNoneActionInNoneBlock) {
+            keyActionType = SerializedKeyActionType_None;
         } else {
+            keyActionType = ReadUInt8(buffer);
+        }
+
+        bool isValidRange = actionIdx < MAX_KEY_COUNT_PER_MODULE;
+        bool isDryRun = parseMode == ParseMode_DryRun;
+        bool isTransparent = parseMode == ParseMode_Overlay && keyActionType == SerializedKeyActionType_None;
+
+        key_action_t *keyAction = (isValidRange && !isDryRun && !isTransparent) ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
+
+        bool wasAction = false;
+
+        if (isNoneActionInNoneBlock) {
+            noneBlockAction(keyAction, &noneBlockColor, parseMode);
+            wasAction = true;
+        } else {
+            bool wasArgument = false;
             uint8_t actionCountToNone = 0;
-            errorCode = parseKeyAction(keyAction, buffer, parseMode, &actionCountToNone, &noneBlockColor);
+            errorCode = parseKeyAction(keyAction, keyActionType, buffer, parseMode, &actionCountToNone, &noneBlockColor, &wasArgument);
 
             if (errorCode != ParserError_Success) {
                 return errorCode;
             }
 
+            wasAction = !wasArgument;
+
             noneBlockUntil = actionIdx + actionCountToNone;
         }
+
+        if (wasAction) {
+            // validate previous action
+            if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
+                //validate it
+                Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx-1, keymapIdx);
+            }
+
+            actionIdx++;
+
+            // cache current action
+            currentAction = *keyAction;
+            currentActionHasArguments = false;
+        } else {
+            currentActionHasArguments = true;
+        }
     }
+    // validate previous action
+    if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
+        //validate it
+        Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx-1, keymapIdx);
+    }
+
     /* default second touchpad action to right button */
     if (parseMode != ParseMode_DryRun && moduleId == ModuleId_TouchpadRight) {
         CurrentKeymap[targetLayer][slotId][1].type = KeyActionType_Mouse;
@@ -314,9 +375,9 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     return ParserError_Success;
 }
 
-static parser_error_t parseModule(config_buffer_t *buffer, uint8_t moduleId, uint8_t layer, parse_mode_t parseMode)
+static parser_error_t parseModule(config_buffer_t *buffer, uint8_t moduleId, uint8_t layer, uint8_t keymapIdx, parse_mode_t parseMode)
 {
-    return parseKeyActions(layer, buffer, moduleId, parseMode);
+    return parseKeyActions(layer, buffer, moduleId, keymapIdx, parseMode);
 }
 
 static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer_id_t* parsedLayerId)
@@ -356,7 +417,7 @@ static void applyDefaultLeftModuleActions(uint8_t layer, parse_mode_t parseMode)
     }
 }
 
-static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_mode_t parseMode)
+static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, uint8_t keymapIdx, parse_mode_t parseMode)
 {
     if (parseMode != ParseMode_DryRun) {
         Cfg.LayerConfig[layer].layerIsDefined = true;
@@ -378,7 +439,7 @@ static parser_error_t parseLayer(config_buffer_t *buffer, uint8_t layer, parse_m
         currentRightModuleWasRead |= ModuleIdToSlotId(moduleId) == SlotId_RightModule && IsModuleAttached(moduleId);
         currentLeftModuleWasRead |= ModuleIdToSlotId(moduleId) == SlotId_LeftModule && IsModuleAttached(moduleId);
 
-        errorCode = parseModule(buffer, moduleId, layer, parseMode);
+        errorCode = parseModule(buffer, moduleId, layer, keymapIdx, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
@@ -427,6 +488,10 @@ void interpretConfig(parse_config_t parseConfig, layer_id_t srcLayer, layer_id_t
                 *dstLayer = srcLayer;
                 *parseMode = ParseMode_DryRun;
             }
+            break;
+        case ParseKeymapMode_ReplaceKeymap:
+            *dstLayer = srcLayer;
+            *parseMode = ParseMode_FullRun;
             break;
         default:
             {
@@ -494,14 +559,14 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
             return errorCode;
         }
         interpretConfig(parseConfig, srcLayer, &dstLayer, &parseMode);
-        errorCode = parseLayer(buffer, dstLayer, parseMode);
+        errorCode = parseLayer(buffer, dstLayer, keymapIdx, parseMode);
         if (errorCode != ParserError_Success) {
             return errorCode;
         }
     }
 
 #ifdef __ZEPHYR__
-    if (parseConfig.mode == ParseKeymapMode_FullRun || parseConfig.mode == ParseKeymapMode_OverlayKeymap) {
+    if (parseConfig.mode == ParseKeymapMode_FullRun || parseConfig.mode == ParseKeymapMode_OverlayKeymap || parseConfig.mode == ParseKeymapMode_ReplaceKeymap) {
         for (uint8_t layerId = 0; layerId < LayerId_Count; layerId++) {
             StateSync_UpdateLayer(layerId, Cfg.LayerConfig[layerId].layerIsDefined);
         }
@@ -510,5 +575,40 @@ parser_error_t ParseKeymap(config_buffer_t *buffer, uint8_t keymapIdx, uint8_t k
     }
 #endif
 
+    if (parseConfig.mode != ParseKeymapMode_DryRun) {
+        LayerSwitcher_MarkMappingsChanged();
+    }
+
     return ParserError_Success;
+}
+
+string_segment_t ParseMacroArgument(uint16_t offset, uint8_t argumentNumber)
+{
+    // Create a config buffer reference with the given offset
+    // The offset points to the start of the PlayMacro action data (after the action type byte)
+    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    buffer.offset = offset;
+
+    // Dry run parse the PlayMacro action
+    key_action_t dummyKeyAction;
+    serialized_key_action_type_t actionType = ReadUInt8(&buffer);
+    parseKeyAction(&dummyKeyAction, actionType, &buffer, ParseMode_DryRun, NULL, NULL, NULL);
+
+    for (uint8_t i = 1; i <= argumentNumber;) {
+        serialized_key_action_type_t argType = ReadUInt8(&buffer);
+
+        if (argType == SerializedKeyActionType_Argument || argType == SerializedKeyActionType_Label) {
+            string_segment_t arg;
+            parseArgumentAction(&dummyKeyAction, &buffer, NULL, &arg);
+            if (i == argumentNumber && argType == SerializedKeyActionType_Argument) {
+                return arg;
+            }
+            if (argType == SerializedKeyActionType_Argument) {
+                i++;
+            }
+        } else {
+            return (string_segment_t){ .start = NULL, .end = NULL };
+        }
+    }
+    return (string_segment_t){ .start = NULL, .end = NULL };
 }

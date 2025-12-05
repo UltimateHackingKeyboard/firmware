@@ -4,12 +4,12 @@
 #include "utils.h"
 #include "event_scheduler.h"
 
-
 uint32_t UsbMediaKeyboardActionCounter;
 static usb_media_keyboard_report_t usbMediaKeyboardReports[2];
 usb_media_keyboard_report_t* ActiveUsbMediaKeyboardReport = usbMediaKeyboardReports;
 
 static bool needsResending = false;
+ATTR_UNUSED static uint8_t retries = 0;
 
 static usb_media_keyboard_report_t* GetInactiveUsbMediaKeyboardReport(void)
 {
@@ -46,7 +46,7 @@ usb_status_t UsbMediaKeyboardAction(void)
 void UsbMediaKeyboardSendActiveReport(void) {
     UsbReportUpdateSemaphore |= 1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX;
     usb_status_t status = UsbMediaKeyboardAction();
-    if (status != kStatus_USB_Success) {
+    if (ShouldResendReport(status == kStatus_USB_Success, &retries)) {
         UsbReportUpdateSemaphore &= ~(1 << USB_MEDIA_KEYBOARD_INTERFACE_INDEX);
         EventVector_Set(EventVector_ResendUsbReports);
         needsResending = true;

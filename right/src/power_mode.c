@@ -59,16 +59,14 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
 
 ATTR_UNUSED static bool usbAwake = false;
 
-power_mode_t CurrentPowerMode = PowerMode_Awake;
+volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
 // originally written for Benedek's power callback
 // TODO: remove this and simplify the rest of the code if the callback is not used.
 void PowerMode_SetUsbAwake(bool awake) {
 #if DEVICE_IS_UHK80_RIGHT
     usbAwake = awake;
-
-    CurrentTime = k_uptime_get();
-    EventScheduler_Reschedule(CurrentTime + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from power callback");
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from power callback");
 #endif
 }
 
@@ -177,7 +175,7 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 #endif
 
     if (CurrentPowerMode > PowerMode_Lock) {
-        EventScheduler_Schedule(CurrentTime + POWER_MODE_RESTART_DELAY, EventSchedulerEvent_PowerModeRestart, "restart power mode");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + POWER_MODE_RESTART_DELAY, EventSchedulerEvent_PowerModeRestart, "restart power mode");
     }
 }
 
@@ -192,6 +190,7 @@ void PowerMode_WakeHost() {
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
     StateWormhole_Open();
+    StateWormhole.wasReboot = true;
     StateWormhole.rebootToPowerMode = true;
     StateWormhole.restartPowerMode = CurrentPowerMode;
     NVIC_SystemReset();
@@ -263,7 +262,7 @@ void PowerMode_RestartedTo(power_mode_t mode) {
 
     if (DEVICE_IS_UHK80_LEFT) {
         PowerMode_ActivateMode(PowerMode_LightSleep, false, true, "woken up from sfjl sleep, waiting for right");
-        EventScheduler_Schedule(CurrentTime + 60*1000, EventSchedulerEvent_PutBackToShutDown, "We were woken up, but right may not.");
+        EventScheduler_Schedule(Timer_GetCurrentTime() + 60*1000, EventSchedulerEvent_PutBackToShutDown, "We were woken up, but right may not.");
     } else {
         PowerMode_ActivateMode(PowerMode_Awake, false, true, "woken up from sfjl sleep");
     }

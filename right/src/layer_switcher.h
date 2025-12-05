@@ -31,4 +31,6 @@
 
     void LayerSwitcher_RecalculateLayerComposition();
 
+    void LayerSwitcher_MarkMappingsChanged();
+
 #endif /* SRC_LAYER_SWITCHER_H_ */

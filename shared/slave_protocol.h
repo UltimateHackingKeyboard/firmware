@@ -3,10 +3,7 @@
 
 // Includes:
 
-#include <stdint.h>
-#ifndef __ZEPHYR__
-    #include "fsl_common.h"
-#endif
+    #include <stdint.h>
     #include "attributes.h"
 
 // Macros:
@@ -31,6 +28,9 @@
 
     typedef enum {
         ModuleSpecificCommand_ResetTrackpoint,
+        ModuleSpecificCommand_RunTrackpoint,
+        ModuleSpecificCommand_TrackpointSignalData,
+        ModuleSpecificCommand_TrackpointSignalClock,
     } module_specific_command_t;
 
     typedef enum {

@@ -15,6 +15,6 @@ void KeyVector_Scan(key_vector_t *keyVector)
 {
     uint8_t *keyState = keyVector->keyStates;
     for (key_vector_pin_t *item = keyVector->items; item < keyVector->items + keyVector->itemNum; item++) {
-        *(keyState++) = !GPIO_ReadPinInput(item->gpio, item->pin);
+        *(keyState++) = !GPIO_PinRead(item->gpio, item->pin);
     }
 }
