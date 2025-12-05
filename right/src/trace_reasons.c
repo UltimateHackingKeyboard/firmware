@@ -3,6 +3,7 @@
 #include "MK22F51212.h"
 #include "logger.h"
 #include "trace.h"
+#include "wormhole.h"
 
 // RCM (Reset Control Module) registers - K22P121M120SF7
 #define RCM_SRS0    (*(volatile uint8_t*)0x4007F000)
@@ -23,8 +24,15 @@
 
 #define POWER_ON_RESET (RCM_SRS0 & 0x80)
 
-bool Trace_LooksLikeNaturalCauses(void) {
-    return (RCM_SRS0 & 0x80);
+bool Trace_ResetShouldBeIgnored(void) {
+    bool powerOnReset = (RCM_SRS0 & 0x80);
+    bool externalPinReset = (RCM_SRS0 & 0x40) && !StateWormhole.devMode;
+
+    if (externalPinReset) {
+        Trace_Printc("ExtPinRst");
+    }
+
+    return powerOnReset || externalPinReset;
 }
 
 void Trace_PrintUhk60ReasonRegisters(device_id_t targetDeviceId, log_target_t targetInterface)

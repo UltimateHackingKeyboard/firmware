@@ -206,7 +206,7 @@ int main(void)
 {
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        if (StateWormhole.wasReboot || Trace_LooksLikeNaturalCauses()) {
+        if (StateWormhole.wasReboot || Trace_ResetShouldBeIgnored()) {
             // Looks like a normal reboot or power on startup
             MacroStatusBuffer_InitNormal();
         }
