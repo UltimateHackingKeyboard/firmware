@@ -78,6 +78,12 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         return ParserError_ConfigVersionTooNew;
     }
 
+    if (DataModelVersion.major >= 13) {
+        ATTR_UNUSED uint16_t l;
+        ATTR_UNUSED const char *lastSaveAgentTag = ReadString(buffer, &len);
+        ATTR_UNUSED const char *lastSaveFirmwareTag = ReadString(buffer, &len);
+    }
+
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {
         printk(
