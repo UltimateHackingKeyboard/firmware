@@ -79,18 +79,10 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     }
 
     if (DataModelVersion.major >= 13) {
-        ATTR_UNUSED version_t saveAgentVersion;
-        ATTR_UNUSED version_t saveFirmwareVersion;
-
-        saveAgentVersion.major = ReadUInt16(buffer);
-        saveAgentVersion.minor = ReadUInt16(buffer);
-        saveAgentVersion.patch = ReadUInt16(buffer);
-
-        saveFirmwareVersion.major = ReadUInt16(buffer);
-        saveFirmwareVersion.minor = ReadUInt16(buffer);
-        saveFirmwareVersion.patch = ReadUInt16(buffer);
+        ATTR_UNUSED uint16_t l;
+        ATTR_UNUSED const char *lastSaveAgentTag = ReadString(buffer, &len);
+        ATTR_UNUSED const char *lastSaveFirmwareTag = ReadString(buffer, &len);
     }
-
 
 #ifdef __ZEPHYR__
     if (!ParserRunDry) {
