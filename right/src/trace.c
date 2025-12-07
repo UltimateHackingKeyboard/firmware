@@ -8,7 +8,8 @@
 #include "event_scheduler.h"
 #include "logger.h"
 #include "versioning.h"
-#include "trace_reasons.h"
+
+#include "device.h"
 
 #ifdef __ZEPHYR__
 #include "proxy_log_backend.h"
@@ -96,8 +97,7 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     }
 
     LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);
-    LogTo(targetDeviceId, targetInterface, "EV: %d\n", StateWormhole.traceBuffer.eventVector);
-    LogTo(targetDeviceId, targetInterface, "Tag: %s\n", gitTag);
+    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag);
 
 #ifndef __ZEPHYR__
     Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);

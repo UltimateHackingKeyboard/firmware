@@ -28,6 +28,9 @@
 
     typedef enum {
         ModuleSpecificCommand_ResetTrackpoint,
+        ModuleSpecificCommand_RunTrackpoint,
+        ModuleSpecificCommand_TrackpointSignalData,
+        ModuleSpecificCommand_TrackpointSignalClock,
     } module_specific_command_t;
 
     typedef enum {

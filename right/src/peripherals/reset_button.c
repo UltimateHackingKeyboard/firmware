@@ -9,13 +9,18 @@
 #include "config_manager.h"
 #include "macros/status_buffer.h"
 
+
+
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     static uint8_t count = 0;
 
-    if (count++ > 10) {
+    if (count++ > 20) {
         DisableIRQ(RESET_BUTTON_IRQ);
-        Macros_ReportError("Looks like spurious factory button activation. Disabling factory button. Please report this.", NULL, NULL);
+        if (Cfg.DevMode) {
+            Macros_ReportErrorPrintf(NULL, "Uptime: %d. Looks like spurious factory button activation. Disabling the reset button.", Timer_GetCurrentTime());
+        }
+        return;
     }
 
     // We are getting spurious activations, so check that it is pressed for at least some 20ms straight
@@ -40,11 +45,11 @@ void InitResetButton(void)
 {
     CLOCK_EnableClock(RESET_BUTTON_CLOCK);
     PORT_SetPinInterruptConfig(RESET_BUTTON_PORT, RESET_BUTTON_PIN, kPORT_InterruptFallingEdge);
-    EnableIRQ(RESET_BUTTON_IRQ);
     PORT_SetPinConfig(RESET_BUTTON_PORT, RESET_BUTTON_PIN,
                       &(port_pin_config_t){.pullSelect=kPORT_PullUp, .mux=kPORT_MuxAsGpio});
     SDK_DelayAtLeastUs(10, SystemCoreClock);
     factoryResetModeEnabled = RESET_BUTTON_IS_PRESSED;
+    EnableIRQ(RESET_BUTTON_IRQ);
 }
 
 bool IsFactoryResetModeEnabled(void)

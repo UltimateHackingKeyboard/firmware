@@ -14,6 +14,12 @@
 #include "macros/shortcut_parser.h"
 #include "macros/string_reader.h"
 
+#define MAX_UNICODE_LENGTH 2
+typedef struct {
+    uint32_t chars[MAX_UNICODE_LENGTH];
+    uint8_t charCount;
+} ATTR_PACKED unicode_sequence_t;
+
 static void addBasicScancode(uint8_t scancode, macro_usb_keyboard_reports_t* reports)
 {
     if (!scancode) {
@@ -360,7 +366,7 @@ static void clearScancodes()
     S->ms.reports.macroBasicKeyboardReport.modifiers = oldMods;
 }
 
-macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawString)
+macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, parser_context_t* ctx)
 {
     const uint8_t maxGroupSize=3;
     static uint8_t currentReportSize=0;
@@ -381,11 +387,11 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
 
     // Precompute modifiers and scancode.
     if (S->as.dispatchData.textIdx != textLen) {
-        if (rawString) {
+        if (ctx == NULL) {
             character = text[S->as.dispatchData.textIdx];
         } else {
-            parser_context_t ctx = { .macroState = S, .begin = text, .at = text, .end = text+textLen, .nestingLevel = PARSER_CONTEXT_STACK_SIZE};
-            character = Macros_ConsumeCharOfString(&ctx, &stringOffsetCopy, &textIndexCopy, &textSubIndexCopy);
+
+            character = Macros_ConsumeCharOfString(ctx, &stringOffsetCopy, &textIndexCopy, &textSubIndexCopy);
 
             //make sure we write error only once
             if (Macros_ParserError) {
@@ -453,7 +459,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
     // Send the scancode.
     UsbBasicKeyboard_AddScancode(&S->ms.reports.macroBasicKeyboardReport, scancode);
     S->as.dispatchData.reportState = ++currentReportSize >= maxGroupSize ? REPORT_FULL : REPORT_PARTIAL;
-    if (rawString) {
+    if (ctx == NULL) {
         ++S->as.dispatchData.textIdx;
     } else {
         if (textIndexCopy == S->as.dispatchData.textIdx && textSubIndexCopy == S->as.dispatchData.subIndex && stringOffsetCopy == S->as.dispatchData.stringOffset) {
@@ -469,7 +475,7 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, bool rawS
 
 macro_result_t Macros_ProcessTextAction(void)
 {
-    return Macros_DispatchText(S->ms.currentMacroAction.text.text, S->ms.currentMacroAction.text.textLen, true);
+    return Macros_DispatchText(S->ms.currentMacroAction.text.text, S->ms.currentMacroAction.text.textLen, NULL);
 }
 
 static macro_action_t decodeKeyAndConsume(parser_context_t* ctx, macro_sub_action_t defaultSubAction)
@@ -549,8 +555,8 @@ static uint8_t putStringFromEnd(char* buffer, uint8_t startIdx, const char* str,
     return startIdx;
 }
 
-static const char* expandCodeInBase(const char* prefix, uint32_t unicodeValue, uint8_t base, const char* suffix, bool useNumpad) {
-#define MAX_CODE_LEN (4*10+1+11)
+static const char* expandCodeInBase(const char* prefix, unicode_sequence_t sequence, uint8_t base, const char* suffix, bool useNumpad) {
+#define MAX_CODE_LEN ((4*10+1+11)*MAX_UNICODE_LENGTH)
     const char digits[] = "0123456789abcdef";
     static char returnBuffer[MAX_CODE_LEN];
 
@@ -561,78 +567,86 @@ static const char* expandCodeInBase(const char* prefix, uint32_t unicodeValue, u
     uint8_t prefixLen = strlen(prefix);
     uint8_t suffixLen = strlen(suffix);
 
-    startIdx = putStringFromEnd(returnBuffer, startIdx, suffix, suffixLen);
-    startIdx = putStringFromEnd(returnBuffer, startIdx, " ", 1);
+    for (uint8_t i = sequence.charCount-1; i < MAX_CODE_LEN; i--) {
+        uint32_t unicodeValue = sequence.chars[i];
 
-    while (unicodeValue != 0 && startIdx >= charWidth) {
-        uint8_t digit = unicodeValue % base;
-        unicodeValue /= base;
+        startIdx = putStringFromEnd(returnBuffer, startIdx, suffix, suffixLen);
+        startIdx = putStringFromEnd(returnBuffer, startIdx, " ", 1);
 
-        if (useNumpad) {
-            returnBuffer[startIdx] = digits[digit];
-            returnBuffer[startIdx-1] = 'p';
-            returnBuffer[startIdx-2] = 'n';
-            returnBuffer[startIdx-3] = ' ';
-        } else {
-            returnBuffer[startIdx] = digits[digit];
-            returnBuffer[startIdx-1] = ' ';
+        while (unicodeValue != 0 && startIdx >= charWidth) {
+            uint8_t digit = unicodeValue % base;
+            unicodeValue /= base;
+
+            if (useNumpad) {
+                returnBuffer[startIdx] = digits[digit];
+                returnBuffer[startIdx-1] = 'p';
+                returnBuffer[startIdx-2] = 'n';
+                returnBuffer[startIdx-3] = ' ';
+            } else {
+                returnBuffer[startIdx] = digits[digit];
+                returnBuffer[startIdx-1] = ' ';
+            }
+            startIdx -= charWidth;
         }
-        startIdx -= charWidth;
-    }
 
-    startIdx = putStringFromEnd(returnBuffer, startIdx, prefix, prefixLen);
-    startIdx = putStringFromEnd(returnBuffer, startIdx, " ", 1);
+        startIdx = putStringFromEnd(returnBuffer, startIdx, prefix, prefixLen);
+        startIdx = putStringFromEnd(returnBuffer, startIdx, " ", 1);
+    }
 
     startIdx += 1;
     return &returnBuffer[startIdx];
 #undef MAX_CODE_LEN
 }
 
-static uint32_t consumeUtf8InParentheses(parser_context_t* ctx) {
+static unicode_sequence_t consumeUtf8InParentheses(parser_context_t* ctx) {
+    unicode_sequence_t sequence = { .charCount = 0 };
+
     if (!ConsumeToken(ctx, "("))
     {
-        Macros_ReportError("Expected parameter list.", ctx->at, ctx->at);
-        return '*';
+        Macros_ReportErrorPos(ctx, "Expected parameter list.");
+        return sequence;
     }
 
-    uint32_t code = consumeUtf8(ctx);
-
-    ConsumeWhite(ctx);
+    while (sequence.charCount < MAX_UNICODE_LENGTH && ctx->at < ctx->end && *ctx->at != ')') {
+        sequence.chars[sequence.charCount++] = consumeUtf8(ctx);
+        ConsumeWhite(ctx);
+    }
 
     if (!ConsumeToken(ctx, ")"))
     {
-        Macros_ReportError("Expected closing parenthess at the end of parameter list.", ctx->at, ctx->at);
+        ConsumeAnyChar(ctx);
+        Macros_ReportErrorPos(ctx, "Expected closing parenthesis at the end of parameter list.");
     }
 
-    return code;
+    return sequence;
 }
 
 static void expandCodes(parser_context_t* ctx) {
     switch (*ctx->at) {
         case 'a':
             if (ConsumeToken(ctx, "altCodeOf")) {
-                uint32_t code = consumeUtf8InParentheses(ctx);
+                unicode_sequence_t code = consumeUtf8InParentheses(ctx);
                 const char* keySeq = expandCodeInBase("pLA", code, 10, "rLA", true);
                 PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
             }
             break;
         case 'd':
             if (ConsumeToken(ctx, "decCodeOf")) {
-                uint32_t code = consumeUtf8InParentheses(ctx);
+                unicode_sequence_t code = consumeUtf8InParentheses(ctx);
                 const char* keySeq = expandCodeInBase("", code, 10, "", false);
                 PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
             }
             break;
         case 'h':
             if (ConsumeToken(ctx, "hexCodeOf")) {
-                uint32_t code = consumeUtf8InParentheses(ctx);
+                unicode_sequence_t code = consumeUtf8InParentheses(ctx);
                 const char* keySeq = expandCodeInBase("", code, 16, "", false);
                 PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
             }
             break;
         case 'u':
             if (ConsumeToken(ctx, "uCodeOf")) {
-                uint32_t code = consumeUtf8InParentheses(ctx);
+                unicode_sequence_t code = consumeUtf8InParentheses(ctx);
                 const char* keySeq = expandCodeInBase("CS-u", code, 16, "space", false);
                 PushParserContext(ctx, keySeq, keySeq, keySeq + strlen(keySeq));
             }
