@@ -316,6 +316,10 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
+    else if (ConsumeToken(ctx, "minimumHoldTime")) {
+        DEFINE_INT_LIMITS(0, 255);
+        ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
+    }
     else {
         Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
