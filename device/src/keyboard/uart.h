@@ -20,7 +20,7 @@
 
 // Functions:
 
-    void Uart_ControlMessage(const pin_wiring_dev_t *device, const uint8_t* data, uint16_t len);
+    // void Uart_ControlMessage(const pin_wiring_dev_t *device, const uint8_t* data, uint16_t len);
     void Uart_SendMessage(const pin_wiring_dev_t *device, message_t* msg);
     void Uart_Enable();
     void InitUart(void);
