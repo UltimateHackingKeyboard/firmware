@@ -141,8 +141,6 @@ void appendByte(uart_parser_t *uartState, uint8_t byte) {
         uartState->txBuffer[uartState->txPosition++] = byte;
     } else {
         LogU("Uart error: too long message in tx buffer\n");
-
-        UartLink_Reset(uartState->core);
     }
 }
 
@@ -202,11 +200,9 @@ void UartParser_StartMessage(uart_parser_t *uartState) {
 
 void UartParser_InitParser(
     uart_parser_t* uartState,
-    uart_link_t * core,
     void (*receiveMessage)(void* state, uart_control_t messageKind, const uint8_t* rxBuffer, uint16_t len),
     void* userArg
 ) {
-    uartState->core = core;
     uartState->rxPosition = 0;
     uartState->rxBuffer = NULL;
     uartState->txPosition = 0;

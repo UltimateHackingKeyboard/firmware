@@ -49,15 +49,13 @@ typedef struct {
     bool escaping;
     bool receivingMessage;
 
-    uart_link_t* core;
-
 } uart_parser_t;
 
 // Variables:
 
 // Functions:
 
-    void UartParser_InitParser( uart_parser_t* uartState, uart_link_t * core, void (*receiveMessage)(void* state, uart_control_t messageKind, const uint8_t* rxBuffer, uint16_t len), void* userArg);
+    void UartParser_InitParser( uart_parser_t* uartState, void (*receiveMessage)(void* state, uart_control_t messageKind, const uint8_t* rxBuffer, uint16_t len), void* userArg);
     void UartParser_SetRxBuffer(uart_parser_t *uartState, uint8_t* buffer);
 
     void UartParser_StartMessage(uart_parser_t *uartState);
