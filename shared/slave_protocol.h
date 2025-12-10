@@ -8,7 +8,7 @@
 
 // Macros:
 
-    #define SLAVE_PROTOCOL_OVER_UART false
+    #define SLAVE_PROTOCOL_OVER_UART (DEVICE_IS_UHK80_RIGHT && (PinWiring_ActualUartDebugMode != UartDebugMode_I2CMode && PinWiring_ActualUartDebugMode != UartDebugMode_DebugOverModules))
 
     #define I2C_MESSAGE_HEADER_LENGTH 3
     #define I2C_MESSAGE_MAX_PAYLOAD_LENGTH 255

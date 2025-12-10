@@ -62,9 +62,8 @@ typedef struct {
 
 
 
-static K_THREAD_STACK_DEFINE(stack_area_bridge, THREAD_STACK_SIZE);
-
-struct k_thread thread_data_bridge;
+static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
+struct k_thread thread_data;
 
 uart_state_t bridgeState = {0};
 
@@ -87,7 +86,7 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
 }
 
 
-void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
+static void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
     switch (messageKind) {
         case UartControl_Ack:
@@ -116,7 +115,7 @@ void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data,
                 uint8_t* oldPacket = uartState->rxBuffer;
 
                 uartState->rxBuffer = MessengerQueue_AllocateMemory();
-                UartParser_SetBuffer(&uartState->parser, uartState->rxBuffer);
+                UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer);
 
                 connection_id_t connectionId = uartState->connectionId;
                 device_id_t remoteDeviceId = uartState->remoteDeviceId;
@@ -137,7 +136,7 @@ void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data,
 
                 setRxState(uartState, UartRxState_Nack);
 
-                UartParser_SetBuffer(&uartState->parser, uartState->rxBuffer);
+                UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer);
             }
             break;
         case UartControl_Unexpected:
@@ -145,34 +144,6 @@ void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data,
             break;
     }
 }
-
-/*
-int Uart_SendModuleMessage(i2c_message_t* msg) {
-    uart_state_t *uartState = &moduleState;
-
-    if (uartState == NULL || uartState->core.device == NULL) {
-        return -1;
-    }
-
-    UartLink_TakeControl(&uartState->core);
-
-    // Call this only after we have taken the semaphore.
-    //Resend_RegisterMessageAndUpdateWatermarks(msg);
-
-
-    UartParser_StartMessage(&uartState->parser);
-
-    UartParser_AppendEscapedTxBytes(&uartState->parser, msg->data, msg->length);
-
-    UartParser_FinalizeMessage(&uartState->parser);
-
-    int err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
-
-    uartState->lastMessageSentTime = k_uptime_get();
-
-    return err;
-}
-*/
 
 void UartBridge_SendMessage(message_t* msg) {
     uart_state_t *uartState = &bridgeState;
@@ -338,7 +309,7 @@ static void initUart(
     UartParser_InitParser(&uartState->parser, &uartState->core, &receivePacket, (void*)uartState);
 
     uartState->rxBuffer = MessengerQueue_AllocateMemory();
-    UartParser_SetBuffer(&uartState->parser, uartState->rxBuffer);
+    UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer);
 }
 
 void InitUartBridge(void) {
@@ -351,13 +322,13 @@ void InitUartBridge(void) {
                 );
 
         k_thread_create(
-                &thread_data_bridge, stack_area_bridge,
-                K_THREAD_STACK_SIZEOF(stack_area_bridge),
+                &thread_data, stack_area,
+                K_THREAD_STACK_SIZEOF(stack_area),
                 uartLoop,
                 &bridgeState, NULL, NULL,
                 THREAD_PRIORITY, 0, K_NO_WAIT
                 );
-        k_thread_name_set(&thread_data_bridge, "test_uart");
+        k_thread_name_set(&thread_data, "test_uart");
     }
 
     UartBridge_Enable();

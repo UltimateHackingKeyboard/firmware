@@ -52,6 +52,7 @@
 #include "power_mode.h"
 #include "proxy_log_backend.h"
 #include "logger_priority.h"
+#include "keyboard/uart_modules.h"
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
@@ -262,6 +263,7 @@ void mainRuntime(void) {
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
+        InitUartModules(); // +1.6mA
         InitUartBridge(); // +1.6mA
         InitZephyrI2c(); // +0.6mA
     }

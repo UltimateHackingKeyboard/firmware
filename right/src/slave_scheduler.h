@@ -71,4 +71,8 @@
     void InitSlaveScheduler(void);
     void SlaveSchedulerCallback(status_t status);
 
+
+    void SlaveScheduler_ScheduleSingleTransfer(uint8_t slaveId);
+    void SlaveScheduler_FinalizeTransfer(uint8_t slaveId, status_t status);
+
 #endif

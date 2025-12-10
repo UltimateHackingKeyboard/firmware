@@ -131,7 +131,7 @@ void UartParser_ProcessIncomingBytes(void *state, const uint8_t* data, uint16_t 
     }
 }
 
-void UartParser_AppendRawTxByte(uart_parser_t *uartState, uint8_t byte) {
+void appendByte(uart_parser_t *uartState, uint8_t byte) {
     if (uartState->txPosition < UART_LINK_TX_BUF_SIZE) {
         uartState->txBuffer[uartState->txPosition++] = byte;
     } else {
@@ -142,7 +142,7 @@ void UartParser_AppendRawTxByte(uart_parser_t *uartState, uint8_t byte) {
 }
 
 // Used to retroactively set crc
-void UartParser_SetEscapedTxByte(uart_parser_t *uartState, uint8_t idx, uint8_t byte, uint8_t escape) {
+static void setEscapedTxByte(uart_parser_t *uartState, uint8_t idx, uint8_t byte, uint8_t escape) {
     uartState->txBuffer[idx] = escape;
     uartState->txBuffer[idx+1] = byte;
 }
@@ -156,11 +156,11 @@ static void escapeAndAppend(uart_parser_t *uartState, uint8_t byte) {
         case UartControlByte_Ack:
         case UartControlByte_Nack:
         case UartControlByte_Ping:
-            UartParser_AppendRawTxByte(uartState, UartControlByte_Escape);
-            UartParser_AppendRawTxByte(uartState, byte);
+            appendByte(uartState, UartControlByte_Escape);
+            appendByte(uartState, byte);
             break;
         default:
-            UartParser_AppendRawTxByte(uartState, byte);
+            appendByte(uartState, byte);
             break;
     }
 }
@@ -178,18 +178,18 @@ static void finalizeCrc(uart_parser_t *uartState, crc16_data_t* crcState) {
     uint16_t crc;
     crc16_finalize(crcState, &crc);
     crc = crc ^ CRC_SALT;
-    UartParser_SetEscapedTxByte(uartState, 1, crc & 0xFF, UartControlByte_Escape);
-    UartParser_SetEscapedTxByte(uartState, 3, crc >> 8, UartControlByte_Escape);
+    setEscapedTxByte(uartState, 1, crc & 0xFF, UartControlByte_Escape);
+    setEscapedTxByte(uartState, 3, crc >> 8, UartControlByte_Escape);
 }
 
 
 void UartParser_FinalizeMessage(uart_parser_t *uartState) {
-    UartParser_AppendRawTxByte(uartState, UartControlByte_End);
+    appendByte(uartState, UartControlByte_End);
     finalizeCrc(uartState, &uartState->crcState);
 }
 
 void UartParser_StartMessage(uart_parser_t *uartState) {
-    UartParser_AppendRawTxByte(uartState, UartControlByte_Start);
+    appendByte(uartState, UartControlByte_Start);
     uartState->txPosition = UART_LINK_CRC_BUF_LEN+1;
 
     crc16_init(&uartState->crcState);
@@ -211,7 +211,7 @@ void UartParser_InitParser(
     uartState->userArg = userArg;
 }
 
-void UartParser_SetBuffer(uart_parser_t *uartState, uint8_t* buffer) {
+void UartParser_SetRxBuffer(uart_parser_t *uartState, uint8_t* buffer) {
     uartState->rxBuffer = buffer;
     uartState->rxPosition = 0;
     uartState->escaping = false;

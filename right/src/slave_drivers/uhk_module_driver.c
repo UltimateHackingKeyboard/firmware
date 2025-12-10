@@ -3,6 +3,8 @@
 #include "i2c_addresses.h"
 #include "i2c.h"
 #include "atomicity.h"
+#include "pin_wiring.h"
+#include "device.h"
 
 #ifdef __ZEPHYR__
 #include "messenger.h"
@@ -75,12 +77,12 @@ static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
 
 static status_t tx(uint8_t i2cAddress)
 {
-#if SLAVE_PROTOCOL_OVER_UART
-    int err = Uart_SendModuleMessage(&txMessage);
-    return err == 0 ? kStatus_Success : kStatus_Fail;
-#else
-    return I2cAsyncWriteMessage(i2cAddress, &txMessage);
-#endif
+    if (SLAVE_PROTOCOL_OVER_UART) {
+        int err = Uart_SendModuleMessage(&txMessage);
+        return err == 0 ? kStatus_Success : kStatus_Fail;
+    } else {
+        return I2cAsyncWriteMessage(i2cAddress, &txMessage);
+    }
 }
 
 static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress)
@@ -226,6 +228,9 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
     uhk_module_phase_t *uhkModulePhase = &uhkModuleState->phase;
     uint8_t i2cAddress = uhkModuleState->firmwareI2cAddress;
     i2c_message_t *rxMessage = &uhkModuleState->rxMessage;
+
+    uint8_t phase = *uhkModulePhase;
+    printk("phase %d\n", phase);
 
     switch (*uhkModulePhase) {
 
@@ -576,4 +581,8 @@ void UhkModuleSlaveDriver_UpdateConnectionStatus() {
             }
             break;
     }
+}
+
+i2c_message_t* UhkModuleDriver_GetTxMessage() {
+    return &txMessage;
 }

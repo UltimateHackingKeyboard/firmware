@@ -58,14 +58,12 @@ typedef struct {
 // Functions:
 
     void UartParser_InitParser( uart_parser_t* uartState, uart_link_t * core, void (*receiveMessage)(void* state, uart_control_t messageKind, const uint8_t* rxBuffer, uint16_t len), void* userArg);
-    void UartParser_SetBuffer(uart_parser_t *uartState, uint8_t* buffer);
+    void UartParser_SetRxBuffer(uart_parser_t *uartState, uint8_t* buffer);
 
     void UartParser_StartMessage(uart_parser_t *uartState);
+    void UartParser_AppendEscapedTxBytes(uart_parser_t *uartState, const uint8_t* data, uint16_t len);
     void UartParser_FinalizeMessage(uart_parser_t *uartState);
 
-    void UartParser_AppendRawTxByte(uart_parser_t *uartState, uint8_t byte);
-    void UartParser_AppendEscapedTxBytes(uart_parser_t *uartState, const uint8_t* data, uint16_t len);
-    void UartParser_SetEscapedTxByte(uart_parser_t *uartState, uint8_t idx, uint8_t byte, uint8_t escape);
 
     void UartParser_ProcessIncomingBytes(void *state, const uint8_t* data, uint16_t len);
 

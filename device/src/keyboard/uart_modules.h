@@ -12,6 +12,7 @@
 // Functions:
 
     void InitUartModules(void);
+    void UartModules_Enable(void);
 
 
 
