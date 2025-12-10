@@ -37,9 +37,9 @@
 
     void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*receiveBytes)(void* state, const uint8_t* data, uint16_t len), void* userArg);
     void UartLink_Enable(uart_link_t *uartState);
-    void UartLink_ResetUart(uart_link_t *uartState);
+    void UartLink_Reset(uart_link_t *uartState);
 
-    void UartLink_TakeControl(uart_link_t *uartState);
+    void UartLink_LockBusy(uart_link_t *uartState);
     int UartLink_Send(uart_link_t *uartState, uint8_t* data, uint16_t len);
 
 #endif // __UART_LINK_H__

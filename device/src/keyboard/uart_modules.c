@@ -1,7 +1,7 @@
 #include "uart_modules.h"
 #include "slave_scheduler.h"
-#include "uart_link.h"
-#include "uart_parser.h"
+#include "keyboard/uart_link.h"
+#include "shared/uart_parser.h"
 #include "slave_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 
@@ -33,7 +33,7 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
         case UartControl_ValidMessage:
         case UartControl_InvalidMessage: {
         case UartControl_Unexpected:
-            UartLink_ResetUart(&uartState->core);
+            UartLink_Reset(&uartState->core);
             break;
         }
     }
@@ -95,7 +95,7 @@ int Uart_SendModuleMessage(i2c_message_t* msg) {
         return -1;
     }
 
-    UartLink_TakeControl(&uartState->core);
+    UartLink_LockBusy(&uartState->core);
 
     // Call this only after we have taken the semaphore.
     //Resend_RegisterMessageAndUpdateWatermarks(msg);

@@ -5,7 +5,7 @@
 
 #define UART_RESET_DELAY 10
 
-void UartLink_ResetUart(uart_link_t *uartState) {
+void UartLink_Reset(uart_link_t *uartState) {
     // This will probably not reset uart, but at least will give main thread some time to run
     uart_rx_disable(uartState->device);
     EventScheduler_Schedule(k_uptime_get() + UART_RESET_DELAY, EventSchedulerEvent_ReenableUart, "reenable uart");
@@ -85,7 +85,7 @@ void UartLink_Enable(uart_link_t *uartState) {
 }
 
 
-void UartLink_TakeControl(uart_link_t *uartState) {
+void UartLink_LockBusy(uart_link_t *uartState) {
     SEM_TAKE(&uartState->txControlBusy);
 }
 

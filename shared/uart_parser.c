@@ -1,7 +1,12 @@
 #include "uart_parser.h"
-#include "uart_link.h"
 #include "crc16.h"
 #include "logger.h"
+
+#ifdef MODULE_ID
+    #include "shared/module/uart_link.h"
+#else
+    #include "keyboard/uart_link.h"
+#endif
 
 #define RX_BUF_SIZE UART_MAX_PACKET_LENGTH + CRC_LEN
 
@@ -137,7 +142,7 @@ void appendByte(uart_parser_t *uartState, uint8_t byte) {
     } else {
         LogU("Uart error: too long message in tx buffer\n");
 
-        UartLink_ResetUart(uartState->core);
+        UartLink_Reset(uartState->core);
     }
 }
 

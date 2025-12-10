@@ -9,8 +9,8 @@
 #include "connections.h"
 #include "resend.h"
 #include "pin_wiring.h"
-#include "uart_link.h"
-#include "uart_parser.h"
+#include "keyboard/uart_link.h"
+#include "shared/uart_parser.h"
 
 // Thread definitions
 
@@ -140,7 +140,7 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
             }
             break;
         case UartControl_Unexpected:
-            UartLink_ResetUart(&uartState->core);
+            UartLink_Reset(&uartState->core);
             break;
     }
 }
@@ -158,7 +158,7 @@ void UartBridge_SendMessage(message_t* msg) {
         LogUOS("Uart: failed to take txBufferBusy semaphore.\n");
     }
 
-    UartLink_TakeControl(&uartState->core);
+    UartLink_LockBusy(&uartState->core);
 
     // Call this only after we have taken the semaphore.
     Resend_RegisterMessageAndUpdateWatermarks(msg);
@@ -180,7 +180,7 @@ void UartBridge_SendMessage(message_t* msg) {
 }
 
 static void sendControl(uart_state_t *uartState, uint8_t byte) {
-    UartLink_TakeControl(&uartState->core);
+    UartLink_LockBusy(&uartState->core);
     UartLink_Send(&uartState->core, &byte, 1);
 }
 
@@ -198,7 +198,7 @@ static void resend(uart_state_t *uartState) {
     } else {
         uartState->txState = UartTxState_WaitingForAck;
         k_sleep(K_MSEC(13));
-        UartLink_TakeControl(&uartState->core);
+        UartLink_LockBusy(&uartState->core);
         UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
         uartState->lastMessageSentTime = k_uptime_get();
     }

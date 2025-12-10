@@ -3,12 +3,12 @@
 
 // Includes:
 
-    #include "uart_bridge.h"
     #include "attributes.h"
     #include <stdint.h>
     #include <stdbool.h>
-    #include "uart_link.h"
     #include "crc16.h"
+
+    #include "keyboard/uart_link.h"
 
 // Macros:
 
