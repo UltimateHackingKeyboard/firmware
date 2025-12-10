@@ -29,7 +29,7 @@
 #include "pin_wiring.h"
 
 #if DEVICE_IS_KEYBOARD
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #endif
 
 static k_tid_t mainThreadId = 0;
@@ -451,7 +451,7 @@ void Messenger_SendMessage(message_t* message) {
         case ConnectionId_UartLeft:
         case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
-            Uart_SendMessage(PinWiringConfig->device_uart_bridge, message);
+            UartBridge_SendMessage(message);
 #endif
             break;
         case ConnectionId_NusClientRight:

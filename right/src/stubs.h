@@ -33,7 +33,7 @@
     extern void Charger_UpdateBatteryCharging();
     extern const rgb_t* PairingScreen_ActionColor(key_action_t* action);
     extern void Uart_Reenable();
-    extern void Uart_Enable();
+    extern void UartBridge_Enable();
     extern status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer);
     extern void Oled_LogConstant(const char* text);
     extern void Oled_Log(const char *fmt, ...);

@@ -1,19 +1,19 @@
-#include "uart_core.h"
+#include "uart_link.h"
 #include "event_scheduler.h"
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 
 #define UART_RESET_DELAY 10
 
-void UartCore_ResetUart(uart_core_t *uartState) {
+void UartLink_ResetUart(uart_link_t *uartState) {
     // This will probably not reset uart, but at least will give main thread some time to run
     uart_rx_disable(uartState->device);
     EventScheduler_Schedule(k_uptime_get() + UART_RESET_DELAY, EventSchedulerEvent_ReenableUart, "reenable uart");
 }
 
-// move to uart_core
+// move to uart_link
 static void uart_callback(const struct device *dev, struct uart_event *evt, void *user_data) {
-    uart_core_t *uartState = (uart_core_t *)user_data;
+    uart_link_t *uartState = (uart_link_t *)user_data;
     int err;
 
     switch (evt->type) {
@@ -22,8 +22,9 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_TX_ABORTED:
-        uart_tx(uartState->device, uartState->txBuffer, uartState->txPosition, UART_TIMEOUT);
-        LogU("Tx aborted, retrying\n");
+        // TODO: is this needed?
+        // uart_tx(uartState->device, uartState->txBuffer, uartState->txPosition, UART_TIMEOUT);
+        LogU("Tx aborted. Please report this!\n");
         break;
 
     case UART_RX_RDY:
@@ -34,7 +35,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     {
         uartState->rxbuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
 
-        err = uart_rx_buf_rsp(uartState->device, uartState->rxbuf, UART_CORE_BUF_SIZE);
+        err = uart_rx_buf_rsp(uartState->device, uartState->rxbuf, UART_LINK_BUF_SIZE);
         if (err != 0) {
             LogU("Could not provide new buffer because %i\n", err);
         }
@@ -59,13 +60,12 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     }
 }
 
-void UartCore_Init(uart_core_t *uartState, const struct device* dev, void (*receiveBytes)(void* state, const uint8_t* data, uint16_t len), void* userArg) {
-    uartState->txPosition = 0;
+void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*receiveBytes)(void* state, const uint8_t* data, uint16_t len), void* userArg) {
     uartState->rxbuf = uartState->rxbuf1;
     uartState->receiveBytes = receiveBytes;
     uartState->userArg = userArg;
 
-    k_sem_init(&uartState->txControlBusy, UART_CORE_SLOTS, UART_CORE_SLOTS);
+    k_sem_init(&uartState->txControlBusy, UART_LINK_SLOTS, UART_LINK_SLOTS);
 
     uartState->device = dev;
 
@@ -73,41 +73,25 @@ void UartCore_Init(uart_core_t *uartState, const struct device* dev, void (*rece
 }
 
 
-void UartCore_Enable(uart_core_t *uartState) {
+void UartLink_Enable(uart_link_t *uartState) {
     if (uartState == NULL || uartState->enabled || uartState->device == NULL) {
         return;
     }
     LogU("Enabling UART\n");
-    int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_CORE_BUF_SIZE, UART_TIMEOUT);
+    int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_LINK_BUF_SIZE, UART_TIMEOUT);
     if (err != 0) {
         LogS("Failed to enable UART RX because %d\n", err);
     }
 }
 
 
-void UartCore_AppendTxByte(uart_core_t *uartState, uint8_t byte) {
-    if (uartState->txPosition < UART_CORE_TX_BUF_SIZE) {
-        uartState->txBuffer[uartState->txPosition++] = byte;
-    } else {
-        LogU("Uart error: too long message in tx buffer\n");
-
-        uart_rx_disable(uartState->device);
-        uart_rx_enable(uartState->device, uartState->rxbuf, UART_CORE_BUF_SIZE, UART_TIMEOUT);
-    }
-}
-
-// Used to retroactively set crc
-void UartCore_SetEscapedTxByte(uart_core_t *uartState, uint8_t idx, uint8_t byte, uint8_t escape) {
-    uartState->txBuffer[idx] = escape;
-    uartState->txBuffer[idx+1] = byte;
-}
-
-void UartCore_TakeControl(uart_core_t *uartState) {
+void UartLink_TakeControl(uart_link_t *uartState) {
     SEM_TAKE(&uartState->txControlBusy);
 }
 
-void UartCore_Send(uart_core_t *uartState, uint8_t* data, uint16_t len) {
-    uart_tx(uartState->device, data, len, UART_TIMEOUT);
+
+int UartLink_Send(uart_link_t *uartState, uint8_t* data, uint16_t len) {
+    return uart_tx(uartState->device, data, len, UART_TIMEOUT);
 }
 
 

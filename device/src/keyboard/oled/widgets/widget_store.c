@@ -15,7 +15,7 @@
 #include "layer.h"
 #include "layer_switcher.h"
 #include "str_utils.h"
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #include "bt_conn.h"
 #include "state_sync.h"
 #include <string.h>
@@ -25,7 +25,7 @@
 #include "macros/status_buffer.h"
 #include "host_connection.h"
 #include "connections.h"
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #include "messenger.h"
 #include "messenger_queue.h"
 #include "event_scheduler.h"
@@ -81,11 +81,10 @@ static string_segment_t getKeymapText() {
 static string_segment_t getDebugLineText() {
 #define BUFFER_LENGTH 80
     static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-    snprintf(buffer, BUFFER_LENGTH-1, "D %d, MB %d, MU %d, IU %d, R %d, RTT %d",
+    snprintf(buffer, BUFFER_LENGTH-1, "D %d, MB %d, MU %d, R %d, RTT %d",
             MessengerQueue_DroppedMessageCount,
             Connections[ConnectionId_UartLeft].watermarks.missedCount,
             Connections[ConnectionId_NusServerLeft].watermarks.missedCount,
-            Uart_InvalidMessagesCounter,
             StateSync_LeftResetCounter,
             RoundTripTime
             );

@@ -14,7 +14,7 @@ typedef struct Crc16Data {
 typedef struct {
     uint16_t length; //length of data
     uint16_t crc;
-    uint8_t* data;
+    const uint8_t* data;
 } ATTR_PACKED crc16_message_t;
 
 //! @brief Initializes the parameters of the crc function, must be called first.

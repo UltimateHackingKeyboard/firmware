@@ -16,7 +16,7 @@
 #include "keyboard/oled/oled.h"
 #include "keyboard/charger.h"
 #include "keyboard/spi.h"
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
 #include "shell.h"
@@ -262,7 +262,7 @@ void mainRuntime(void) {
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUart(); // +1.6mA
+        InitUartBridge(); // +1.6mA
         InitZephyrI2c(); // +0.6mA
     }
 

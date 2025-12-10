@@ -8,6 +8,7 @@
 #include "messenger.h"
 #include "link_protocol.h"
 #include "state_sync.h"
+#include "keyboard/uart_bridge.h"
 #else
 #include "peripherals/test_led.h"
 #include "device.h"
@@ -74,12 +75,22 @@ static uhk_module_i2c_addresses_t moduleIdsToI2cAddresses[] = {
 
 static status_t tx(uint8_t i2cAddress)
 {
+#if SLAVE_PROTOCOL_OVER_UART
+    int err = Uart_SendModuleMessage(&txMessage);
+    return err == 0 ? kStatus_Success : kStatus_Fail;
+#else
     return I2cAsyncWriteMessage(i2cAddress, &txMessage);
+#endif
 }
 
 static status_t rx(i2c_message_t *rxMessage, uint8_t i2cAddress)
 {
+#if SLAVE_PROTOCOL_OVER_UART
+    //TODO: eeh?
+    return kStatus_Success;
+#else
     return I2cAsyncReadMessage(i2cAddress, rxMessage);
+#endif
 }
 
 void UhkModuleSlaveDriver_Init(uint8_t uhkModuleDriverId)
@@ -221,7 +232,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         // Jump to bootloader
         case UhkModulePhase_JumpToBootloader:
             txMessage.data[0] = SlaveCommand_JumpToBootloader;
-            txMessage.length = 1;
+            txMessage.length = 2;
             res.status = tx(i2cAddress);
             break;
 
