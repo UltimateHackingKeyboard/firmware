@@ -306,7 +306,7 @@ static void initUart(
     uartState->remoteDeviceId = DEVICE_IS_UHK80_LEFT ? DeviceId_Uhk80_Right : DeviceId_Uhk80_Left;
 
     UartLink_Init(&uartState->core, device->device, UartParser_ProcessIncomingBytes, (void*)&uartState->parser);
-    UartParser_InitParser(&uartState->parser, &uartState->core, &receivePacket, (void*)uartState);
+    UartParser_InitParser(&uartState->parser, &receivePacket, (void*)uartState);
 
     uartState->rxBuffer = MessengerQueue_AllocateMemory();
     UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer);

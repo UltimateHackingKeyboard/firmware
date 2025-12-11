@@ -57,7 +57,7 @@ static void initUart(
     }
 
     UartLink_Init(&uartState->core, device->device, UartParser_ProcessIncomingBytes, (void*)&uartState->parser);
-    UartParser_InitParser(&uartState->parser, &uartState->core, &receivePacket, (void*)uartState);
+    UartParser_InitParser(&uartState->parser, &receivePacket, (void*)uartState);
 
     UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer);
 }
