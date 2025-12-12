@@ -552,3 +552,20 @@ bool PopParserContext(parser_context_t* ctx)
     }
 }
 
+const char* DeviceModelName(device_id_t device) {
+    switch (device) {
+        case DeviceId_Uhk60v1_Right:
+            return "UHK60v1";
+        case DeviceId_Uhk60v2_Right:
+            return "UHK60v2";
+        case DeviceId_Uhk80_Left:
+            return "UHK80Left";
+        case DeviceId_Uhk80_Right:
+            return "UHK80Right";
+        case DeviceId_Uhk_Dongle:
+            return "UHKDongle";
+        default:
+            return "Unknown device";
+    }
+}
+

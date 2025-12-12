@@ -37,6 +37,7 @@
 #include "usb_commands/usb_command_reenumerate.h"
 #include "bt_defs.h"
 #include "trace.h"
+#include "peripherals/leakage_test.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
@@ -1698,6 +1699,19 @@ static macro_result_t processTrackpointCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processTestLeakageCommand(parser_context_t* ctx)
+{
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifndef __ZEPHYR__
+    TestLeakage(1000);
+#endif
+
+    return MacroResult_Finished;
+}
+
 
 static macro_result_t processResetTrackpointCommand()
 {
@@ -2550,6 +2564,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
                     Trace_Print(LogTarget_ErrorBuffer, "Triggered by macro command");
                 }
                 return MacroResult_Finished;
+            }
+            else if (ConsumeToken(ctx, "testLeakage")) {
+                return processTestLeakageCommand(ctx);
             }
             else {
                 goto failed;

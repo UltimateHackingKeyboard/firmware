@@ -89,6 +89,7 @@
     secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx);
     secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx);
     navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx);
+    const char* DeviceModelName(device_id_t device);
 
     bool PushParserContext(parser_context_t* ctx, const char* begin, const char* at, const char* end);
     bool PopParserContext(parser_context_t* ctx);
