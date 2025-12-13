@@ -134,9 +134,13 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     postponer_buffer_record_type_t *actionRelease;
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
-    uint8_t lastKeyQueuePos = PostponerQuery_PendingKeypressCount() - 1;
-    PostponerQuery_InfoByQueueIdx(lastKeyQueuePos, &actionPress, &actionRelease);
-    uint16_t actionKeyId = PostponerExtended_PendingId(lastKeyQueuePos);
+    if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
+        PostponerQuery_FindFirstReleased(&actionPress, &actionRelease);
+    }
+    else {
+        PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
+    }
+    uint16_t actionKeyId = actionPress != NULL ? Utils_KeyStateToKeyId(actionPress->event.key.keyState) : 255;
     uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
 
     //handle doubletap logic
