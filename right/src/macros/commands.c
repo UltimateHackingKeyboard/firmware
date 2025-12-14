@@ -1007,8 +1007,8 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
         if (ConsumeToken(ctx, "primaryFromSameHalf")) {
             fromSameHalf = SecondaryRole_PrimaryFromSameHalf;
         }
-        else if (ConsumeToken(ctx, "secondaryFromSameHalf")) {
-            fromSameHalf = SecondaryRole_SecondaryFromSameHalf;
+        else if (ConsumeToken(ctx, "primaryFromSameHalfDisabled")) {
+            fromSameHalf = SecondaryRole_PrimaryFromSameHalfDisabled;
         }
         else {
             break;

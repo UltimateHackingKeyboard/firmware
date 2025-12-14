@@ -193,7 +193,7 @@ CONDITION = if (EXPRESSION)
 CONDITION = else
 CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
 CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
-CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy | primaryFromSameHalf | secondaryFromSameHalf ]
+CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy | primaryFromSameHalf | primaryFromSameHalfDisabled ]
 CONDITION = {ifHold | ifTap}
 CONDITION = {ifDoubletap | ifNotDoubletap}
 CONDITION = {ifInterrupted | ifNotInterrupted}
@@ -475,7 +475,7 @@ Commands:
 - `holdLayer LAYERID` mostly corresponds to the sequence `toggleLayer <layer>; delayUntilRelease; untoggleLayer`, except for more elaborate conflict resolution (releasing holds in incorrect order).
 - `holdKeymapLayer KEYMAPID LAYERID` just as holdLayer, but allows referring to layer of different keymap. This reloads the entire keymap, so it may be very inefficient.
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | primaryFromSameHalf | secondaryFromSameHalf ]... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | primaryFromSameHalf | primaryFromSameHalfDisabled ]... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Layer/Keymap loading manipulation / shared layers:
 
@@ -499,7 +499,7 @@ We allow postponing key activations in order to allow deciding between some scen
 - `ifKeyPendingAt/ifNotKeyPendingAt <idx> <keyId>` looks into postponing queue at `idx`th waiting key and compares it to the `keyId`.
 - `consumePending <n>` will remove n records from the queue.
 - `activateKeyPostponed KEYID` will add tap of KEYID at the end of queue. If `atLayer LAYERID` is specified, action will be taken from that layer rather than current one. If `prepend` option is specified, event will be place at the beginning of the queue.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | primaryFromSameHalf | secondaryFromSameHalf ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | primaryFromSameHalf | primaryFromSameHalfDisabled ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 - `ifHold/ifTap COMMAND` will wait until the key that activated the macro will be released or until holdTimeout elapses. Then it will either execute the command or skip it.
 - `ifShortcut/ifNotShortcut/ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for next keypresses until sufficient number of keys has been pressed. If the next keypresses correspond to the provided arguments (hardware ids), the keypresses are consumed and the condition is performed. Consuming takes place in both `if` and `ifNot` versions if the full list is matched. E.g., `ifShortcut 090 089 final tapKey C-V; holdKey v`.
   - `Shortcut` requires continual press of keys (e.g., Ctrl+c). By default, it timeouts with the activation key release.
@@ -539,7 +539,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
-- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | primaryFromSameHalf | secondaryFromSameHalf ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
+- `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | primaryFromSameHalf | primaryFromSameHalfDisabled ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
 ### Modifiers
 
@@ -693,7 +693,7 @@ Internally, values are saved in one of the following types, and types are automa
       - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release and trigger-by-press behaviours, so that positive values favor primary role, while negative values favor secondary role. This works by adding the value to the action key (or subtracting from the dual role key). E.g., suppose trigger by release is active, and safetyMargin equal 50. Furthermore assume that dual-role key is released 30ms after the action key. Due to safety margin 50 being greater than 30, the dual-role key is still considered to be released first, and so primary role is activated.
       - `set secondaryRole.advanced.doubletapToPrimary BOOL` allows initiating hold of primary action by doubletap. (Useful if you want a dual key on space.)
       - `set secondaryRole.advanced.doubletapTime <ms, 200 (INT)>` configures the above timeout (measured press-to-press).
-      - `set secondaryRole.advanced.primaryFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role if the triggering key is from the same keyboard half.  `ifPrimary/ifSecondary` can specify explicitly whether to trigger primary from same half using the argument `primaryFromSameHalf/secondaryFromSameHalf`.
+      - `set secondaryRole.advanced.primaryFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role if the triggering key is from the same keyboard half.  `ifPrimary/ifSecondary` can specify explicitly whether to trigger primary from same half using the argument `primaryFromSameHalf/primaryFromSameHalfDisabled`.
 
 - `macroEngine`
   - terminology:

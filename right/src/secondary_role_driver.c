@@ -347,7 +347,7 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
             case SecondaryRole_PrimaryFromSameHalf:
                 primaryFromSameHalf = true;
                 break;
-            case SecondaryRole_SecondaryFromSameHalf:
+            case SecondaryRole_PrimaryFromSameHalfDisabled:
                 primaryFromSameHalf = false;
                 break;
             default:
