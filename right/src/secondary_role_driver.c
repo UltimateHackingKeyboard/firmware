@@ -157,6 +157,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     bool dualRoleWasHeldLongEnoughToBeAllowedSecondary = activeTime >= Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
 
     if (dualRoleRelease != NULL && !dualRoleWasHeldLongEnoughToBeAllowedSecondary) {
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));        
         return SecondaryRoleState_Primary;
     }
 
@@ -164,16 +165,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     if (actionPress == NULL) {
         if (dualRoleRelease != NULL && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
             //activate primary
-            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));
+            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
             return SecondaryRoleState_Primary;
         } else if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
             //activate secondary
             switch (Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction) {
             case SecondaryRoleState_Primary:
-                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
+                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PD"));
                 return SecondaryRoleState_Primary;
             case SecondaryRoleState_Secondary:
-                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SC"));
+                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SA"));
                 return SecondaryRoleState_Secondary;
             default:
                 sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
