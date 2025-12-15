@@ -190,6 +190,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         bool actionKeyWasPressedAndFromTheSameHalf = primaryFromSameHalf && actionPress != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
 
         if (actionKeyWasPressedAndFromTheSameHalf) {
+            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PE"));
             return SecondaryRoleState_Primary;
         }
         
@@ -201,16 +202,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
                 sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
                 return SecondaryRoleState_DontKnowYet;
             }
-            KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SE"));
-            KEY_TIMING2(actionKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "SF"));
+            KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SB"));
+            KEY_TIMING2(actionKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "SC"));
             return SecondaryRoleState_Secondary;
         }
 
         bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(Timer_GetCurrentTime() - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
         bool dualKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (dualKeyWasPressedFirst || dualKeyWasPressedButActionKeyNot) {
-            KEY_TIMING2(dualKeyWasPressedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PE"));
-            KEY_TIMING2(dualKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "PF"));
+            KEY_TIMING2(dualKeyWasPressedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PF"));
+            KEY_TIMING2(dualKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "PG"));
             return SecondaryRoleState_Primary;
         }
     }
@@ -220,6 +221,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         bool actionKeyWasReleasedAndFromSameHalf = primaryFromSameHalf && actionRelease != NULL && Utils_AreKeysOnTheSameHalf(actionKeyId, dualRoleId);
         
         if (actionKeyWasReleasedAndFromSameHalf) {
+            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PH"));
             return SecondaryRoleState_Primary;
         }
 
@@ -231,16 +233,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
                 sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
                 return SecondaryRoleState_DontKnowYet;
             }
-            KEY_TIMING2(actionKeyWasReleasedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SG"));
-            KEY_TIMING2(actionKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "SH"));
+            KEY_TIMING2(actionKeyWasReleasedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SD"));
+            KEY_TIMING2(actionKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "SE"));
             return SecondaryRoleState_Secondary;
         }
 
         bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(Timer_GetCurrentTime() - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
         bool dualKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
         if (dualKeyWasReleasedFirst | dualKeyWasReleasedButActionKeyNot) {
-            KEY_TIMING2(dualKeyWasReleasedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PG"));
-            KEY_TIMING2(dualKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "PH"));
+            KEY_TIMING2(dualKeyWasReleasedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PI"));
+            KEY_TIMING2(dualKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "PJ"));
             return SecondaryRoleState_Primary;
         }
     }
@@ -249,13 +251,13 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // handle timeout when action key is pressed
     if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SJ"));
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SF"));
         return SecondaryRoleState_Secondary;
     }
 
     // handle primary press when action key is pressed and trigger behaviors are off
     if (dualRoleRelease != NULL && !triggerBehaviorsActive && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PJ"));
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PK"));
         return SecondaryRoleState_Primary;
     }
 
