@@ -5,12 +5,15 @@
 #include "i2c_addresses.h"
 #include "fsl_i2c.h"
 #include "fsl_clock.h"
+#include "fsl_lpuart.h"
 #include "module/i2c.h"
+#include "module/uart.h"
 #include "module/key_scanner.h"
 #include "module/led_pwm.h"
 #include "slave_protocol_handler.h"
 #include "module/i2c_watchdog.h"
 #include "module.h"
+#include "uart.h"
 
 i2c_slave_config_t slaveConfig;
 i2c_slave_handle_t slaveHandle;
@@ -26,7 +29,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
 
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
-            SlaveTxHandler();
+            SlaveTxHandler(TxMessage.data);
             xfer->data = (uint8_t*)&TxMessage;
             xfer->dataSize = TxMessage.length + I2C_MESSAGE_HEADER_LENGTH;
             break;
@@ -36,7 +39,11 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
         case kI2C_SlaveReceiveEvent:
             ((uint8_t*)&RxMessage)[rxMessagePos++] = userData;
             if (RxMessage.length == rxMessagePos-I2C_MESSAGE_HEADER_LENGTH) {
-                SlaveRxHandler();
+                if (CRC16_IsMessageValid(&RxMessage)) {
+                    SlaveRxHandler(RxMessage.data);
+                } else {
+                    TxMessage.length = 0;
+                }
             }
             break;
         default:
@@ -48,6 +55,7 @@ void initInterruptPriorities(void)
 {
     NVIC_SetPriority(I2C0_IRQn, 1);
     NVIC_SetPriority(SPI0_IRQn, 1);
+    NVIC_SetPriority(LPUART0_IRQn, 1);
     // TODO: what's the desired priority? NVIC_SetPriority(KEY_SCANNER_LPTMR_IRQ_ID, 1);
 }
 
@@ -85,5 +93,9 @@ void InitPeripherals(void)
     InitLedDriver();
     TestLed_Init();
     LedPwm_Init();
-    initI2c();
+    if (MODULE_OVER_UART) {
+        InitModuleUart();
+    } else {
+        initI2c();
+    }
 }

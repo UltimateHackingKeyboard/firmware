@@ -16,11 +16,12 @@ target_sources(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/main.c
     ${CMAKE_CURRENT_LIST_DIR}/slave_protocol_handler.c
     ${CMAKE_CURRENT_LIST_DIR}/test_led.c
+    ${CMAKE_CURRENT_LIST_DIR}/uart.c
 )
 
 mcux_add_linker_symbol(SYMBOLS
     __heap_size__=0
-    __stack_size__=0x0050
+    __stack_size__=0x0100
 )
 mcux_add_armgcc_linker_script(LINKER link/MKL03Z32xxx4_flash.ld)
 

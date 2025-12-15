@@ -34,6 +34,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
         DEVICEID_UHK80_LEFT=69660648
         DEVICEID_UHK80_RIGHT=69660578
         DEVICEID_UHK_DONGLE=683150769
+        DEVICEID_UHK_MODULE=69665303
 
     You can also set a command that will be executed after the builds are finished,
     and a command that will be executed whenever this script is invoked:
@@ -151,7 +152,7 @@ function dealiasDeviceZephyr() {
             BUILD_DIR="device/build/$DEVICE"
             ;;
         *)
-            echo "$DEVICE is not a valid device name!"
+            echo "$DEVICE is not a valid zephyr device name!"
             exit 1
     esac
 }
@@ -177,9 +178,10 @@ function dealiasDeviceMcux() {
             VARIANT="release"
             BUILD_DIR="$DEVICE/build/$VARIANT"
             DEVICE_DIR="$DEVICE"
+            DEVICEARG="-SelectEmuBySN $DEVICEID_UHK_MODULE"
             ;;
         *)
-            echo "$DEVICE is not a valid device name!"
+            echo "$DEVICE is not a valid mcux device name!"
             exit 1
     esac
 }
@@ -282,10 +284,9 @@ function performMcuxAction() {
 
         flash)
             mutex lock
-            west flash --build-dir $BUILD_DIR
+            JLinkExe -if SWD -speed 4000 -device MKL03Z32xxx4 -autoconnect 1 $DEVICEARG -CommanderScript "scripts/flash-$DEVICE.jlink"
             mutex unlock
             exitOnFail $?
-            exit 1
             ;;
         flashUsb)
             mutex lock

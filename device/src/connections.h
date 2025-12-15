@@ -24,6 +24,7 @@
         ConnectionType_NusRight,
         ConnectionType_UartLeft,
         ConnectionType_UartRight,
+        ConnectionType_UartModule,
         ConnectionType_Unknown,
     } connection_type_t;
 
@@ -35,6 +36,7 @@
         ConnectionId_UsbHidRight, //alias to some host connection
         ConnectionId_UartLeft,
         ConnectionId_UartRight,
+        ConnectionId_MyModule,
         ConnectionId_NusServerLeft,
         ConnectionId_NusServerRight,
         ConnectionId_NusClientRight,
@@ -47,6 +49,7 @@
         ConnectionTarget_Left,
         ConnectionTarget_Right,
         ConnectionTarget_Host,
+        ConnectionTarget_Module,
         ConnectionTarget_Count,
     } connection_target_t;
 

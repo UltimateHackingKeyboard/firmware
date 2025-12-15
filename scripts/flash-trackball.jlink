@@ -1,0 +1,8 @@
+speed 4000
+device MKL03Z32xxx4
+connect
+loadfile trackball/build/release/uhk-trackball.bin 0x0
+RSetType 2
+r
+qc
+

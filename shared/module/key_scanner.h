@@ -4,6 +4,7 @@
 // Includes:
 
     #include "module.h"
+    #include <stdint.h>
 
 // Macros:
 
@@ -12,6 +13,10 @@
     #define KEY_SCANNER_LPTMR_BASEADDR LPTMR0
     #define KEY_SCANNER_LPTMR_IRQ_ID   LPTMR0_IRQn
     #define KEY_SCANNER_HANDLER        LPTMR0_IRQHandler
+
+// Functions:
+
+    extern uint32_t CurrentTime;
 
 // Functions:
 

@@ -4,8 +4,10 @@
 #include <stdio.h>
 #include "module/key_scanner.h"
 #include "module.h"
+#include "uart.h"
 
 DEFINE_BOOTLOADER_CONFIG_AREA(I2C_ADDRESS_MODULE_BOOTLOADER)
+
 
 int main(void)
 {
@@ -16,6 +18,11 @@ int main(void)
 
     while (1) {
         Module_Loop();
+
+        if (MODULE_OVER_UART) {
+            ModuleUart_Loop();
+        }
+
         __WFI();
     }
 }

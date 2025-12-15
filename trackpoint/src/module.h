@@ -6,8 +6,12 @@
     #include "module/module_api.h"
     #include "key_vector.h"
     #include "slave_protocol.h"
+    #include <stdint.h>
 
 // Macros:
+
+    #define TRACKPOINT_VERSION 2
+    #define MANUAL_RUN false
 
     #define I2C_ADDRESS_MODULE_FIRMWARE I2C_ADDRESS_RIGHT_MODULE_FIRMWARE
     #define I2C_ADDRESS_MODULE_BOOTLOADER I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER
@@ -47,6 +51,12 @@
 
     extern key_vector_t KeyVector;
     extern pointer_delta_t PointerDelta;
+
+#define DEBUG_CNT 32
+
+#define NEXTPOS ((debugPos++) % DEBUG_CNT)
+    extern volatile uint8_t debugOut[DEBUG_CNT];
+    extern volatile uint8_t debugPos;
 
 // Functions:
 

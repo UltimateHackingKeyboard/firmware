@@ -1,4 +1,5 @@
 #include "event_scheduler.h"
+#include "keyboard/uart_modules.h"
 #include "timer.h"
 #include "macros/core.h"
 #include "macro_recorder.h"
@@ -17,7 +18,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/oled.h"
 #include "keyboard/charger.h"
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #include "main.h"
 #include "bt_manager.h"
 #else
@@ -98,7 +99,8 @@ static void processEvt(event_scheduler_event_t evt)
             EventVector_Set(EventVector_MouseController);
             break;
         case EventSchedulerEvent_ReenableUart:
-            Uart_Enable();
+            UartBridge_Enable();
+            UartModules_Enable();
             break;
         case EventSchedulerEvent_ModuleConnectionStatusUpdate:
             UhkModuleSlaveDriver_UpdateConnectionStatus();

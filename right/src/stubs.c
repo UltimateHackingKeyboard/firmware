@@ -13,7 +13,7 @@
     ATTRS void Charger_UpdateBatteryCharging() {};
     ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
     ATTRS void Uart_Reenable() {};
-    ATTRS void Uart_Enable() {};
+    ATTRS void UartBridge_Enable() {};
     ATTRS status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) { return kStatus_Fail; };
     ATTRS void Oled_LogConstant(const char* text) {};
     ATTRS void Oled_Log(const char *fmt, ...) {};

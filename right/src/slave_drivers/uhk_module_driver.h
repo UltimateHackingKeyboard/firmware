@@ -139,4 +139,6 @@
 
     void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkModuleState, const uint8_t* rxMessageData);
     void UhkModuleSlaveDriver_UpdateConnectionStatus();
+
+    i2c_message_t* UhkModuleDriver_GetTxMessage();
 #endif
