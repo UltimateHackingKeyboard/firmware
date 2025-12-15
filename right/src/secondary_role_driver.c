@@ -137,7 +137,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
         PostponerQuery_FindFirstReleased(&actionPress, &actionRelease);
     }
-    else {
+    if (!Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease || actionPress == NULL) {
         PostponerQuery_InfoByQueueIdx(0, &actionPress, &actionRelease);
     }
     uint16_t actionKeyId = actionPress != NULL ? Utils_KeyStateToKeyId(actionPress->event.key.keyState) : 255;
