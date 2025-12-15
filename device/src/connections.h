@@ -24,6 +24,7 @@
         ConnectionType_NusRight,
         ConnectionType_UartLeft,
         ConnectionType_UartRight,
+        ConnectionType_UartModule,
         ConnectionType_Unknown,
     } connection_type_t;
 
@@ -47,6 +48,7 @@
         ConnectionTarget_Left,
         ConnectionTarget_Right,
         ConnectionTarget_Host,
+        ConnectionTarget_Module,
         ConnectionTarget_Count,
     } connection_target_t;
 

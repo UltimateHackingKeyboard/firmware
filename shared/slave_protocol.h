@@ -6,10 +6,22 @@
     #include <stdint.h>
     #include "attributes.h"
 
+#ifdef DEVICE_ID
+    #include "device.h"
+#endif
+
 // Macros:
 
+#if defined(DEVICE_ID) && DEVICE_IS_UHK80_RIGHT
+    #define SLAVE_PROTOCOL_OVER_UART (DEVICE_IS_UHK80_RIGHT && (PinWiring_ActualUartDebugMode != UartDebugMode_I2CMode && PinWiring_ActualUartDebugMode != UartDebugMode_DebugOverModules))
+#else
+    #define SLAVE_PROTOCOL_OVER_UART false
+#endif
+
+    #define SLAVE_PROTOCOL_MAX_PAYLOAD_LENGTH 64
+
     #define I2C_MESSAGE_HEADER_LENGTH 3
-    #define I2C_MESSAGE_MAX_PAYLOAD_LENGTH 255
+    #define I2C_MESSAGE_MAX_PAYLOAD_LENGTH SLAVE_PROTOCOL_MAX_PAYLOAD_LENGTH
     #define I2C_MESSAGE_MAX_TOTAL_LENGTH (I2C_MESSAGE_HEADER_LENGTH + I2C_MESSAGE_MAX_PAYLOAD_LENGTH)
 
     #define SLAVE_SYNC_STRING "SYNC"

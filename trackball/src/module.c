@@ -2,6 +2,8 @@
 #include "fsl_port.h"
 #include "fsl_spi.h"
 #include "module.h"
+#include "module/uart.h"
+#include "module/init_peripherals.h"
 
 #define TRACKBALL_SHTDWN_PORT PORTA
 #define TRACKBALL_SHTDWN_GPIO GPIOA
@@ -116,6 +118,9 @@ void trackballUpdate(SPI_Type *base, spi_master_handle_t *masterHandle, status_t
             PointerDelta.y += deltaX; // This is correct given the sensor orientation.
             tx(txBufferGetMotion);
             modulePhase = ModulePhase_ProcessMotion;
+            if (MODULE_OVER_UART) {
+                ModuleUart_RequestKeyStatesUpdate();
+            }
             break;
     }
 }
