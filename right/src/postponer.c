@@ -421,7 +421,7 @@ void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, po
         for ( int i = 1; i < bufferSize; i++ ) {
             *release = &buffer[POS(i)];
             if ((*release)->event.type == PostponerEventType_ReleaseKey) {
-                for ( int j = i - 1; j >= 0; j-- ) {
+                for ( int j = 0; j < i; j++ ) {
                     *press = &buffer[POS(j)];
                     if((*press)->event.type == PostponerEventType_PressKey
                         && (*press)->event.key.keyState == (*release)->event.key.keyState )
