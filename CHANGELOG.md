@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [16.0.0] - 2025-12-16
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.11.0
+
+New Features:
+- Implement macro templates. `USERCONFIG:MINOR`
+  - Macros can now be parametrized via `$macroArg.0`.
+  - Reimplement argument handling in config parser. Change key counting logic compared to original macro template implementation.
+  - Refactor macro validation to evaluate on per-key basis, including template expansion.
+  - Refactor error reporting to report the template expansion stack.
+  - Implement `altCodeOf`, `uCodeOf`, `decCodeOf` and `hexCodeOf` template expansions that can be used for generic unicode sequences. E.g., `tapKeySeq altCodeOf(😊)`. `SMARTMACROS:MINOR`
+- Add UserConfig version fields to track failed migrations. `USERCONFIG: MAJOR`
+
+Fixes, maintenance:
+- Eliminate minute delay of the oled charging indicator, e.g., when rapidly reconnecting power.
+- Prevent large jumps of the battery capacity detection algorithm.
+- Change behavior regarding uhk60 reset button "crashes":
+  - revert 15.3.1 changes and let the keyboard reboot silently.
+  - implement gpio leakage test. (Please join #1380 if you are affected.)
+
+Misc:
+- Refactor ps/2 trackpoint driver.
+- Improve debug mode icons.
+
 ## [15.3.1] - 2025-11-16
 
 Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 12.0.1 | Hardware Config: 1.0.0 | Smart Macros: 3.10.0
