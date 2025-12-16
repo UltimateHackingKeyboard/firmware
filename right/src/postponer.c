@@ -418,12 +418,12 @@ void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t**
 void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release)
 {
     if (bufferSize > 1) {
-        for ( int i = 0; i < bufferSize - 1; i++ ) {
-            *press = &buffer[POS(i)];
-            if ((*press)->event.type == PostponerEventType_PressKey) {
-                for ( int j = i + 1; j < bufferSize; j++ ) {
-                    *release = &buffer[POS(j)];
-                    if((*release)->event.type == PostponerEventType_ReleaseKey
+        for ( int i = 1; i < bufferSize; i++ ) {
+            *release = &buffer[POS(i)];
+            if ((*release)->event.type == PostponerEventType_ReleaseKey) {
+                for ( int j = i - 1; j >= 0; j-- ) {
+                    *press = &buffer[POS(j)];
+                    if((*press)->event.type == PostponerEventType_PressKey
                         && (*press)->event.key.keyState == (*release)->event.key.keyState )
                     return;
                 }
