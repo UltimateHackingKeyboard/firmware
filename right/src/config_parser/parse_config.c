@@ -294,6 +294,12 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         )
     }
 
+    if (DataModelVersion.major >= 13) {
+        ATTR_UNUSED uint16_t l;
+        ATTR_UNUSED const char *lastSaveAgentTag = ReadString(buffer, &len);
+        ATTR_UNUSED const char *lastSaveFirmwareTag = ReadString(buffer, &len);
+    }
+
     // If parsing succeeded then apply the parsed values.
 
     if (!ParserRunDry) {
