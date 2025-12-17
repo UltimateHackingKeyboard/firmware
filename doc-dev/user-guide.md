@@ -486,6 +486,7 @@ set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 set secondaryRole.advanced.minimumHoldTime 0
+set secondaryRole.advanced.primaryFromSameHalf 0
 ```
 
 The above configuration will trigger the secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger the secondary role.

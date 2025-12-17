@@ -323,7 +323,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, action->keystroke.secondaryRole, Cfg.SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState), false);
+        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState), false, SecondaryRole_DefaultFromSameHalf);
         if (res.activatedNow) {
             SecondaryRoles_FakeActivation(res);
         }

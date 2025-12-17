@@ -222,6 +222,7 @@ const config_t DefaultCfg = (config_t){
         .SecondaryRoles_AdvancedStrategyMinimumHoldTime = 0,
         .SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true,
         .SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary,
+        .SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf = false,
         .SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple,
         .StickyModifierStrategy = Stick_Smart,
         .Macros_Scheduler = Scheduler_Blocking,

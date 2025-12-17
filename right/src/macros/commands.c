@@ -994,12 +994,25 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
 {
     secondary_role_strategy_t strategy = Cfg.SecondaryRoles_Strategy;
     bool originalPostponing = S->ls->as.modifierPostpone;
+    secondary_role_same_half_t fromSameHalf = SecondaryRole_DefaultFromSameHalf;
 
-    if (ConsumeToken(ctx, "simpleStrategy")) {
-        strategy = SecondaryRoleStrategy_Simple;
-    }
-    else if (ConsumeToken(ctx, "advancedStrategy")) {
-        strategy = SecondaryRoleStrategy_Advanced;
+    while(true) {
+        if (ConsumeToken(ctx, "simpleStrategy")) {
+            strategy = SecondaryRoleStrategy_Simple;
+        }
+        else if (ConsumeToken(ctx, "advancedStrategy")) {
+            strategy = SecondaryRoleStrategy_Advanced;
+        }
+
+        if (ConsumeToken(ctx, "primaryFromSameHalf")) {
+            fromSameHalf = SecondaryRole_PrimaryFromSameHalf;
+        }
+        else if (ConsumeToken(ctx, "primaryFromSameHalfDisabled")) {
+            fromSameHalf = SecondaryRole_PrimaryFromSameHalfDisabled;
+        }
+        else {
+            break;
+        }
     }
 
     if (Macros_DryRun) {
@@ -1015,7 +1028,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, 0, strategy, !S->as.actionActive, true);
+    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, !S->as.actionActive, true, fromSameHalf);
 
     S->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
 
