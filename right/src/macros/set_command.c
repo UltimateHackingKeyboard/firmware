@@ -508,6 +508,9 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
             Macros_ReportError("Cannot set perKeyRgb mode when perKeyRgb maps are not available. Please, consult Agent's led section...", ConsumedToken(ctx), ConsumedToken(ctx));
         }
     }
+    else if (ConsumeToken(ctx, "heatmap") || ConsumeToken(ctx, "heat")) {
+        res = BacklightingMode_Heat;
+    }
     else {
         Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }

@@ -28,6 +28,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     debug.c
     eeprom.c
     event_scheduler.c
+    heatmap.c
     host_connection.c
     i2c.c
     i2c_error_logger.c

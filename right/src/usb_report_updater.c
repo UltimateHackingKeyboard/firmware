@@ -2,6 +2,7 @@
 #include "atomicity.h"
 #include "bt_defs.h"
 #include "event_scheduler.h"
+#include "heatmap.h"
 #include "host_connection.h"
 #include "key_action.h"
 #include "led_display.h"
@@ -508,6 +509,9 @@ static void mergeReports(void)
 static void commitKeyState(key_state_t *keyState, bool active)
 {
     WATCH_TRIGGER(keyState);
+    if (Cfg.BacklightingMode == BacklightingMode_Heat && active) {
+        Heatmap_RegisterKeystroke(keyState);
+    }
 
 #if __ZEPHYR__ && !DEVICE_IS_UHK_DONGLE
     if (Shell.keyLog) {

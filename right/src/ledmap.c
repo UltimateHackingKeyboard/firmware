@@ -11,6 +11,8 @@
 #include "config_manager.h"
 #include "event_scheduler.h"
 #include "test_switches.h"
+#include "heatmap.h"
+#include "device.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
@@ -603,6 +605,16 @@ static void updateLedsByLightNoneStrategy() {
     setEntireMatrix(0);
 }
 
+static void updateLedsByHeatStrategy() {
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        color_mode_t colorMode = determineMode(slotId);
+        for (uint8_t keyIndex=0; keyIndex<MAX_KEY_COUNT_PER_MODULE; keyIndex++) {
+            key_action_t* keyAction = &CurrentKeymap[LayerId_Base][slotId][keyIndex];
+            setPerKeyColor(&keyAction->color, colorMode, slotId, keyIndex);
+        }
+    }
+}
+
 void Ledmap_ActivateTestled(uint8_t slotId, uint8_t keyId) {
     if (Timer_GetCurrentTime() < backlightingLedTestStart + 1000 || !TestSwitches) {
         return;
@@ -699,6 +711,9 @@ void Ledmap_UpdateBacklightLeds(void) {
         case BacklightingMode_LightNone:
             updateLedsByLightNoneStrategy();
             break;
+        case BacklightingMode_Heat:
+            updateLedsByHeatStrategy();
+            break;
         case BacklightingMode_Unspecified:
             break;
     }
@@ -783,3 +798,4 @@ void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
     StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
 #endif
 }
+
