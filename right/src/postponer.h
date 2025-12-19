@@ -88,6 +88,7 @@
     bool PostponerQuery_IsActiveEventually(key_state_t* key);
     void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
     void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
+    void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
     bool PostponerQuery_ContainsKeyId(uint8_t keyid);
 
 // Functions (Query APIs extended):

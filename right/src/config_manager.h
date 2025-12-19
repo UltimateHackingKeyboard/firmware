@@ -29,6 +29,7 @@
 
         // secondary roles
         secondary_role_strategy_t SecondaryRoles_Strategy;
+        bool SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf;
         uint16_t SecondaryRoles_AdvancedStrategyDoubletapTimeout;
         uint16_t SecondaryRoles_AdvancedStrategyTimeout;
         int16_t SecondaryRoles_AdvancedStrategySafetyMargin;
@@ -37,6 +38,7 @@
         bool SecondaryRoles_AdvancedStrategyTriggerByMouse;
         bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
         secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction;
+        uint8_t SecondaryRoles_AdvancedStrategyMinimumHoldTime;
 
         // mouse keys
         mouse_kinetic_state_t MouseMoveState;
