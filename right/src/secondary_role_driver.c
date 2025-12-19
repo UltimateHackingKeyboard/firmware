@@ -143,21 +143,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     uint16_t actionKeyId = actionPress != NULL ? Utils_KeyStateToKeyId(actionPress->event.key.keyState) : 255;
     uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
 
-    //handle doubletap logic
-    if (
-        Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary
-        && resolutionKey == previousResolutionKey
-        && resolutionStartTime - previousResolutionTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout
-        ) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PA"));
-        return SecondaryRoleState_Primary;
-    }
-
     int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - dualRolePressTime;
     bool dualRoleWasHeldLongEnoughToBeAllowedSecondary = activeTime >= Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
 
     if (dualRoleRelease != NULL && !dualRoleWasHeldLongEnoughToBeAllowedSecondary) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));        
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PA"));
         return SecondaryRoleState_Primary;
     }
 
@@ -165,9 +155,18 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     if (actionPress == NULL) {
         if (dualRoleRelease != NULL && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
             //activate primary
-            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
+            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));
             return SecondaryRoleState_Primary;
         } else if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
+            // doubletap logic
+            bool shouldPrimaryBecauseOfDoubletap = 
+                Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary
+                && resolutionKey == previousResolutionKey
+                && resolutionStartTime - previousResolutionTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
+            if(shouldPrimaryBecauseOfDoubletap) {
+                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
+                return SecondaryRoleState_Primary;
+            }
             //activate secondary
             switch (Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction) {
             case SecondaryRoleState_Primary:
