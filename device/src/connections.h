@@ -24,7 +24,6 @@
         ConnectionType_NusRight,
         ConnectionType_UartLeft,
         ConnectionType_UartRight,
-        ConnectionType_UartModule,
         ConnectionType_Unknown,
     } connection_type_t;
 

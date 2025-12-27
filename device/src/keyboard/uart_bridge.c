@@ -119,7 +119,7 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
                 connection_id_t connectionId = uartState->connectionId;
                 device_id_t remoteDeviceId = uartState->remoteDeviceId;
 
-                Messenger_Enqueue(connectionId, remoteDeviceId, oldPacket, len, UART_CRC_LEN);
+                Messenger_Enqueue(connectionId, remoteDeviceId, oldPacket, len, 0);
             }
             break;
         case UartControl_InvalidMessage: {
@@ -164,9 +164,7 @@ void UartBridge_SendMessage(message_t* msg) {
 
     UartParser_StartMessage(&uartState->parser);
 
-    uint8_t header[] = {msg->src, msg->dst, msg->wm};
-
-    UartParser_AppendEscapedTxBytes(&uartState->parser, (uint8_t[]){msg->src, msg->dst, msg->wm}, sizeof(header));
+    UartParser_AppendEscapedTxBytes(&uartState->parser, (uint8_t[]){msg->src, msg->dst, msg->wm}, 3);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->messageId, msg->idsUsed);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->data, msg->len);
 
