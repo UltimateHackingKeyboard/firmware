@@ -29,7 +29,7 @@ static void i2cSlaveCallback(I2C_Type *base, i2c_slave_transfer_t *xfer, void *u
 
     switch (xfer->event) {
         case kI2C_SlaveTransmitEvent:
-            SlaveTxHandler(TxMessage.data);
+            SlaveTxHandler(RxMessage.data);
             xfer->data = (uint8_t*)&TxMessage;
             xfer->dataSize = TxMessage.length + I2C_MESSAGE_HEADER_LENGTH;
             break;
