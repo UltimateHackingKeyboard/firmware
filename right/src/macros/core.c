@@ -2,6 +2,7 @@
 #include "config_parser/parse_macro.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "keymap.h"
 #include "layer_stack.h"
 #include "macros/commands.h"
 #include "macros/debug_commands.h"
@@ -9,13 +10,18 @@
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
 #include "macros/typedefs.h"
+#include "module.h"
 #include "postponer.h"
 #include <string.h>
+#include "slave_protocol.h"
 #include "str_utils.h"
 #include "timer.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_report_updater.h"
 #include "config_manager.h"
+#include "logger.h"
+#include "keyid_parser.h"
+#include "utils.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution
@@ -151,7 +157,7 @@ macro_result_t Macros_GoToLabel(parser_context_t* ctx)
         }
     }
 
-    Macros_ReportError("Label not found:", ctx->at, ctx->end);
+    Macros_ReportErrorTok(ctx, "Label not found:");
     S->ms.macroBroken = true;
 
     return MacroResult_Finished;
@@ -193,7 +199,7 @@ bool Macros_PushScope(parser_context_t* ctx)
         }
     }
     S->ms.macroBroken = true;
-    Macros_ReportError("Out of scope states. This means too many too deeply nested macros are running.", ctx->at, ctx->at);
+    Macros_ReportErrorPos(ctx, "Out of scope states. This means too many too deeply nested macros are running.");
     return false;
 }
 
@@ -205,7 +211,7 @@ bool Macros_PopScope(parser_context_t* ctx)
         S->ls->as.whileExecuting = false;
         return true;
     } else {
-        Macros_ReportError("Encountered unmatched brace", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Encountered unmatched brace");
         S->ms.macroBroken = true;
         return false;
     }
@@ -223,7 +229,7 @@ static bool findFreeScopeStateSlot()
         }
     }
     S->ms.macroBroken = true;
-    Macros_ReportError("Out of scope states. This means too many too deeply nested macros are running.", NULL, NULL);
+    Macros_ReportErrorPos(NULL, "Out of scope states. This means too many too deeply nested macros are running.");
     return false;
 }
 
@@ -236,7 +242,7 @@ static bool findFreeStateSlot()
             return true;
         }
     }
-    Macros_ReportError("Too many macros running at one time!", NULL, NULL);
+    Macros_ReportErrorPos(NULL, "Too many macros running at one time!");
     return false;
 }
 
@@ -404,7 +410,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, S->ms.currentMacroKeyStamp, parentSlotIndex, true);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, parentSlotIndex, true);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -418,11 +424,11 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, S->ms.currentMacroKeyStamp, 255, true);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, 255, true);
     return MacroResult_Finished;
 }
 
-uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot)
+uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot)
 {
     if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
@@ -437,6 +443,7 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8
     S->ms.currentMacroKey = keyState;
     S->ms.currentMacroKeyStamp = timestamp;
     S->ms.currentMacroStartTime = CurrentPostponedTime;
+    S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
 
     //this loads the first action and resets all adresses
@@ -447,11 +454,11 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8
 
 
 //partentMacroSlot == 255 means no parent
-uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction)
+uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, timestamp, parentMacroSlot);
+    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, timestamp, parentMacroSlot);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -475,6 +482,45 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint8_t timestam
     return slotIndex;
 }
 
+void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasArgs, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx) {
+    bool wasValid = true;
+    uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255);
+
+    if (slotIndex == 255) {
+        S = NULL;
+        return;
+    }
+
+    scheduleSlot(slotIndex);
+
+    bool macroHasNotEnded = AllMacros[macroIndex].macroActionsCount;
+    while (macroHasNotEnded) {
+        if (S->ms.currentMacroAction.type == MacroActionType_Command) {
+            processCurrentMacroAction();
+            wasValid &= !Macros_ParserError;
+            Macros_ParserError = false;
+        }
+
+        macroHasNotEnded = loadNextCommand() || loadNextAction();
+    }
+    endMacro();
+    S = NULL;
+
+    if (!wasValid && hasArgs && moduleId != 255 && keyIdx != 255 && keymapIdx != 255) {
+        uint8_t keyId = Utils_KeyCoordinatesToKeyId(ModuleIdToSlotId(moduleId), keyIdx);
+        const char* keyAbbrev = MacroKeyIdParser_KeyIdToAbbreviation(keyId);
+        const char* keymapAbbrev = AllKeymaps[keymapIdx].abbreviation;
+        uint8_t keymapAbbrevLen = AllKeymaps[keymapIdx].abbreviationLen;
+        const char* moduleName = ModuleIdToStr(moduleId);
+        Macros_ReportErrorPrintf(NULL, "> Bound at %.*s/%s/%s.\n", keymapAbbrevLen, keymapAbbrev, moduleName, keyAbbrev);
+    }
+}
+
+/**
+ * Current known limitations:
+ * - We check only actions that have arguments, therefore we don't catch missing arguments.
+ * - The validation takes hundreds of milliseconds, causing a short freeze when config is saved.
+ */
 void Macros_ValidateAllMacros()
 {
     macro_state_t* oldS = S;
@@ -482,28 +528,19 @@ void Macros_ValidateAllMacros()
     memset(&Macros_SchedulerState, 0, sizeof Macros_SchedulerState);
     Macros_DryRun = true;
     Macros_ValidationInProgress = true;
+    // Validate macros without arguments
+    uint32_t t1 = Timer_GetCurrentTime();
+    LogU("Validating macros without arguments...\n");
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
-        uint8_t slotIndex = initMacro(macroIndex, NULL, 255, 255);
-
-        if (slotIndex == 255) {
-            S = NULL;
-            continue;
-        }
-
-        scheduleSlot(slotIndex);
-
-        bool macroHasNotEnded = AllMacros[macroIndex].macroActionsCount;
-        while (macroHasNotEnded) {
-            if (S->ms.currentMacroAction.type == MacroActionType_Command) {
-                processCurrentMacroAction();
-                Macros_ParserError = false;
-            }
-
-            macroHasNotEnded = loadNextCommand() || loadNextAction();
-        }
-        endMacro();
-        S = NULL;
+        Macros_ValidateMacro(macroIndex, 0, false, 255, 255, 255);
     }
+    LogU("Validating macros with arguments...\n");
+    // Validate macros that have arguments
+    for (uint8_t keymapIndex = 0; keymapIndex < AllKeymapsCount; keymapIndex++) {
+        DryParseKeymap(keymapIndex);
+    }
+    uint32_t t2 = Timer_GetCurrentTime();
+    LogU("Validation completed in %d ms!\n", t2 - t1);
     Macros_ValidationInProgress = false;
     Macros_DryRun = false;
     Macros_SchedulerState = schedulerState;
@@ -514,7 +551,7 @@ uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestam
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, timestamp, 255);
+    uint8_t slotIndex = initMacro(index, keyState, 0, timestamp, 255);
 
     if (slotIndex == 255) {
         return slotIndex;

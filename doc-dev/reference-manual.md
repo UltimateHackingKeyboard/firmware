@@ -304,15 +304,18 @@ COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set emergencyKey KEYID
-COMMAND = validateUserConfig
+COMMAND = validateMacros
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
 COMMAND = set devMode BOOL
+COMMAND = set maxVoltage INT
 COMMAND = powerMode autoShutdown
+COMMAND = testLeakage
 COMMAND = zephyr ZEPHYR_COMMAND
+COMMAND = trackpoint { run | signalClock | signalData }
 ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger | ledtest BOOL | gamepad BOOL }
 ##############
 # DEPRECATED #

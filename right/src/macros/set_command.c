@@ -42,6 +42,10 @@
 #include "init_peripherals.h"
 #endif
 
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+#include "keyboard/battery_manager.h"
+#endif
+
 #if DEVICE_HAS_OLED
 #include "keyboard/oled/oled.h"
 #endif
@@ -176,7 +180,7 @@ static macro_variable_t moduleNavigationMode(parser_context_t* ctx, set_command_
     navigation_mode_t modeId = ConsumeNavigationModeId(ctx);
 
     if (IS_MODIFIER_LAYER(layerId)) {
-        Macros_ReportError("Navigation mode cannot be changed for modifier layers!", layerCtx.at, layerCtx.at);
+        Macros_ReportErrorPos(&layerCtx, "Navigation mode cannot be changed for modifier layers!");
         return noneVar();
     }
 
@@ -252,7 +256,7 @@ static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t 
         ASSIGN_BOOL(module->invertScrollDirectionX);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -320,7 +324,7 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -336,7 +340,7 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
         return secondaryRoleAdvanced(ctx, action);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -380,7 +384,7 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
         BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in set_command - directedAdvertisingAllowed changed");
 #endif
     } else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -394,7 +398,7 @@ static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t ac
     } else if (ConsumeToken(ctx, "scroll")) {
         state = &Cfg.MouseScrollState;
     } else {
-        Macros_ReportError("Scroll or move expected!", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Scroll or move expected!");
         return noneVar();
     }
 
@@ -425,7 +429,7 @@ static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t ac
         ASSIGN_FLOAT(state->axisSkew);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -442,7 +446,7 @@ static macro_variable_t stickyModifiers(parser_context_t* ctx, set_command_actio
         ASSIGN_ENUM(Cfg.StickyModifierStrategy, Stick_Always);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -456,7 +460,7 @@ static macro_variable_t macroEngineScheduler(parser_context_t* ctx, set_command_
         ASSIGN_ENUM(Cfg.Macros_Scheduler, Scheduler_Blocking);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -475,7 +479,7 @@ static macro_variable_t macroEngine(parser_context_t* ctx, set_command_action_t 
         /* this option was removed -> accept the command & do nothing */
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -505,7 +509,7 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
         }
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
 
     if (Macros_ParserError) {
@@ -529,7 +533,7 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
     uint16_t keyId = Macros_TryConsumeKeyId(ctx);
 
     if (keyId == 255) {
-        Macros_ReportError("Failed to decode keyid!", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Failed to decode keyid!");
         return noneVar();
     }
 
@@ -590,7 +594,7 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
         return noneVar();
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
         return noneVar();
     }
 }
@@ -634,7 +638,7 @@ static macro_variable_t leds(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_BOOL(Cfg.LedsAlwaysOn);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
 
     EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
@@ -654,7 +658,7 @@ static macro_variable_t chargeLimit(parser_context_t* ctx, set_command_action_t 
         res = true;
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
 
     if (Macros_ParserError || Macros_DryRun) {
@@ -675,7 +679,7 @@ static macro_variable_t battery(parser_context_t* ctx, set_command_action_t acti
         return chargeLimit(ctx, action);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
 
     return noneVar();
@@ -695,7 +699,7 @@ static macro_variable_t backlight(parser_context_t* ctx, set_command_action_t ac
         return keyRgb(ctx, action);
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }
@@ -725,7 +729,7 @@ static key_action_t parseKeyAction(parser_context_t* ctx)
         action.type = KeyActionType_None;
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
 
     return action;
@@ -743,7 +747,7 @@ static macro_variable_t navigationModeAction(parser_context_t* ctx, set_command_
     ConsumeUntilDot(ctx);
 
     if (action == SetCommandAction_Read) {
-        Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Reading actions is not supported!");
         return noneVar();
     }
 
@@ -772,7 +776,7 @@ static macro_variable_t navigationModeAction(parser_context_t* ctx, set_command_
         positive = false;
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
         return noneVar();
     }
 
@@ -799,12 +803,12 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
     uint16_t keyId = Macros_TryConsumeKeyId(ctx);
 
     if (keyId == 255) {
-        Macros_ReportError("Failed to decode keyid!", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Failed to decode keyid!");
         return noneVar();
     }
 
     if (action == SetCommandAction_Read) {
-        Macros_ReportError("Reading actions is not supported!", ctx->at, ctx->at);
+        Macros_ReportErrorPos(ctx, "Reading actions is not supported!");
         return noneVar();
     }
 
@@ -878,7 +882,7 @@ static macro_variable_t modLayerTriggers(parser_context_t* ctx, set_command_acti
         mask = left | right;
     }
     else {
-        Macros_ReportError("Specifier not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Specifier not recognized:");
     }
 
     if (Macros_ParserError) {
@@ -906,7 +910,7 @@ static macro_variable_t uiStyle(parser_context_t* ctx, set_command_action_t acti
         res = UiStyle_Alternative;
     }
     else {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
 
     if (Macros_ParserError) {
@@ -925,6 +929,21 @@ static macro_variable_t uiStyle(parser_context_t* ctx, set_command_action_t acti
     return noneVar();
 }
 
+static macro_variable_t setMaxVoltage(parser_context_t* ctx, set_command_action_t action) {
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+    uint32_t voltage = BatteryManager_StandardUse.maxVoltage;
+#else
+    uint32_t voltage = 4000;
+#endif
+
+    DEFINE_INT_LIMITS(0, 65535);
+    ASSIGN_INT(voltage);
+
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+    BatteryManager_SetMaxCharge(voltage);
+#endif
+    return noneVar();
+}
 
 static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
@@ -972,6 +991,9 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ConsumeUntilDot(ctx);
         return modLayerTriggers(ctx, action);
     }
+    else if (ConsumeToken(ctx, "maxVoltage")) {
+        return setMaxVoltage(ctx, action);
+    }
     else if (ConsumeToken(ctx, "diagonalSpeedCompensation")) {
         ASSIGN_BOOL(Cfg.DiagonalSpeedCompensation);
     }
@@ -990,6 +1012,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_INT2(Cfg.DebounceTimePress, Cfg.DebounceTimeRelease);
     }
     else if (ConsumeToken(ctx, "keystrokeDelay")) {
+
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.KeystrokeDelay);
     }
@@ -1048,7 +1071,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_NO_LIMITS(key_state_t*, noneVar,, Cfg.EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }
     else if (action == SetCommandAction_Write) {
-        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }
     return noneVar();
 }

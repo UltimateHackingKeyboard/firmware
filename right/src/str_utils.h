@@ -56,6 +56,7 @@
 // Functions:
 
     uint8_t SegmentLen(string_segment_t str);
+    bool IsEnd(parser_context_t* ctx);
     bool SegmentEqual(string_segment_t str1, string_segment_t str2);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
@@ -66,6 +67,7 @@
     bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref);
     bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref);
     void ConsumeAnyIdentifier(parser_context_t* ctx);
+    void ConsumeAnyChar(parser_context_t* ctx);
     void UnconsumeWhite(parser_context_t* ctx);
     const char* ConsumedToken(parser_context_t* ctx);
     bool IsIdentifierChar(char c);
@@ -87,9 +89,11 @@
     secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx);
     secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx);
     navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx);
+    const char* DeviceModelName(device_id_t device);
 
     bool PushParserContext(parser_context_t* ctx, const char* begin, const char* at, const char* end);
     bool PopParserContext(parser_context_t* ctx);
+    const parser_context_t* ViewContext(uint8_t level);
 
 #ifdef __ZEPHYR__
     const char* Utils_DeviceIdToString(device_id_t deviceId);

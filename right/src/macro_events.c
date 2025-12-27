@@ -54,7 +54,7 @@ void MacroEvent_OnInit()
     const char* name = "$onInit";
     uint8_t idx = FindMacroIndexByName(name, name + strlen(name), false);
     if (idx != 255) {
-        previousEventMacroSlot = Macros_StartMacro(idx, NULL, 255, 255, false);
+        previousEventMacroSlot = Macros_StartMacro(idx, NULL, 0, 255, 255, false);
     }
 
     registerJoinSplitEvents();
@@ -67,7 +67,7 @@ static void startMacroInSlot(macro_index_t macroIndex, uint8_t* slotId) {
         if (*slotId != 255 && MacroState[*slotId].ms.macroPlaying) {
             *slotId = Macros_QueueMacro(macroIndex, NULL, 255, *slotId);
         } else {
-            *slotId = Macros_StartMacro(macroIndex, NULL, 255, 255, false);
+            *slotId = Macros_StartMacro(macroIndex, NULL, 0, 255, 255, false);
         }
     }
 }

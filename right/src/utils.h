@@ -40,6 +40,7 @@ if (reentrancyGuard_active) {                    \
     void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx);
     void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report);
     key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId);
+    uint16_t Utils_KeyCoordinatesToKeyId(uint8_t slotId, uint8_t keyIdx);
     const char* Utils_KeyAbbreviation(key_state_t* keyState);
     bool ShouldResendReport(bool statusOk, uint8_t* counter);
     bool Utils_AreKeysOnTheSameHalf(uint16_t oneKey, uint16_t anotherKey);
