@@ -8,6 +8,7 @@
 #include "init_peripherals.h"
 #include "peripherals/test_led.h"
 #include "trace.h"
+#include "slave_protocol.h"
 
 uint32_t I2cWatchdog_WatchCounter;
 uint32_t I2cWatchdog_RecoveryCounter;
@@ -19,6 +20,10 @@ static uint32_t prevWatchdogCounter;
 // This method relies on a patched KSDK which increments I2C_Watchdog upon I2C transfers.
 void PIT_I2C_WATCHDOG_HANDLER(void)
 {
+    if (SLAVE_PROTOCOL_OVER_UART) {
+        return;
+    }
+
     Trace_Printc("<i5");
     I2cWatchdog_WatchCounter++;
 

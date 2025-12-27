@@ -12,45 +12,59 @@
 #include "versioning.h"
 #include <string.h>
 #include "atomicity.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 i2c_message_t RxMessage;
 i2c_message_t TxMessage;
 
-void SlaveRxHandler(void)
-{
-    if (!CRC16_IsMessageValid(&RxMessage)) {
-        TxMessage.length = 0;
-        return;
-    }
+bool SlaveProtocol_FreeUpdateAllowed = false;
 
-    uint8_t commandId = RxMessage.data[0];
+bool IsI2cRxTransaction(uint8_t commandId) {
+    switch (commandId) {
+        case SlaveCommand_JumpToBootloader:
+        case SlaveCommand_SetTestLed:
+        case SlaveCommand_SetLedPwmBrightness:
+        case SlaveCommand_ModuleSpecificCommand:
+            return true;
+        case SlaveCommand_RequestProperty:
+        case SlaveCommand_RequestKeyStates:
+            return false;
+    }
+    return true;
+}
+
+void SlaveRxHandler(const uint8_t* data)
+{
+    uint8_t commandId = data[0];
     switch (commandId) {
     case SlaveCommand_JumpToBootloader:
         NVIC_SystemReset();
         break;
     case SlaveCommand_SetTestLed:
         TxMessage.length = 0;
-        bool isLedOn = RxMessage.data[1];
+        bool isLedOn = data[1];
         TestLed_Set(isLedOn);
         break;
     case SlaveCommand_SetLedPwmBrightness:
         TxMessage.length = 0;
-        uint8_t brightnessPercent = RxMessage.data[1];
+        uint8_t brightnessPercent = data[1];
         LedPwm_SetBrightness(brightnessPercent);
         break;
     case SlaveCommand_ModuleSpecificCommand: {
-        Module_ModuleSpecificCommand(RxMessage.data[1]);
+        Module_ModuleSpecificCommand(data[1]);
         break;
     }
     }
 }
 
-void SlaveTxHandler(void)
+void SlaveTxHandler(const uint8_t* rxData)
 {
-    uint8_t commandId = RxMessage.data[0];
+    uint8_t commandId = rxData[0];
     switch (commandId) {
     case SlaveCommand_RequestProperty: {
-        uint8_t propertyId = RxMessage.data[1];
+        SlaveProtocol_FreeUpdateAllowed = false;
+        uint8_t propertyId = rxData[1];
         switch (propertyId) {
         case SlaveProperty_Sync: {
             memcpy(TxMessage.data, SlaveSyncString, SLAVE_SYNC_STRING_LENGTH);
@@ -126,10 +140,15 @@ void SlaveTxHandler(void)
             ENABLE_IRQ();
             messageLength += sizeof(pointer_delta_t);
         }
+        SlaveProtocol_FreeUpdateAllowed = true;
         TxMessage.length = messageLength;
         break;
     }
     }
 
-    CRC16_UpdateMessageChecksum(&TxMessage);
+    if (!MODULE_OVER_UART) {
+        CRC16_UpdateMessageChecksum(&TxMessage);
+    }
 }
+
+

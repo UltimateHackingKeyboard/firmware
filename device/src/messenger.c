@@ -26,9 +26,10 @@
 #include "debug.h"
 #include "trace.h"
 #include "usb_commands/usb_command_reenumerate.h"
+#include "pin_wiring.h"
 
 #if DEVICE_IS_KEYBOARD
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #endif
 
 static k_tid_t mainThreadId = 0;
@@ -441,36 +442,6 @@ void Messenger_ProcessQueue() {
     }
 }
 
-bool Messenger_Availability(device_id_t dst, messenger_availability_op_t operation) {
-    connection_id_t connection = determineChannel(dst);
-
-    switch (connection) {
-        case ConnectionId_UartLeft:
-        case ConnectionId_UartRight:
-#if DEVICE_IS_KEYBOARD
-            return Uart_Availability(operation);
-#else
-            return false;
-#endif
-        case ConnectionId_NusClientRight:
-        case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
-#ifdef CONFIG_BT_NUS
-            return NusServer_Availability(operation);
-#else
-            return false;
-#endif
-        case ConnectionId_NusServerRight:
-        case ConnectionId_NusServerLeft:
-#ifdef CONFIG_BT_NUS_CLIENT
-            return NusClient_Availability(operation);
-#else
-            return false;
-#endif
-        default:
-            return false;
-    }
-}
-
 void Messenger_SendMessage(message_t* message) {
     connection_id_t connectionId = message->connectionId;
     device_id_t dst = message->dst;
@@ -480,7 +451,7 @@ void Messenger_SendMessage(message_t* message) {
         case ConnectionId_UartLeft:
         case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
-            Uart_SendMessage(message);
+            UartBridge_SendMessage(message);
 #endif
             break;
         case ConnectionId_NusClientRight:

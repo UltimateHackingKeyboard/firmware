@@ -60,6 +60,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_LIST_DIR}/bool_array_converter.c
     ${CMAKE_CURRENT_LIST_DIR}/buffer.c
     ${CMAKE_CURRENT_LIST_DIR}/crc16.c
+    ${CMAKE_CURRENT_LIST_DIR}/uart_parser.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_LIST_DIR}/key_matrix.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_LIST_DIR}/key_vector.c>
     ${CMAKE_CURRENT_LIST_DIR}/slave_protocol.c
