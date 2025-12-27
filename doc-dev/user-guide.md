@@ -433,9 +433,10 @@ ifPrimary final holdKey a
 holdLayer mouse
 ```
 
-The advanced strategy has the disadvantage that its configuration depends on the user's typing style. Please see the reference manual for the meaning of all its configuration values. Two example configurations follow.
+The advanced strategy has the disadvantage that its configuration depends on the user's typing style. Please see the reference manual for the meaning of all its configuration values. Some example configurations follow.
 
-Release-order configuration:
+
+Basic release-order configuration:
 
 ```
 set secondaryRole.defaultStrategy advanced
@@ -473,6 +474,20 @@ set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
 
+Firngrod's Home Row Mods (HRM) configuration (Recommended):
+
+```
+set secondaryRole.defaultStrategy advanced
+set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.timeout 1000
+set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.doubletapToPrimary 1
+set secondaryRole.advanced.safetyMargin -100
+set secondaryRole.advanced.triggerByMouse 1
+set secondaryRole.advanced.minimumHoldTime 150
+set secondaryRole.advanced.primaryFromSameHalf 1
+```
+
 Full set of advanced strategy config values follows (for copy-paste convenience):
 
 ```
@@ -485,6 +500,8 @@ set secondaryRole.advanced.triggerByPress 0
 set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
+set secondaryRole.advanced.minimumHoldTime 0
+set secondaryRole.advanced.primaryFromSameHalf 0
 ```
 
 The above configuration will trigger the secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger the secondary role.
