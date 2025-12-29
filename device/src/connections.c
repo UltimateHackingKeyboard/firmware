@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "config_manager.h"
 #include "bt_pair.h"
+#include "usb_commands/usb_command_get_new_pairings.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -434,6 +435,8 @@ void Connections_PrintInfo(log_target_t target) {
     LogTo(DEVICE_ID, target, "Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
     LogTo(DEVICE_ID, target, "Pairing mode: %d\n", BtPair_PairingMode);
     LogTo(DEVICE_ID, target, "Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
+    LogTo(DEVICE_ID, target, "New connection: %d\n", Bt_NewPairedDevice);
+
     HostConnections_ListKnownBleConnections(target);
     BtConn_ListAllBonds(target);
     BtConn_ListCurrentConnections(target);

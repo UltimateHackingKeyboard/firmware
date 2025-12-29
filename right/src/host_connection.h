@@ -52,13 +52,19 @@
         bool switchover;
     } ATTR_PACKED host_connection_t;
 
+    typedef enum {
+        HostKnown_Unknown = 0,
+        HostKnown_Unregistered = 1,
+        HostKnown_Registered = 2,
+    } host_known_t;
+
 // Variables:
 
     extern host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX];
 
 // Functions:
 
-    bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+    host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
     host_connection_t* HostConnection(uint8_t connectionId);
 
     void HostConnections_ListKnownBleConnections();
