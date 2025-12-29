@@ -62,6 +62,10 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
         SlaveScheduler_FinalizeTransfer(UhkModuleDriverId_RightModule, lastStatus);
         lastStatus = kStatus_Fail;
         SlaveScheduler_ScheduleSingleTransfer(UhkModuleDriverId_RightModule);
+
+        // If they don't ping us in 2 seconds, kick the driver with a failed connection.
+        // Otherwise, any reply triggers an uhk module transfer.
+        // Once we reach key update phase, they send us updates on their own, at least once a second so that we know they live.
         k_sem_take(&newMessageSemaphore, K_MSEC(UART_MODULE_TIMEOUT_MS));
     }
 }

@@ -6,7 +6,8 @@
     #include <stdint.h>
     #include "attributes.h"
 
-#ifdef DEVICE_ID
+// #include device id for main device, but not for modules
+#if defined(DEVICE_ID) || defined(CONFIG_DEVICE_ID)
     #include "device.h"
 #endif
 
