@@ -182,3 +182,13 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
         return false;
     }
 }
+
+static uint8_t isRightHalfOrModule(uint16_t id)
+{
+    return id < 64 || id >= 192;
+}
+
+bool Utils_AreKeysOnTheSameHalf(uint16_t oneKey, uint16_t anotherKey)
+{
+    return isRightHalfOrModule(oneKey) == isRightHalfOrModule(anotherKey);
+}
