@@ -35,6 +35,8 @@
 #include "trace.h"
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
+#include "macros/status_buffer.h"
+
 
 LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
@@ -293,9 +295,11 @@ void BtConn_UpdateHostConnectionPeerAllocations() {
         if (conn) {
             connection_id_t currentId = Peers[peerId].connectionId;
             connection_id_t newId = Connections_GetConnectionIdByHostAddr(bt_conn_get_dst(conn));
-            LOG_INF("Reallocating peer %s from connection %d -> %d\n", Peers[peerId].name, currentId, newId);
             if (newId != ConnectionId_Invalid && newId != currentId) {
                 Connections_MoveConnection(peerId, currentId, newId);
+            } else if (newId == ConnectionId_Invalid) {
+                LOG_WRN("No host connection found for peer %s, disconnecting\n", Peers[peerId].name);
+                safeDisconnect(conn, BT_REASON_UNSPECIFIED);
             }
         }
     }
@@ -796,10 +800,16 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         connection_type_t connectionType = Connections_Type(connectionId);
 
         if (connectionId == ConnectionId_Invalid) {
-            connectionId = Connections_GetNewBtHidConnectionId();
+            connectionId = HostConnections_AllocateConnectionIdForUnregisteredHid(&addr);
             connectionType = ConnectionType_BtHid;
-            HostConnection(connectionId)->bleAddress = addr;
             Bt_NewPairedDevice = true;
+
+            if (connectionId == ConnectionId_Invalid) {
+                LOG_WRN("No connection slot available for newly paired device %s\n", GetPeerStringByConn(conn));
+                NotifyPrintf("No slot available!");
+                safeDisconnect(conn, BT_REASON_UNSPECIFIED);
+                return;
+            }
         }
 
         HostConnections_SelectByHostConnIndex(connectionId - ConnectionId_HostConnectionFirst);
