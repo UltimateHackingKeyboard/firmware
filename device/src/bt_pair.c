@@ -292,7 +292,7 @@ bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
     return bonded;
 }
 
-void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
+ATTR_UNUSED void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
     if (HostConnections_IsKnownBleAddress(&info->addr) != HostKnown_Registered) {
         printk(" - Deleting an unknown bond!\n");
         deleteBond(info);
@@ -302,9 +302,20 @@ void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
 };
 
 
-void BtPair_ClearUnknownBonds() {
+ATTR_UNUSED void BtPair_ClearUnknownBonds() {
     BT_TRACE_AND_ASSERT("bp9");
     printk("Clearing bonds\n");
     bt_foreach_bond(BT_ID_DEFAULT, deleteBondIfUnknown, NULL);
+    UsbCommand_UpdateNewPairingsFlag();
+}
+
+void allocateBond(const struct bt_bond_info *info, void *user_data) {
+    HostConnections_AllocateConnectionIdForUnregisteredHid(&info->addr);
+}
+
+void BtPair_AllocateUnregisteredBonds() {
+    BT_TRACE_AND_ASSERT("bp10");
+    printk("Allocating unregistered bonds\n");
+    bt_foreach_bond(BT_ID_DEFAULT, allocateBond, NULL);
     UsbCommand_UpdateNewPairingsFlag();
 }

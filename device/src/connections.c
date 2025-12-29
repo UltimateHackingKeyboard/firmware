@@ -167,6 +167,8 @@ connection_type_t Connections_Type(connection_id_t connectionId) {
             host_connection_type_t hostConnectionType = HostConnection(connectionId)->type;
             switch (hostConnectionType) {
                 case HostConnectionType_NewBtHid:
+                    return ConnectionType_Empty;
+                case HostConnectionType_UnregisteredBtHid:
                     return ConnectionType_BtHid;
                 default:
                     return (connection_type_t)hostConnectionType;
@@ -205,10 +207,11 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
                 case HostConnectionType_UsbHidRight:
                     return ConnectionTarget_Host;
                 case HostConnectionType_BtHid:
-                case HostConnectionType_NewBtHid:
+                case HostConnectionType_UnregisteredBtHid:
                     return ConnectionTarget_Host;
                 case HostConnectionType_Dongle:
                     return ConnectionTarget_Host;
+                case HostConnectionType_NewBtHid:
                 case HostConnectionType_Empty:
                 case HostConnectionType_Count:
                     return ConnectionTarget_None;
@@ -251,9 +254,9 @@ static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
-            case HostConnectionType_NewBtHid:
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
+            case HostConnectionType_UnregisteredBtHid:
                 if (BtAddrEq(addr, &hostConnection->bleAddress)) {
                     return connectionId;
                 }
@@ -261,6 +264,7 @@ static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
             case HostConnectionType_Empty:
             case HostConnectionType_UsbHidLeft:
             case HostConnectionType_UsbHidRight:
+            case HostConnectionType_NewBtHid:
             case HostConnectionType_Count:
                 break;
         }
@@ -329,7 +333,7 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
     connection_state_t newState = Connections[newConnectionId].state;
 
     ASSERT(oldPeerId == peerId);
-    ASSERT(otherPeerId == PeerIdUnknown || newPeerId > peerId);
+    ASSERT(newPeerId == PeerIdUnknown || newPeerId > peerId);
 
     // Exchange connection data
     Connections[newConnectionId].peerId = oldPeerId;

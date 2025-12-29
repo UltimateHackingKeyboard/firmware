@@ -43,6 +43,7 @@
 #include "connections.h"
 #include "bt_pair.h"
 #include "shell.h"
+#include "host_connection.h"
 #else
 #include "segment_display.h"
 #endif
@@ -1869,12 +1870,47 @@ static macro_result_t processFreezeCommand()
     return MacroResult_Finished;
 }
 
+static macro_result_t Macros_ProcessUnpairHostCommand(parser_context_t* ctx)
+{
+    ATTR_UNUSED uint8_t slotId = 0;
+    ATTR_UNUSED uint8_t connId = 0;
+
+    if (Macros_IsNUM(ctx)) {
+        ATTR_UNUSED uint8_t arg = Macros_ConsumeInt(ctx);
+#ifdef __ZEPHYR__
+        slotId = arg;
+        connId = ConnectionId_HostConnectionFirst + slotId - 1;
+#endif
+    } else {
+#ifdef __ZEPHYR__
+        connId = HostConnections_NameToConnId(ctx);
+        slotId = connId - ConnectionId_HostConnectionFirst + 1;
+#endif
+        Macros_ConsumeStringToken(ctx);
+    }
+
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+#ifdef __ZEPHYR__
+    HostConnections_ClearConnectionByConnId(connId);
+#endif
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 {
 #define DRY_RUN_FINISH() if (Macros_DryRun) { return MacroResult_Finished; }
 
 #ifdef __ZEPHYR__
-    if (ConsumeToken(ctx, "next")) {
+    if (Macros_IsNUM(ctx)) {
+        uint8_t hostConnectionIndex = Macros_ConsumeInt(ctx) - 1;
+        DRY_RUN_FINISH();
+        HostConnections_SelectByHostConnIndex(hostConnectionIndex);
+    }
+    else if (ConsumeToken(ctx, "next")) {
         DRY_RUN_FINISH();
         HostConnections_SelectNextConnection();
     }
@@ -2578,6 +2614,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "untoggleLayer")) {
                 return processUnToggleLayerCommand();
+            }
+            else if (ConsumeToken(ctx, "unpairHost")) {
+                return Macros_ProcessUnpairHostCommand(ctx);
             }
             else {
                 goto failed;
