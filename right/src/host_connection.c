@@ -22,19 +22,24 @@ host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     },
 };
 
-bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
+host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
     for (int i = 0; i < HOST_CONNECTION_COUNT_MAX; i++) {
-        switch (HostConnections[i].type) {
+        host_connection_type_t type = HostConnections[i].type;
+        switch (type) {
             case HostConnectionType_Empty:
             case HostConnectionType_UsbHidRight:
             case HostConnectionType_UsbHidLeft:
-            case HostConnectionType_NewBtHid:
             case HostConnectionType_Count:
+                break;
+            case HostConnectionType_NewBtHid:
+                if (BtAddrEq(address, &HostConnections[i].bleAddress)) {
+                    return HostKnown_Unregistered;
+                }
                 break;
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
                 if (BtAddrEq(address, &HostConnections[i].bleAddress)) {
-                    return true;
+                    return HostKnown_Registered;
                 }
                 break;
         }
@@ -44,11 +49,11 @@ bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
     // Do check devices that are paired via settings - left, right, dongle
     for (int peerIdx = 0; peerIdx < PeerIdFirstHost; peerIdx++) {
         if (BtAddrEq(address, &Peers[peerIdx].addr)) {
-            return true;
+            return HostKnown_Registered;
         }
     }
 
-    return false;
+    return HostKnown_Unknown;
 }
 
 host_connection_t* HostConnection(uint8_t connectionId) {

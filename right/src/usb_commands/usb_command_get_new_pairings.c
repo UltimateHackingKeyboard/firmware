@@ -24,7 +24,7 @@ static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
         return;
     }
 
-    if (HostConnections_IsKnownBleAddress(&info->addr)) {
+    if (HostConnections_IsKnownBleAddress(&info->addr) != HostKnown_Unregistered) {
         return;
     }
 

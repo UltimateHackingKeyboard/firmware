@@ -293,7 +293,7 @@ bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
 }
 
 void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
-    if (!HostConnections_IsKnownBleAddress(&info->addr)) {
+    if (HostConnections_IsKnownBleAddress(&info->addr) != HostKnown_Registered) {
         printk(" - Deleting an unknown bond!\n");
         deleteBond(info);
     } else {
