@@ -316,21 +316,51 @@ connection_id_t Connections_GetNewBtHidConnectionId() {
 }
 
 void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId, connection_id_t newConnectionId) {
-    bool isActiveConnection = oldConnectionId == ActiveHostConnectionId;
-    bool isSelectedConnection = oldConnectionId == SelectedHostConnectionId;
+    bool isOldActive = oldConnectionId == ActiveHostConnectionId;
+    bool isOldSelected = oldConnectionId == SelectedHostConnectionId;
+    bool isNewActive = newConnectionId == ActiveHostConnectionId;
+    bool isNewSelected = newConnectionId == SelectedHostConnectionId;
 
-    Connections[newConnectionId].peerId = Connections[oldConnectionId].peerId;
-    Connections[newConnectionId].state = Connections[oldConnectionId].state;
+    // Save both connection states
+    uint8_t oldPeerId = Connections[oldConnectionId].peerId;
+    connection_state_t oldState = Connections[oldConnectionId].state;
 
-    Peers[Connections[oldConnectionId].peerId].connectionId = newConnectionId;
+    uint8_t newPeerId = Connections[newConnectionId].peerId;
+    connection_state_t newState = Connections[newConnectionId].state;
 
-    Connections[oldConnectionId].peerId = PeerIdUnknown;
-    Connections[oldConnectionId].state = ConnectionState_Disconnected;
+    ASSERT(oldPeerId == peerId);
+    ASSERT(otherPeerId == PeerIdUnknown || newPeerId > peerId);
 
-    ActiveHostConnectionId = isActiveConnection ? newConnectionId : ActiveHostConnectionId;
-    SelectedHostConnectionId = isSelectedConnection ? newConnectionId : SelectedHostConnectionId;
+    // Exchange connection data
+    Connections[newConnectionId].peerId = oldPeerId;
+    Connections[newConnectionId].state = oldState;
 
-    if (isActiveConnection) {
+    Connections[oldConnectionId].peerId = newPeerId;
+    Connections[oldConnectionId].state = newState;
+
+    // Update peer references for both connections
+    if (oldPeerId != PeerIdUnknown) {
+        Peers[oldPeerId].connectionId = newConnectionId;
+    }
+    if (newPeerId != PeerIdUnknown) {
+        Peers[newPeerId].connectionId = oldConnectionId;
+    }
+
+    // Update active connection ID
+    if (isOldActive) {
+        ActiveHostConnectionId = newConnectionId;
+    } else if (isNewActive) {
+        ActiveHostConnectionId = oldConnectionId;
+    }
+
+    // Update selected connection ID
+    if (isOldSelected) {
+        SelectedHostConnectionId = newConnectionId;
+    } else if (isNewSelected) {
+        SelectedHostConnectionId = oldConnectionId;
+    }
+
+    if (isOldActive || isNewActive) {
         WIDGET_REFRESH(&TargetWidget);
     }
 }
