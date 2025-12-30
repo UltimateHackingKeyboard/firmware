@@ -302,10 +302,11 @@ ATTR_UNUSED static void printContentPretty() {
 void PostponerCore_RunPostponedEvents(void)
 {
     LOG_POSTPONER(printk("? RunPostponedEvents called! ---\n"));
-    runState.runEventsThisCycle = bufferSize > 0;
-    runState.eventsShouldBeQueued = bufferSize > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay || EventVector_IsSet(EventVector_SomeonePostponing);
 
-    runState.runEventsThisCycle &= !EventVector_IsSet(EventVector_SomeonePostponing);
+    bool someoneIsPostponing = EventVector_IsSet(EventVector_SomeonePostponing);
+
+    runState.eventsShouldBeQueued = bufferSize > 0 || Cfg.ChordingDelay || Cfg.AutoShiftDelay || someoneIsPostponing;
+    runState.runEventsThisCycle = !someoneIsPostponing && bufferSize > 0;
 
     if (Cfg.ChordingDelay) {
         chording();
