@@ -59,5 +59,6 @@
     void MacroStatusBuffer_SafePrint();
 
     void NotifyPrintf(const char *fmt, ...);
+    void UnNotify();
 
 #endif

@@ -35,6 +35,7 @@
 
 // Typedefs:
 
+    // these are serialized, don't change order!
     typedef enum {
         HostConnectionType_Empty = 0,
         HostConnectionType_UsbHidRight = 1,
@@ -42,6 +43,7 @@
         HostConnectionType_BtHid = 3,
         HostConnectionType_Dongle = 4,
         HostConnectionType_NewBtHid = 5,
+        HostConnectionType_UnregisteredBtHid = 6,
         HostConnectionType_Count,
     } host_connection_type_t;
 
@@ -52,13 +54,19 @@
         bool switchover;
     } ATTR_PACKED host_connection_t;
 
+    typedef enum {
+        HostKnown_Unknown = 0,
+        HostKnown_Unregistered = 1,
+        HostKnown_Registered = 2,
+    } host_known_t;
+
 // Variables:
 
     extern host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX];
 
 // Functions:
 
-    bool HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+    host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
     host_connection_t* HostConnection(uint8_t connectionId);
 
     void HostConnections_ListKnownBleConnections();
@@ -71,6 +79,12 @@
     void HostConnections_SelectByName(parser_context_t* ctx);
     void HostConnection_SetSelectedConnection(uint8_t connectionId);
 
+    uint8_t HostConnections_NameToConnId(parser_context_t* ctx);
+
+    void HostConnections_ClearConnectionByConnId(uint8_t connectionId);
+
     void HostConnections_Reconnect();
+
+    uint8_t HostConnections_AllocateConnectionIdForUnregisteredHid(const bt_addr_le_t *addr);
 
 #endif

@@ -344,7 +344,40 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
     }
 }
 
-static void applyConnectionAction(connection_action_t command, uint8_t hostConnectionIdx)
+static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionIdx)
+{
+#ifdef __ZEPHYR__
+    const uint32_t unpairTimeout = 3000;
+    static key_state_t* inProgress = NULL;
+    static uint32_t startTime = 0;
+    uint32_t currentTime = Timer_GetCurrentTime();
+
+    if (KeyState_ActivatedNow(keyState)) {
+        inProgress = keyState;
+        startTime = currentTime;
+        UnNotify();
+        EventScheduler_Schedule(startTime + unpairTimeout, EventSchedulerEvent_NativeActions, "unpair host timeout");
+    }
+
+    if (KeyState_DeactivatedNow(keyState)) {
+        if (inProgress == keyState && currentTime - startTime < unpairTimeout) {
+            inProgress = NULL;
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+        }
+    }
+
+    if (KeyState_Active(keyState) && inProgress == keyState) {
+        if (currentTime - startTime >= unpairTimeout) {
+            inProgress = NULL;
+            HostConnections_ClearConnectionByConnId(hostConnectionIdx + ConnectionId_HostConnectionFirst);
+        } else {
+            EventScheduler_Schedule(startTime + unpairTimeout, EventSchedulerEvent_NativeActions, "unpair host timeout");
+        }
+    }
+#endif
+}
+
+static void applyConnectionActionPress(connection_action_t command, uint8_t hostConnectionIdx)
 {
 #ifdef __ZEPHYR__
     switch(command) {
@@ -361,7 +394,7 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
             HostConnections_SelectLastSelectedConnection();
             break;
         case ConnectionAction_SwitchByHostConnectionId:
-            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            //handled elsewhere
             break;
         case ConnectionAction_ToggleAdvertisement:
             BtManager_EnterMode(PairingMode_Advertise, true);
@@ -372,6 +405,16 @@ static void applyConnectionAction(connection_action_t command, uint8_t hostConne
     }
 #endif
 }
+static void applyConnectionAction(key_state_t* keyState, connection_action_t command, uint8_t hostConnectionIdx) {
+    if (command == ConnectionAction_SwitchByHostConnectionId) {
+        applySwitchHostPress(keyState, hostConnectionIdx);
+    } else {
+        if (KeyState_ActivatedNow(keyState)) {
+            applyConnectionActionPress(command, hostConnectionIdx);
+        }
+    }
+}
+
 
 static void applyOtherAction(other_action_t actionSubtype)
 {
@@ -428,9 +471,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             }
             break;
         case KeyActionType_Connections:
-            if (KeyState_ActivatedNow(keyState)) {
-                applyConnectionAction(action->connections.command, action->connections.hostConnectionId);
-            }
+            applyConnectionAction(keyState, action->connections.command, action->connections.hostConnectionId);
             break;
         case KeyActionType_Other:
             if (KeyState_ActivatedNow(keyState)) {

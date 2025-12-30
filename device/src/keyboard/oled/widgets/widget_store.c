@@ -39,6 +39,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
 
+
 widget_t KeymapWidget;
 widget_t LayerWidget;
 widget_t KeymapLayerWidget;
@@ -93,17 +94,31 @@ static string_segment_t getDebugLineText() {
 #undef BUFFER_LENGTH
 }
 
-static string_segment_t getTargetText_() {
-    switch (ActiveHostConnectionId) {
+static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
+    switch (connId) {
         case ConnectionId_UsbHidRight:
             return (string_segment_t){ .start = "USB Cable", .end = NULL };
         case ConnectionId_BtHid:
             return (string_segment_t){ .start = "Bluetooth", .end = NULL };
         case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast: {
-            host_connection_t* hostConnection = HostConnection(ActiveHostConnectionId);
+            host_connection_t* hostConnection = HostConnection(connId);
+
+            if (hostConnection == NULL) {
+                LogU("Widget store get target called with invalid conn Id %d. This wasn't supposed to happen!\n", connId);
+                return (string_segment_t){ .start = NULL, .end = NULL };
+            }
 
             if (SegmentLen(hostConnection->name) > 0) {
-                return hostConnection->name;
+                if (hostConnection->type == HostConnectionType_UnregisteredBtHid) {
+                    #define UNREGISTERED_BLE_HID_TEXT_SHORT "Ble slot %d"
+                    #define UNREGISTERED_BLE_HID_TEXT "Bluetooth device, slot %d"
+                    static char buffer[] = UNREGISTERED_BLE_HID_TEXT;
+                    const char* fmt = shortVersion ? UNREGISTERED_BLE_HID_TEXT_SHORT : UNREGISTERED_BLE_HID_TEXT;
+                    snprintf(buffer, sizeof(buffer), fmt, connId - ConnectionId_HostConnectionFirst + 1);
+                    return (string_segment_t){ .start = buffer, .end = NULL };
+                } else {
+                    return hostConnection->name;
+                }
             }
 
             switch(hostConnection->type) {
@@ -134,15 +149,12 @@ static string_segment_t getTargetText() {
     if ( Macros_DisplayStringsBuffs.host[0] != 0) {
         return (string_segment_t){ .start = Macros_DisplayStringsBuffs.host, .end = NULL };
     } else {
-        string_segment_t currentConnection = getTargetText_();
+        string_segment_t currentConnection = getTargetText_(ActiveHostConnectionId, false);
 
         string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
 
         if (SelectedHostConnectionId != ConnectionId_Invalid) {
-            host_connection_t* hostConnection = HostConnection(SelectedHostConnectionId);
-            if (hostConnection) {
-                selectedConnection = hostConnection->name;
-            }
+            selectedConnection = getTargetText_(SelectedHostConnectionId, true);
         }
 
         if (selectedConnection.start) {

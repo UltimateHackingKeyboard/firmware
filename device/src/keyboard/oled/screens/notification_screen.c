@@ -30,3 +30,7 @@ void NotificationScreen_Notify(const char* message) {
     NotificationScreen_NotifyFor(message, SCREEN_NOTIFICATION_TIMEOUT);
 }
 
+void NotificationScreen_Hide() {
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + 10, EventSchedulerEvent_SwitchScreen, "notification screen - hide");
+}
+

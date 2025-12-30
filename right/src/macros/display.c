@@ -255,5 +255,12 @@ void NotifyPrintf(const char *fmt, ...)
 #endif
 }
 
+void UnNotify()
+{
+#if DEVICE_HAS_OLED
+    NotificationScreen_Hide();
+#endif
+}
+
 
 

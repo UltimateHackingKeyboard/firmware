@@ -29,6 +29,7 @@
     void BtManager_EnterMode(pairing_mode_t mode, bool toggle);
     void BtPair_ClearUnknownBonds();
     void BtPair_UnpairAllNonLR();
+    void BtPair_AllocateUnregisteredBonds();
 
 // Variables
 
