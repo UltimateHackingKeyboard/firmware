@@ -42,6 +42,7 @@
 #include <string.h>
 #include "led_manager.h"
 #include "power_mode.h"
+#include "oneshot.h"
 
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
@@ -168,6 +169,7 @@ static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerSwitcher_DoubleTapInterrupt(keyState);
         Macros_SignalInterrupt();
+        OneShot_SignalInterrupt();
         UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
     }
 }
@@ -866,10 +868,6 @@ static void sendActiveReports(bool resending) {
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
-    }
-
-    if (usbReportsChangedByAction) {
-        Macros_SignalUsbReportsChange();
     }
 
     // If anything changed, trigger one more update to send zero reports

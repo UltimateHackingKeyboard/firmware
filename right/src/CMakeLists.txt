@@ -51,6 +51,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     mouse_controller.c
     mouse_keys.c
     module.c
+    oneshot.c
     postponer.c
     power_mode.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/right_key_matrix.c>

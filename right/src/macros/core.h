@@ -154,8 +154,7 @@
             uint8_t postponeNextNCommands;
             // ---- 4-aligned ----
             uint8_t nextSlot;
-            uint8_t oneShotState : 2;
-            bool oneShotUsbChangeDetected : 1;
+            uint8_t oneShot : 2;
             bool macroInterrupted : 1;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
@@ -242,7 +241,9 @@
     extern bool MacroPlaying;
     extern scheduler_state_t Macros_SchedulerState;
     extern uint32_t Macros_WakeMeOnTime;
+    extern bool Macros_WakeMeOnOneShot;
     extern bool Macros_WakeMeOnKeystateChange;
+    extern bool Macros_WakedBecauseOfOneShot;
     extern bool Macros_WakedBecauseOfTime;
     extern bool Macros_WakedBecauseOfKeystateChange;
     extern uint16_t AutoRepeatInitialDelay;
@@ -280,9 +281,9 @@
     void Macros_Initialize();
     void Macros_ResetBasicKeyboardReports();
     void Macros_SignalInterrupt(void);
-    void Macros_SignalUsbReportsChange();
     void Macros_ValidateAllMacros();
     void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx);
     void Macros_WakeBecauseOfKeystateChange();
+    void Macros_WakeBecauseOfOneShot();
 
 #endif

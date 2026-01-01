@@ -10,6 +10,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "oneshot.h"
 
 #ifdef __ZEPHYR__
 #include "round_trip_test.h"
@@ -154,6 +155,9 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_UnselectHostConnection:
             HostConnection_Unselect();
+            break;
+        case EventSchedulerEvent_OneShotTimeout:
+            OneShot_OnTimeout();
             break;
         default:
             return;

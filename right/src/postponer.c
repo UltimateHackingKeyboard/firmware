@@ -13,6 +13,7 @@
 #include "config_manager.h"
 #include "event_scheduler.h"
 #include "macros/keyid_parser.h"
+#include "oneshot.h"
 
 #ifdef __ZEPHYR__
 #include <zephyr/sys/printk.h>
@@ -40,6 +41,7 @@ bool Postponer_MouseBlocked = false;
 
 static void autoShift();
 static void chording();
+static void oneshot(bool someonePostponing);
 
 struct postponer_run_state_t {
     bool runEventsThisCycle;
@@ -314,6 +316,10 @@ void PostponerCore_RunPostponedEvents(void)
     if (Cfg.AutoShiftDelay) {
         autoShift();
     }
+    if (OneShot_State != OneShotState_Idle) {
+        oneshot(someoneIsPostponing);
+    }
+
     // Process one event every two cycles. (Unless someone keeps Postponer active by touching cycles_until_activation.)
     if ( bufferSize != 0 && (runState.runEventsThisCycle || bufferSize > POSTPONER_BUFFER_MAX_FILL)) {
         LOG_POSTPONER(printRecord("? applying event", &buffer[bufferPosition]););
@@ -566,6 +572,21 @@ void PostponerExtended_RequestUnblockMouse() {
         SecondaryRoles_ActivateSecondaryImmediately();
     }
 }
+
+//##########################
+//### Oneshot ###
+//##########################
+
+static void oneshot(bool someonePostponing)
+{
+    bool queueNonEmpty = bufferSize > 0;
+    bool shouldPostpone = OneShot_ShouldPostpone(queueNonEmpty, someonePostponing);
+
+    if (shouldPostpone) {
+        runState.runEventsThisCycle = false;
+    }
+}
+
 
 //##########################
 //### Chording ###
