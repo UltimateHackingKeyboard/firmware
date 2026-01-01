@@ -3,7 +3,7 @@
 
 // Macros:
 
-    #define MODULE_OVER_UART false
+    #define MODULE_OVER_UART true
 
     #define LED_DRIVER_SDB_PORT  PORTB
     #define LED_DRIVER_SDB_GPIO  GPIOB
