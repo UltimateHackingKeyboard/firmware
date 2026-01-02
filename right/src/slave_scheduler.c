@@ -92,61 +92,90 @@ static uint8_t getNextSlaveId(uint8_t slaveId)
 #endif
 }
 
+static void finalizePreviousTransfer(uhk_slave_t *previousSlave, status_t previousStatus)
+{
+    previousSlave->previousStatus = previousStatus;
+    if (IS_STATUS_I2C_ERROR(previousStatus)) {
+        LogI2cError(previousSlaveId, previousStatus);
+    }
+
+    bool wasPreviousSlaveConnected = previousSlave->isConnected;
+    previousSlave->isConnected = previousStatus == kStatus_Success;
+    if (wasPreviousSlaveConnected != previousSlave->isConnected) {
+        if (previousSlave->isConnected && previousSlave->connect) {
+            previousSlave->connect(previousSlave->perDriverId);
+        }
+        if (!previousSlave->isConnected && previousSlave->disconnect) {
+            previousSlave->disconnect(previousSlave->perDriverId);
+        }
+    }
+}
+
+static void tryInitiateTransfer(uhk_slave_t* currentSlave, bool isFirst, bool *transferIsScheduled, bool *shouldHold)
+{
+    if (!currentSlave->isConnected && isFirst) {
+        currentSlave->init(currentSlave->perDriverId);
+    }
+
+    slave_result_t res = currentSlave->update(currentSlave->perDriverId);
+    status_t currentStatus = res.status;
+    if (IS_STATUS_I2C_ERROR(currentStatus)) {
+        LogI2cError(currentSlaveId, currentStatus);
+    }
+
+    *transferIsScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_IdleCycle;
+    *shouldHold = res.hold;
+}
+
 static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, status_t previousStatus, void *userData)
 {
-    bool isFirstCycle = true;
     bool isTransferScheduled = false;
+    bool shouldHold = false;
+    bool isFirst = true;
     I2cSlaveScheduler_Counter++;
 
     Trace_Printc("<");
 
+    uhk_slave_t *previousSlave = Slaves + previousSlaveId;
+    finalizePreviousTransfer(previousSlave, previousStatus);
+
     do {
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
-        if (isFirstCycle) {
-            uhk_slave_t *previousSlave = Slaves + previousSlaveId;
-            previousSlave->previousStatus = previousStatus;
-            if (IS_STATUS_I2C_ERROR(previousStatus)) {
-                LogI2cError(previousSlaveId, previousStatus);
-            }
+        tryInitiateTransfer(currentSlave, isFirst, &isTransferScheduled, &shouldHold);
 
-            bool wasPreviousSlaveConnected = previousSlave->isConnected;
-            previousSlave->isConnected = previousStatus == kStatus_Success;
-            if (wasPreviousSlaveConnected != previousSlave->isConnected) {
-                if (previousSlave->isConnected && previousSlave->connect) {
-                    previousSlave->connect(previousSlave->perDriverId);
-                }
-                if (!previousSlave->isConnected && previousSlave->disconnect) {
-                    previousSlave->disconnect(previousSlave->perDriverId);
-                }
-            }
-
-            isFirstCycle = false;
-        }
-
-        if (!currentSlave->isConnected) {
-            currentSlave->init(currentSlave->perDriverId);
-        }
-
-        slave_result_t res = currentSlave->update(currentSlave->perDriverId);
-        status_t currentStatus = res.status;
-        if (IS_STATUS_I2C_ERROR(currentStatus)) {
-            LogI2cError(currentSlaveId, currentStatus);
-        }
-
-        isTransferScheduled = currentStatus != kStatus_Uhk_IdleSlave && currentStatus != kStatus_Uhk_IdleCycle;
-
-        if (!res.hold || !currentSlave->isConnected) {
+        if (!shouldHold || !currentSlave->isConnected) {
             previousSlaveId = currentSlaveId;
             currentSlaveId = getNextSlaveId(currentSlaveId);
         } else {
             previousSlaveId = currentSlaveId;
         }
 
+        isFirst = false;
     } while (!isTransferScheduled);
 
     Trace_Printc(">");
 }
+
+void SlaveScheduler_ScheduleSingleTransfer(uint8_t slaveId)
+{
+    bool initiated = false;
+    bool shouldHold = false;
+    bool isFirst = true;
+
+    while (!initiated) {
+        uhk_slave_t *currentSlave = Slaves + slaveId;
+        tryInitiateTransfer(currentSlave, isFirst, &initiated, &shouldHold);
+        isFirst = false;
+    }
+}
+
+void SlaveScheduler_FinalizeTransfer(uint8_t slaveId, status_t status)
+{
+    uhk_slave_t *slave = Slaves + slaveId;
+    finalizePreviousTransfer(slave, status);
+}
+
 
 void SlaveSchedulerCallback(status_t status)
 {

@@ -3,6 +3,7 @@
 #include "i2c_watchdog.h"
 #include "test_led.h"
 #include "init_peripherals.h"
+#include "module.h"
 
 // NOTE: Because of a bug in the ROM bootloader of the KL03Z, the watchdog timer is disabled and cannot be re-enabled.
 // See https://community.nxp.com/thread/457893
@@ -20,6 +21,10 @@ void I2C0_IRQHandler(void)
 
 void RunWatchdog(void)
 {
+    if (MODULE_OVER_UART) {
+        return;
+    }
+
     static volatile uint32_t I2cWatchdog_WatchCounter = 0; // Counter for timer
     static int counter = 0;
 

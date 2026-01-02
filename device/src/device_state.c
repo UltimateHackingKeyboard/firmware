@@ -3,7 +3,7 @@
 #include "bt_manager.h"
 #include "connections.h"
 #include "device.h"
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "state_sync.h"

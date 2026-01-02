@@ -47,6 +47,7 @@
         ConnectionTarget_Left,
         ConnectionTarget_Right,
         ConnectionTarget_Host,
+        ConnectionTarget_Module,
         ConnectionTarget_Count,
     } connection_target_t;
 

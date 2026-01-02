@@ -4,12 +4,11 @@
 #include "module.h"
 #include <stdint.h>
 #include <stdbool.h>
+#include "uart.h"
+#include "module/init_peripherals.h"
 
 // TODO: After sorting out pullup values and refactors, it turns out that the v2 trackpoint works even with the v1 driver.
 // However, the v2 driver is better abstracted, so if we want to unify the code, we should probably do so towards the v2 driver.
-
-#define TRACKPOINT_VERSION 1
-#define MANUAL_RUN false
 
 #if TRACKPOINT_VERSION == 1
 #define NORESET 1
@@ -142,18 +141,37 @@ static bool runOrIdle(ps2_driver_state_t* state) {
 
 ATTR_UNUSED static uint32_t transitionCount = 1;
 
-static void simpleSignalData() {
+void simpleSignalData() {
         GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
         GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
-        for (volatile uint32_t i=0; i<100000; i++);
+        for (volatile uint32_t i=0; i<30; i++);
         GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, 1);
+        for (volatile uint32_t i=0; i<10; i++);
 }
 
-static void simpleSignalClock() {
+void simpleSignalDataShort() {
+        GPIO_PinInit(PS2_DATA_GPIO, PS2_DATA_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
+        GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, 0);
+        for (volatile uint32_t i=0; i<10; i++);
+        GPIO_PinWrite(PS2_DATA_GPIO, PS2_DATA_PIN, 1);
+        for (volatile uint32_t i=0; i<10; i++);
+}
+
+
+void simpleSignalClock() {
         GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
         GPIO_PinWrite(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
-        for (volatile uint32_t i=0; i<100000; i++);
+        for (volatile uint32_t i=0; i<30; i++);
         GPIO_PinWrite(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
+        for (volatile uint32_t i=0; i<10; i++);
+}
+
+void simpleSignalClockShort() {
+        GPIO_PinInit(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, &(gpio_pin_config_t){.pinDirection=kGPIO_DigitalOutput, .outputLogic=0});
+        GPIO_PinWrite(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 0);
+        for (volatile uint32_t i=0; i<10; i++);
+        GPIO_PinWrite(PS2_CLOCK_GPIO, PS2_CLOCK_PIN, 1);
+        for (volatile uint32_t i=0; i<10; i++);
 }
 
 static void requestToSend(ps2_driver_state_t* state)
@@ -364,6 +382,9 @@ static void processDeltas(ps2_driver_state_t* state) {
     } else {
         state->phase = Phase_ReadByte1;
     }
+    if (MODULE_OVER_UART) {
+        ModuleUart_RequestKeyStatesUpdate();
+    }
 }
 
 static void stateMachineTrackpoint1(ps2_driver_state_t* state) {
@@ -539,6 +560,41 @@ void PS2_CLOCK_IRQ_HANDLER(void)
     SDK_ISR_EXIT_BARRIER;
 }
 
+ATTR_UNUSED static void writeNumber(uint8_t num) {
+    simpleSignalData();
+
+    if (num <= 4) {
+        for (int j = 0; j < num; j++) {
+            simpleSignalClockShort();
+        }
+    } else {
+        uint8_t digit = 128;
+
+        while (digit > num) {
+            digit /= 2;
+        }
+
+        while (digit > 0) {
+            if (num >= digit) {
+                simpleSignalClock();
+                num -= digit;
+            } else {
+                simpleSignalClockShort();
+            }
+            digit /= 2;
+        }
+    }
+}
+
+ATTR_UNUSED static void writeOutDebug() {
+    // for (int i = 0; i < DEBUG_CNT; i++) {
+    //     int dbg = debugOut[i];
+    //     debugOut[i] = 0;
+    //     writeNumber(dbg);
+    // }
+    // debugPos = 0;
+}
+
 void Module_Loop(void)
 {
 }
@@ -549,7 +605,6 @@ void Module_OnScan(void)
     if (ps2State.resetTimer > 0 && --ps2State.resetTimer == 0) {
         GPIO_PinWrite(TP_RST_GPIO, TP_RST_PIN, NORESET);
     }
-
 }
 
 static void resetState(ps2_driver_state_t* state) {
