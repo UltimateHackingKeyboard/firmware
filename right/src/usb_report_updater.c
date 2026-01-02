@@ -323,9 +323,12 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState), false, SecondaryRole_DefaultFromSameHalf);
+        if ( KeyState_ActivatedNow(keyState) ) {
+            SecondaryRoles_ResetResolution(keyState);
+        }
+        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, false, SecondaryRole_DefaultFromSameHalf);
         if (res.activatedNow) {
-            SecondaryRoles_FakeActivation(res);
+            SecondaryRoles_FakeActivation();
         }
         switch (res.state) {
             case SecondaryRoleState_Primary:
@@ -337,6 +340,8 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
             case SecondaryRoleState_DontKnowYet:
                 // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
                 EventVector_Set(EventVector_NativeActionsPostponing);
+                return;
+            case SecondaryRoleState_NoOp:
                 return;
         }
     } else {
@@ -423,6 +428,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
+                SecondaryRoles_ResetResolution(keyState);
                 resetStickyMods(cachedAction);
                 Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->timestamp, 255, true);
             }

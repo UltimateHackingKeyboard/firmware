@@ -1029,7 +1029,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, !S->as.actionActive, true, fromSameHalf);
+    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
 
     S->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
 
@@ -1050,7 +1050,10 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
         } else {
             goto conditionPassed;
         }
+    case SecondaryRoleState_NoOp:
+        return MacroResult_Finished | MacroResult_ConditionFailedFlag;
     }
+     
 conditionPassed:
     S->ls->as.currentIfSecondaryConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped

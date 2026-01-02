@@ -56,11 +56,6 @@
         Stick_Always
     } sticky_strategy_t;
 
-    typedef enum {
-        SecondaryRoleState_DontKnowYet,
-        SecondaryRoleState_Secondary,
-        SecondaryRoleState_Primary,
-    } secondary_role_state_t;
 
     typedef enum {
         SecondaryRoleStrategy_Simple,
@@ -82,10 +77,10 @@
 
 // Functions:
 
-    secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution, secondary_role_same_half_t fromSameHalf);
-    void SecondaryRoles_FakeActivation(secondary_role_result_t res);
+    secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isMacroResolution, secondary_role_same_half_t fromSameHalf);
+    void SecondaryRoles_FakeActivation();
     void SecondaryRoles_ActivateSecondaryImmediately();
 
-
+    void SecondaryRoles_ResetResolution(key_state_t* keyState);
 
 #endif /* SRC_SECONDARY_ROLE_DRIVER_H_ */
