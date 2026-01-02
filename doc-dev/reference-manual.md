@@ -146,7 +146,7 @@ COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
 COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
 COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
 COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
-COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary }
+COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary | noAction }
 COMMAND = set secondaryRole.advanced.safetyMargin <ms, higher value adjusts sensitivity towards primary role -50-50 (INT)>
 COMMAND = set secondaryRole.advanced.triggerByPress <trigger immediately on action key press (BOOL)>
 COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)>
@@ -688,7 +688,7 @@ Internally, values are saved in one of the following types, and types are automa
     - simple strategy listens for other key activations until the dual-role key is released. If there is any such activation, it activates the secondary role and then the action of the other key without any further delays. If there is no such other action, it performs primary role on the dual-role key release.
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
-      - `set secondaryRole.advanced.timeoutAction { primary | secondary }` defines whether the primary action or the secondary role should be activated when timeout is reached
+      - `set secondaryRole.advanced.timeoutAction { primary | secondary | noAction}` defines whether the primary action or the secondary role, or no action at all, should be activated when timeout is reached
       - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on the release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action). This is further modified by safetyMargin.
       - `set secondaryRole.advanced.triggerByPress BOOL` if enabled, secondary role is triggered when there is another press, simiarly to the simple strategy. Unlike simple strategy, this allows setting timeout behaviors, and also is modified by safetyMargin.
       - `set secondaryRole.advanced.triggerByMouse BOOL` if enabled, any mouse (module) activity triggers secondary role immediately.
