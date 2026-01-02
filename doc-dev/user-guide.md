@@ -479,7 +479,7 @@ Firngrod's Home Row Mods (HRM) configuration (Recommended):
 ```
 set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.triggerByRelease 1
-set secondaryRole.advanced.timeout 1000
+set secondaryRole.advanced.timeout 300
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.safetyMargin -100

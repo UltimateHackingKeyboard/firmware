@@ -68,39 +68,28 @@ static key_state_t *previousResolutionKey;
 static uint32_t previousResolutionTime;
 static bool activateSecondaryImmediately;
 
-static void activatePrimary()
+void SecondaryRoles_FakeActivation()
 {
-    // Activate the key "again", but now in "SecondaryRoleState_Primary".
     resolutionKey->current = true;
     resolutionKey->previous = false;
-    resolutionKey->secondary = false;
-    // Give the key two cycles (this and next) of activity before allowing postponer to replay any events (esp., the key's own release).
-    // PostponerCore_PostponeNCycles(1);
 }
 
-static void activateSecondary()
-{
-    // Activate the key "again", but now in "SecondaryRoleState_Secondary".
-    resolutionKey->current = true;
-    resolutionKey->previous = false;
-    resolutionKey->secondary = true;
-    // Let the secondary role take place before allowing the affected key to execute. Postponing rest of this cycle should suffice.
-    // PostponerCore_PostponeNCycles(0); //just for aesthetics - we are already postponed for this cycle so this is no-op
-}
+/*
+Utility functions for cached resolution management.
+I am not happy about this arrangement, and it is very much up for discussion.
+I dislike the arrangement because it puts double roles on the values SecondaryRoleState_DontKnowYet 
+and SecondaryRoleState_NoOp and the variable key_state_t.secondaryState.
+In some cases they are states of resolution, in other cases, they are cache management.
+The best alternative I can see is to extend the secondary_role_state_t enum with a fifth state 
+SecondaryRoleState_ResolutionUninitialized, or adding another member to key_state_t, but then yet another bit of memory
+per key is required.  Personally, I like that better, but I leave that up to the maintainers.
+One could also add two new names to the enum with duplicate values, but that still makes the usage of
+key_state_t.secondaryState confusing with it's content's meaning being dependend on the stored resolutionKey
+*/
+void SecondaryRoles_ResetResolution(key_state_t* keyState) { keyState->secondaryState = SecondaryRoleState_DontKnowYet; }
+static inline bool isUninitializedResolution(key_state_t* keyState) { return keyState->secondaryState == SecondaryRoleState_DontKnowYet; }
+static inline void markSecondaryRoleResolutionAsNotUnilitialized(key_state_t *keyState) { keyState->secondaryState = SecondaryRoleState_NoOp; }
 
-void SecondaryRoles_FakeActivation(secondary_role_result_t res)
-{
-    switch (res.state) {
-        case SecondaryRoleState_Primary:
-            activatePrimary();
-            break;
-        case SecondaryRoleState_Secondary:
-            activateSecondary();
-            break;
-        default:
-            break;
-    }
-}
 
 /*
  * Conservative settings (safely preventing collisions) (triggered via distinct && correct release sequence):
@@ -167,7 +156,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
                 KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
                 return SecondaryRoleState_Primary;
             }
-            //activate secondary
+            // activate configured timeout action
             switch (Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction) {
             case SecondaryRoleState_Primary:
                 KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PD"));
@@ -175,6 +164,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
             case SecondaryRoleState_Secondary:
                 KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SA"));
                 return SecondaryRoleState_Secondary;
+            case SecondaryRoleState_NoOp:
+                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "NA"));
+                return SecondaryRoleState_NoOp;
             default:
                 sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
                 return SecondaryRoleState_DontKnowYet;
@@ -335,14 +327,15 @@ void SecondaryRoles_ActivateSecondaryImmediately() {
     }
 }
 
-secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isNewResolution, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf)
+secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf)
 {
     // Since postponer is active during resolutions, KeyState_ActivatedNow can happen only after previous
     // resolution has finished - i.e., if primary action has been activated, carried out and
     // released, or if previous resolution has been resolved as secondary. Therefore,
     // it suffices to deal with the `resolutionKey` only. Any other queried key is a finished resoluton.
 
-    if (isNewResolution) {
+    if (isUninitializedResolution(keyState)) {
+        markSecondaryRoleResolutionAsNotUnilitialized(keyState);
         //start new resolution
         resolutionCallerIsMacroEngine = isMacroResolution;
         switch (actionFromSameHalf) {
@@ -360,28 +353,32 @@ secondary_role_result_t SecondaryRoles_ResolveState(key_state_t* keyState, secon
         resolutionState = resolveCurrentKey(strategy);
         bool resolvedNow = resolutionState != SecondaryRoleState_DontKnowYet;
         if (resolvedNow) {
+            resolutionKey->secondaryState = resolutionState;
             PostponerExtended_UnblockMouse();
         }
         return (secondary_role_result_t){
             .state = resolutionState,
-            .activatedNow = resolutionState != SecondaryRoleState_DontKnowYet
+            .activatedNow = resolvedNow
         };
     } else {
         //handle old resolution
         if (keyState == resolutionKey) {
-            secondary_role_state_t oldState = resolutionState;
-            resolutionState = resolveCurrentKey(strategy);
-            bool resolvedNow = oldState != resolutionState;
-            if (resolvedNow) {
-                PostponerExtended_UnblockMouse();
+            bool resolvedThisRun = false;
+            if ( resolutionState == SecondaryRoleState_DontKnowYet ) {
+                resolutionState = resolveCurrentKey(strategy);
+                resolvedThisRun = resolutionState != SecondaryRoleState_DontKnowYet;
+                if (resolvedThisRun) {
+                    resolutionKey->secondaryState = resolutionState;
+                    PostponerExtended_UnblockMouse();
+                }
             }
             return (secondary_role_result_t){
                 .state = resolutionState,
-                .activatedNow = resolvedNow
+                .activatedNow = resolvedThisRun
             };
         } else {
             return (secondary_role_result_t){
-                .state = keyState->secondary ? SecondaryRoleState_Secondary : SecondaryRoleState_Primary,
+                .state = keyState->secondaryState,
                 .activatedNow = false
             };
         }
