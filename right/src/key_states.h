@@ -11,7 +11,7 @@
 
 // Typedefs:
 
-    typedef enum : uint8_t {
+    typedef enum {
         SecondaryRoleState_DontKnowYet,
         SecondaryRoleState_Secondary,
         SecondaryRoleState_Primary,
