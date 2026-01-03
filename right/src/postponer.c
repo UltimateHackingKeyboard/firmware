@@ -398,35 +398,45 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_typ
     }
 }
 
-void PostponerQuery_InfoByQueueIdx(uint8_t idx, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release)
+void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
+                                     key_state_predicate_t predicate)
 {
-    *press = NULL;
-    *release = NULL;
-    uint8_t startIdx = getPendingKeypressIdx(idx);
-    if(startIdx == 255) {
-        return;
-    }
-    *press = &buffer[POS(startIdx)];
-    for ( int i = startIdx; i < bufferSize; i++ ) {
-        postponer_buffer_record_type_t* rec = &buffer[POS(i)];
-        if (rec->event.type == PostponerEventType_ReleaseKey && rec->event.key.keyState == (*press)->event.key.keyState) {
-            *release = rec;
-            return;
+
+    for ( int i = 0; i < bufferSize; i++ ) {
+        *press = &buffer[POS(i)];
+        if ((*press)->event.type == PostponerEventType_PressKey) {
+            if (predicate == NULL || predicate((*press)->event.key.keyState)) {
+                for ( int j = i + 1; j < bufferSize; j++ ) {
+                    *release = &buffer[POS(j)];
+                    if ((*release)->event.type == PostponerEventType_ReleaseKey
+                        && (*press)->event.key.keyState == (*release)->event.key.keyState ) {
+                        return;
+                    }
+                }
+                *release = NULL;
+                return;
+            }
         }
-    }
+     }
+     *press = NULL;
+     return;
 }
 
-void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release)
+void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
+                                      key_state_predicate_t predicate)
 {
     if (bufferSize > 1) {
         for ( int i = 1; i < bufferSize; i++ ) {
             *release = &buffer[POS(i)];
             if ((*release)->event.type == PostponerEventType_ReleaseKey) {
-                for ( int j = 0; j < i; j++ ) {
-                    *press = &buffer[POS(j)];
-                    if((*press)->event.type == PostponerEventType_PressKey
-                        && (*press)->event.key.keyState == (*release)->event.key.keyState )
-                    return;
+                if (predicate == NULL || predicate((*release)->event.key.keyState)) {
+                    for ( int j = 0; j < i; j++ ) {
+                        *press = &buffer[POS(j)];
+                        if ((*press)->event.type == PostponerEventType_PressKey
+                            && (*press)->event.key.keyState == (*release)->event.key.keyState ) {
+                            return;
+                        }
+                    }
                 }
             }
         }
