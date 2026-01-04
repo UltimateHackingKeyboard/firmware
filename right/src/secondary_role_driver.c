@@ -75,7 +75,7 @@ static inline void fakeActivation()
     resolutionKey->previous = false;
 }
 
-bool isKeyAllowedToTriggerSecondary(key_state_t* keyState) {
+bool isKeyAllowedToBeActionKey(key_state_t* keyState) {
     return acceptTriggersFromSameHalf || !Utils_AreKeysOnTheSameHalf(
         Utils_KeyStateToKeyId(resolutionKey), 
         Utils_KeyStateToKeyId(keyState)
@@ -114,11 +114,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
-        PostponerQuery_FindFirstReleased(&actionPress, &actionRelease, isKeyAllowedToTriggerSecondary);
+        PostponerQuery_FindFirstReleased(&actionPress, &actionRelease, isKeyAllowedToBeActionKey);
         
     }
     if (actionPress == NULL) {
-        PostponerQuery_FindFirstPressed(&actionPress, &actionRelease, isKeyAllowedToTriggerSecondary);
+        PostponerQuery_FindFirstPressed(&actionPress, &actionRelease, isKeyAllowedToBeActionKey);
     }
 
     int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - resolutionStartTime;
