@@ -74,8 +74,8 @@
 
     typedef enum {
         SecondaryRole_DefaultFromSameHalf,
-        SecondaryRole_PrimaryFromSameHalf,
-        SecondaryRole_PrimaryFromSameHalfDisabled,
+        SecondaryRole_IgnoreTriggersFromSameHalf,
+        SecondaryRole_AcceptTriggersFromSameHalf,
     } secondary_role_same_half_t;
 
 // Variables:
