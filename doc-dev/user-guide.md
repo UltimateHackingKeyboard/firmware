@@ -485,7 +485,7 @@ set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.safetyMargin -100
 set secondaryRole.advanced.triggerByMouse 1
 set secondaryRole.advanced.minimumHoldTime 150
-set secondaryRole.advanced.ignoreTriggersFromSameHalf 1
+set secondaryRole.advanced.acceptTriggersFromSameHalf 0
 ```
 
 Full set of advanced strategy config values follows (for copy-paste convenience):
@@ -501,7 +501,7 @@ set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 set secondaryRole.advanced.minimumHoldTime 0
-set secondaryRole.advanced.ignoreTriggersFromSameHalf 0
+set secondaryRole.advanced.acceptTriggersFromSameHalf 1
 ```
 
 The above configuration will trigger the secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger the secondary role.

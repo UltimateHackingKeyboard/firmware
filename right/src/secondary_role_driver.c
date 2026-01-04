@@ -38,6 +38,8 @@
  * - TriggerByRelease - if set to false, the only way to trigger secondary role is to press it for more than Timeout.
  * - DoubletapTime - if dual-role key is tapped and press within this time (press-to-press), then primary role is activated.
  * - DoubletapToPrimary - if set to false, doubletap logic is disabled. Useful if you prefer tap and hold evaluate to primary role.
+ * - MinimumHoldTime - The minimum time that a key must be held for in order to allow it to trigger as secondary.
+ * - AcceptTriggersFromSameHalf - Whether or not action keys can be from the same half as the resolution key.
  *
  * This yields two most basic activation modes:
  *
@@ -59,7 +61,7 @@
  */
 
 static bool resolutionCallerIsMacroEngine = false;
-static bool ignoreTriggersFromSameHalf = false;
+static bool acceptTriggersFromSameHalf = true;
 static key_state_t *resolutionKey;
 static uint32_t resolutionStartTime;
 
@@ -74,7 +76,7 @@ static inline void fakeActivation()
 }
 
 bool isKeyAllowedToTriggerSecondary(key_state_t* keyState) {
-    return !ignoreTriggersFromSameHalf || !Utils_AreKeysOnTheSameHalf(
+    return acceptTriggersFromSameHalf || !Utils_AreKeysOnTheSameHalf(
         Utils_KeyStateToKeyId(resolutionKey), 
         Utils_KeyStateToKeyId(keyState)
     );
