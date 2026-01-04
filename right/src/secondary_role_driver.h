@@ -68,6 +68,12 @@
         SecondaryRole_AcceptTriggersFromSameHalf,
     } secondary_role_same_half_t;
 
+    typedef enum {
+        SecondaryRoleTriggeringEvent_None,
+        SecondaryRoleTriggeringEvent_Press,
+        SecondaryRoleTriggeringEvent_Release,
+    } secondary_role_triggering_event_t;
+
 // Variables:
 
 // Functions:

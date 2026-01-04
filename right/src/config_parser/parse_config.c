@@ -182,7 +182,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     uint16_t secondaryRoles_AdvancedStrategyDoubletapTimeout = Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
     uint16_t secondaryRoles_AdvancedStrategyTimeout = Cfg.SecondaryRoles_AdvancedStrategyTimeout;
     int16_t secondaryRoles_AdvancedStrategySafetyMargin = Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-    bool secondaryRoles_AdvancedStrategyTriggerByRelease = Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease;
+    secondary_role_triggering_event_t secondaryRoles_AdvancedStrategyTriggeringEvent = Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent;
     bool secondaryRoles_AdvancedStrategyDoubletapToPrimary = Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
     serialized_secondary_role_action_type_t secondaryRoles_AdvancedStrategyTimeoutAction = SerializedSecondaryRoleActionType_Secondary;
 
@@ -191,7 +191,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         secondaryRoles_AdvancedStrategyDoubletapTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategyTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategySafetyMargin = ReadInt16(buffer);
-        secondaryRoles_AdvancedStrategyTriggerByRelease = ReadBool(buffer);
+        secondaryRoles_AdvancedStrategyTriggeringEvent = ReadBool(buffer) ? SecondaryRoleTriggeringEvent_Release : SecondaryRoleTriggeringEvent_Press;
         secondaryRoles_AdvancedStrategyDoubletapToPrimary = ReadBool(buffer);
         secondaryRoles_AdvancedStrategyTimeoutAction = ReadUInt8(buffer);
 
@@ -349,7 +349,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
             Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout = secondaryRoles_AdvancedStrategyDoubletapTimeout;
             Cfg.SecondaryRoles_AdvancedStrategyTimeout = secondaryRoles_AdvancedStrategyTimeout;
             Cfg.SecondaryRoles_AdvancedStrategySafetyMargin = secondaryRoles_AdvancedStrategySafetyMargin;
-            Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease = secondaryRoles_AdvancedStrategyTriggerByRelease;
+            Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent = secondaryRoles_AdvancedStrategyTriggeringEvent;
             Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary = secondaryRoles_AdvancedStrategyDoubletapToPrimary;
             switch (secondaryRoles_AdvancedStrategyTimeoutAction) {
                 case SerializedSecondaryRoleActionType_Primary:

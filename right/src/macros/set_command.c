@@ -301,10 +301,16 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
     }
     else if (ConsumeToken(ctx, "triggerByRelease")) {
-        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease);
+        DEFINE_NONE_LIMITS();
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent, ConsumeSecondaryRoleTriggerByRelease(ctx, Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent));
     }
     else if (ConsumeToken(ctx, "triggerByPress")) {
-        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyTriggerByPress);
+        DEFINE_NONE_LIMITS();
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent, ConsumeSecondaryRoleTriggerByPress(ctx, Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent));
+    }
+    else if (ConsumeToken(ctx, "triggeringEvent")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent, ConsumeSecondaryRoleTriggeringEvent(ctx));
     }
     else if (ConsumeToken(ctx, "triggerByMouse")) {
         ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyTriggerByMouse);

@@ -149,8 +149,7 @@ COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
 COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
 COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary | none }
 COMMAND = set secondaryRole.advanced.safetyMargin <ms, higher value adjusts sensitivity towards primary role -50-50 (INT)>
-COMMAND = set secondaryRole.advanced.triggerByPress <trigger immediately on action key press (BOOL)>
-COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)>
+COMMAND = set secondaryRole.advanced.triggeringEvent { press | release | none } <determines whether secondary role is triggered when another key is pressed or when another key is pressed and released while the secondary role key is being held, or not at all from other keys being pressed>
 COMMAND = set secondaryRole.advanced.triggerByMouse <trigger secondary role immediately on mouse move (BOOL)
 COMMAND = set secondaryRole.advanced.minimumHoldTime <ms, minimum time a key must be held before it can trigger secondary role 0-255 (INT)>
 COMMAND = set secondaryRole.advanced.doubletapToPrimary <hold primary on doubletap (BOOL)>
@@ -326,6 +325,8 @@ ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger 
 COMMAND = set macroEngine.scheduler {blocking|preemptive}
 COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
 COMMAND = set modifierLayerTriggers.{control} {left|right|both}
+COMMAND = set secondaryRole.advanced.triggerByPress <trigger immediately on action key press (BOOL)>
+COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)>
 COMMAND = untoggleLayer
 LAYERID = control
 ###########
@@ -703,8 +704,7 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary | none}` defines whether the primary action or the secondary role, or no action at all, should be activated when timeout is reached
-      - `set secondaryRole.advanced.triggerByRelease BOOL` if enabled, secondary role is chosen depending on the release order of the keys (`press-A, press-B, release-B, release-A` leads to secondary action; `press-A, press-B, release-A, release-B` leads to primary action). This is further modified by safetyMargin.
-      - `set secondaryRole.advanced.triggerByPress BOOL` if enabled, secondary role is triggered when there is another press, simiarly to the simple strategy. Unlike simple strategy, this allows setting timeout behaviors, and also is modified by safetyMargin.
+      - `set secondaryRole.advanced.triggeringEvent { press | release | none }` determines whether a secondary role key is triggered as secondary if another key is pressed while it's held, if another key is pressed and released while it's held, or not at all from other keys being held.  The third option allows usage of the timeout feature without inter-key triggers.
       - `set secondaryRole.advanced.triggerByMouse BOOL` if enabled, any mouse (module) activity triggers secondary role immediately.
       - `set secondaryRole.advanced.minimumHoldTime <ms, 0-255 (INT)>` sets the minimum time that a key must be held before it is allowed to trigger as secondary role.
       - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release and trigger-by-press behaviours, so that positive values favor primary role, while negative values favor secondary role. This works by adding the value to the action key (or subtracting from the dual role key). E.g., suppose trigger by release is active, and safetyMargin equal 50. Furthermore assume that dual-role key is released 30ms after the action key. Due to safety margin 50 being greater than 30, the dual-role key is still considered to be released first, and so primary role is activated.

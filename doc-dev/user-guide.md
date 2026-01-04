@@ -443,7 +443,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 350
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 50
-set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.triggeringEvent release
 set secondaryRole.advanced.doubletapToPrimary 0
 ```
 
@@ -456,7 +456,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 200
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.triggeringEvent none
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
@@ -468,8 +468,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 500
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease 0
-set secondaryRole.advanced.triggerByPress 1
+set secondaryRole.advanced.triggeringEvent press
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
@@ -478,7 +477,7 @@ Firngrod's Home Row Mods (HRM) configuration (Recommended):
 
 ```
 set secondaryRole.defaultStrategy advanced
-set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.triggeringEvent release
 set secondaryRole.advanced.timeout 300
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.doubletapToPrimary 1
@@ -495,8 +494,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 500
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease 0
-set secondaryRole.advanced.triggerByPress 0
+set secondaryRole.advanced.triggeringEvent press
 set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
