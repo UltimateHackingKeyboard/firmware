@@ -401,7 +401,6 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_typ
 void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
                                      key_state_predicate_t predicate)
 {
-
     for ( int i = 0; i < bufferSize; i++ ) {
         *press = &buffer[POS(i)];
         if ((*press)->event.type == PostponerEventType_PressKey) {
@@ -417,9 +416,10 @@ void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, pos
                 return;
             }
         }
-     }
-     *press = NULL;
-     return;
+    }
+    *release = NULL;
+    *press = NULL;
+    return;
 }
 
 void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,

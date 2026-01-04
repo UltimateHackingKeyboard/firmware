@@ -320,8 +320,8 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
     }
-    else if (ConsumeToken(ctx, "primaryFromSameHalf")) {
-        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf);
+    else if (ConsumeToken(ctx, "ignoreTriggersFromSameHalf")) {
+        ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyIgnoreTriggersFromSameHalf);
     }
     else {
         Macros_ReportErrorTok(ctx, "Parameter not recognized:");

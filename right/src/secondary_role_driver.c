@@ -59,7 +59,7 @@
  */
 
 static bool resolutionCallerIsMacroEngine = false;
-static bool primaryFromSameHalf = false;
+static bool ignoreTriggersFromSameHalf = false;
 static key_state_t *resolutionKey;
 static uint32_t resolutionStartTime;
 
@@ -74,7 +74,7 @@ static inline void fakeActivation()
 }
 
 bool isKeyAllowedToTriggerSecondary(key_state_t* keyState) {
-    return !primaryFromSameHalf || !Utils_AreKeysOnTheSameHalf(
+    return !ignoreTriggersFromSameHalf || !Utils_AreKeysOnTheSameHalf(
         Utils_KeyStateToKeyId(resolutionKey), 
         Utils_KeyStateToKeyId(keyState)
     );
@@ -107,14 +107,15 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     //gather data
     postponer_buffer_record_type_t *dummy;
     postponer_buffer_record_type_t *dualRoleRelease;
-    postponer_buffer_record_type_t *actionPress;
+    postponer_buffer_record_type_t *actionPress = NULL;
     postponer_buffer_record_type_t *actionRelease;
 
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease) {
         PostponerQuery_FindFirstReleased(&actionPress, &actionRelease, isKeyAllowedToTriggerSecondary);
+        
     }
-    if (!Cfg.SecondaryRoles_AdvancedStrategyTriggerByRelease || actionPress == NULL) {
+    if (actionPress == NULL) {
         PostponerQuery_FindFirstPressed(&actionPress, &actionRelease, isKeyAllowedToTriggerSecondary);
     }
 

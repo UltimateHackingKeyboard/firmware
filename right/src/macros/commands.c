@@ -1006,11 +1006,11 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
             strategy = SecondaryRoleStrategy_Advanced;
         }
 
-        if (ConsumeToken(ctx, "primaryFromSameHalf")) {
-            fromSameHalf = SecondaryRole_PrimaryFromSameHalf;
+        if (ConsumeToken(ctx, "ignoreTriggersFromSameHalf")) {
+            fromSameHalf = SecondaryRole_IgnoreTriggersFromSameHalf;
         }
-        else if (ConsumeToken(ctx, "primaryFromSameHalfDisabled")) {
-            fromSameHalf = SecondaryRole_PrimaryFromSameHalfDisabled;
+        else if (ConsumeToken(ctx, "acceptTriggersFromSameHalf")) {
+            fromSameHalf = SecondaryRole_AcceptTriggersFromSameHalf;
         }
         else {
             break;
