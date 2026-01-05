@@ -393,8 +393,8 @@ static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectio
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
     bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
-    bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount() > 0;
-    bool isSelectedConnection = BtAddrEq(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress);
+    bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
+    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(SelectedHostConnectionId)->bleAddress);
     bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || SelectedHostConnectionId == ConnectionId_Invalid;
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
 
@@ -992,7 +992,7 @@ void BtConn_ReserveConnections() {
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
         bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
-        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount() > 0) {
+        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
             disconnectAllHids();
             // Advertising will get started when the host actually gets disconnected
         } else if (unusedConnectionCount == 0) {
@@ -1026,11 +1026,13 @@ void Bt_SetEnabled(bool enabled) {
     }
 }
 
-uint8_t BtConn_ConnectedHidCount() {
+uint8_t BtConn_ConnectedHidCount(const bt_addr_le_t* excludeAddr) {
     uint8_t connectedHids = 0;
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            connectedHids++;
+            if (excludeAddr == NULL || !BtAddrEq(excludeAddr, &Peers[peerId].addr)) {
+                    connectedHids++;
+            }
         }
     }
     return connectedHids;
