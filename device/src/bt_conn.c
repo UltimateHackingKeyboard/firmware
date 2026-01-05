@@ -391,6 +391,7 @@ static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthentic
 
 static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
+
     bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
     bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
@@ -980,7 +981,8 @@ ATTR_UNUSED static void disconnectAllHids() {
 void BtConn_ReserveConnections() {
 #if DEVICE_IS_UHK80_RIGHT
     bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
-    bool hostActive = hostSelected && Connections_IsReady(SelectedHostConnectionId);
+    uint8_t hostState = hostSelected ? Connections_GetState(SelectedHostConnectionId) : ConnectionState_Disconnected;
+    bool hostActive = hostSelected && hostState >= ConnectionState_Connected;
     bool selectionIsSatisfied = !hostSelected || hostActive;
 
     if (!selectionIsSatisfied) {
@@ -1002,6 +1004,13 @@ void BtConn_ReserveConnections() {
             BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in ReserveConnections");
         }
         WIDGET_REFRESH(&TargetWidget);
+    } else {
+        // TODO: what should we do if the selected connection is connected but not ready?
+        // Is this even a legal code path?
+        // Just log for now.
+        if (hostState == ConnectionState_Connected) {
+            LOG_WRN("Selected host is connected but not yet ready in ReserveConnections. Waiting...\n");
+        }
     }
 #endif
 }
