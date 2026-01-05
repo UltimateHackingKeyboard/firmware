@@ -82,7 +82,7 @@
         uint16_t crc;
         uint8_t data[I2C_MESSAGE_MAX_PAYLOAD_LENGTH];
         uint8_t padding[I2C_MESSAGE_PADDING];
-    } ATTR_PACKED i2c_message_t;
+    } ATTR_PACKED ATTR_ALIGNED i2c_message_t;
 
     typedef struct {
     } ATTR_PACKED pointer_debug_info_t;
