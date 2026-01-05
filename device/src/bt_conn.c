@@ -820,7 +820,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
             Bt_NewPairedDevice = true;
         }
 
-        HostConnections_SelectByHostConnIndex(connectionId - ConnectionId_HostConnectionFirst);
+        HostConnection_SetSelectedConnection(connectionId);
 
         LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d\n", connectionId, SelectedHostConnectionId);
 
