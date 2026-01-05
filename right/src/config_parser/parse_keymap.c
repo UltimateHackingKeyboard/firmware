@@ -322,7 +322,8 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 
         bool isValidRange = actionIdx < MAX_KEY_COUNT_PER_MODULE;
         bool isDryRun = parseMode == ParseMode_DryRun;
-        bool isTransparent = parseMode == ParseMode_Overlay && keyActionType == SerializedKeyActionType_None;
+        bool isNoneActionType = keyActionType == SerializedKeyActionType_None || keyActionType == SerializedKeyActionType_NoneBlock;
+        bool isTransparent = parseMode == ParseMode_Overlay && isNoneActionType;
 
         key_action_t *keyAction = (isValidRange && !isDryRun && !isTransparent) ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
 
