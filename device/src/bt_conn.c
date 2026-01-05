@@ -134,11 +134,13 @@ static struct bt_conn* unsetAuthConn(bool cancel_auth) {
 
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
+        LOG_INF("Unauthenticating %s\n", GetPeerStringByConn(conn));
         unsetAuthConn(true);
     } else {
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            LOG_INF("Disconnecting %s\n", GetPeerStringByConn(conn));
             bt_conn_disconnect(conn, reason);
         }
     }
@@ -416,12 +418,23 @@ static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectio
             }
         }
     */
+
+        // We can get here during pairing where the connection collides with itself.
+        LOG_INF("    Not wanted: this is HID collision\n");
         return false;
     } else if (selectedConnectionIsBleHid) {
+        if (!isSelectedConnection) {
+            LOG_INF("    Not wanted: selected connection is BLE HID, this is not it: %d != %d (%d)", SelectedHostConnectionId, connectionId, connectionType);
+        }
         return isSelectedConnection;
     }
     else {
-        return weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+        bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+        if (!result) {
+            LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (%d != %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
+                SelectedHostConnectionId, connectionId, connectionType, isLeftConnection);
+        }
+        return result;
     }
 }
 
@@ -625,7 +638,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, true, connectionId, connectionType)) {
-        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection)\n", connectionId);
+        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection(%d))\n", connectionId, SelectedHostConnectionId);
         youAreNotWanted(conn);
         return;
     }
@@ -806,6 +819,8 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 
         HostConnections_SelectByHostConnIndex(connectionId - ConnectionId_HostConnectionFirst);
 
+        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d\n", connectionId, SelectedHostConnectionId);
+
         // we have to connect from here, because central changes its address *after* setting security
         connectAuthenticatedConnection(conn, connectionId, connectionType);
     }
@@ -870,9 +885,10 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }
 
+
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
     .pairing_complete = pairing_complete,
-    .pairing_failed = pairing_failed
+    .pairing_failed = pairing_failed,
 };
 
 void BtConn_Init(void) {
