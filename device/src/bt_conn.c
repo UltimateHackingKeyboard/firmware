@@ -990,7 +990,7 @@ void BtConn_ReserveConnections() {
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
         bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
-        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount() > 0) {
+        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
             disconnectAllHids();
             // Advertising will get started when the host actually gets disconnected
         } else if (unusedConnectionCount == 0) {
@@ -1031,11 +1031,13 @@ void Bt_SetEnabled(bool enabled) {
     }
 }
 
-uint8_t BtConn_ConnectedHidCount() {
+uint8_t BtConn_ConnectedHidCount(const bt_addr_le_t* excludeAddr) {
     uint8_t connectedHids = 0;
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            connectedHids++;
+            if (excludeAddr == NULL || !BtAddrEq(excludeAddr, &Peers[peerId].addr)) {
+                    connectedHids++;
+            }
         }
     }
     return connectedHids;

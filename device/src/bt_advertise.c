@@ -248,7 +248,7 @@ adv_config_t BtAdvertise_Config() {
                         return ADVERTISEMENT( 0 );
                     }
                 }
-                else if (BtConn_ConnectedHidCount() > 0) {
+                else if (BtConn_ConnectedHidCount(NULL) > 0) {
                     /** we can't handle multiple HID connections, so don't advertise it when one HID is already connected */
                     return ADVERTISEMENT(ADVERTISE_NUS);
                 } else {
