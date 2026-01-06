@@ -552,6 +552,18 @@ bool PopParserContext(parser_context_t* ctx)
     }
 }
 
+parser_context_t CreateStringRefContext(string_ref_t ref)
+{
+    return (parser_context_t) {
+        .macroState = NULL,
+        .begin = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset,
+        .at = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset,
+        .end = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset + ref.len,
+        .nestingLevel = PARSER_CONTEXT_STACK_SIZE,
+        .nestingBound = PARSER_CONTEXT_STACK_SIZE,
+    };
+}
+
 const char* DeviceModelName(device_id_t device) {
     switch (device) {
         case DeviceId_Uhk60v1_Right:

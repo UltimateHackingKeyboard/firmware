@@ -285,6 +285,7 @@ const config_t DefaultCfg = (config_t){
         .DevMode = false,
         .EmergencyKey = NULL,
         .UiStyle = UiStyle_Classic,
+        .DeviceName = { .offset = 0, .len = 0 },
         .KeyActionColors = {
             {0x00, 0x00, 0x00}, // KeyActionColor_None
             {0xFF, 0xFF, 0xFF}, // KeyActionColor_Scancode
