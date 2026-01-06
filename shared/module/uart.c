@@ -17,8 +17,12 @@ static lpuart_config_t uartConfig;
 static lpuart_handle_t uartHandle;
 static lpuart_transfer_t uartTransfer;
 
-static uint8_t uartRxBuffer[UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH];
-static uint16_t uartRxReadCount = 0;
+/**
+ * We use this buffer for both tx and rx. When processing tx, we are not
+ * listening, so there should be no race condition risk.
+ * */
+static uint8_t uartLinkLayerBuffer[UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH];
+static uint16_t uartBytesReadCount = 0;
 
 static bool hasRawIncomingMessage = false;
 static bool updateKeysNow = false;
@@ -37,7 +41,7 @@ static inline void handleSlaveProtocolMessage(const uint8_t* data) {
         SlaveTxHandler(data);
     }
 
-    UartParser_SetTxBuffer(&uartParser, uartRxBuffer, UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH);
+    UartParser_SetTxBuffer(&uartParser, uartLinkLayerBuffer, UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH);
     UartParser_StartMessage(&uartParser);
     UartParser_AppendEscapedTxBytes(&uartParser, TxMessage.data, TxMessage.length);
     UartParser_FinalizeMessage(&uartParser);
@@ -48,15 +52,15 @@ static inline void handleSlaveProtocolMessage(const uint8_t* data) {
 }
 
 static void processRxBuffer(void) {
-    if (uartRxReadCount > 0) {
-        UartParser_ProcessIncomingBytes(&uartParser, uartRxBuffer, uartRxReadCount);
-        memset(uartRxBuffer, 0, uartRxReadCount);
-        uartRxReadCount = 0;
+    if (uartBytesReadCount > 0) {
+        UartParser_ProcessIncomingBytes(&uartParser, uartLinkLayerBuffer, uartBytesReadCount);
+        memset(uartLinkLayerBuffer, 0, uartBytesReadCount);
+        uartBytesReadCount = 0;
     }
 }
 
 static void startListening(void) {
-    uartTransfer.data = uartRxBuffer;
+    uartTransfer.data = uartLinkLayerBuffer;
     uartTransfer.dataSize = UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH;
     LPUART_TransferReceiveNonBlocking(LPUART0, &uartHandle, &uartTransfer, NULL);
 }
@@ -102,7 +106,7 @@ static void processDeserializedRxData(void *state, uart_control_t messageKind, c
 static void lpuartCallback(LPUART_Type *base, lpuart_handle_t *handle, status_t status, void *arg1)
 {
     if (status == kStatus_LPUART_RxIdle || status == kStatus_LPUART_IdleLineDetected) {
-        uartRxReadCount = uartHandle.rxDataSizeAll - uartHandle.rxDataSize;
+        uartBytesReadCount = uartHandle.rxDataSizeAll - uartHandle.rxDataSize;
     }
 
     // The lpuart functions need to be called from the main thread.
@@ -130,7 +134,7 @@ static void initLpUart(void) {
 static void initUartParser(void) {
     UartParser_InitParser(&uartParser, &processDeserializedRxData, NULL);
     UartParser_SetRxBuffer(&uartParser, RxMessage.data, UART_MAX_MODULE_PAYLOAD_LENGTH);
-    UartParser_SetTxBuffer(&uartParser, RxMessage.data, UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH);
+    UartParser_SetTxBuffer(&uartParser, uartLinkLayerBuffer, UART_MAX_MODULE_SERIALIZED_MESSAGE_LENGTH);
 }
 
 void ModuleUart_RequestKeyStatesUpdate(void) {

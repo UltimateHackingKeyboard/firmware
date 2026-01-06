@@ -55,7 +55,11 @@
 // Functions:
 
     void UartParser_InitParser( uart_parser_t* uartState, void (*receiveMessage)(void* state, uart_control_t messageKind, const uint8_t* rxBuffer, uint16_t len), void* userArg);
+
+    /** Buffer for deserialized data - userspace layer. */
     void UartParser_SetRxBuffer(uart_parser_t *uartState, uint8_t* buffer, uint16_t length);
+
+    /** Buffer for serialized data - link layer. */
     void UartParser_SetTxBuffer(uart_parser_t *uartState, uint8_t* buffer, uint16_t length);
 
     void UartParser_StartMessage(uart_parser_t *uartState);
