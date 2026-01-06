@@ -63,7 +63,7 @@ static report_sink_t determineSink() {
                 return ReportSink_Dongle;
             }
         default:
-            printk("Unhandled sink type. Is this connection really meant to be a report target?\n");
+            printk("Unhandled sink type %d. Is this connection really meant to be a report target?\n", connectionType);
             return ReportSink_Usb;
     }
 }
@@ -159,7 +159,6 @@ extern "C" void UsbCompatibility_UpdateKeyboardLedsState()
             UsbCompatibility_SetCurrentKeyboardLedsState(KeyboardLedsStateUsb);
             break;
         case ConnectionType_BtHid:
-        case ConnectionType_NewBtHid:
             UsbCompatibility_SetCurrentKeyboardLedsState(KeyboardLedsStateBle);
             break;
         case ConnectionType_NusDongle:
@@ -209,9 +208,8 @@ extern "C" void UsbCompatibility_SetKeyboardLedsState(connection_id_t connection
             KeyboardLedsStateUsb = state;
             break;
         case ConnectionType_BtHid:
-        case ConnectionType_NewBtHid:
             KeyboardLedsStateBle = state;
-            break;  
+            break;
         case ConnectionType_NusDongle:
             break;
         default:
@@ -235,7 +233,6 @@ extern "C" float VerticalScrollMultiplier(void)
             return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
 #if DEVICE_IS_UHK80_RIGHT
         case ConnectionType_BtHid:
-        case ConnectionType_NewBtHid:
             return mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
 #endif
         case ConnectionType_NusDongle:
@@ -253,7 +250,6 @@ extern "C" float HorizontalScrollMultiplier(void)
             return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
 #if DEVICE_IS_UHK80_RIGHT
         case ConnectionType_BtHid:
-        case ConnectionType_NewBtHid:
             return mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();
 #endif
         case ConnectionType_NusDongle:
