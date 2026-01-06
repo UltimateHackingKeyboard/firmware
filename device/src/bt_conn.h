@@ -79,7 +79,7 @@ typedef enum {
     void Bt_SetEnabled(bool enabled);
     void BtConn_MakeSpaceForHid();
 
-    uint8_t BtConn_ConnectedHidCount();
+    uint8_t BtConn_ConnectedHidCount(const bt_addr_le_t* excludeAddr);
 
     static inline bool BtAddrEq(const bt_addr_le_t *a, const bt_addr_le_t *b) {
         return 0 == memcmp(a->a.val, b->a.val, sizeof(a->a.val));
