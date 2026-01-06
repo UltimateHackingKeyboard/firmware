@@ -226,8 +226,10 @@ LAYERID_BASIC = {fn|mouse|mod|base|fn2|fn3|fn4|fn5}
 KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last|current
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
-VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name> | $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV
+VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name>
+VARIABLE_EXPANSION = $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV | $uhk.name
 EXPRESSION = <expression> | (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
+EXPRESSION = STRING == STRING | STRING != STRING
 PARENTHESSED_EXPRESSION = (EXPRESSION)
 INT = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | [0-9]+ | -[0-9]+
 BOOL = PARENTHESSED_EXPRESSION | VARIABLE_EXPANSION | 0 | 1
@@ -579,6 +581,7 @@ Internally, values are saved in one of the following types, and types are automa
 - `INT` - as a int32_t. E.g., `(7/3)` yields 2
 - `FLOAT` - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
 - `BOOL` - 1 or 0 value
+- `STRING` - a string _reference_. These strings can use interpolation, but this interpolation is always applied at the expansion site / time.
 
 ### Configuration options:
 
@@ -751,6 +754,7 @@ Internally, values are saved in one of the following types, and types are automa
     - `$currentAddress` which stands for the address of the command in which it is found.
     - `$currentTime` returns current time in milliseconds in 31 bit range.
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
+    - `$uhk.name` returns a reference to the uhk name string.
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpreted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.
 - `custom text` is an arbitrary text starting on the next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
