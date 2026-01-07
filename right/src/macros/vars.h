@@ -16,6 +16,7 @@
 // Macros:
 
     #define MACRO_VARIABLE_COUNT_MAX 32
+    #define TRY_EXPAND_TEMPLATE(CTX) (*ctx->at == '&' && TryExpandMacroTemplateOnce(CTX))
 
 // Typedefs:
 

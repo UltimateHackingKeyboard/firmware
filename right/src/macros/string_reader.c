@@ -148,7 +148,7 @@ static char consumeExpressionCharOfString(const macro_variable_t* variable, uint
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index)
 {
     char c;
-    if (TryExpandMacroTemplateOnce(ctx)) {
+    if (TRY_EXPAND_TEMPLATE(ctx)) {
         // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
         // (If there is an expansion, it is handled within a new context copy.)
         c = consumeCharOfTemplate(ctx, stringType, index);

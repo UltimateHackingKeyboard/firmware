@@ -120,7 +120,7 @@ static void consumeWhite(parser_context_t* ctx)
                 ctx->at++;
             }
         }
-        if (*ctx->at == '$' && TryExpandMacroTemplateOnce(ctx)) {
+        if (TRY_EXPAND_TEMPLATE(ctx)) {
             continue;
         } else {
             return;
