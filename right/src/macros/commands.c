@@ -1029,11 +1029,10 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_result_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
+    secondary_role_state_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
 
-    S->as.actionActive = res.state == SecondaryRoleState_DontKnowYet;
-
-    switch(res.state) {
+    S->as.actionActive = res == SecondaryRoleState_DontKnowYet;
+    switch(res) {
     case SecondaryRoleState_DontKnowYet:
         // secondary role driver has its own scheduler hook to wake us up
         return MacroResult_Sleeping;

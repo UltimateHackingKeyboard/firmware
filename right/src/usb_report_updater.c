@@ -323,14 +323,8 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        if ( KeyState_ActivatedNow(keyState) ) {
-            SecondaryRoles_ResetResolution(keyState);
-        }
-        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, false, SecondaryRole_DefaultFromSameHalf);
-        if (res.activatedNow) {
-            SecondaryRoles_FakeActivation();
-        }
-        switch (res.state) {
+        secondary_role_state_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, false, SecondaryRole_DefaultFromSameHalf);
+        switch (res) {
             case SecondaryRoleState_Primary:
                 applyKeystrokePrimary(keyState, cachedAction, reports);
                 return;
@@ -428,7 +422,6 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
-                SecondaryRoles_ResetResolution(keyState);
                 resetStickyMods(cachedAction);
                 Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->timestamp, 255, true);
             }
@@ -643,6 +636,7 @@ static void updateActionStates() {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
+                    keyState->secondaryState = SecondaryRoleState_DontKnowYet;
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);

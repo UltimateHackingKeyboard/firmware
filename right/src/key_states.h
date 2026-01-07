@@ -13,8 +13,8 @@
 
     typedef enum {
         SecondaryRoleState_DontKnowYet,
-        SecondaryRoleState_Secondary,
         SecondaryRoleState_Primary,
+        SecondaryRoleState_Secondary,
         SecondaryRoleState_NoOp,
     } secondary_role_state_t;
 

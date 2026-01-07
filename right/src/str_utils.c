@@ -466,7 +466,7 @@ secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
     else if (ConsumeToken(ctx, "secondary")) {
         return SecondaryRoleState_Secondary;
     }
-    else if (ConsumeToken(ctx, "noAction")) {
+    else if (ConsumeToken(ctx, "none")) {
         return SecondaryRoleState_NoOp;
     }
     else {
