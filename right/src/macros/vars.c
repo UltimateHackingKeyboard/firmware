@@ -388,6 +388,9 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
 {
     if (*ctx->at == '$') {
         TryExpandMacroTemplateOnce(ctx);
+        if (Macros_ParserError) {
+            return noneVar();
+        }
     }
 
     switch (*ctx->at) {
