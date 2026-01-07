@@ -98,7 +98,6 @@ static void sleepTimeoutStrategy(uint16_t wakeTimeOffset) {
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 {
     //gather data
-    uint32_t dualRolePressTime = resolutionStartTime;
     postponer_buffer_record_type_t *dummy;
     postponer_buffer_record_type_t *dualRoleRelease;
     postponer_buffer_record_type_t *actionPress;
@@ -114,7 +113,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     uint16_t actionKeyId = actionPress != NULL ? Utils_KeyStateToKeyId(actionPress->event.key.keyState) : 255;
     uint16_t dualRoleId = Utils_KeyStateToKeyId(resolutionKey);
 
-    int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - dualRolePressTime;
+    int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - resolutionStartTime;
     bool dualRoleWasHeldLongEnoughToBeAllowedSecondary = activeTime >= Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
 
     if (dualRoleRelease != NULL && !dualRoleWasHeldLongEnoughToBeAllowedSecondary) {
