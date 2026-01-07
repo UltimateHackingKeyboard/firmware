@@ -376,7 +376,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd, NULL);
 }
 
-void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
+void Macros_PrintfWithPos(parser_context_t* ctx, const char *fmt, ...)
 {
     REENTRANCY_GUARD_BEGIN;
     va_list myargs;
@@ -385,9 +385,10 @@ void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
     vsprintf(buffer, fmt, myargs);
 
     indicateOut();
-    if (pos != NULL) {
-        reportErrorHeader("Out", findPosition(pos));
-        reportError(buffer, pos, pos, NULL);
+    if (ctx != NULL) {
+        reportErrorHeader("Out", findPositionCtx(ctx));
+        reportError(buffer, NULL, NULL, ctx);
+
     } else {
         Macros_SetStatusString(buffer, NULL);
     }
