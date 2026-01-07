@@ -1058,7 +1058,8 @@ static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
     string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argNumber);
 
     if (str.start == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
+        // If this kind of substitution is not found, assume it is empty and do *not* throw an error.
+        // Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
         return false;
     }
 

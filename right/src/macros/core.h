@@ -282,7 +282,7 @@
     void Macros_SignalInterrupt(void);
     void Macros_SignalUsbReportsChange();
     void Macros_ValidateAllMacros();
-    void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasArgs, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx);
+    void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx);
     void Macros_WakeBecauseOfKeystateChange();
 
 #endif
