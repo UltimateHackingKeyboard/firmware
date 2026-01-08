@@ -83,7 +83,7 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
 
 void HostConnection_Unselect() {
     HostConnection_SetSelectedConnection(ConnectionId_Invalid);
-    BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in HostConnection_Unselect");
+    BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in HostConnection_Unselect");
 }
 
 static void selectConnection(uint8_t connectionId) {

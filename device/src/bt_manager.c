@@ -88,11 +88,28 @@ void BtManager_StopBt() {
 }
 
 
-void BtManager_StartScanningAndAdvertisingAsync(const char* eventLabel) {
+void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
-    uint32_t delay = 50;
-    LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s\n", eventLabel);
-    EventScheduler_Reschedule(Timer_GetCurrentTime() + delay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
+    uint32_t maxDelay = 5000;
+    uint32_t minDelay = 100;
+    uint32_t expDelay;
+    static int8_t aggressiveTries = 0;
+
+    bool weArePairing = BtPair_PairingMode == PairingMode_Oob || BtPair_PairingMode == PairingMode_PairHid;
+    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
+
+    if (weArePairing || weAreSwitching) {
+        expDelay = minDelay;
+    } else {
+        aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
+        aggressiveTries = MAX(0, aggressiveTries);
+        aggressiveTries = MIN(aggressiveTries, 16);
+
+        expDelay = MIN(maxDelay, minDelay << aggressiveTries);
+    }
+
+    LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s, delay %d\n", eventLabel, expDelay);
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + expDelay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
 }
 
 /*
