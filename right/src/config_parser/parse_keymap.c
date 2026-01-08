@@ -307,8 +307,6 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
     uint8_t noneBlockUntil = 0;
     rgb_t noneBlockColor = {0, 0, 0};
     uint8_t actionIdx = 0;
-    key_action_t currentAction = {};
-    bool currentActionHasArguments = false;
     for (uint8_t i = 0; i < actionCount; i++) {
         bool isNoneActionInNoneBlock = actionIdx < noneBlockUntil;
 
@@ -347,25 +345,12 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         }
 
         if (wasAction) {
-            // validate previous action
-            if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
-                //validate it
-                Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx-1, keymapIdx);
+            if (keyAction->type == KeyActionType_PlayMacro && Macros_ValidationInProgress) {
+                Macros_ValidateMacro(keyAction->playMacro.macroId, keyAction->playMacro.offset, moduleId, actionIdx, keymapIdx, targetLayer);
             }
 
             actionIdx++;
-
-            // cache current action
-            currentAction = *keyAction;
-            currentActionHasArguments = false;
-        } else {
-            currentActionHasArguments = true;
         }
-    }
-    // validate previous action
-    if (currentAction.type == KeyActionType_PlayMacro && currentActionHasArguments && Macros_ValidationInProgress) {
-        //validate it
-        Macros_ValidateMacro(currentAction.playMacro.macroId, currentAction.playMacro.offset, currentActionHasArguments, moduleId, actionIdx-1, keymapIdx);
     }
 
     /* default second touchpad action to right button */

@@ -50,6 +50,7 @@ typedef enum {
 macro_variable_t macroVariables[MACRO_VARIABLE_COUNT_MAX];
 uint8_t macroVariableCount = 0;
 
+static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx);
 static macro_variable_t consumeParenthessExpression(parser_context_t* ctx);
 static macro_variable_t consumeValue(parser_context_t* ctx);
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res);
@@ -377,6 +378,9 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
             return noneVar();
         }
     }
+    else if (ConsumeToken(ctx, "macroArg")) {
+        return consumeArgumentAsValue(ctx);
+    }
     else if ((res = Macro_TryReadConfigVal(ctx)).type != MacroVariableType_None) {
         return res;
     } else {
@@ -386,8 +390,11 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
 
 static macro_variable_t consumeValue(parser_context_t* ctx)
 {
-    if (*ctx->at == '$') {
+    if (*ctx->at == '&') {
         TryExpandMacroTemplateOnce(ctx);
+        if (Macros_ParserError) {
+            return noneVar();
+        }
     }
 
     switch (*ctx->at) {
@@ -1014,22 +1021,45 @@ void MacroVariables_RunTests(void) {
 #endif
 }
 
-static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
+static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
+    ConsumeUntilDot(ctx);
+    uint8_t argId = Macros_ConsumeInt(ctx);
+
     if (S->ms.currentMacroArgumentOffset == 0) {
-        if (Macros_ValidationInProgress) {
-            // mark this action as failed, but don't report it. It will get validated in keymap run later
-            Macros_ParserError = true;
-            return false;
-        } else {
-            Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argNumber);
-            return false;
-        }
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
+    }
+
+    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argId);
+
+    if (str.start == NULL) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argId);
+        return noneVar();
+    }
+
+    parser_context_t varCtx = (parser_context_t) {
+        .at = str.start,
+        .begin = str.start,
+        .end = str.end,
+        .macroState = ctx->macroState,
+        .nestingLevel = ctx->nestingLevel,
+        .nestingBound = ctx->nestingBound,
+    };
+
+    macro_variable_t res = consumeValue(&varCtx);
+
+    return res;
+}
+
+static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
+    if (S->ms.currentMacroArgumentOffset == 0) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argNumber);
     }
 
     string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argNumber);
 
     if (str.start == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
+        // If this kind of substitution is not found, assume it is empty and do *not* throw an error.
+        // Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
         return false;
     }
 
@@ -1037,7 +1067,7 @@ static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
 }
 
 bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
-    ASSERT(*ctx->at == '$');
+    ASSERT(*ctx->at == '&');
 
     ctx->at++;
 
@@ -1046,25 +1076,10 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     if (ConsumeToken(ctx, "macroArg")) {
         ConsumeUntilDot(ctx);
         uint8_t argId = Macros_ConsumeInt(ctx);
-        expandArgument(ctx, argId);
+        expandArgumentInplace(ctx, argId);
         return true;
     }
-    else if (ConsumeToken(ctx, "macroTemplate")) {
-        ConsumeUntilDot(ctx);
-        if (ConsumeToken(ctx, "test")) {
-            const char* arg = "3";
-            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
-            return success;
-        }
-        else if (ConsumeToken(ctx, "emoji")) {
-            const char* arg = "€";
-            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
-            return success;
-        } else {
-            Macros_ReportErrorTok(ctx, "Expected valid template name!");
-            return true;
-        }
-    }
+
     ctx->at--;
     return false;
 }

@@ -482,7 +482,7 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumen
     return slotIndex;
 }
 
-void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasArgs, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx) {
+void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
     bool wasValid = true;
     uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255);
 
@@ -493,6 +493,7 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasA
 
     scheduleSlot(slotIndex);
 
+    Macros_ParserError = false;
     bool macroHasNotEnded = AllMacros[macroIndex].macroActionsCount;
     while (macroHasNotEnded) {
         if (S->ms.currentMacroAction.type == MacroActionType_Command) {
@@ -506,14 +507,17 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, bool hasA
     endMacro();
     S = NULL;
 
-    if (!wasValid && hasArgs && moduleId != 255 && keyIdx != 255 && keymapIdx != 255) {
+    if (!wasValid && moduleId != 255 && keyIdx != 255 && keymapIdx != 255) {
+        const char *name, *nameEnd;
+        FindMacroName(&AllMacros[macroIndex], &name, &nameEnd);
         uint8_t keyId = Utils_KeyCoordinatesToKeyId(ModuleIdToSlotId(moduleId), keyIdx);
         const char* keyAbbrev = MacroKeyIdParser_KeyIdToAbbreviation(keyId);
         const char* keymapAbbrev = AllKeymaps[keymapIdx].abbreviation;
         uint8_t keymapAbbrevLen = AllKeymaps[keymapIdx].abbreviationLen;
         const char* moduleName = ModuleIdToStr(moduleId);
-        Macros_ReportErrorPrintf(NULL, "> Bound at %.*s/%s/%s.\n", keymapAbbrevLen, keymapAbbrev, moduleName, keyAbbrev);
+        Macros_ReportErrorPrintf(NULL, ">     '%.*s' bound at %.*s/%s/%s/%s.\n", nameEnd - name, name, keymapAbbrevLen, keymapAbbrev, LayerNames[layerIdx], moduleName, keyAbbrev);
     }
+    Macros_ParserError = false;
 }
 
 /**
@@ -526,16 +530,10 @@ void Macros_ValidateAllMacros()
     macro_state_t* oldS = S;
     scheduler_state_t schedulerState = Macros_SchedulerState;
     memset(&Macros_SchedulerState, 0, sizeof Macros_SchedulerState);
+    LogU("Validating macros with arguments...\n");
     Macros_DryRun = true;
     Macros_ValidationInProgress = true;
-    // Validate macros without arguments
     uint32_t t1 = Timer_GetCurrentTime();
-    LogU("Validating macros without arguments...\n");
-    for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
-        Macros_ValidateMacro(macroIndex, 0, false, 255, 255, 255);
-    }
-    LogU("Validating macros with arguments...\n");
-    // Validate macros that have arguments
     for (uint8_t keymapIndex = 0; keymapIndex < AllKeymapsCount; keymapIndex++) {
         DryParseKeymap(keymapIndex);
     }

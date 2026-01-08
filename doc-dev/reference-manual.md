@@ -188,6 +188,7 @@ COMMAND = set battery.chargeLimit { full | optimizeHealth }
 COMMAND = set bluetooth.enabled BOOL
 COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
+COMMAND = &macroArg.<macro argument index (INT)>
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
 CONDITION = else
@@ -218,7 +219,6 @@ MODIFIER = postponeKeys
 MODIFIER = final
 MODIFIER = autoRepeat
 MODIFIER = oneShot
-TEMPLATE = $macroArg.<macro argument index (INT)>
 IFSHORTCUT_OPTIONS = noConsume | transitive | anyOrder | orGate | timeoutIn <time in ms (INT)> | cancelIn <time in ms(INT)>
 DIRECTION = {left|right|up|down}
 LAYERID = {fn|mouse|mod|base|fn2|fn3|fn4|fn5|alt|shift|super|ctrl}|last|previous|current
@@ -227,7 +227,7 @@ KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last|current
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
 VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name>
-VARIABLE_EXPANSION = $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV | $uhk.name
+VARIABLE_EXPANSION = $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV | $uhk.name | $macroArg.<macro argument index (INT)>
 EXPRESSION = <expression> | (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
 EXPRESSION = STRING == STRING | STRING != STRING
 PARENTHESSED_EXPRESSION = (EXPRESSION)
@@ -582,6 +582,15 @@ Internally, values are saved in one of the following types, and types are automa
 - `FLOAT` - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
 - `BOOL` - 1 or 0 value
 - `STRING` - a string _reference_. These strings can use interpolation, but this interpolation is always applied at the expansion site / time.
+
+### Argument expansion:
+
+Key actions can be parametrized with macro arguments. These arguments can be expanded in two ways:
+
+- `$macroArg.<idx>` - in which case they are parsed as a single value. This is the normal and safe variant that prevents context corruption.
+- `&macroArg.<idx>` - this variant substitutes the argument into current parser context. These allow substituing any string, including full commands or their parts. This is an experimental feature and might be unsafe in some contexts. Following limitations apply:
+  - the argument bounds must correspond to token bounds in the fully expanded string
+  - the argument cannot span multiple lines
 
 ### Configuration options:
 
