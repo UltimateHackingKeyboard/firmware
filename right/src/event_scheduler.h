@@ -46,6 +46,7 @@
         EventSchedulerEvent_CheckDongleProtocolVersion,
         EventSchedulerEvent_PutBackToShutDown,
         EventSchedulerEvent_BlinkStatusIcons,
+        EventSchedulerEvent_UnselectHostConnection,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

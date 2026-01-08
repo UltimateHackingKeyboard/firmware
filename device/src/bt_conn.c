@@ -47,7 +47,8 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
-#define BT_REASON_TEMPORARY BT_HCI_ERR_CONN_LIMIT_EXCEEDED
+//#define BT_REASON_TEMPORARY BT_HCI_ERR_CONN_LIMIT_EXCEEDED
+#define BT_REASON_TEMPORARY BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
 
@@ -986,7 +987,7 @@ ATTR_UNUSED static void disconnectOldestHost() {
 ATTR_UNUSED static void disconnectAllHids() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            safeDisconnect(Peers[peerId].conn, BT_REASON_TEMPORARY);
+            safeDisconnect(Peers[peerId].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         }
     }
 }
