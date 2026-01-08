@@ -1,7 +1,10 @@
 #include "host_connection.h"
+#include "event_scheduler.h"
 #include "macros/status_buffer.h"
 #include "str_utils.h"
 #include "macros/string_reader.h"
+#include "timer.h"
+#include "bt_manager.h"
 
 #ifdef __ZEPHYR__
 #include "bt_conn.h"
@@ -11,6 +14,8 @@
 #include "stubs.h"
 #include "debug.h"
 #include "bt_pair.h"
+
+#define HOST_CONNECTION_SELECT_TIMEOUT 10000
 
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
@@ -75,13 +80,22 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
     }
 }
 
+void HostConnection_Unselect() {
+    HostConnection_SetSelectedConnection(ConnectionId_Invalid);
+    BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in HostConnection_Unselect");
+}
+
 static void selectConnection(uint8_t connectionId) {
     if (Connections_IsReady(connectionId)) {
+        printk("Selecting ready host connection %d\n", connectionId);
         Connections_HandleSwitchover(connectionId, true);
-        HostConnection_SetSelectedConnection(ConnectionId_Invalid);
+        HostConnection_Unselect();
     } else {
+        printk("Selecting not ready host connection %d\n", connectionId);
         HostConnection_SetSelectedConnection(connectionId);
         BtConn_ReserveConnections();
+        EventScheduler_Reschedule(Timer_GetCurrentTime() + HOST_CONNECTION_SELECT_TIMEOUT, EventSchedulerEvent_UnselectHostConnection, "Unselect host connection timeout");
+
     }
     Connections_ReportState(connectionId);
     LastSelectedHostConnectionId = connectionId;

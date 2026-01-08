@@ -152,6 +152,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_BlinkStatusIcons:
             WIDGET_REFRESH(&StatusWidget);
             break;
+        case EventSchedulerEvent_UnselectHostConnection:
+            HostConnection_Unselect();
+            break;
         default:
             return;
     }
