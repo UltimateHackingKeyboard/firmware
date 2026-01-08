@@ -256,27 +256,20 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 
 static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strategy)
 {
-    switch (resolutionKey->secondaryState) {
-    case SecondaryRoleState_Primary:
-    case SecondaryRoleState_Secondary:
-        return resolutionKey->secondaryState;
-    case SecondaryRoleState_DontKnowYet:
-        if (activateSecondaryImmediately) {
-            activateSecondaryImmediately = false;
-            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SM"));
-            return SecondaryRoleState_Secondary;
-        }
-        switch (strategy) {
+    if (activateSecondaryImmediately) {
+        activateSecondaryImmediately = false;
+        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SM"));
+        return SecondaryRoleState_Secondary;
+    }
+    switch (strategy) {
         case SecondaryRoleStrategy_Simple:
             return resolveCurrentKeyRoleIfDontKnowSimple();
         default:
         case SecondaryRoleStrategy_Advanced:
             return resolveCurrentKeyRoleIfDontKnowTimeout();
-        }
-    default:
-        return SecondaryRoleState_DontKnowYet; // prevent warning
     }
 }
+
 
 static void startResolution(
     key_state_t *keyState,
