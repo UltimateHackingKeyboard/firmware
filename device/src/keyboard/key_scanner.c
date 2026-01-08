@@ -4,7 +4,7 @@
 #include <zephyr/drivers/gpio.h>
 #include "keyboard/key_scanner.h"
 #include "shell.h"
-#include "keyboard/uart.h"
+#include "keyboard/uart_bridge.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "oled/oled_buffer.h"

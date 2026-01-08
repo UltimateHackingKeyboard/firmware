@@ -10,6 +10,7 @@
     #include "macros/core.h"
     #include "ledmap.h"
     #include "layer.h"
+    #include "str_utils.h"
 
 // Typedefs:
 
@@ -103,6 +104,7 @@
         uint32_t I2cBaudRate;
         uint8_t Bt_MaxPeripheralConnections;
         ui_style_t UiStyle;
+        string_ref_t DeviceName;
     } config_t;
 
 // Variables:

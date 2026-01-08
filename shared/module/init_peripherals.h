@@ -3,6 +3,8 @@
 
 // Macros:
 
+    #define MODULE_OVER_UART false
+
     #define LED_DRIVER_SDB_PORT  PORTB
     #define LED_DRIVER_SDB_GPIO  GPIOB
     #define LED_DRIVER_SDB_CLOCK kCLOCK_PortB
@@ -12,5 +14,7 @@
 
     void InitPeripherals(void);
     void initI2c(void);
+    void initUart(void);
+    void uartSendFaByte(void);
 
 #endif

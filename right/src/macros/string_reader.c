@@ -6,6 +6,7 @@
 #include <inttypes.h>
 #include "macros/vars.h"
 #include "str_utils.h"
+#include "config_parser/config_globals.h"
 
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
@@ -119,10 +120,35 @@ static char consumeCharOfTemplate(parser_context_t* ctx, string_type_t stringTyp
     return c1;
 }
 
+static char consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx)
+{
+    parser_context_t ctx = CreateStringRefContext(variable->asStringRef);
+
+    uint16_t stringOffset = 0;
+    uint16_t nestedIndex = 0;
+    uint16_t nestedSubIndex = 0;
+
+    char c1 = '\0'; // char we are interested in
+    char c2 = '\a'; // next char to know if we reached the end
+
+    for (uint16_t i = 0; i < *idx + 2 && c2; i++) {
+        c1 = c2;
+        c2 = Macros_ConsumeCharOfString(&ctx, &stringOffset, &nestedIndex, &nestedSubIndex);
+    }
+
+    if (c1 && c2) {
+        (*idx)++;
+    } else {
+        *idx = 0;
+    }
+
+    return c1;
+}
+
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index)
 {
     char c;
-    if (TryExpandMacroTemplateOnce(ctx)) {
+    if (TRY_EXPAND_TEMPLATE(ctx)) {
         // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
         // (If there is an expansion, it is handled within a new context copy.)
         c = consumeCharOfTemplate(ctx, stringType, index);
@@ -145,6 +171,9 @@ static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringTyp
                 break;
             case MacroVariableType_Bool:
                 c = consumeExpressionCharOfBool(&res, index);
+                break;
+            case MacroVariableType_String:
+                c = consumeExpressionCharOfString(&res, index);
                 break;
             case MacroVariableType_None:
                 c = '?';
@@ -187,6 +216,31 @@ static char tryConsumeAnotherStringLiteral(parser_context_t* ctx, uint16_t* stri
             *stringOffset = 0;
             *subIndex = 0;
             return '\0';
+    }
+}
+
+bool Macros_CompareStringRefs(string_ref_t ref1, string_ref_t ref2) {
+    parser_context_t ctx1 = CreateStringRefContext(ref1);
+    parser_context_t ctx2 = CreateStringRefContext(ref2);
+
+    uint16_t stringOffset1 = 0, textIndex1 = 0, textSubIndex1 = 0;
+    uint16_t stringOffset2 = 0, textIndex2 = 0, textSubIndex2 = 0;
+
+    char c1, c2;
+    while (true) {
+        c1 = Macros_ConsumeCharOfString(&ctx1, &stringOffset1, &textIndex1, &textSubIndex1);
+        c2 = Macros_ConsumeCharOfString(&ctx2, &stringOffset2, &textIndex2, &textSubIndex2);
+
+        bool c1Ended = c1 == '\0';
+        bool c2Ended = c2 == '\0';
+
+        if (c1Ended || c2Ended) {
+            return c1Ended && c2Ended;
+        }
+
+        if (c1 != c2) {
+            return false;
+        }
     }
 }
 

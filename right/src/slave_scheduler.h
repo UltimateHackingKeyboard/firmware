@@ -17,7 +17,7 @@
 
     #define SLAVE_COUNT 8
     #define IS_VALID_SLAVE_ID(slaveId) (0 <= slaveId && slaveId < SLAVE_COUNT)
-    #define IS_STATUS_I2C_ERROR(status) (kStatus_I2C_Busy <= status && status <= kStatus_I2C_Timeout)
+    #define IS_STATUS_I2C_ERROR(status) (kStatus_I2C_Busy <= status && status <= kStatus_I2C_Timeout && status != kStatus_Fail)
 
 // Typedefs:
 
@@ -70,5 +70,9 @@
 
     void InitSlaveScheduler(void);
     void SlaveSchedulerCallback(status_t status);
+
+
+    void SlaveScheduler_ScheduleSingleTransfer(uint8_t slaveId);
+    void SlaveScheduler_FinalizeTransfer(uint8_t slaveId, status_t status);
 
 #endif

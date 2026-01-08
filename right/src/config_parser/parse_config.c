@@ -96,7 +96,10 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     const char *deviceName = ReadString(buffer, &len);
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
-    (void)deviceName;
+    // Save device name as string_ref_t
+    Cfg.DeviceName.offset = deviceName - (const char*)ValidatedUserConfigBuffer.buffer;
+    Cfg.DeviceName.len = len;
+
     (void)doubleTapSwitchLayerTimeout;
 
     // LED brightness

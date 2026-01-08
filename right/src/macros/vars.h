@@ -16,6 +16,7 @@
 // Macros:
 
     #define MACRO_VARIABLE_COUNT_MAX 32
+    #define TRY_EXPAND_TEMPLATE(CTX) (*ctx->at == '&' && TryExpandMacroTemplateOnce(CTX))
 
 // Typedefs:
 
@@ -23,6 +24,7 @@
         MacroVariableType_Int,
         MacroVariableType_Float,
         MacroVariableType_Bool,
+        MacroVariableType_String,
         MacroVariableType_None,
     } macro_variable_type_t;
 
@@ -31,6 +33,7 @@
             int32_t asInt;
             float asFloat;
             bool asBool;
+            string_ref_t asStringRef;
         };
         string_ref_t name;
         macro_variable_type_t type;

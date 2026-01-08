@@ -2,6 +2,7 @@
 #include "key_scanner.h"
 #include "module/i2c_watchdog.h"
 #include "module.h"
+#include "module/uart.h"
 
 #if defined(DEVICE_ID)
 #include "trace.h"
@@ -9,9 +10,12 @@
 #define Trace_Printc(...)
 #endif
 
+uint32_t CurrentTime = 0;
+
 void KEY_SCANNER_HANDLER(void)
 {
     Trace_Printc("<i2");
+    CurrentTime++;
     #if KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_VECTOR
         KeyVector_Scan(&KeyVector);
     #elif KEY_ARRAY_TYPE == KEY_ARRAY_TYPE_MATRIX
@@ -19,6 +23,7 @@ void KEY_SCANNER_HANDLER(void)
     #endif
     RunWatchdog();
     Module_OnScan();
+    ModuleUart_OnTime();
     LPTMR_ClearStatusFlags(KEY_SCANNER_LPTMR_BASEADDR, kLPTMR_TimerCompareFlag);
     Trace_Printc(">");
     SDK_ISR_EXIT_BARRIER;

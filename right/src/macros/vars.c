@@ -50,6 +50,7 @@ typedef enum {
 macro_variable_t macroVariables[MACRO_VARIABLE_COUNT_MAX];
 uint8_t macroVariableCount = 0;
 
+static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx);
 static macro_variable_t consumeParenthessExpression(parser_context_t* ctx);
 static macro_variable_t consumeValue(parser_context_t* ctx);
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res);
@@ -63,7 +64,9 @@ macro_result_t Macros_ProcessStatsVariablesCommand(void) {
 
     Macros_Printf("Variables:");
     for (uint8_t i = 0; i < macroVariableCount; i++) {
-        Macros_Printf("  %.*s: %d", EXPAND_REF(macroVariables[i].name), macroVariables[i].asInt);
+        char buffer[32];
+        Macros_SerializeVar(buffer, sizeof(buffer), macroVariables[i]);
+        Macros_Printf("  %.*s: %s", EXPAND_REF(macroVariables[i].name), buffer);
     }
 
     return MacroResult_Finished;
@@ -77,6 +80,11 @@ static macro_variable_t intVar(int32_t value)
 static macro_variable_t boolVar(bool value)
 {
     return (macro_variable_t) { .asBool = value, .type = MacroVariableType_Bool };
+}
+
+static macro_variable_t stringVar(string_ref_t value)
+{
+    return (macro_variable_t) { .asStringRef = value, .type = MacroVariableType_String };
 }
 
 static macro_variable_t noneVar()
@@ -114,6 +122,24 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
 
     ConsumeWhite(ctx);
     return res;
+}
+
+static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
+{
+    const char* stringStart = ctx->at;
+    uint8_t nestingLevelBefore = ctx->nestingLevel;
+
+    Macros_ConsumeStringToken(ctx);
+
+    if (ctx->nestingLevel != nestingLevelBefore) {
+        Macros_ReportError("String literal crossed context boundary", stringStart, ctx->at);
+        return noneVar();
+    }
+
+    uint16_t offset = stringStart - (const char*)ValidatedUserConfigBuffer.buffer;
+    uint8_t len = ctx->at - stringStart;
+
+    return stringVar((string_ref_t){ .offset = offset, .len = len });
 }
 
 
@@ -228,6 +254,9 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_Bool:
                     value.asInt = value.asBool ? 1 : 0;
                     break;
+                case MacroVariableType_String:
+                    Macros_ReportError("Cannot convert string to int", NULL, NULL);
+                    return noneVar();
                 case MacroVariableType_None:
                     break;
                 default:
@@ -246,6 +275,9 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_Bool:
                     value.asFloat = value.asBool ? 1.0 : 0.0;
                     break;
+                case MacroVariableType_String:
+                    Macros_ReportError("Cannot convert string to float", NULL, NULL);
+                    return noneVar();
                 case MacroVariableType_None:
                     break;
                 default:
@@ -263,6 +295,26 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                     break;
                 case MacroVariableType_Bool:
                     value.asBool = !!value.asBool;
+                    break;
+                case MacroVariableType_String:
+                    Macros_ReportError("Cannot convert string to bool", NULL, NULL);
+                    return noneVar();
+                case MacroVariableType_None:
+                    break;
+                default:
+                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
+                    break;
+            }
+            break;
+        case MacroVariableType_String:
+            switch (value.type) {
+                case MacroVariableType_Int:
+                case MacroVariableType_Float:
+                case MacroVariableType_Bool:
+                    Macros_ReportError("Cannot convert to string", NULL, NULL);
+                    return noneVar();
+                case MacroVariableType_String:
+                    // Already a string, no conversion needed
                     break;
                 case MacroVariableType_None:
                     break;
@@ -317,6 +369,18 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         }
         return intVar(keyId);
     }
+    else if (ConsumeToken(ctx, "uhk")) {
+        ConsumeUntilDot(ctx);
+        if (ConsumeToken(ctx, "name")) {
+            return stringVar(Cfg.DeviceName);
+        } else {
+            Macros_ReportErrorTok(ctx, "UHK property not recognized:");
+            return noneVar();
+        }
+    }
+    else if (ConsumeToken(ctx, "macroArg")) {
+        return consumeArgumentAsValue(ctx);
+    }
     else if ((res = Macro_TryReadConfigVal(ctx)).type != MacroVariableType_None) {
         return res;
     } else {
@@ -326,8 +390,11 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
 
 static macro_variable_t consumeValue(parser_context_t* ctx)
 {
-    if (*ctx->at == '$') {
+    if (*ctx->at == '&') {
         TryExpandMacroTemplateOnce(ctx);
+        if (Macros_ParserError) {
+            return noneVar();
+        }
     }
 
     switch (*ctx->at) {
@@ -343,6 +410,9 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
         case '.':
         case '0' ... '9':
             return consumeNumericValue(ctx);
+        case '"':
+        case '\'':
+            return consumeStringLiteral(ctx);
         case 'f':
             if (ConsumeToken(ctx, "false")) {
                 return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = false };
@@ -409,6 +479,9 @@ static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res)
             res.asInt = -res.asBool;
             res.type = MacroVariableType_Int;
             break;
+        case MacroVariableType_String:
+            Macros_ReportError("Cannot negate a string", NULL, NULL);
+            return noneVar();
         case MacroVariableType_None:
             break;
         default:
@@ -430,6 +503,8 @@ static macro_variable_type_t determineCommonType(macro_variable_type_t a, macro_
 {
     if (a == MacroVariableType_None || b == MacroVariableType_None) {
         return MacroVariableType_None;
+    } else if (a == MacroVariableType_String || b == MacroVariableType_String) {
+        return MacroVariableType_String;
     } else if (a == MacroVariableType_Float || b == MacroVariableType_Float) {
         return MacroVariableType_Float;
     } else if (a == MacroVariableType_Int || b == MacroVariableType_Int) {
@@ -541,6 +616,19 @@ static bool computeIntEqOperation(int32_t a, operator_t op, parser_context_t* op
     }
 }
 
+static bool computeStringEqOperation(string_ref_t a, operator_t op, parser_context_t* opCtx, string_ref_t b)
+{
+    switch(op) {
+        case Operator_Eq:
+            return Macros_CompareStringRefs(a, b);
+        case Operator_Ne:
+            return !Macros_CompareStringRefs(a, b);
+        default:
+            Macros_ReportErrorTok(opCtx, "Only == and != operators are supported for strings");
+            return false;
+    }
+}
+
 
 static macro_variable_t computeBoolOperation(macro_variable_t a, operator_t op, parser_context_t* opCtx, macro_variable_t b)
 {
@@ -574,6 +662,9 @@ static macro_variable_t computeOperation(macro_variable_t a, operator_t op, pars
         case MacroVariableType_Bool:
             a.asInt = computeIntOperation(a.asInt, op, opCtx, b.asInt);
             return noneVar();
+        case MacroVariableType_String:
+            Macros_ReportError("Arithmetic operations are not supported for strings", NULL, NULL);
+            return noneVar();
         case MacroVariableType_None:
             return noneVar();
         default:
@@ -606,6 +697,10 @@ static macro_variable_t computeEqOperation(macro_variable_t a, operator_t op, pa
             a.asBool = computeIntEqOperation(a.asBool, op, opCtx, b.asBool);
             a.type = MacroVariableType_Bool;
             return noneVar();
+        case MacroVariableType_String:
+            a.asBool = computeStringEqOperation(a.asStringRef, op, opCtx, b.asStringRef);
+            a.type = MacroVariableType_Bool;
+            break;
         case MacroVariableType_None:
             return noneVar();
         default:
@@ -856,6 +951,25 @@ void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var) {
         case MacroVariableType_Bool:
             snprintf(buffer, len, "%s", var.asBool ? "true" : "false");
             break;
+        case MacroVariableType_String: {
+            parser_context_t ctx = CreateStringRefContext(var.asStringRef);
+
+            uint16_t stringOffset = 0;
+            uint16_t textIndex = 0;
+            uint16_t textSubIndex = 0;
+            uint8_t bufferIndex = 0;
+
+            char c;
+            while (bufferIndex < len - 1) {
+                c = Macros_ConsumeCharOfString(&ctx, &stringOffset, &textIndex, &textSubIndex);
+                if (c == '\0') {
+                    break;
+                }
+                buffer[bufferIndex++] = c;
+            }
+            buffer[bufferIndex] = '\0';
+            break;
+        }
         default:
             Macros_ReportErrorNum("Unexpected variable type:", var.type, NULL);
             break;
@@ -907,22 +1021,45 @@ void MacroVariables_RunTests(void) {
 #endif
 }
 
-static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
+static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
+    ConsumeUntilDot(ctx);
+    uint8_t argId = Macros_ConsumeInt(ctx);
+
     if (S->ms.currentMacroArgumentOffset == 0) {
-        if (Macros_ValidationInProgress) {
-            // mark this action as failed, but don't report it. It will get validated in keymap run later
-            Macros_ParserError = true;
-            return false;
-        } else {
-            Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argNumber);
-            return false;
-        }
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
+    }
+
+    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argId);
+
+    if (str.start == NULL) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argId);
+        return noneVar();
+    }
+
+    parser_context_t varCtx = (parser_context_t) {
+        .at = str.start,
+        .begin = str.start,
+        .end = str.end,
+        .macroState = ctx->macroState,
+        .nestingLevel = ctx->nestingLevel,
+        .nestingBound = ctx->nestingBound,
+    };
+
+    macro_variable_t res = consumeValue(&varCtx);
+
+    return res;
+}
+
+static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
+    if (S->ms.currentMacroArgumentOffset == 0) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argNumber);
     }
 
     string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argNumber);
 
     if (str.start == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
+        // If this kind of substitution is not found, assume it is empty and do *not* throw an error.
+        // Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argNumber);
         return false;
     }
 
@@ -930,7 +1067,7 @@ static bool expandArgument(parser_context_t* ctx, uint8_t argNumber) {
 }
 
 bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
-    ASSERT(*ctx->at == '$');
+    ASSERT(*ctx->at == '&');
 
     ctx->at++;
 
@@ -939,25 +1076,10 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     if (ConsumeToken(ctx, "macroArg")) {
         ConsumeUntilDot(ctx);
         uint8_t argId = Macros_ConsumeInt(ctx);
-        expandArgument(ctx, argId);
+        expandArgumentInplace(ctx, argId);
         return true;
     }
-    else if (ConsumeToken(ctx, "macroTemplate")) {
-        ConsumeUntilDot(ctx);
-        if (ConsumeToken(ctx, "test")) {
-            const char* arg = "3";
-            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
-            return success;
-        }
-        else if (ConsumeToken(ctx, "emoji")) {
-            const char* arg = "€";
-            bool success = PushParserContext(ctx, arg, arg, arg + strlen(arg));
-            return success;
-        } else {
-            Macros_ReportErrorTok(ctx, "Expected valid template name!");
-            return true;
-        }
-    }
+
     ctx->at--;
     return false;
 }

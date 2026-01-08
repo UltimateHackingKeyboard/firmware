@@ -262,9 +262,12 @@ static void reportErrorHeader(const char* status, uint16_t pos)
     }
 }
 
-static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool markPosition)
+static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin, const char* end, bool markPosition, uint8_t indent)
 {
     Macros_SetStatusString("> ", NULL);
+    for (uint8_t i = 0; i < indent; i++) {
+        Macros_SetStatusString(" ", NULL);
+    }
     uint16_t l = Buf.len;
     Macros_SetStatusNumSpaced(line, false);
     l = Buf.len - l;
@@ -273,7 +276,7 @@ static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin
     Macros_SetStatusString("\n", NULL);
     if (markPosition) {
         Macros_SetStatusString("> ", NULL);
-        for (uint8_t i = 0; i < l; i++) {
+        for (uint8_t i = 0; i < l + indent; i++) {
             Macros_SetStatusString(" ", NULL);
         }
         Macros_SetStatusString(" | ", NULL);
@@ -285,21 +288,23 @@ static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin
     }
 }
 
-static void reportLocationStackLevel(const parser_context_t* ctx, uint16_t line) {
+static void reportLocationStackLevel(const parser_context_t* ctx, uint16_t line, uint8_t indent) {
     uint16_t pos = ctx->at - ctx->begin;
     bool positionIsValid = ctx->begin <= ctx->at && ctx->at <= ctx->end;
     if (positionIsValid) {
-        reportCommandLocation(line, pos, ctx->begin, ctx->end, positionIsValid);
+        reportCommandLocation(line, pos, ctx->begin, ctx->end, positionIsValid, indent);
     } else {
         Macros_SetStatusString("> Position not available here.\n", NULL);
     }
 }
 
 static void reportLocationStack(parser_context_t* ctx, uint16_t line) {
+    uint8_t indent = 0;
     for (uint8_t level = 0; level < ctx->nestingLevel; level++) {
-        reportLocationStackLevel(ViewContext(level), line);
+        reportLocationStackLevel(ViewContext(level), line, indent);
+        indent = 0;
     }
-    reportLocationStackLevel(ctx, line);
+    reportLocationStackLevel(ctx, line, indent);
 }
 
 static void reportError(
@@ -321,7 +326,7 @@ static void reportError(
         const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
         if (startOfLine <= arg && arg <= endOfLine) {
-            reportCommandLocation(line, arg - startOfLine, startOfLine, endOfLine, argIsCommand);
+            reportCommandLocation(line, arg - startOfLine, startOfLine, endOfLine, argIsCommand, 0);
         } else if (ctx != NULL) {
             reportLocationStack(ctx, line);
         } else {
@@ -376,7 +381,7 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd, NULL);
 }
 
-void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
+void Macros_PrintfWithPos(parser_context_t* ctx, const char *fmt, ...)
 {
     REENTRANCY_GUARD_BEGIN;
     va_list myargs;
@@ -385,9 +390,10 @@ void Macros_PrintfWithPos(const char* pos, const char *fmt, ...)
     vsprintf(buffer, fmt, myargs);
 
     indicateOut();
-    if (pos != NULL) {
-        reportErrorHeader("Out", findPosition(pos));
-        reportError(buffer, pos, pos, NULL);
+    if (ctx != NULL) {
+        reportErrorHeader("Out", findPositionCtx(ctx));
+        reportError(buffer, NULL, NULL, ctx);
+
     } else {
         Macros_SetStatusString(buffer, NULL);
     }

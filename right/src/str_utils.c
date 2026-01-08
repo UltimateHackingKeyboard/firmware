@@ -120,7 +120,7 @@ static void consumeWhite(parser_context_t* ctx)
                 ctx->at++;
             }
         }
-        if (*ctx->at == '$' && TryExpandMacroTemplateOnce(ctx)) {
+        if (TRY_EXPAND_TEMPLATE(ctx)) {
             continue;
         } else {
             return;
@@ -550,6 +550,18 @@ bool PopParserContext(parser_context_t* ctx)
     } else {
         return false;
     }
+}
+
+parser_context_t CreateStringRefContext(string_ref_t ref)
+{
+    return (parser_context_t) {
+        .macroState = NULL,
+        .begin = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset,
+        .at = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset,
+        .end = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset + ref.len,
+        .nestingLevel = PARSER_CONTEXT_STACK_SIZE,
+        .nestingBound = PARSER_CONTEXT_STACK_SIZE,
+    };
 }
 
 const char* DeviceModelName(device_id_t device) {

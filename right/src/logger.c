@@ -18,7 +18,7 @@
     #include <zephyr/drivers/gpio.h>
     #include <zephyr/arch/arch_interface.h>
     #if DEVICE_IS_KEYBOARD
-        #include "keyboard/uart.h"
+        #include "keyboard/uart_bridge.h"
         #ifdef DEVICE_HAS_OLED
             #include "keyboard/oled/widgets/console_widget.h"
         #endif
