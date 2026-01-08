@@ -54,7 +54,7 @@ void handleStateTransition(connection_target_t remote, connection_id_t connectio
                                 EventVector_WakeMain();
                             }
 
-                            BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in handleStateTransition - left was disconnected");
+                            BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in handleStateTransition - left was disconnected");
                         }
                         break;
                     case ConnectionTarget_Host:
