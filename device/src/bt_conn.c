@@ -80,6 +80,7 @@ struct bt_conn *auth_conn;
 
 #define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_NOT_SELECTED BT_HCI_ERR_REMOTE_USER_TERM_CONN
+#define BT_REASON_TEMPORARY BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_REMOTE_USER_TERM_CONN
 
@@ -850,7 +851,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
         // Disconnect it so that the connection is established only after it is identified as a host connection
-        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
     } else {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
@@ -1022,7 +1023,7 @@ ATTR_UNUSED static void disconnectOldestHost() {
 ATTR_UNUSED static void disconnectAllHids() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            safeDisconnect(Peers[peerId].conn, BT_REASON_TEMPORARY);
+            safeDisconnect(Peers[peerId].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
         }
     }
 }
