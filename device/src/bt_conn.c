@@ -270,7 +270,7 @@ static void youAreNotWanted(struct bt_conn *conn) {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)\n", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
     } else {
-        LOG_WRN("Refusing connenction %s (this is not a selected connection)\n", GetPeerStringByConn(conn));
+        LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))\n", GetPeerStringByConn(conn), SelectedHostConnectionId);
         safeDisconnect(conn, BT_REASON_INTENTIONAL_DISCONNECT);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
@@ -380,14 +380,22 @@ static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthentic
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
     bool isBonded = BtPair_IsDeviceBonded(bt_conn_get_dst(conn));
 
-    return isLeftConnection || !isBonded || !alreadyAuthenticated;
+    bool result = isLeftConnection || !isBonded || !alreadyAuthenticated;
+
+    if (!result) {
+        LOG_INF("    Not wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
+    }
+
+    return result;
 }
 
 static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
+    const bt_addr_le_t* addr = bt_conn_get_dst(conn);
+
     bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
-    bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount() > 0;
-    bool isSelectedConnection = BtAddrEq(bt_conn_get_dst(conn), &HostConnection(SelectedHostConnectionId)->bleAddress);
+    bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
+    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(SelectedHostConnectionId)->bleAddress);
     bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || SelectedHostConnectionId == ConnectionId_Invalid;
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
 
@@ -414,12 +422,23 @@ static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectio
             }
         }
     */
+
+        // We can get here during pairing where the connection collides with itself.
+        LOG_INF("    Not wanted: this is HID collision\n");
         return false;
     } else if (selectedConnectionIsBleHid) {
+        if (!isSelectedConnection) {
+            LOG_INF("    Not wanted: selected connection is BLE HID, this is not it: %d != %d (%d)", SelectedHostConnectionId, connectionId, connectionType);
+        }
         return isSelectedConnection;
     }
     else {
-        return weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+        bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+        if (!result) {
+            LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (%d != %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
+                SelectedHostConnectionId, connectionId, connectionType, isLeftConnection);
+        }
+        return result;
     }
 }
 
@@ -623,7 +642,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, true, connectionId, connectionType)) {
-        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection)\n", connectionId);
+        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection(%d))\n", connectionId, SelectedHostConnectionId);
         youAreNotWanted(conn);
         return;
     }
@@ -802,7 +821,9 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
             Bt_NewPairedDevice = true;
         }
 
-        HostConnections_SelectByHostConnIndex(connectionId - ConnectionId_HostConnectionFirst);
+        HostConnection_SetSelectedConnection(connectionId);
+
+        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d\n", connectionId, SelectedHostConnectionId);
 
         // we have to connect from here, because central changes its address *after* setting security
         connectAuthenticatedConnection(conn, connectionId, connectionType);
@@ -868,9 +889,10 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }
 
+
 static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
     .pairing_complete = pairing_complete,
-    .pairing_failed = pairing_failed
+    .pairing_failed = pairing_failed,
 };
 
 void BtConn_Init(void) {
@@ -959,7 +981,8 @@ ATTR_UNUSED static void disconnectAllHids() {
 void BtConn_ReserveConnections() {
 #if DEVICE_IS_UHK80_RIGHT
     bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
-    bool hostActive = hostSelected && Connections_IsReady(SelectedHostConnectionId);
+    uint8_t hostState = hostSelected ? Connections_GetState(SelectedHostConnectionId) : ConnectionState_Disconnected;
+    bool hostActive = hostSelected && hostState >= ConnectionState_Connected;
     bool selectionIsSatisfied = !hostSelected || hostActive;
 
     if (!selectionIsSatisfied) {
@@ -971,7 +994,7 @@ void BtConn_ReserveConnections() {
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
         bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
-        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount() > 0) {
+        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
             disconnectAllHids();
             // Advertising will get started when the host actually gets disconnected
         } else if (unusedConnectionCount == 0) {
@@ -981,6 +1004,13 @@ void BtConn_ReserveConnections() {
             BtManager_StartScanningAndAdvertisingAsync("StartScanningAndAdvertisingAsync in ReserveConnections");
         }
         WIDGET_REFRESH(&TargetWidget);
+    } else {
+        // TODO: what should we do if the selected connection is connected but not ready?
+        // Is this even a legal code path?
+        // Just log for now.
+        if (hostState == ConnectionState_Connected) {
+            LOG_WRN("Selected host is connected but not yet ready in ReserveConnections. Waiting...\n");
+        }
     }
 #endif
 }
@@ -1005,11 +1035,13 @@ void Bt_SetEnabled(bool enabled) {
     }
 }
 
-uint8_t BtConn_ConnectedHidCount() {
+uint8_t BtConn_ConnectedHidCount(const bt_addr_le_t* excludeAddr) {
     uint8_t connectedHids = 0;
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
-            connectedHids++;
+            if (excludeAddr == NULL || !BtAddrEq(excludeAddr, &Peers[peerId].addr)) {
+                    connectedHids++;
+            }
         }
     }
     return connectedHids;
