@@ -17,8 +17,6 @@
 // Variables:
 
     extern widget_t* PairingScreen;
-    extern widget_t* PairingSucceededScreen;
-    extern widget_t* PairingFailedScreen;
 
 // Functions:
 
