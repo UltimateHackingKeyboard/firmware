@@ -134,7 +134,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     bool isFirst = true;
     I2cSlaveScheduler_Counter++;
 
-    Trace_Printc("<");
+    // Trace_Printc("<7");
 
     uhk_slave_t *previousSlave = Slaves + previousSlaveId;
     finalizePreviousTransfer(previousSlave, previousStatus);
@@ -154,7 +154,7 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         isFirst = false;
     } while (!isTransferScheduled);
 
-    Trace_Printc(">");
+    // Trace_Printc(">");
 }
 
 void SlaveScheduler_ScheduleSingleTransfer(uint8_t slaveId)
