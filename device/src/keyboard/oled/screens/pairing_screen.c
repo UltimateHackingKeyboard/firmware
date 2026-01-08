@@ -8,17 +8,13 @@
 #include "bt_conn.h"
 #include "screen_manager.h"
 #include "key_action.h"
+#include "macros/status_buffer.h"
 
 static widget_t splitterWidget;
 static widget_t questionLine;
 static widget_t answerLine;
 
-static widget_t pairingFailed;
-static widget_t pairingSucceeded;
-
 widget_t* PairingScreen;
-widget_t* PairingSucceededScreen;
-widget_t* PairingFailedScreen;
 
 static uint8_t passwordCharCount = 0;
 static uint8_t password[PASSWORD_LENGTH];
@@ -62,7 +58,11 @@ static void registerPasswordDigit(uint8_t digit)
 
 void PairingScreen_Feedback(bool success)
 {
-    ScreenManager_ActivateScreen(success ? ScreenId_PairingSucceeded : ScreenId_PairingFailed);
+    if (success) {
+        NotifyPrintf("Pairing succeeded!");
+    } else {
+        NotifyPrintf("Pairing failed!");
+    }
 }
 
 const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
@@ -135,10 +135,4 @@ void PairingScreen_Init(void)
     answerLine = TextWidget_Build(&JetBrainsMono16, passwordTextBuffer);
     splitterWidget = SplitterWidget_BuildVertical(&questionLine, &answerLine, (DISPLAY_HEIGHT-DISPLAY_SHIFTING_MARGIN)/2, false);
     PairingScreen = &splitterWidget;
-
-    pairingFailed = TextWidget_Build(&JetBrainsMono16, "Pairing failed!");
-    PairingFailedScreen = &pairingFailed;
-
-    pairingSucceeded = TextWidget_Build(&JetBrainsMono16, "Pairing succeeded!");
-    PairingSucceededScreen = &pairingSucceeded;
 }

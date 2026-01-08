@@ -936,7 +936,7 @@ void num_comp_reply(int passkey) {
     struct bt_conn *conn;
 
 #if DEVICE_HAS_OLED
-    ScreenManager_SwitchScreenEvent();
+    NotificationScreen_NotifyFor("Pairing...", 10000);
 #endif
 
     if (!auth_conn) {
