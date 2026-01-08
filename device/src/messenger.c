@@ -433,7 +433,7 @@ void Messenger_ProcessQueue() {
     EventVector_Unset(EventVector_NewMessage);
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
-        Trace('<');
+        Trace_Printc("<8");
         receive(rec.data+rec.offset, rec.len);
         MessengerQueue_FreeMemory(rec.data);
         Trace('>');
