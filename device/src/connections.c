@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include "config_manager.h"
 #include "bt_pair.h"
+#include "usb_commands/usb_command_get_new_pairings.h"
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -166,6 +167,8 @@ connection_type_t Connections_Type(connection_id_t connectionId) {
             host_connection_type_t hostConnectionType = HostConnection(connectionId)->type;
             switch (hostConnectionType) {
                 case HostConnectionType_NewBtHid:
+                    return ConnectionType_Empty;
+                case HostConnectionType_UnregisteredBtHid:
                     return ConnectionType_BtHid;
                 default:
                     return (connection_type_t)hostConnectionType;
@@ -204,10 +207,11 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
                 case HostConnectionType_UsbHidRight:
                     return ConnectionTarget_Host;
                 case HostConnectionType_BtHid:
-                case HostConnectionType_NewBtHid:
+                case HostConnectionType_UnregisteredBtHid:
                     return ConnectionTarget_Host;
                 case HostConnectionType_Dongle:
                     return ConnectionTarget_Host;
+                case HostConnectionType_NewBtHid:
                 case HostConnectionType_Empty:
                 case HostConnectionType_Count:
                     return ConnectionTarget_None;
@@ -250,9 +254,9 @@ static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
         host_connection_t *hostConnection = HostConnection(connectionId);
         switch (hostConnection->type) {
-            case HostConnectionType_NewBtHid:
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
+            case HostConnectionType_UnregisteredBtHid:
                 if (BtAddrEq(addr, &hostConnection->bleAddress)) {
                     return connectionId;
                 }
@@ -260,6 +264,7 @@ static connection_id_t getConnIdByAddr(const bt_addr_le_t *addr) {
             case HostConnectionType_Empty:
             case HostConnectionType_UsbHidLeft:
             case HostConnectionType_UsbHidRight:
+            case HostConnectionType_NewBtHid:
             case HostConnectionType_Count:
                 break;
         }
@@ -315,21 +320,51 @@ connection_id_t Connections_GetNewBtHidConnectionId() {
 }
 
 void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId, connection_id_t newConnectionId) {
-    bool isActiveConnection = oldConnectionId == ActiveHostConnectionId;
-    bool isSelectedConnection = oldConnectionId == SelectedHostConnectionId;
+    bool isOldActive = oldConnectionId == ActiveHostConnectionId;
+    bool isOldSelected = oldConnectionId == SelectedHostConnectionId;
+    bool isNewActive = newConnectionId == ActiveHostConnectionId;
+    bool isNewSelected = newConnectionId == SelectedHostConnectionId;
 
-    Connections[newConnectionId].peerId = Connections[oldConnectionId].peerId;
-    Connections[newConnectionId].state = Connections[oldConnectionId].state;
+    // Save both connection states
+    uint8_t oldPeerId = Connections[oldConnectionId].peerId;
+    connection_state_t oldState = Connections[oldConnectionId].state;
 
-    Peers[Connections[oldConnectionId].peerId].connectionId = newConnectionId;
+    uint8_t newPeerId = Connections[newConnectionId].peerId;
+    connection_state_t newState = Connections[newConnectionId].state;
 
-    Connections[oldConnectionId].peerId = PeerIdUnknown;
-    Connections[oldConnectionId].state = ConnectionState_Disconnected;
+    ASSERT(oldPeerId == peerId);
+    ASSERT(newPeerId == PeerIdUnknown || newPeerId > peerId);
 
-    ActiveHostConnectionId = isActiveConnection ? newConnectionId : ActiveHostConnectionId;
-    SelectedHostConnectionId = isSelectedConnection ? newConnectionId : SelectedHostConnectionId;
+    // Exchange connection data
+    Connections[newConnectionId].peerId = oldPeerId;
+    Connections[newConnectionId].state = oldState;
 
-    if (isActiveConnection) {
+    Connections[oldConnectionId].peerId = newPeerId;
+    Connections[oldConnectionId].state = newState;
+
+    // Update peer references for both connections
+    if (oldPeerId != PeerIdUnknown) {
+        Peers[oldPeerId].connectionId = newConnectionId;
+    }
+    if (newPeerId != PeerIdUnknown) {
+        Peers[newPeerId].connectionId = oldConnectionId;
+    }
+
+    // Update active connection ID
+    if (isOldActive) {
+        ActiveHostConnectionId = newConnectionId;
+    } else if (isNewActive) {
+        ActiveHostConnectionId = oldConnectionId;
+    }
+
+    // Update selected connection ID
+    if (isOldSelected) {
+        SelectedHostConnectionId = newConnectionId;
+    } else if (isNewSelected) {
+        SelectedHostConnectionId = oldConnectionId;
+    }
+
+    if (isOldActive || isNewActive) {
         WIDGET_REFRESH(&TargetWidget);
     }
 }
@@ -434,6 +469,8 @@ void Connections_PrintInfo(log_target_t target) {
     LogTo(DEVICE_ID, target, "Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
     LogTo(DEVICE_ID, target, "Pairing mode: %d\n", BtPair_PairingMode);
     LogTo(DEVICE_ID, target, "Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
+    LogTo(DEVICE_ID, target, "New connection: %d\n", Bt_NewPairedDevice);
+
     HostConnections_ListKnownBleConnections(target);
     BtConn_ListAllBonds(target);
     BtConn_ListCurrentConnections(target);

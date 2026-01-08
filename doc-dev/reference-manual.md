@@ -126,7 +126,8 @@ COMMAND = tapKeySeq [persistent] [ SHORTCUT | KEY_SEQUENCE ]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
 COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
-COMMAND = switchHost { last | lastSelected | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
+COMMAND = switchHost { last | lastSelected | next | previous | <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
+COMMAND = unpairHost { <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
 COMMAND = set module.MODULEID.speed <xcelerated speed, 0-10.0 (FLOAT)>
@@ -386,6 +387,7 @@ COMMAND = setEmergencyKey KEYID
   - `lastSelected` switches to the last manually selected connection. This is useful to undo an automatic switchover.
   - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
   - See the bluetooth section for more information.
+- `unpairHost { <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> }` unpairs the given host connection. If the slot is in User Configuration, it only unpairs the host, but keeps the connection information. If the slot is not in User Configuration, it removes the entire connection information and makes the slot available to pairing another device.
 - `reconnect` disconnects current active host, waits 100ms and then attempts to connect to it again (i.e., similar to calling switchHost).
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.):
