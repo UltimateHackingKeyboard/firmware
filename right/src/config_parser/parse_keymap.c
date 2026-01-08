@@ -346,7 +346,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 
         if (wasAction) {
             if (keyAction->type == KeyActionType_PlayMacro && Macros_ValidationInProgress) {
-                Macros_ValidateMacro(keyAction->playMacro.macroId, keyAction->playMacro.offset, moduleId, actionIdx, keymapIdx);
+                Macros_ValidateMacro(keyAction->playMacro.macroId, keyAction->playMacro.offset, moduleId, actionIdx, keymapIdx, targetLayer);
             }
 
             actionIdx++;

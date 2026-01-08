@@ -482,7 +482,7 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumen
     return slotIndex;
 }
 
-void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx) {
+void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
     bool wasValid = true;
     uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255);
 
@@ -515,7 +515,7 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t m
         const char* keymapAbbrev = AllKeymaps[keymapIdx].abbreviation;
         uint8_t keymapAbbrevLen = AllKeymaps[keymapIdx].abbreviationLen;
         const char* moduleName = ModuleIdToStr(moduleId);
-        Macros_ReportErrorPrintf(NULL, "> '%.*s' bound at %.*s/%s/%s.\n", nameEnd - name, name, keymapAbbrevLen, keymapAbbrev, moduleName, keyAbbrev);
+        Macros_ReportErrorPrintf(NULL, ">     '%.*s' bound at %.*s/%s/%s/%s.\n", nameEnd - name, name, keymapAbbrevLen, keymapAbbrev, LayerNames[layerIdx], moduleName, keyAbbrev);
     }
     Macros_ParserError = false;
 }
