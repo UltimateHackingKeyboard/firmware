@@ -11,6 +11,13 @@
 
 // Typedefs:
 
+    typedef enum {
+        SecondaryRoleState_DontKnowYet,
+        SecondaryRoleState_Primary,
+        SecondaryRoleState_Secondary,
+        SecondaryRoleState_NoOp,
+    } secondary_role_state_t;
+
     // Next is used as an accumulator of the state - asynchronous state updates
     // are stored there. The hardwareSwitchState always contains the most up-to-date
     // information about hardware state of the switch.
@@ -29,7 +36,7 @@
         bool current : 1;
         bool previous : 1;
         bool debouncing : 1;
-        bool secondary : 1;
+        secondary_role_state_t secondaryState : 2;
     } key_state_t;
 
 // Variables:

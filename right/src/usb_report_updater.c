@@ -323,11 +323,8 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        secondary_role_result_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, KeyState_ActivatedNow(keyState), false, SecondaryRole_DefaultFromSameHalf);
-        if (res.activatedNow) {
-            SecondaryRoles_FakeActivation(res);
-        }
-        switch (res.state) {
+        secondary_role_state_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, false, SecondaryRole_DefaultFromSameHalf);
+        switch (res) {
             case SecondaryRoleState_Primary:
                 applyKeystrokePrimary(keyState, cachedAction, reports);
                 return;
@@ -337,6 +334,8 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
             case SecondaryRoleState_DontKnowYet:
                 // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
                 EventVector_Set(EventVector_NativeActionsPostponing);
+                return;
+            case SecondaryRoleState_NoOp:
                 return;
         }
     } else {
@@ -678,6 +677,7 @@ static void updateActionStates() {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
+                    keyState->secondaryState = SecondaryRoleState_DontKnowYet;
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
