@@ -33,7 +33,7 @@
         EventSchedulerEvent_MouseController,
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
-        EventSchedulerEvent_PowerMode,
+        EventSchedulerEvent_PowerModeUpdate,
         EventSchedulerEvent_PowerModeRestart,
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,

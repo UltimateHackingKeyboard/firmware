@@ -682,6 +682,7 @@ static void updateActionStates() {
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
                         PowerMode_WakeHost();
+                        PowerMode_ActivateMode(PowerMode_Awake, false, true, "key action wakeup");
                         Trace_Printc("y4");
                     }
 
