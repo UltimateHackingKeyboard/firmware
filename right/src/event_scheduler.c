@@ -108,7 +108,7 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_UpdateMergeSensor:
             MergeSensor_Update();
             break;
-        case EventSchedulerEvent_PowerMode:
+        case EventSchedulerEvent_PowerModeUpdate:
             PowerMode_Update();
             break;
         case EventSchedulerEvent_PowerModeRestart:

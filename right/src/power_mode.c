@@ -1,4 +1,5 @@
 #include "power_mode.h"
+#include "timer.h"
 #include "usb_composite_device.h"
 #include "event_scheduler.h"
 #include "led_manager.h"
@@ -59,14 +60,18 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
 
 ATTR_UNUSED static bool usbAwake = false;
 
+static uint32_t lastWakeEvent = 0;
+
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
+
+#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10000
 
 // originally written for Benedek's power callback
 // TODO: remove this and simplify the rest of the code if the callback is not used.
 void PowerMode_SetUsbAwake(bool awake) {
 #if DEVICE_IS_UHK80_RIGHT
     usbAwake = awake;
-    EventScheduler_Reschedule(Timer_GetCurrentTime() + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from power callback");
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerModeUpdate, "update sleep mode from power callback");
 #endif
 }
 
@@ -85,12 +90,19 @@ void PowerMode_Update() {
 
     power_mode_t newPowerMode = someoneAwake ? PowerMode_Awake : PowerMode_LightSleep;
 
-    if (newPowerMode == someoneAwake) {
-        newPowerMode = RunningOnBattery ? PowerMode_Powersaving : PowerMode_Awake;
-    }
-
     if (CurrentPowerMode <= PowerMode_LightSleep) {
-        PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
+        if (newPowerMode <= PowerMode_Powersaving) {
+            PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
+            return;
+        }
+
+        if (newPowerMode == PowerMode_LightSleep && CurrentPowerMode < PowerMode_LightSleep) {
+            if (Timer_GetCurrentTime() - lastWakeEvent >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
+                PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
+            } else {
+                EventScheduler_Schedule(lastWakeEvent + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
+            }
+        }
     }
 }
 
@@ -125,8 +137,11 @@ static void shutDown(power_mode_t mode) {
 }
 
 static void wake() {
+    lastWakeEvent = Timer_GetCurrentTime();
+    EventScheduler_Schedule(lastWakeEvent + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "waked - check for short wake condition");
     CurrentPowerMode = PowerMode_Awake;
     notifyEveryone();
+
 }
 
 void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const char* reason) {

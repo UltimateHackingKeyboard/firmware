@@ -64,7 +64,7 @@ void handleStateTransition(connection_target_t remote, connection_id_t connectio
 #if DEVICE_HAS_OLED
                         Widget_Refresh(&TargetWidget);
 #endif
-                        EventScheduler_Reschedule(Timer_GetCurrentTime() + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerMode, "update sleep mode from device state");
+                        EventScheduler_Reschedule(Timer_GetCurrentTime() + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerModeUpdate, "update sleep mode from device state");
                         break;
                     default:
                         break;
