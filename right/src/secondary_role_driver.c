@@ -275,14 +275,14 @@ static void startResolution(
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;
     switch (actionFromSameHalf) {
-        case SecondaryRole_PrimaryFromSameHalf:
-            primaryFromSameHalf = true;
+        case SecondaryRole_AcceptTriggersFromSameHalf:
+            acceptTriggersFromSameHalf = true;
             break;
-        case SecondaryRole_PrimaryFromSameHalfDisabled:
-            primaryFromSameHalf = false;
+        case SecondaryRole_IgnoreTriggersFromSameHalf:
+            acceptTriggersFromSameHalf = false;
             break;
         default:
-            primaryFromSameHalf = Cfg.SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf;
+            acceptTriggersFromSameHalf = Cfg.SecondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf;
             break;
     }
 
