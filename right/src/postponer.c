@@ -399,12 +399,13 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_typ
 }
 
 void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
-                                     key_state_predicate_t predicate)
+                                     key_state_t *opposingKey)
 {
+    bool opposingIsRight = KeyState_IsRightSide(opposingKey);
     for ( int i = 0; i < bufferSize; i++ ) {
         *press = &buffer[POS(i)];
         if ((*press)->event.type == PostponerEventType_PressKey) {
-            if (predicate == NULL || predicate((*press)->event.key.keyState)) {
+            if (opposingKey == NULL || opposingIsRight != KeyState_IsRightSide((*press)->event.key.keyState)) {
                 for ( int j = i + 1; j < bufferSize; j++ ) {
                     *release = &buffer[POS(j)];
                     if ((*release)->event.type == PostponerEventType_ReleaseKey
@@ -423,13 +424,14 @@ void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, pos
 }
 
 void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
-                                      key_state_predicate_t predicate)
+                                      key_state_t *opposingKey)
 {
+    bool opposingIsRight = KeyState_IsRightSide(opposingKey);
     if (bufferSize > 1) {
         for ( int i = 1; i < bufferSize; i++ ) {
             *release = &buffer[POS(i)];
             if ((*release)->event.type == PostponerEventType_ReleaseKey) {
-                if (predicate == NULL || predicate((*release)->event.key.keyState)) {
+                if (opposingKey == NULL || opposingIsRight != KeyState_IsRightSide((*release)->event.key.keyState)) {
                     for ( int j = 0; j < i; j++ ) {
                         *press = &buffer[POS(j)];
                         if ((*press)->event.type == PostponerEventType_PressKey

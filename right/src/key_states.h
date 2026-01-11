@@ -53,4 +53,13 @@
     static inline bool KeyState_DeactivatedEarlier(key_state_t* s) { return !s->previous && !s->current; };
     static inline bool KeyState_NonZero(key_state_t* s) { return s->previous || s->current; };
 
+    static inline bool KeyState_IsRightHalf(key_state_t* s) { return s < &KeyStates[1][0]; };
+    static inline bool KeyState_IsLeftHalf(key_state_t* s) { return s < &KeyStates[2][0] && s >= &KeyStates[1][0]; };
+    static inline bool KeyState_IsKeyCluster(key_state_t* s) { return s >= &KeyStates[2][0] && s < &KeyStates[3][0]; };
+    static inline bool KeyState_IsMouseModule(key_state_t* s) { return s >= &KeyStates[3][0]; };
+    static inline bool KeyState_IsModule(key_state_t* s) { return s >= &KeyStates[2][0]; };
+    static inline bool KeyState_IsRightSide(key_state_t* s) { return KeyState_IsRightHalf(s) || KeyState_IsMouseModule(s); };
+    static inline bool KeyState_IsLeftSide(key_state_t* s) { return s >= &KeyStates[1][0] && s < &KeyStates[3][0]; };
+
+
 #endif
