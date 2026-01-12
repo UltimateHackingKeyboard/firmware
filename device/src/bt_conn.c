@@ -47,12 +47,12 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
-// BT_HCI_ERR_CONN_REJ_LIMITED_RESOURCES - come back later, I am busy
+// BT_HCI_ERR_REMOTE_LOW_RESOURCES - it is *their* resources that are low, so we probably shouldn't use this
 // BT_HCI_ERR_LOCALHOST_TERM_CONN - this is our decision, bond should remain valid
 // BT_HCI_ERR_REMOTE_USER_TERM_CONN - this is user's decision, bond should remain valid
 // BT_HCI_ERR_AUTH_FAIL - permanent failure, bond should be removed
 
-#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_LOW_RESOURCES
+#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_LOCALHOST_TERM_CONN
 #define BT_REASON_NOT_SELECTED BT_HCI_ERR_LOCALHOST_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
