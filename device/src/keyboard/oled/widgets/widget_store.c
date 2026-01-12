@@ -35,6 +35,7 @@
 #include "config_manager.h"
 #include "pin_wiring.h"
 #include "settings.h"
+#include "power_mode.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat-truncation"
@@ -227,7 +228,7 @@ static string_segment_t getLeftStatusText() {
 
     string_segment_t uartDebugText = getUartDebugModeText();
 
-    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %s %c%c%c %s",
+    snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %s %c%c%c %c %s",
             // connection icon; always present
             (char)FontControl_NextCharIcon12, (char)connectionIcon,
             // pairing icon; sometimes present
@@ -238,6 +239,8 @@ static string_segment_t getLeftStatusText() {
             // recording icon; sometimes present
             MacroRecorder_IsRecording() ? getBlinkingColor() : FontControl_NextCharAndSpaceGone,
             (char)FontControl_NextCharIcon12, FontIcon_Video,
+            // USB power state
+            PowerMode_UsbPowerState == 3 ? ' ' : ('0' + PowerMode_UsbPowerState),
             // setLedTxt if set
             Macros_DisplayStringsBuffs.leftStatus
     );

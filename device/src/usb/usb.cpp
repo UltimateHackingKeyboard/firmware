@@ -6,11 +6,13 @@ extern "C" {
 #include "key_states.h"
 #include "keyboard/charger.h"
 #include "keyboard/key_scanner.h"
+#include "keyboard/oled/widgets/widget_store.h"
 #include "logger.h"
 #include "power_mode.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "user_logic.h"
+#include "stubs.h"
 #include <zephyr/kernel.h>
 #include <nrfx_power.h>
 }
@@ -157,7 +159,10 @@ struct usb_manager {
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
             using event = enum usb::df::device::event;
             if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
-                switch (dev.power_state()) {
+                usb::power::state state = dev.power_state();
+                PowerMode_UsbPowerState = static_cast<int>(state);
+                WIDGET_REFRESH(&StatusWidget);
+                switch (state) {
                     case usb::power::state::L2_SUSPEND:
                         PowerMode_SetUsbAwake(false);
                         break;

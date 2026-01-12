@@ -62,6 +62,9 @@ ATTR_UNUSED static bool usbAwake = false;
 
 static uint32_t lastWakeEvent = 0;
 
+// for debug purposes
+int PowerMode_UsbPowerState = 0;
+
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
 #define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10000
