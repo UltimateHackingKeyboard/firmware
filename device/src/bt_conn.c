@@ -47,8 +47,14 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
-#define BT_REASON_TEMPORARY BT_HCI_ERR_REMOTE_USER_TERM_CONN
-#define BT_REASON_PERMANENT BT_HCI_ERR_REMOTE_USER_TERM_CONN
+// BT_HCI_ERR_CONN_REJ_LIMITED_RESOURCES - come back later, I am busy
+// BT_HCI_ERR_LOCALHOST_TERM_CONN - this is our decision, bond should remain valid
+// BT_HCI_ERR_REMOTE_USER_TERM_CONN - this is user's decision, bond should remain valid
+// BT_HCI_ERR_AUTH_FAIL - permanent failure, bond should be removed
+
+#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_LOW_RESOURCES
+#define BT_REASON_NOT_SELECTED BT_HCI_ERR_LOCALHOST_TERM_CONN
+#define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
 
 static void disconnectAllHids();
@@ -270,12 +276,12 @@ static void youAreNotWanted(struct bt_conn *conn) {
     static bt_addr_le_t lastAddr = {0};
     uint32_t currentTime = k_uptime_get_32();
 
-    if (currentTime - lastAttemptTime < 2000 && BtAddrEq(bt_conn_get_dst(conn), &lastAddr)) {
+    if (currentTime - lastAttemptTime < 1000 && BtAddrEq(bt_conn_get_dst(conn), &lastAddr)) {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)\n", GetPeerStringByConn(conn));
-        safeDisconnect(conn, BT_REASON_TEMPORARY);
+        safeDisconnect(conn, BT_REASON_HID_GIVE_US_BREAK);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))\n", GetPeerStringByConn(conn), SelectedHostConnectionId);
-        safeDisconnect(conn, BT_REASON_TEMPORARY);
+        safeDisconnect(conn, BT_REASON_NOT_SELECTED);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
         BtConn_UnusedPeripheralConnectionCount(),
@@ -665,7 +671,7 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
             break;
         case ConnectionType_Unknown:
         default:
-            LOG_WRN("Authenticated connection is not known. Disconnecting %s", GetPeerStringByConn(conn));
+            LOG_ERR("Authenticated connection is not known. Disconnecting %s", GetPeerStringByConn(conn));
             safeDisconnect(conn, BT_HCI_ERR_AUTH_FAIL);
             BtManager_StartScanningAndAdvertisingAsync(true, "StartScanningAndAdvertisingAsync in authenticatedConnection - is unknown");
             break;
@@ -852,7 +858,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 }
 
 static void bt_foreach_conn_cb(struct bt_conn *conn, void *user_data) {
-    safeDisconnect(conn, BT_REASON_TEMPORARY);
+    safeDisconnect(conn, BT_REASON_NOT_SELECTED);
     // gpt says you should unref here. Don't believe it!
 }
 
@@ -870,14 +876,14 @@ void BtConn_DisconnectOne(connection_id_t connectionId) {
 
     if (!conn) { return; }
 
-    safeDisconnect(conn, BT_REASON_TEMPORARY);
+    safeDisconnect(conn, BT_REASON_NOT_SELECTED);
 }
 
 static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
     peer_t* peer = getPeerByConn(conn);
     if (!peer) {
         LOG_INF("     disconnecting unassigned connection %s\n", GetPeerStringByConn(conn));
-        safeDisconnect(conn, BT_REASON_TEMPORARY);
+        safeDisconnect(conn, BT_REASON_NOT_SELECTED);
     }
 }
 
@@ -979,7 +985,7 @@ ATTR_UNUSED static void disconnectOldestHost() {
 
     if (oldestPeerId != PeerIdUnknown) {
         LOG_INF("Disconnecting oldest host %d\n", oldestPeerId);
-        safeDisconnect(Peers[oldestPeerId].conn, BT_REASON_TEMPORARY);
+        safeDisconnect(Peers[oldestPeerId].conn, BT_REASON_NOT_SELECTED);
     }
 }
 
