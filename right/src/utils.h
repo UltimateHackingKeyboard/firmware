@@ -43,7 +43,6 @@ if (reentrancyGuard_active) {                    \
     uint16_t Utils_KeyCoordinatesToKeyId(uint8_t slotId, uint8_t keyIdx);
     const char* Utils_KeyAbbreviation(key_state_t* keyState);
     bool ShouldResendReport(bool statusOk, uint8_t* counter);
-    bool Utils_AreKeysOnTheSameHalf(uint16_t oneKey, uint16_t anotherKey);
 
 
 #endif /* SRC_UTILS_H_ */

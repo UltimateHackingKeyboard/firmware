@@ -30,12 +30,11 @@
 
         // secondary roles
         secondary_role_strategy_t SecondaryRoles_Strategy;
-        bool SecondaryRoles_AdvancedStrategyPrimaryFromSameHalf;
+        bool SecondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf;
         uint16_t SecondaryRoles_AdvancedStrategyDoubletapTimeout;
         uint16_t SecondaryRoles_AdvancedStrategyTimeout;
         int16_t SecondaryRoles_AdvancedStrategySafetyMargin;
-        bool SecondaryRoles_AdvancedStrategyTriggerByRelease;
-        bool SecondaryRoles_AdvancedStrategyTriggerByPress;
+        secondary_role_triggering_event_t SecondaryRoles_AdvancedStrategyTriggeringEvent;
         bool SecondaryRoles_AdvancedStrategyTriggerByMouse;
         bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
         secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction;

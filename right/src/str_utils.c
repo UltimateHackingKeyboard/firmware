@@ -475,6 +475,55 @@ secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
     }
 }
 
+secondary_role_triggering_event_t ConsumeSecondaryRoleTriggeringEvent(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "press")) {
+        return SecondaryRoleTriggeringEvent_Press;
+    }
+    else if (ConsumeToken(ctx, "release")) {
+        return SecondaryRoleTriggeringEvent_Release;
+    }
+    else if (ConsumeToken(ctx, "none")) {
+        return SecondaryRoleTriggeringEvent_None;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return SecondaryRoleTriggeringEvent_Press;
+    }
+}
+
+secondary_role_triggering_event_t ConsumeSecondaryRoleTriggerByPress(parser_context_t* ctx, secondary_role_triggering_event_t current)
+{
+    bool triggerByPress = Macros_ConsumeBool(ctx);
+    if ( triggerByPress ) {
+        return SecondaryRoleTriggeringEvent_Press;
+    }
+    switch ( current ) {
+        case SecondaryRoleTriggeringEvent_Press:
+        case SecondaryRoleTriggeringEvent_None:
+            return SecondaryRoleTriggeringEvent_None;
+        case SecondaryRoleTriggeringEvent_Release:
+        default:
+            return SecondaryRoleTriggeringEvent_Release;
+    }
+}
+
+secondary_role_triggering_event_t ConsumeSecondaryRoleTriggerByRelease(parser_context_t* ctx, secondary_role_triggering_event_t current)
+{
+    bool triggerByRelease = Macros_ConsumeBool(ctx);
+    if ( triggerByRelease ) {
+        return SecondaryRoleTriggeringEvent_Release;
+    }
+    switch ( current ) {
+        case SecondaryRoleTriggeringEvent_Release:
+        case SecondaryRoleTriggeringEvent_None:
+            return SecondaryRoleTriggeringEvent_None;
+        case SecondaryRoleTriggeringEvent_Press:
+        default:
+            return SecondaryRoleTriggeringEvent_Press;
+    }
+}
+
 secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "simple")) {

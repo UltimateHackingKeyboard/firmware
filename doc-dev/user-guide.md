@@ -443,7 +443,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 350
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 50
-set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.triggeringEvent release
 set secondaryRole.advanced.doubletapToPrimary 0
 ```
 
@@ -456,7 +456,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 200
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease 0
+set secondaryRole.advanced.triggeringEvent none
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
@@ -468,8 +468,7 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 500
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease 0
-set secondaryRole.advanced.triggerByPress 1
+set secondaryRole.advanced.triggeringEvent press
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 ```
@@ -478,14 +477,14 @@ Firngrod's Home Row Mods (HRM) configuration (Recommended):
 
 ```
 set secondaryRole.defaultStrategy advanced
-set secondaryRole.advanced.triggerByRelease 1
+set secondaryRole.advanced.triggeringEvent release
 set secondaryRole.advanced.timeout 300
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.safetyMargin -100
 set secondaryRole.advanced.triggerByMouse 1
 set secondaryRole.advanced.minimumHoldTime 150
-set secondaryRole.advanced.primaryFromSameHalf 1
+set secondaryRole.advanced.acceptTriggersFromSameHalf 0
 ```
 
 Full set of advanced strategy config values follows (for copy-paste convenience):
@@ -495,13 +494,12 @@ set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.timeout 500
 set secondaryRole.advanced.timeoutAction secondary
 set secondaryRole.advanced.safetyMargin 0
-set secondaryRole.advanced.triggerByRelease 0
-set secondaryRole.advanced.triggerByPress 0
+set secondaryRole.advanced.triggeringEvent press
 set secondaryRole.advanced.triggerByMouse 0
 set secondaryRole.advanced.doubletapToPrimary 1
 set secondaryRole.advanced.doubletapTime 200
 set secondaryRole.advanced.minimumHoldTime 0
-set secondaryRole.advanced.primaryFromSameHalf 0
+set secondaryRole.advanced.acceptTriggersFromSameHalf 1
 ```
 
 The above configuration will trigger the secondary role whenever the dual-role key is pressed for more than 200ms, i.e., just a very slightly prolonged activation will trigger the secondary role.
