@@ -64,7 +64,7 @@ static uint32_t lastWakeEvent = 0;
 
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
-#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10000
+#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10*1000
 
 // originally written for Benedek's power callback
 // TODO: remove this and simplify the rest of the code if the callback is not used.

@@ -188,7 +188,7 @@ extern "C" void USB_RemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
     if (err != usb::result::ok) {
-        printk("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+        LogUO("Usb: remote wakeup fail: %d\n", std::bit_cast<int>(err));
     }
 }
 
