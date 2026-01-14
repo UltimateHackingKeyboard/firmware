@@ -232,7 +232,7 @@ function createCentralCompileCommands() {
 
     echo creating central compile_commands.json
 
-    local existing_jsons=` $ROOT/device/build/ $ROOT/right/build/ $ROOT/trackball/build $ROOT/trackpoint/build $ROOT/keycluster/build -name "compile_commands.json" 2>/dev/null`
+    local existing_jsons=`find $ROOT/device/build/ $ROOT/right/build/ $ROOT/trackball/build $ROOT/trackpoint/build $ROOT/keycluster/build -name "compile_commands.json" 2>/dev/null`
 
     if [ "$existing_jsons" != "" ] 
     then 
