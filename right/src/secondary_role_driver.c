@@ -128,7 +128,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // see if we have an activating key event
     const postponer_buffer_record_type_t *actionEvent = NULL;
-    const key_state_t* opposingKey = acceptTriggersFromSameHalf ? NULL : resolutionKey;
+    const key_state_t * const opposingKey = acceptTriggersFromSameHalf ? NULL : resolutionKey;
 
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent == SecondaryRoleTriggeringEvent_Release) {
         PostponerQuery_FindFirstReleased(&actionEvent, opposingKey);
