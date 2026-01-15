@@ -88,10 +88,12 @@ void BtManager_StopBt() {
 }
 
 
+// The delay has to be at least 100ms. Otherwise, the bluetooth controller can
+// easily be overwhelmed and crash with a very non-nescriptive hci_core.c:430
 void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
     uint32_t maxDelay = 5000;
-    uint32_t minDelay = 20;
+    uint32_t minDelay = 100;
     static int8_t aggressiveTries = 0;
 
     aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
