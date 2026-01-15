@@ -301,8 +301,9 @@ bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
     // Iterate over all bonded devices
     bt_foreach_bond(BT_ID_DEFAULT, checkBondedDevice, (void*)&args);
 
+    Trace_Printc("rbp8");
+
     return bonded;
-    BT_TRACE_AND_ASSERT("rbp8");
 }
 
 ATTR_UNUSED void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {
