@@ -32,10 +32,12 @@ macro_reference_t AllMacros[MacroIndex_MaxCount] = {
 };
 uint8_t AllMacrosCount;
 
+bool Macros_WakedBecauseOfOneShot = false;
 bool Macros_WakedBecauseOfTime = false;
 bool Macros_WakedBecauseOfKeystateChange = false;
 uint32_t Macros_WakeMeOnTime = 0xFFFFFFFF;
 bool Macros_WakeMeOnKeystateChange = false;
+bool Macros_WakeMeOnOneShot = false;
 
 macro_usb_keyboard_reports_t Macros_PersistentReports = {};
 
@@ -78,19 +80,16 @@ void Macros_SignalInterrupt()
     }
 }
 
-void Macros_SignalUsbReportsChange()
-{
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (MacroState[i].ms.macroPlaying && MacroState[i].ms.macroInterrupted) {
-            MacroState[i].ms.oneShotUsbChangeDetected = true;
-        }
-    }
-}
-
-
 void Macros_WakeBecauseOfKeystateChange() {
     if (Macros_WakeMeOnKeystateChange) {
         Macros_WakedBecauseOfKeystateChange = true;
+        EventVector_Set(EventVector_MacroEngine);
+    }
+}
+
+void Macros_WakeBecauseOfOneShot() {
+    if (Macros_WakeMeOnOneShot) {
+        Macros_WakedBecauseOfOneShot = true;
         EventVector_Set(EventVector_MacroEngine);
     }
 }
@@ -601,13 +600,6 @@ macro_result_t continueMacro(void)
 
 macro_result_t Macros_SleepTillKeystateChange()
 {
-    if(S->ms.oneShotState > 0) {
-        if(S->ms.oneShotState > 1) {
-            return MacroResult_Blocking;
-        } else if (Cfg.Macros_OneShotTimeout != 0) {
-            Macros_SleepTillTime(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout, "Macros - OneShot");
-        }
-    }
     if (!S->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
@@ -619,13 +611,6 @@ macro_result_t Macros_SleepTillKeystateChange()
 
 macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason)
 {
-    if(S->ms.oneShotState > 0) {
-        if(S->ms.oneShotState > 1) {
-            return MacroResult_Blocking;
-        } else if (Cfg.Macros_OneShotTimeout != 0) {
-            EventScheduler_Schedule(S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout, EventSchedulerEvent_MacroWakeOnTime, "Macros - OneShot");
-        }
-    }
     if (!S->ms.macroSleeping) {
         unscheduleCurrentSlot();
     }
@@ -651,6 +636,15 @@ static void wakeSleepers()
         Macros_WakeMeOnTime = 0xFFFFFFFF;
         for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
             if (MacroState[i].ms.wakeMeOnTime) {
+                wakeMacroInSlot(i);
+            }
+        }
+    }
+    if (Macros_WakedBecauseOfOneShot) {
+        Macros_WakedBecauseOfOneShot = false;
+        // Macros_WakeMeOnOneShot = <this is updated based on oneShot flags>;
+        for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+            if (MacroState[i].ms.oneShot == 1) {
                 wakeMacroInSlot(i);
             }
         }
@@ -868,6 +862,7 @@ typedef struct {
     bool someoneAlive;
     bool someoneAwake;
     bool someonePostponing;
+    bool someOneShot;
 } macro_applicable_state_t;
 
 static macro_applicable_state_t applicableState = {
@@ -876,6 +871,7 @@ static macro_applicable_state_t applicableState = {
     .someoneAlive = false,
     .someoneAwake = false,
     .someonePostponing = false,
+    .someOneShot = false
 };
 
 static void recalculateSleepingMods()
@@ -885,11 +881,13 @@ static void recalculateSleepingMods()
     applicableState.someoneAlive = false;
     applicableState.someoneAwake = false;
     applicableState.someonePostponing = SchedulerPostponing;
+    applicableState.someOneShot = false;
 
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (MacroState[i].ms.macroPlaying) {
             applicableState.someoneAlive = true;
             applicableState.reportsUsed |= MacroState[i].ms.reportsUsed;
+            applicableState.someOneShot |= MacroState[i].ms.oneShot == 1;
         }
         if (MacroState[i].ms.macroPlaying && !MacroState[i].ms.macroSleeping) {
             applicableState.someoneAwake = true;
@@ -910,6 +908,7 @@ static void recalculateSleepingMods()
     EventVector_SetValue(EventVector_MacroEnginePostponing, applicableState.someonePostponing);
     EventVector_SetValue(EventVector_MacroEngine, applicableState.someoneAwake);
     EventVector_SetValue(EventVector_MacroReportsUsed, applicableState.reportsUsed);
+    Macros_WakeMeOnOneShot = applicableState.someOneShot;
     SuppressMods = applicableState.modifierSuppressMods;
     S = NULL;
 }

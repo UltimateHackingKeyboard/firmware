@@ -38,6 +38,7 @@
 #include "bt_defs.h"
 #include "trace.h"
 #include "peripherals/leakage_test.h"
+#include "oneshot.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
@@ -110,16 +111,16 @@ static void postponeCurrentCycle()
 bool Macros_CurrentMacroKeyIsActive()
 {
     if (S->ms.currentMacroKey == NULL) {
-        return S->ms.oneShotState;
+        return S->ms.oneShot == 1;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
         bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
-        return  (isSameActivation && keyIsActive) || S->ms.oneShotState;
+        return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     } else {
         bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
-        return (isSameActivation && keyIsActive) || S->ms.oneShotState;
+        return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     }
 }
 
@@ -1053,7 +1054,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     case SecondaryRoleState_NoOp:
         return MacroResult_Finished | MacroResult_ConditionFailedFlag;
     }
-     
+
 conditionPassed:
     S->ls->as.currentIfSecondaryConditionPassed = true;
     S->ls->as.currentConditionPassed = false; //otherwise following conditions would be skipped
@@ -1340,39 +1341,15 @@ run_command:;
     }
 }
 
-
 static macro_result_t processOneShotCommand(parser_context_t* ctx) {
-    if (Macros_DryRun) {
-        return processCommand(ctx);
+    if (S->ms.oneShot == 0 && OneShot_State != OneShotState_Unwinding) {
+        S->ms.oneShot = 1;
+        OneShot_Activate(CurrentPostponedTime);
+    } else if (OneShot_State == OneShotState_Unwinding) {
+        S->ms.oneShot = 2;
     }
 
-    if (Cfg.Macros_OneShotTimeout != 0 && Timer_GetCurrentTime() >= S->ms.currentMacroStartTime + Cfg.Macros_OneShotTimeout) {
-        S->ms.oneShotState = 0;
-        return processCommand(ctx);
-    }
-
-    /* In order for modifiers of a scancode action to be applied properly, we need to
-     * make the action live at least one cycle after macroInterrupted becomes true.
-     *
-     * Also, we need to prevent the command to go sleeping after this because
-     * we would not be woken up.
-     * */
-    if (!S->ms.macroInterrupted || !S->ms.oneShotUsbChangeDetected) {
-        S->ms.oneShotState = 1;
-    } else if (0 < S->ms.oneShotState && S->ms.oneShotState < 3) {
-        S->ms.oneShotState++;
-    } else {
-        S->ms.oneShotState = 0;
-    }
-    macro_result_t res = processCommand(ctx);
-    if (res & MacroResult_ActionFinishedFlag || res & MacroResult_DoneFlag) {
-        S->ms.oneShotState = 0;
-    }
-    if (S->ms.oneShotState > 1) {
-        return res | MacroResult_Blocking;
-    } else {
-        return res;
-    }
+    return processCommand(ctx);
 }
 
 static macro_result_t processOverlayKeymapCommand(parser_context_t* ctx)
