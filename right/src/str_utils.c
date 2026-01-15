@@ -475,6 +475,20 @@ secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
     }
 }
 
+secondary_role_timeout_type_t ConsumeSecondaryRoleTimeoutType(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "active")) {
+        return SecondaryRoleTimeoutType_Active;
+    }
+    else if (ConsumeToken(ctx, "passive")) {
+        return SecondaryRoleTimeoutType_Passive;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return SecondaryRoleTimeoutType_Active;
+    }
+}
+
 secondary_role_triggering_event_t ConsumeSecondaryRoleTriggeringEvent(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "press")) {

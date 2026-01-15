@@ -1,5 +1,6 @@
 #include "secondary_role_driver.h"
 #include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "postponer.h"
 #include "timer.h"
 #include "utils.h"
@@ -64,9 +65,10 @@ static bool resolutionCallerIsMacroEngine = false;
 static bool acceptTriggersFromSameHalf = true;
 static key_state_t *resolutionKey;
 static uint32_t resolutionStartTime;
+static bool isDoubletap = false;
+static bool currentlyResolving = false;
 
-static key_state_t *previousResolutionKey;
-static uint32_t previousResolutionTime;
+
 static bool activateSecondaryImmediately;
 
 static inline void fakeActivation()
@@ -97,143 +99,114 @@ static void sleepTimeoutStrategy(uint16_t wakeTimeOffset) {
     }
 }
 
+
+#define RESOLVED(resolution)    KEY_TIMING(KeyTiming_RecordComment(resolutionKey, resolution, __LINE__))  \
+                                return resolution;
+#define AWAITEVENT(timeout)        sleepTimeoutStrategy(timeout);                                  \
+                                return SecondaryRoleState_DontKnowYet;
+
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 {
-    //gather data
     postponer_buffer_record_type_t *dummy;
     postponer_buffer_record_type_t *dualRoleRelease;
-    postponer_buffer_record_type_t *actionPress = NULL;
-    postponer_buffer_record_type_t *actionRelease;
+    PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
+    const int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - resolutionStartTime;
+
+    // handle things we can know without another key
+    // doubletap and active timeout
+    const bool reachedTimeout = activeTime > Cfg.SecondaryRoles_AdvancedStrategyTimeout;
+    const bool isActiveTimeout = Cfg.SecondaryRoles_AdvancedStrategyTimeoutType == SecondaryRoleTimeoutType_Active;
+
+    if (reachedTimeout) {
+        if (isDoubletap && Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary) {
+            RESOLVED(SecondaryRoleState_Primary);
+        }
+        if (isActiveTimeout) {
+            RESOLVED(Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction);
+        }
+    }
+
+    // see if we have an activating key event
+    postponer_buffer_record_type_t *actionEvent = NULL;
     key_state_t* opposingKey = acceptTriggersFromSameHalf ? NULL : resolutionKey;
 
-    PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     if (Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent == SecondaryRoleTriggeringEvent_Release) {
-        PostponerQuery_FindFirstReleased(&actionPress, &actionRelease, opposingKey);
-        
+        PostponerQuery_FindFirstReleased(&actionEvent, opposingKey);
     }
-    if (Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent != SecondaryRoleTriggeringEvent_None && actionPress == NULL) {
-        PostponerQuery_FindFirstPressed(&actionPress, &actionRelease, opposingKey);
-    }
-
-    int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - resolutionStartTime;
-    bool dualRoleWasHeldLongEnoughToBeAllowedSecondary = activeTime >= Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
-
-    if (dualRoleRelease != NULL && !dualRoleWasHeldLongEnoughToBeAllowedSecondary) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PA"));
-        return SecondaryRoleState_Primary;
+    else if (Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent == SecondaryRoleTriggeringEvent_Press) {
+        PostponerQuery_FindFirstPressed(&actionEvent, opposingKey);
     }
 
-    // handle timeout when action key is not pressed
-    if (actionPress == NULL) {
-        if (dualRoleRelease != NULL && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
-            //activate primary
-            KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PB"));
-            return SecondaryRoleState_Primary;
-        } else if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
-            // doubletap logic
-            bool shouldPrimaryBecauseOfDoubletap = 
-                Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary
-                && resolutionKey == previousResolutionKey
-                && resolutionStartTime - previousResolutionTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
-            if(shouldPrimaryBecauseOfDoubletap) {
-                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PC"));
-                return SecondaryRoleState_Primary;
+    // handle positive safety margin part 1: is action key allowed to trigger secondary yet
+    const bool safetyWaitForRelease = dualRoleRelease == NULL && actionEvent != NULL
+        && (int32_t)(Timer_GetCurrentTime() - actionEvent->time) < Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
+    if (safetyWaitForRelease) {
+        // prevent the action from triggering secondary
+        actionEvent = NULL;
+    }
+
+    // handle release of the dual role key
+    const bool heldTooShortForSecondary = activeTime < Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
+    if (dualRoleRelease != NULL) {
+        // released before it was allowed to become secondary
+        // overrides any safety margin concerns
+        if (heldTooShortForSecondary) {
+            RESOLVED(SecondaryRoleState_Primary);
+        }
+
+        // released before another key triggered activation
+        if (actionEvent == NULL) {
+            // if safety margin requires us to wait for a bit
+            // flipping signs to simplify checks
+            const bool safetyWaitForAction = 
+                (int32_t)(dualRoleRelease->time - Timer_GetCurrentTime()) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
+            if (safetyWaitForAction) {
+                AWAITEVENT(activeTime - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
             }
-            // activate configured timeout action
-            switch (Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction) {
-            case SecondaryRoleState_Primary:
-                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PD"));
-                return SecondaryRoleState_Primary;
-            case SecondaryRoleState_Secondary:
-                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SA"));
-                return SecondaryRoleState_Secondary;
-            case SecondaryRoleState_NoOp:
-                KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "NA"));
-                return SecondaryRoleState_NoOp;
-            default:
-                sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
-                return SecondaryRoleState_DontKnowYet;
+            else {
+                // see if passive timeout alters release action
+                const secondary_role_state_t releaseAction = 
+                    reachedTimeout ? Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction : SecondaryRoleState_Primary;
+                RESOLVED(releaseAction);
             }
-        } else {
-            sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
-            return SecondaryRoleState_DontKnowYet;
         }
     }
 
-    //handle trigger by press
-    if (Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent == SecondaryRoleTriggeringEvent_Press) {
-        bool actionKeyWasPressedButDualkeyNot = actionPress != NULL && dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionPress->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-        bool actionKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-
-        if (actionKeyWasPressedButDualkeyNot || actionKeyWasPressedFirst) {
-            if(!dualRoleWasHeldLongEnoughToBeAllowedSecondary){
-                sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
-                return SecondaryRoleState_DontKnowYet;
-            }
-            KEY_TIMING2(actionKeyWasPressedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SB"));
-            KEY_TIMING2(actionKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "SC"));
-            return SecondaryRoleState_Secondary;
-        }
-
-        bool dualKeyWasPressedButActionKeyNot = dualRoleRelease != NULL && (actionPress == NULL && (int32_t)(Timer_GetCurrentTime() - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool dualKeyWasPressedFirst = actionPress != NULL && dualRoleRelease != NULL && actionPress->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-        if (dualKeyWasPressedFirst || dualKeyWasPressedButActionKeyNot) {
-            KEY_TIMING2(dualKeyWasPressedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PF"));
-            KEY_TIMING2(dualKeyWasPressedFirst, KeyTiming_RecordComment(resolutionKey, "PG"));
-            return SecondaryRoleState_Primary;
-        }
+    // now we want to trigger secondary, but are we allowed?
+    // handle safety margin part 2: wait for the safety margin?
+    uint32_t waitUntil = safetyWaitForRelease ? activeTime + Cfg.SecondaryRoles_AdvancedStrategySafetyMargin : 0;
+    // wait for being allowed to trigger secondary?
+    if (heldTooShortForSecondary) {
+        // pick the longer wait time
+        // we're waiting to trigger secondary once both timespans have passed, and the only thing
+        // which can prevent that resolution is dual role release which triggers reevaluation on it's own
+        waitUntil = MAX(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime, waitUntil);
+    }
+    // wait until we are allowed to go secondary
+    if (waitUntil != 0) {
+        AWAITEVENT(waitUntil);
     }
 
-    //handle trigger by release
-    if (Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent == SecondaryRoleTriggeringEvent_Release) {
-        bool actionKeyWasReleasedButDualkeyNot = actionRelease != NULL && (dualRoleRelease == NULL && (int32_t)(Timer_GetCurrentTime() - actionRelease->time) > Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool actionKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time <= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-
-        if (actionKeyWasReleasedFirst || actionKeyWasReleasedButDualkeyNot) {
-            if(!dualRoleWasHeldLongEnoughToBeAllowedSecondary){
-                sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime);
-                return SecondaryRoleState_DontKnowYet;
-            }
-            KEY_TIMING2(actionKeyWasReleasedButDualkeyNot, KeyTiming_RecordComment(resolutionKey, "SD"));
-            KEY_TIMING2(actionKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "SE"));
-            return SecondaryRoleState_Secondary;
-        }
-
-        bool dualKeyWasReleasedButActionKeyNot = dualRoleRelease != NULL && (actionRelease == NULL && (int32_t)(Timer_GetCurrentTime() - dualRoleRelease->time) > -Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
-        bool dualKeyWasReleasedFirst = actionRelease != NULL && dualRoleRelease != NULL && actionRelease->time >= dualRoleRelease->time - Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-        if (dualKeyWasReleasedFirst | dualKeyWasReleasedButActionKeyNot) {
-            KEY_TIMING2(dualKeyWasReleasedButActionKeyNot, KeyTiming_RecordComment(resolutionKey, "PI"));
-            KEY_TIMING2(dualKeyWasReleasedFirst, KeyTiming_RecordComment(resolutionKey, "PJ"));
-            return SecondaryRoleState_Primary;
-        }
+    // handle action key activation
+    if (actionEvent != NULL) {
+        RESOLVED(SecondaryRoleState_Secondary);
     }
 
-    bool triggerBehaviorsActive = Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent != SecondaryRoleTriggeringEvent_None;
-
-    // handle timeout when action key is pressed
-    if (activeTime >= Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SF"));
-        return SecondaryRoleState_Secondary;
+    // see if we should set a timer to wake up to actively time out
+    if (isActiveTimeout || isDoubletap) {
+        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
-
-    // handle primary press when action key is pressed and trigger behaviors are off
-    if (dualRoleRelease != NULL && !triggerBehaviorsActive && activeTime < Cfg.SecondaryRoles_AdvancedStrategyTimeout) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PK"));
-        return SecondaryRoleState_Primary;
-    }
-
-    sleepTimeoutStrategy(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
+    
+    // otherwise, keep postponing until key action
     return SecondaryRoleState_DontKnowYet;
 }
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
     if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SK"));
-        return SecondaryRoleState_Secondary;
+        RESOLVED(SecondaryRoleState_Secondary);
     } else if (PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/) {
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "PK"));
-        return SecondaryRoleState_Primary;
+        RESOLVED(SecondaryRoleState_Primary);
     } else {
         if (resolutionCallerIsMacroEngine) {
             Macros_SleepTillKeystateChange();
@@ -246,8 +219,7 @@ static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strate
 {
     if (activateSecondaryImmediately) {
         activateSecondaryImmediately = false;
-        KEY_TIMING(KeyTiming_RecordComment(resolutionKey, "SM"));
-        return SecondaryRoleState_Secondary;
+        RESOLVED(SecondaryRoleState_Secondary);
     }
     switch (strategy) {
         case SecondaryRoleStrategy_Simple:
@@ -265,6 +237,12 @@ static void startResolution(
     bool isMacroResolution,
     secondary_role_same_half_t actionFromSameHalf)
 {
+    // stored state is last resolution.  detect doubletap here
+    isDoubletap = keyState == resolutionKey 
+        && CurrentPostponedTime - resolutionStartTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
+
+    // store current state
+    currentlyResolving = true;
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;
@@ -298,17 +276,19 @@ static void startResolution(
 static void finishResolution(secondary_role_state_t res)
 {
     resolutionKey->secondaryState = res;
-    previousResolutionKey = resolutionKey;
-    previousResolutionTime = resolutionStartTime;
     if(!resolutionCallerIsMacroEngine) {
         fakeActivation();
     }
-    resolutionKey = NULL;
+    currentlyResolving = false;
     PostponerExtended_UnblockMouse();
 }
 
 void SecondaryRoles_ActivateSecondaryImmediately() {
-    if (resolutionKey != NULL) {
+    if (currentlyResolving && !activateSecondaryImmediately) {
+        if (RecordKeyTiming) {
+            Macros_SetStatusNumSpaced(Timer_GetCurrentTime(), false);
+            Macros_SetStatusString(" Got resolve request.\n", NULL);
+        }
         activateSecondaryImmediately = true;
     }
 }
@@ -320,7 +300,7 @@ secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, second
     // released, or if previous resolution has been resolved as secondary. Therefore,
     // it suffices to deal with the `resolutionKey` only. Any other queried key is a finished resoluton.
 
-    if (resolutionKey == NULL && keyState->secondaryState == SecondaryRoleState_DontKnowYet) {
+    if (!currentlyResolving && keyState->secondaryState == SecondaryRoleState_DontKnowYet) {
         startResolution(keyState, strategy, isMacroResolution, actionFromSameHalf);
         secondary_role_state_t res = resolveCurrentKey(strategy);
         if (res != SecondaryRoleState_DontKnowYet) {
@@ -329,7 +309,7 @@ secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, second
         return res;
     }
     else {
-        if (keyState == resolutionKey) {
+        if (currentlyResolving && keyState == resolutionKey) {
             secondary_role_state_t res = resolveCurrentKey(strategy);
             if (res != SecondaryRoleState_DontKnowYet) {
                 finishResolution(res);
