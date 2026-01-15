@@ -404,7 +404,7 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_typ
     }
 }
 
-void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, key_state_t *opposingKey)
+void PostponerQuery_FindFirstPressed(const postponer_buffer_record_type_t** press, const key_state_t *opposingKey)
 {
     bool opposingIsRight = KeyState_IsRightSide(opposingKey);
     for ( int i = 0; i < bufferSize; i++ ) {
@@ -419,7 +419,7 @@ void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, key
     return;
 }
 
-void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** release, key_state_t *opposingKey)
+void PostponerQuery_FindFirstReleased(const postponer_buffer_record_type_t** release, const key_state_t *opposingKey)
 {
     bool opposingIsRight = KeyState_IsRightSide(opposingKey);
     if (bufferSize > 1) {
