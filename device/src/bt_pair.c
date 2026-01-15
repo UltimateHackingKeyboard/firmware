@@ -266,11 +266,18 @@ struct check_bonded_device_args_t {
 };
 
 void checkBondedDevice(const struct bt_bond_info *info, void *user_data) {
+    if (info == NULL || user_data == NULL) {
+        return;
+    }
     struct check_bonded_device_args_t* args = (struct check_bonded_device_args_t*)user_data;
-    char addr[32];
-    bt_addr_le_to_str(&info->addr, addr, sizeof(addr));
-    char ref[32];
-    bt_addr_le_to_str(args->addr, ref, sizeof(ref));
+    if (args->addr == NULL || args->bonded == NULL) {
+        return;
+    }
+    ATTR_UNUSED char dbgBondAddr[32];
+    bt_addr_le_to_str(&info->addr, dbgBondAddr, sizeof(dbgBondAddr));
+    ATTR_UNUSED char dbgRefAddr[32];
+    bt_addr_le_to_str(args->addr, dbgRefAddr, sizeof(dbgRefAddr));
+
     if (BtAddrEq(&info->addr, args->addr)) {
         *args->bonded = true;
     }
@@ -279,7 +286,12 @@ void checkBondedDevice(const struct bt_bond_info *info, void *user_data) {
 bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
 {
     BT_TRACE_AND_ASSERT("bp8");
+    if (addr == NULL) {
+        return false;
+    }
     bool bonded = false;
+
+
 
     struct check_bonded_device_args_t args = {
         .addr = addr,
@@ -290,6 +302,7 @@ bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr)
     bt_foreach_bond(BT_ID_DEFAULT, checkBondedDevice, (void*)&args);
 
     return bonded;
+    BT_TRACE_AND_ASSERT("rbp8");
 }
 
 ATTR_UNUSED void deleteBondIfUnknown(const struct bt_bond_info *info, void *user_data) {

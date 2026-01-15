@@ -60,6 +60,7 @@ static bool isSpam(event_scheduler_event_t evt)
 
 static void processEvt(event_scheduler_event_t evt)
 {
+    Trace_Printf("s%d", evt);
     switch (evt) {
         case EventSchedulerEvent_UpdateBattery:
             Charger_UpdateBatteryState();
