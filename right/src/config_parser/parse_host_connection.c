@@ -7,6 +7,8 @@
 #include "config_parser/basic_types.h"
 #include "host_connection.h"
 #include "parse_config.h"
+#include "bt_conn.h"
+#include <string.h>
 
 static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connection_t* hostConnection) {
     host_connection_type_t hostType = ReadUInt8(buffer);
@@ -56,6 +58,44 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
     return ParserError_Success;
 }
 
+static void deduplicateUnregisteredConnections(void) {
+#ifdef __ZEPHYR__
+    if (ParserRunDry) {
+        return;
+    }
+
+    for (uint8_t i = 0; i < SERIALIZED_HOST_CONNECTION_COUNT_MAX; i++) {
+        host_connection_t* conn = &HostConnections[i];
+
+        if (conn->type != HostConnectionType_UnregisteredBtHid) {
+            continue;
+        }
+
+        for (uint8_t j = 0; j < SERIALIZED_HOST_CONNECTION_COUNT_MAX; j++) {
+            if (i == j) {
+                continue;
+            }
+
+            host_connection_t* other = &HostConnections[j];
+
+            if (other->type != HostConnectionType_BtHid &&
+                other->type != HostConnectionType_Dongle &&
+                other->type != HostConnectionType_UnregisteredBtHid) {
+                continue;
+            }
+
+            if (BtAddrEq(&conn->bleAddress, &other->bleAddress)) {
+                conn->type = HostConnectionType_Empty;
+                memset(&conn->bleAddress, 0, sizeof(bt_addr_le_t));
+                conn->name = (string_segment_t){ .start = NULL, .end = NULL };
+                conn->switchover = false;
+                break;
+            }
+        }
+    }
+#endif
+}
+
 parser_error_t ParseHostConnections(config_buffer_t *buffer) {
     int errorCode;
 
@@ -72,6 +112,8 @@ parser_error_t ParseHostConnections(config_buffer_t *buffer) {
             parseHostConnection(buffer, hostConnection);
         );
     }
+
+    deduplicateUnregisteredConnections();
 
     return ParserError_Success;
 }
