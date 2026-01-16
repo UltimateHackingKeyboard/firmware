@@ -940,6 +940,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         PairingScreen_Feedback(false);
     }
 
+    // should we here?
     safeDisconnect(conn, BT_REASON_PERMANENT);
 
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
