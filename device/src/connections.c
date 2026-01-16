@@ -382,8 +382,8 @@ bool Connections_IsActiveHostConnection(connection_id_t connectionId) {
     return resolveAliases(connectionId) == ActiveHostConnectionId;
 }
 
-static void setCurrentDongleToStandby() {
-    if (Connections_IsHostConnection(ActiveHostConnectionId) && HostConnection(ActiveHostConnectionId)->type == HostConnectionType_Dongle) {
+static void setDongleToStandby(connection_id_t connectionId) {
+    if (Connections_IsHostConnection(connectionId) && HostConnection(connectionId)->type == HostConnectionType_Dongle) {
         bool standby = true;
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
     }
@@ -428,7 +428,9 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         bool connectionIsSelected = SelectedHostConnectionId == connectionId;
         bool noHostIsConnected = ActiveHostConnectionId == ConnectionId_Invalid;
         if (hostConnection->switchover || noHostIsConnected || forceSwitch || connectionIsSelected) {
-            setCurrentDongleToStandby();
+            if (connectionId != ActiveHostConnectionId) {
+                setDongleToStandby(ActiveHostConnectionId);
+            }
             switchOver(connectionId);
             reportConnectionState(connectionId, "Conn state");
         }
