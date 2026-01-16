@@ -91,7 +91,7 @@ void BtManager_StopBt() {
 void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
     uint32_t maxDelay = 5000;
-    uint32_t minDelay = 20;
+    uint32_t minDelay = 100;
     static int8_t aggressiveTries = 0;
 
     aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
