@@ -47,13 +47,39 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
-// BT_HCI_ERR_REMOTE_LOW_RESOURCES - it is *their* resources that are low, so we probably shouldn't use this
-// BT_HCI_ERR_LOCALHOST_TERM_CONN - this is our decision, bond should remain valid
-// BT_HCI_ERR_REMOTE_USER_TERM_CONN - this is user's decision, bond should remain valid
-// BT_HCI_ERR_AUTH_FAIL - permanent failure, bond should be removed
+/*
+ * Reason codes are named from the perspective of the party that receives them.
+ *
+ * BT_HCI_ERR_REMOTE_LOW_RESOURCES
+ * - it is our resources that are low
+ *
+ * BT_HCI_ERR_LOCALHOST_TERM_CONN
+ * - this is their decision
+ * - we never send this.
+ * - don't trust llms on it.
+ * - if we actually use it, the connection will not actually disconnect
+ *
+ * BT_HCI_ERR_REMOTE_USER_TERM_CONN
+ * - this is probably the right thing to send
+ * - bond should remain valid
+ *
+ * BT_HCI_ERR_AUTH_FAIL
+ * - permanent failure
+ * - bond should be removed
+ *
+ * LLM says that according to the core spec, following disconnect reasons are valid:
+ *
+ * Code: 0x08 Zephyr Constant: BT_HCI_ERR_AUTH_FAIL Meaning: Authentication failure - signals permanent bond problem
+ * Code: 0x13 Zephyr Constant: BT_HCI_ERR_REMOTE_USER_TERM_CONN Meaning: Standard disconnect - "I'm disconnecting you"
+ * Code: 0x14 Zephyr Constant: BT_HCI_ERR_REMOTE_LOW_RESOURCES Meaning: Low resources - signals temporary resource issue
+ * Code: 0x15 Zephyr Constant: BT_HCI_ERR_REMOTE_POWER_OFF Meaning: Power off - device is shutting down
+ * Code: 0x1A Zephyr Constant: BT_HCI_ERR_UNSUPP_REMOTE_FEATURE Meaning: Unsupported feature
+ * Code: 0x29 Zephyr Constant: BT_HCI_ERR_PAIRING_NOT_SUPPORTED Meaning: Pairing not supported
+ * Code: 0x3B Zephyr Constant: BT_HCI_ERR_UNACCEPT_CONN_PARAM
+ * */
 
-#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_LOCALHOST_TERM_CONN
-#define BT_REASON_NOT_SELECTED BT_HCI_ERR_LOCALHOST_TERM_CONN
+#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_USER_TERM_CONN
+#define BT_REASON_NOT_SELECTED BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
 
@@ -404,6 +430,8 @@ static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthentic
 
     if (!result) {
         LOG_INF("    Not wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
+    } else {
+        LOG_INF("    Is wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
     }
 
     return result;
