@@ -81,7 +81,7 @@ struct bt_conn *auth_conn;
 #define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_NOT_SELECTED BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
-#define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
+#define BT_REASON_UNSPECIFIED BT_HCI_ERR_REMOTE_USER_TERM_CONN
 
 static void disconnectAllHids();
 static void auth_cancel(struct bt_conn *conn);
@@ -170,6 +170,7 @@ static struct bt_conn* unsetAuthConn(bool cancel_auth) {
 
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
+        LOG_INF("Unauthenticating %s\n", GetPeerStringByConn(conn));
         unsetAuthConn(true); // called by auth_cancel
 
         #if DEVICE_HAS_OLED
@@ -181,6 +182,7 @@ static void safeDisconnect(struct bt_conn *conn, int reason) {
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            LOG_INF("Disconnecting %s\n", GetPeerStringByConn(conn));
             bt_conn_disconnect(conn, reason);
         }
     }
@@ -284,7 +286,7 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                     0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                    100 // connection timeout (*10ms)
+                    30 // connection timeout (*10ms)
                 );
                 setLatency(conn, &conn_params);
              }
@@ -296,7 +298,7 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                     0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                    100 // connection timeout (*10ms)
+                    30 // connection timeout (*10ms)
                 );
                 setLatency(conn, &conn_params);
              }
