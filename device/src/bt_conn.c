@@ -21,6 +21,7 @@
 #include "nus_server.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
+#include "keyboard/oled/screens/screen_manager.h"
 #include "usb/usb.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/settings/settings.h>
@@ -36,7 +37,6 @@
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
 #include "macros/status_buffer.h"
-
 
 LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
@@ -58,6 +58,7 @@ struct bt_conn *auth_conn;
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
 
 static void disconnectAllHids();
+static void auth_cancel(struct bt_conn *conn);
 
 peer_t Peers[PeerCount] = {
     {
@@ -143,7 +144,13 @@ static struct bt_conn* unsetAuthConn(bool cancel_auth) {
 
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
-        unsetAuthConn(true);
+        unsetAuthConn(true); // called by auth_cancel
+
+        #if DEVICE_HAS_OLED
+        if (ActiveScreen == ScreenId_Pairing) {
+            PairingScreen_Cancel();
+        }
+        #endif
     } else {
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
@@ -904,6 +911,8 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         unsetAuthConn(false);
         PairingScreen_Feedback(false);
     }
+
+    safeDisconnect(conn, BT_REASON_PERMANENT);
 
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }
