@@ -39,6 +39,16 @@ void Trace(char a) {
     }
 }
 
+void Trace_Printc(const char* s) {
+    if (enabled) {
+        StateWormhole.traceBuffer.eventVector = EventScheduler_Vector;
+        for (uint16_t i = 0; s[i] != '\0' && s[i] < 127; i++) {
+            TraceBuffer[TraceBufferPosition] = a;
+            TraceBufferPosition = (TraceBufferPosition + 1) % TRACE_BUFFER_SIZE;
+        }
+    }
+}
+
 void Trace_Printf(const char *fmt, ...) {
     if (enabled) {
         EXPAND_STRING(buffer, TRACE_BUFFER_SIZE);
@@ -52,21 +62,6 @@ void Trace_Printf(const char *fmt, ...) {
                 continue;
             }
             Trace(buffer[i]);
-        }
-    }
-}
-
-void Trace_Printc(const char* s) {
-    if (enabled) {
-        for (uint16_t i = 0; s[i] != '\0'; i++) {
-            if (s[i] == '\0' || s[i] > 126) {
-                break;
-            }
-            if (s[i] == '\n') {
-                Trace(' ');
-                continue;
-            }
-            Trace(s[i]);
         }
     }
 }
