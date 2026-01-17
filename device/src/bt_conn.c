@@ -80,6 +80,7 @@ struct bt_conn *auth_conn;
 
 #define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_NOT_SELECTED BT_HCI_ERR_REMOTE_USER_TERM_CONN
+#define BT_REASON_TEMPORARY BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
 #define BT_REASON_UNSPECIFIED BT_HCI_ERR_REMOTE_USER_TERM_CONN
 
@@ -171,7 +172,7 @@ static struct bt_conn* unsetAuthConn(bool cancel_auth) {
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
         LOG_INF("Unauthenticating %s\n", GetPeerStringByConn(conn));
-        unsetAuthConn(true); // called by auth_cancel
+        unsetAuthConn(true);
 
         #if DEVICE_HAS_OLED
         if (ActiveScreen == ScreenId_Pairing) {
@@ -316,7 +317,7 @@ static void youAreNotWanted(struct bt_conn *conn) {
         safeDisconnect(conn, BT_REASON_HID_GIVE_US_BREAK);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))\n", GetPeerStringByConn(conn), SelectedHostConnectionId);
-        safeDisconnect(conn, BT_REASON_NOT_SELECTED);
+        safeDisconnect(conn, BT_REASON_TEMPORARY);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
         BtConn_UnusedPeripheralConnectionCount(),
@@ -857,7 +858,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
         // Disconnect it so that the connection is established only after it is identified as a host connection
-        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
     } else {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
@@ -942,7 +943,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         PairingScreen_Feedback(false);
     }
 
-    // should we here?
+    // TODO: should we here?
     safeDisconnect(conn, BT_REASON_PERMANENT);
 
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);

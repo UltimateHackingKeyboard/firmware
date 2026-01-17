@@ -95,8 +95,10 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 
+    bool weArePairing = BtPair_PairingMode == PairingMode_Oob || BtPair_PairingMode == PairingMode_PairHid;
+    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
 
-    if (BtPair_PairingMode == PairingMode_Oob || BtPair_PairingMode == PairingMode_PairHid) {
+    if (weArePairing || weAreSwitching) {
         expDelay = minDelay;
     } else {
         aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;

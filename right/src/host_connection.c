@@ -16,7 +16,7 @@
 #include "bt_manager.h"
 
 
-#define HOST_CONNECTION_SELECT_TIMEOUT 10000
+#define HOST_CONNECTION_SELECT_TIMEOUT 30000
 
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
