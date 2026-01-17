@@ -7,7 +7,7 @@
     #include <stdint.h>
     #include "power_mode.h"
     #include "macros/status_buffer.h"
-    #include "trace.h"
+    #include "trace_defs.h"
 
 // Macros:
 

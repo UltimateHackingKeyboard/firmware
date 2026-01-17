@@ -21,6 +21,7 @@
 #include "nus_server.h"
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
+#include "keyboard/oled/screens/screen_manager.h"
 #include "usb/usb.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/settings/settings.h>
@@ -37,7 +38,6 @@
 #include "bt_health.h"
 #include "macros/status_buffer.h"
 
-
 LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
 bool Bt_NewPairedDevice = false;
@@ -47,17 +47,45 @@ struct bt_conn *auth_conn;
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
 
-// BT_HCI_ERR_REMOTE_LOW_RESOURCES - it is *their* resources that are low, so we probably shouldn't use this
-// BT_HCI_ERR_LOCALHOST_TERM_CONN - this is our decision, bond should remain valid
-// BT_HCI_ERR_REMOTE_USER_TERM_CONN - this is user's decision, bond should remain valid
-// BT_HCI_ERR_AUTH_FAIL - permanent failure, bond should be removed
+/*
+ * Reason codes are named from the perspective of the party that receives them.
+ *
+ * BT_HCI_ERR_REMOTE_LOW_RESOURCES
+ * - it is our resources that are low
+ *
+ * BT_HCI_ERR_LOCALHOST_TERM_CONN
+ * - this is their decision
+ * - we never send this.
+ * - don't trust llms on it.
+ * - if we actually use it, the connection will not actually disconnect
+ *
+ * BT_HCI_ERR_REMOTE_USER_TERM_CONN
+ * - this is probably the right thing to send
+ * - bond should remain valid
+ *
+ * BT_HCI_ERR_AUTH_FAIL
+ * - permanent failure
+ * - bond should be removed
+ *
+ * LLM says that according to the core spec, following disconnect reasons are valid:
+ *
+ * Code: 0x08 Zephyr Constant: BT_HCI_ERR_AUTH_FAIL Meaning: Authentication failure - signals permanent bond problem
+ * Code: 0x13 Zephyr Constant: BT_HCI_ERR_REMOTE_USER_TERM_CONN Meaning: Standard disconnect - "I'm disconnecting you"
+ * Code: 0x14 Zephyr Constant: BT_HCI_ERR_REMOTE_LOW_RESOURCES Meaning: Low resources - signals temporary resource issue
+ * Code: 0x15 Zephyr Constant: BT_HCI_ERR_REMOTE_POWER_OFF Meaning: Power off - device is shutting down
+ * Code: 0x1A Zephyr Constant: BT_HCI_ERR_UNSUPP_REMOTE_FEATURE Meaning: Unsupported feature
+ * Code: 0x29 Zephyr Constant: BT_HCI_ERR_PAIRING_NOT_SUPPORTED Meaning: Pairing not supported
+ * Code: 0x3B Zephyr Constant: BT_HCI_ERR_UNACCEPT_CONN_PARAM
+ * */
 
-#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_LOCALHOST_TERM_CONN
-#define BT_REASON_NOT_SELECTED BT_HCI_ERR_LOCALHOST_TERM_CONN
+#define BT_REASON_HID_GIVE_US_BREAK BT_HCI_ERR_REMOTE_USER_TERM_CONN
+#define BT_REASON_NOT_SELECTED BT_HCI_ERR_REMOTE_USER_TERM_CONN
+#define BT_REASON_TEMPORARY BT_HCI_ERR_REMOTE_USER_TERM_CONN
 #define BT_REASON_PERMANENT BT_HCI_ERR_AUTH_FAIL
-#define BT_REASON_UNSPECIFIED BT_HCI_ERR_UNSPECIFIED
+#define BT_REASON_UNSPECIFIED BT_HCI_ERR_REMOTE_USER_TERM_CONN
 
 static void disconnectAllHids();
+static void auth_cancel(struct bt_conn *conn);
 
 peer_t Peers[PeerCount] = {
     {
@@ -143,11 +171,19 @@ static struct bt_conn* unsetAuthConn(bool cancel_auth) {
 
 static void safeDisconnect(struct bt_conn *conn, int reason) {
     if (conn == auth_conn) {
+        LOG_INF("Unauthenticating %s\n", GetPeerStringByConn(conn));
         unsetAuthConn(true);
+
+        #if DEVICE_HAS_OLED
+        if (ActiveScreen == ScreenId_Pairing) {
+            PairingScreen_Cancel();
+        }
+        #endif
     } else {
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+            LOG_INF("Disconnecting %s\n", GetPeerStringByConn(conn));
             bt_conn_disconnect(conn, reason);
         }
     }
@@ -251,7 +287,7 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                     0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                    100 // connection timeout (*10ms)
+                    30 // connection timeout (*10ms)
                 );
                 setLatency(conn, &conn_params);
              }
@@ -263,7 +299,7 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
                     0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                    100 // connection timeout (*10ms)
+                    30 // connection timeout (*10ms)
                 );
                 setLatency(conn, &conn_params);
              }
@@ -281,7 +317,7 @@ static void youAreNotWanted(struct bt_conn *conn) {
         safeDisconnect(conn, BT_REASON_HID_GIVE_US_BREAK);
     } else {
         LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))\n", GetPeerStringByConn(conn), SelectedHostConnectionId);
-        safeDisconnect(conn, BT_REASON_NOT_SELECTED);
+        safeDisconnect(conn, BT_REASON_TEMPORARY);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
         BtConn_UnusedPeripheralConnectionCount(),
@@ -397,6 +433,8 @@ static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthentic
 
     if (!result) {
         LOG_INF("    Not wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
+    } else {
+        LOG_INF("    Is wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
     }
 
     return result;
@@ -820,7 +858,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
         // Disconnect it so that the connection is established only after it is identified as a host connection
-        bt_conn_disconnect(conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+        bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
     } else {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
@@ -901,9 +939,12 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     if (auth_conn == conn) {
         Trace_Printc("bu7");
         LOG_WRN("Pairing of auth conn failed because of %d\n", reason);
-        unsetAuthConn(false);
+        unsetAuthConn(true);
         PairingScreen_Feedback(false);
     }
+
+    // TODO: should we here?
+    //safeDisconnect(conn, BT_REASON_PERMANENT);
 
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }

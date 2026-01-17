@@ -36,10 +36,9 @@ static pairing_mode_t defaultPairingMode() {
 }
 
 static void enterOobPairingMode() {
-    printk("--- Entering pairing mode. Going to stop BT and disconnect all connections. ---\n");
+    printk("------ Entering oob pairing mode. Going to stop BT and disconnect all connections. ------\n");
     BtPair_PairingMode = PairingMode_Oob;
     BtManager_StopBt();
-    BtConn_DisconnectAll();
 }
 
 struct bt_le_oob* BtPair_GetLocalOob() {
@@ -242,6 +241,8 @@ void BtPair_Unpair(const bt_addr_le_t addr) {
     // Update settings
     Settings_Reload();
     UsbCommand_UpdateNewPairingsFlag();
+
+    BT_TRACE_AND_ASSERT("bpr6");
 }
 
 static void bt_foreach_bond_cb_delete_non_lr(const struct bt_bond_info *info, void *user_data) {

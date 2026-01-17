@@ -65,6 +65,12 @@ void PairingScreen_Feedback(bool success)
     }
 }
 
+void PairingScreen_Cancel(void)
+{
+    passwordCharCount = 0;
+    ScreenManager_SwitchScreenEvent();
+}
+
 const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
     static const rgb_t black = { 0, 0, 0 };
     static const rgb_t green = { 0, 0xff, 0 };

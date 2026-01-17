@@ -72,19 +72,34 @@ void BtManager_StartBt() {
 
 void BtManager_StopBt() {
     BT_TRACE_AND_ASSERT("bm3");
-    if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Disable();
-    }
+
+    k_sleep(K_MSEC(10));
+
+    EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         BtAdvertise_Stop();
     }
 
+    k_sleep(K_MSEC(10));
+
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         BtScan_Stop();
     }
 
+    EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
+
+    k_sleep(K_MSEC(10));
+
+    BtConn_DisconnectAll();
+
+    k_sleep(K_MSEC(10));
+
     BtAdvertise_DisableAdvertisingIcon();
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HOGP_Disable();
+    }
 }
 
 
@@ -92,14 +107,25 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     BT_TRACE_AND_ASSERT("bm4");
     uint32_t maxDelay = 5000;
     uint32_t minDelay = 100;
+    uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 
-    aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
-    aggressiveTries = MAX(0, aggressiveTries);
-    aggressiveTries = MIN(aggressiveTries, 16);
+    if (BtPair_PairingMode == PairingMode_Oob) {
+        return;
+    }
 
-    uint32_t expDelay = MIN(maxDelay, minDelay << aggressiveTries);
+    bool weArePairing = BtPair_PairingMode == PairingMode_PairHid;
+    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
 
+    if (weArePairing || weAreSwitching) {
+        expDelay = minDelay;
+    } else {
+        aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
+        aggressiveTries = MAX(0, aggressiveTries);
+        aggressiveTries = MIN(aggressiveTries, 16);
+
+        expDelay = MIN(maxDelay, minDelay << aggressiveTries);
+    }
 
     LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s, delay %d\n", eventLabel, expDelay);
     EventScheduler_Reschedule(Timer_GetCurrentTime() + expDelay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
