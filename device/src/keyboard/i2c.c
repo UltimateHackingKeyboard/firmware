@@ -13,7 +13,8 @@
 
 // Thread definitions
 
-#define THREAD_STACK_SIZE 1000
+// 1000 did overflow
+#define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY -1
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
