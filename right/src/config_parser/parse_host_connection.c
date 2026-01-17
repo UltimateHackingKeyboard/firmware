@@ -7,8 +7,11 @@
 #include "config_parser/basic_types.h"
 #include "host_connection.h"
 #include "parse_config.h"
-#include "bt_conn.h"
 #include <string.h>
+
+#ifdef __ZEPHYR__
+#include "bt_conn.h"
+#endif
 
 static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connection_t* hostConnection) {
     host_connection_type_t hostType = ReadUInt8(buffer);
