@@ -36,10 +36,9 @@ static pairing_mode_t defaultPairingMode() {
 }
 
 static void enterOobPairingMode() {
-    printk("--- Entering pairing mode. Going to stop BT and disconnect all connections. ---\n");
+    printk("------ Entering oob pairing mode. Going to stop BT and disconnect all connections. ------\n");
     BtPair_PairingMode = PairingMode_Oob;
     BtManager_StopBt();
-    BtConn_DisconnectAll();
 }
 
 struct bt_le_oob* BtPair_GetLocalOob() {

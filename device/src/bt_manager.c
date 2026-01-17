@@ -72,19 +72,34 @@ void BtManager_StartBt() {
 
 void BtManager_StopBt() {
     BT_TRACE_AND_ASSERT("bm3");
-    if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Disable();
-    }
+
+    k_sleep(K_MSEC(10));
+
+    EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         BtAdvertise_Stop();
     }
 
+    k_sleep(K_MSEC(10));
+
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         BtScan_Stop();
     }
 
+    EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
+
+    k_sleep(K_MSEC(10));
+
+    BtConn_DisconnectAll();
+
+    k_sleep(K_MSEC(10));
+
     BtAdvertise_DisableAdvertisingIcon();
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HOGP_Disable();
+    }
 }
 
 
