@@ -939,12 +939,12 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     if (auth_conn == conn) {
         Trace_Printc("bu7");
         LOG_WRN("Pairing of auth conn failed because of %d\n", reason);
-        unsetAuthConn(false);
+        unsetAuthConn(true);
         PairingScreen_Feedback(false);
     }
 
     // TODO: should we here?
-    safeDisconnect(conn, BT_REASON_PERMANENT);
+    //safeDisconnect(conn, BT_REASON_PERMANENT);
 
     LOG_WRN("Pairing failed: %s, reason %d\n", GetPeerStringByConn(conn), reason);
 }
