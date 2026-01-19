@@ -75,6 +75,8 @@ void BtManager_StopBt() {
 
     k_sleep(K_MSEC(10));
 
+    printk("OOB: Stopping bluetooth services.\n");
+
     EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
@@ -95,11 +97,14 @@ void BtManager_StopBt() {
 
     k_sleep(K_MSEC(10));
 
-    BtAdvertise_DisableAdvertisingIcon();
 
     if (DEVICE_IS_UHK80_RIGHT) {
         HOGP_Disable();
     }
+
+    BtAdvertise_DisableAdvertisingIcon();
+
+    printk("OOB: Bluetooth stopped\n");
 }
 
 

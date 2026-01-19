@@ -111,8 +111,9 @@ void BtPair_PairCentral() {
     BtPair_PairingAsCentral = true;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
+    printk ("OOB: Scanning preparing...\n");
     BtScan_Start();
-    printk ("Scanning for pairable device\n");
+    printk ("OOB: Scanning for pairable device\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
 #endif
@@ -123,8 +124,9 @@ void BtPair_PairPeripheral() {
     BtPair_PairingAsCentral = false;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
+    printk ("OOB: Advertisement preparing...\n");
     BtAdvertise_Start(BtAdvertise_Config());
-    printk ("Waiting for central to pair to me.\n");
+    printk ("OOB: Waiting for central to pair to me.\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
 #endif
