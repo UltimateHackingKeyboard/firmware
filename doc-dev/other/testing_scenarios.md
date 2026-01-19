@@ -11,6 +11,9 @@ Following is a list testing suggestions. Not all have to be tested each time.
 - Unpair+pair dongle. (Optionally, let a bluetooth hid active while doing so.)
 - Pair two ble hids using `bluetooth pair` while all devices are active.
 
+Known issues:
+- Oob pairing (of the dongle) fails when another device is connected, including a dongle that is *not* connected over usb.
+
 ## Usb suspend:
 
 In all scenarios make sure that uhk works afterwards. 

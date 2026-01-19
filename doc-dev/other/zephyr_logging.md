@@ -1,24 +1,31 @@
-# Crash logs - users
-
-## Uhk80
-
-Crash logs have to be enabled via `set devMode true` in `$onInit`
+# Uhk logs
 
 ## Uhk60
 
-Crash logs are enabled by default. However, `set devMode true` is suggested as it enables logging in cases of ESD events.
+Uhk 60 has no extensive logging in place. See [crash logging](./crash_logs.md) for crash logging configuration.
 
-(We don't log esd reboots because they are often and these crash logs are significantly more disturbing than a quick reboot.)
+## Uhk80
 
-# Developer notes
+- Launch Agent.
+- Go to the About page.
+- Click the Agent logo seven times.
+- Go to the newly visible "Advanced settings" menu.
+- Click on the "Zephyr logging" button.
+- Check the "Right half" checkbox. If the left half and/or dongle is affected and connected via USB, check them, too.
 
-In order to fit all our uart applications onto two controllers, we use the async uart driver. Unfortunatelly, the async serial backend is significantly less reliable than the default interrupt backend. Especially it is not available at all during early boot phases. When these log are needed, the interrupt driver has to be used:
+# Agent logs
 
-- Comment out pin wiring stuff in device/src/main.c.
+You can find Agent logs in the following path:
 
-- Comment out this in uhk-80-right.conf:
+- on Linux: `~/.config/uhk-agent/uhk-agent.log`
+- on macOS: `~/Library/Logs/uhk-agent/uhk-agent.log`
+- on Windows: `%USERPROFILE%\AppData\Roaming\uhk-agent/uhk-agent.log`
+
+Depending on the issue, you may need to enable additional logging by passing additional commandline arguments. For communication related issues, it is `--log=usb`, valid values are `config | misc | usb | usbOps | all`. Furthermore, you may need to prefix them with multiple groups of `--`, exact count depending on your system and exact Agent build. Resulting command may look as follows:
 
 ```
-# CONFIG_SHELL_BACKEND_SERIAL_API_ASYNC=y
+./UHK.Agent-9.0.0-linux-x86_64.AppImage -- -- --log=misc,config,usb
 ```
+
+
 
