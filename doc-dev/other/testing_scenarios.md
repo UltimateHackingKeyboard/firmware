@@ -10,13 +10,19 @@ Following is a list testing suggestions. Not all have to be tested each time.
 - Test that we can add a paired device into the host connections. Try pair and add multiple devices within one Agent session.
 - Unpair+pair dongle. (Optionally, let a bluetooth hid active while doing so.)
 - Pair two ble hids using `bluetooth pair` while all devices are active.
-- Unregistered slot connections: try to add a ble hid without registering it in Agent. Change registered connection count. Check that the ble hid remaind in the same slot (unless another host connection took that slot - in that case, it should be in the first availalbe slot). 
+- Unregistered slot connections: try to add a ble hid without registering it in Agent. Change registered connection count and save the userconfig. Check that the ble hid remaind in the same slot (unless another host connection took that slot - in that case, it should be in the first availalbe slot). 
+- If moving currently connected device's host connection to another position, check that saving the UserConfig doesn't disconnect it - it should be remapped to the new slot by itself.
 
 Todos:
 - deduplicate and reorder these scenarios.
 
 Known issues:
 - Oob pairing (of the dongle) fails when another device is connected, including a dongle that is *not* connected over usb.
+- IRK fails are produced by settings loads (maybe this is the cause of the direct advertising issue though?):
+```
+[00:00:32.821,655] <wrn> bt_hci_core: opcode 0x2027 status 0x12
+[00:00:32.821,655] <err> bt_id: Failed to add IRK to controller
+```
 
 ## Usb suspend:
 
