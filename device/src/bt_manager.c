@@ -125,11 +125,14 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     if (weArePairing || weAreSwitching) {
         expDelay = minDelay;
     } else {
-        aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
+        if (wasAggresive) {
+            aggressiveTries = aggressiveTries + 1;
+        } else {
+            aggressiveTries = 0;
+        }
         aggressiveTries = MAX(0, aggressiveTries);
-        aggressiveTries = MIN(aggressiveTries, 16);
-
-        expDelay = MIN(maxDelay, minDelay << aggressiveTries);
+        aggressiveTries = MIN(aggressiveTries, 64);
+        expDelay = MIN(maxDelay, minDelay << (aggressiveTries/2));
     }
 
     LOG_INF("BtManager: Scheduling scan/adv in %dms. (%s)", expDelay, eventLabel);
