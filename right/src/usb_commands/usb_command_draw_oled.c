@@ -14,10 +14,27 @@
 void UsbCommand_DrawOled(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
 #if defined(__ZEPHYR__) && DEVICE_HAS_OLED
-    uint8_t x = GetUsbRxBufferUint8(1);
-    uint8_t y = GetUsbRxBufferUint8(2);
-    uint8_t len = GetUsbRxBufferUint8(3);
+    uint8_t offset = 1;
 
-    CanvasScreen_Draw(x, y, ((uint8_t*)GenericHidOutBuffer) + 4, len);
+    while (offset < USB_GENERIC_HID_OUT_BUFFER_LENGTH - 3) {
+        uint8_t x = GenericHidOutBuffer[offset];
+        if (x == 255) {
+            break;  // End of data marker
+        }
+
+        uint8_t y = GenericHidOutBuffer[offset + 1];
+        uint8_t pixelCount = GenericHidOutBuffer[offset + 2];
+        offset += 3;
+
+        // Payload contains 2 pixels per byte (4-bit grayscale each)
+        uint8_t payloadBytes = (pixelCount + 1) / 2;
+
+        if (offset + payloadBytes > USB_GENERIC_HID_OUT_BUFFER_LENGTH) {
+            break;  // Not enough data
+        }
+
+        CanvasScreen_DrawPacked(x, y, ((uint8_t*)GenericHidOutBuffer) + offset, pixelCount);
+        offset += payloadBytes;
+    }
 #endif
 }
