@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Sun, 19 Jan 2026 16:00:00 +0100
+Subject: [PATCH] zephyr_module: handle None revision in offline projects
+
+When running in a directory without a .git (e.g., a jj workspace),
+the revision can be None. Check for this before appending "-off"
+suffix to avoid TypeError.
+
+---
+ scripts/zephyr_module.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/scripts/zephyr_module.py b/scripts/zephyr_module.py
+index 000000000..000000001 100755
+--- a/scripts/zephyr_module.py
++++ b/scripts/zephyr_module.py
+@@ -585,7 +585,7 @@ def process_meta(zephyr_base, west_projs, modules,
+             manifest_project, manifest_dirty = _create_meta_project(
+                 projects[0].posixpath)
+             manifest_off = manifest_project.get("remote") is None
+-            if manifest_off:
++            if manifest_off and manifest_project.get("revision") is not None:
+                 manifest_project["revision"] +=  "-off"
+
+         if manifest_project:
+--
+2.44.0
+
