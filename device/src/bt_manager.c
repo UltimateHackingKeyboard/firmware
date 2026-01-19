@@ -132,7 +132,7 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
         expDelay = MIN(maxDelay, minDelay << aggressiveTries);
     }
 
-    LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s, delay %d\n", eventLabel, expDelay);
+    LOG_INF("BtManager: Scheduling scan/adv in %dms. (%s)\n", expDelay, eventLabel);
     EventScheduler_Reschedule(Timer_GetCurrentTime() + expDelay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
 }
 
@@ -174,8 +174,6 @@ void BtManager_StartScanningAndAdvertising() {
     bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
     bool shouldScan = rightShouldScanForPeer || rightShouldScanForOob || dongleShouldScanForPeer || dongleShouldScanForOob;
 
-    LOG_INF("btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
-
     if (shouldAdvertise || shouldScan) {
         const char* label = "";
         if (shouldAdvertise && shouldScan) {
@@ -185,7 +183,7 @@ void BtManager_StartScanningAndAdvertising() {
         } else if (shouldScan) {
             label = "scanning";
         }
-        LOG_INF("Starting %s, try %d!\n", label, try);
+        LOG_INF("BtManager: Start '%s' (%d).\n", label, try);
     }
 
 #ifdef CONFIG_BT_PERIPHERAL
