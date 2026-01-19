@@ -70,6 +70,7 @@
         UsbCommandId_ExecShellCommand         = 0x1e,
         UsbCommandId_ReadOled                 = 0x1f,
         UsbCommandId_SetUhk60LedState         = 0x20,
+        UsbCommandId_SetPerKeyRgb             = 0x21,
     } usb_command_id_t;
 
     typedef enum {

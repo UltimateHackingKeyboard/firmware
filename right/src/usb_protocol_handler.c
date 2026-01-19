@@ -16,6 +16,7 @@
 #include "usb_commands/usb_command_launch_storage_transfer.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_exec_shell_command.h"
+#include "usb_commands/usb_command_set_per_key_rgb.h"
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
@@ -147,6 +148,9 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
             UsbCommand_SetUhk60LedState(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #endif
+        case UsbCommandId_SetPerKeyRgb:
+            UsbCommand_SetPerKeyRgb(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
         default:
             SetUsbTxBufferUint8(0, UsbStatusCode_InvalidCommand);
             break;

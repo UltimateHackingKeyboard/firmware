@@ -73,6 +73,7 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             // Byte 2: OLED override mode
 #if DEVICE_HAS_OLED
             GenericHidInBuffer[2] = OledOverrideMode;
+            printk("========= reading oled %d\n", OledOverrideMode);
 #else
             GenericHidInBuffer[2] = 0;
 #endif

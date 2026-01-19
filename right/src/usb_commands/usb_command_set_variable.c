@@ -79,6 +79,8 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
 #if DEVICE_HAS_OLED
             OledOverrideMode = GenericHidOutBuffer[3];
 #endif
+
+            printk("============= Writing oled %d\n", OledOverrideMode);
             // Bytes 4-35: per-key RGB override bitmap (32 bytes = 256 bits)
             // Deserialize into colorOverridden for ALL layers
             for (uint8_t slotIdx = 0; slotIdx < SLOT_COUNT; slotIdx++) {
