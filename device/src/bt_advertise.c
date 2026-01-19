@@ -81,7 +81,7 @@ ATTR_UNUSED static void setFilters(adv_config_t advConfig) {
     bt_le_filter_accept_list_clear();
 
     if (advConfig.advType & (ADVERTISE_HID | ADVERTISE_NUS)) {
-        printk("Bt: filling adv allow filter\n");
+        LOG_DBG("Bt: filling adv allow filter");
         for (uint8_t connId = ConnectionId_HostConnectionFirst; connId <= ConnectionId_HostConnectionLast; connId++) {
             host_connection_t* hostConnection = HostConnection(connId);
 
@@ -99,7 +99,7 @@ ATTR_UNUSED static void setFilters(adv_config_t advConfig) {
     }
 
     if (advConfig.advType & ADVERTISE_DIRECTED_NUS) {
-        printk("Bt: filling adv allow filter for \"directed\" advertising.\n");
+        LOG_DBG("Bt: filling adv allow filter for \"directed\" advertising.");
         bt_le_filter_accept_list_add(advConfig.addr);
     }
 }
@@ -136,14 +136,12 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
     updateAdvertisingIcon(advConfig.advType & ADVERTISE_HID);
 
-    printk("Bt: start advertising\n");
-
     // Start advertising
     static struct bt_le_adv_param advParam;
     switch (advConfig.advType) {
         case ADVERTISE_HID:
         case ADVERTISE_NUS | ADVERTISE_HID:
-            LOG_INF("Adv: advertise nus+hid.\n");
+            LOG_DBG("Adv: advertise nus+hid.");
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
             advParam = *BT_LE_ADV_CONN_ONE_TIME;
             err = BT_LE_ADV_START(&advParam, adHid, sdHid);
@@ -151,7 +149,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             break;
         case ADVERTISE_NUS:
             if (Cfg.Bt_DirectedAdvertisingAllowed) {
-                LOG_INF("Adv: advertise nus, with allow list.\n");
+                LOG_DBG("Adv: advertise nus, with allow list.");
                 setFilters(advConfig);
 
                 advParam = *BT_LE_ADV_CONN_ONE_TIME;
@@ -159,14 +157,14 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
-                LOG_INF("Adv: advertise nus, without allow list.\n");
+                LOG_DBG("Adv: advertise nus, without allow list.");
                 advParam = *BT_LE_ADV_CONN_ONE_TIME;
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             }
             break;
         case ADVERTISE_DIRECTED_NUS:
             if (Cfg.Bt_DirectedAdvertisingAllowed) {
-                LOG_INF("Adv: direct advertise nus, with allow list.\n");
+                LOG_DBG("Adv: direct advertise nus, with allow list.");
                 setFilters(advConfig);
 
                 advParam = *BT_LE_ADV_CONN_ONE_TIME;
@@ -174,31 +172,31 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
 
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
-                LOG_INF("Adv: direct advertise nus, without allow list.\n");
+                LOG_DBG("Adv: direct advertise nus, without allow list.");
                 advParam = *BT_LE_ADV_CONN_ONE_TIME;
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             }
 
             //// TODO: fix and reenable this?
-            // printk("Advertising against %s\n", GetAddrString(advConfig.addr));
+            // printk("Advertising against %s", GetAddrString(advConfig.addr));
             // advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
             // advParam.options |= BT_LE_ADV_OPT_DIR_ADDR_RPA;
             // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         default:
-            LOG_INF("Adv: Attempted to start advertising without any type! Ignoring.\n");
+            LOG_INF("Adv: Attempted to start advertising without any type! Ignoring.");
             return 0;
     }
 
     // Log it
     if (err == 0) {
-        LOG_INF("Adv: %s advertising successfully started\n", advTypeString);
+        LOG_INF("Adv: '%s' started", advTypeString);
         return 0;
     } else if (err == -EALREADY) {
-        LOG_INF("Adv: %s advertising continued\n", advTypeString);
+        LOG_INF("Adv: '%s' continued", advTypeString);
         return 0;
     } else {
-        LOG_INF("Adv: %s advertising failed to start (err %d), free connections: %d\n", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
+        LOG_INF("Adv: '%s' failed to start (err %d), free connections: %d", advTypeString, err, BtConn_UnusedPeripheralConnectionCount());
         return err;
     }
 }
@@ -207,7 +205,7 @@ void BtAdvertise_Stop(void) {
     BT_TRACE_AND_ASSERT("ba2");
     int err = bt_le_adv_stop();
     if (err) {
-        LOG_WRN("Adv: Advertising failed to stop (err %d)\n", err);
+        LOG_WRN("Adv: Advertising failed to stop (err %d)", err);
         Bt_HandleError("BtAdvertise_Stop", err);
     }
 }
@@ -262,7 +260,7 @@ adv_config_t BtAdvertise_Config() {
             } else {
                 /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to
                  *  disconnect other devices in order to restore proper function. */
-                LOG_INF("Adv: Current slot count is zero, not advertising!\n");
+                LOG_INF("Adv: Current slot count is zero, not advertising!");
                 // BtConn_ListCurrentConnections();
                 return ADVERTISEMENT( 0 );
             }
@@ -270,7 +268,7 @@ adv_config_t BtAdvertise_Config() {
         case DeviceId_Uhk_Dongle:
             return ADVERTISEMENT( 0 );
         default:
-            LOG_WRN("unknown device!\n");
+            LOG_WRN("unknown device!");
             return ADVERTISEMENT( 0 );
     }
 }

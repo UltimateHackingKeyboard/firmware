@@ -36,6 +36,9 @@
 #include "versioning.h"
 #include "event_scheduler.h"
 #include "macro_events.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(StateSync, LOG_LEVEL_INF);
 
 #define WAKE(TID) if (TID != 0) { k_wakeup(TID); }
 
@@ -72,10 +75,10 @@ static void wake(k_tid_t tid) {
     if (tid != 0) {
         k_wakeup(tid);
         // if (DEBUG_MODE) {
-        //     LogU("StateSync woke up %p\n", tid);
+        //     LogU("StateSync woke up %p", tid);
         // }
     } else if (k_uptime_get_32() > 5000) {
-        printk("Skipping wake up, tid is 0");
+        LOG_INF("Skipping wake up, tid is 0");
     }
 }
 
@@ -425,7 +428,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_Battery:
         WIDGET_REFRESH(&StatusWidget);
         {
-            printk("Batteries: %d%% %d%% (%d %d)\n"
+            LOG_INF("Batteries: %d%% %d%% (%d %d)"
                 , SyncLeftHalfState.battery.batteryPercentage, SyncRightHalfState.battery.batteryPercentage
                 , SyncLeftHalfState.battery.batteryVoltage, SyncRightHalfState.battery.batteryVoltage
             );
@@ -517,11 +520,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         }
         break;
     case StateSyncPropertyId_ZeroDummy:
-        printk("Received an invalid state sync property message: %d %d %d | %d %d | %d %d %d %d %d\n", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
+        LOG_INF("Received an invalid state sync property message: %d %d %d | %d %d | %d %d %d %d %d", data[-5], data[-4], data[-3], data[-2], data[-1], data[0], data[1], data[2], data[3], data[4]);
         break;
     case StateSyncPropertyId_BatteryStationaryMode:
         //for both local and remote
-        printk("Setting battery mode to %d\n", Cfg.BatteryStationaryMode);
+        LOG_INF("Setting battery mode to %d", Cfg.BatteryStationaryMode);
         EventScheduler_Schedule(Timer_GetCurrentTime() + 1000, EventSchedulerEvent_UpdateBattery, "state sync");
         break;
     case StateSyncPropertyId_PowerMode:
@@ -530,8 +533,8 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         }
         break;
     default:
-        printk("Property %i ('%s') has no receive handler. If this is correct, please add a "
-               "separate empty case...\n",
+        LOG_ERR("Property %i ('%s') has no receive handler. If this is correct, please add a "
+               "separate empty case...",
             propId, prop->name);
         break;
     }
@@ -926,7 +929,7 @@ void StateSync_Init() {
 }
 
 void StateSync_ResetRightLeftLink(bool bidirectional) {
-    printk("Resetting left right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
+    LOG_INF("Resetting left right link! %s", bidirectional ? "Bidirectional" : "Unidirectional");
     StateSync_LeftResetCounter++;
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightLeftLink);
@@ -957,7 +960,7 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
 
 void StateSync_ResetRightDongleLink(bool bidirectional) {
     StateSync_DongleResetCounter++;
-    // printk("Resetting dongle right link! %s\n", bidirectional ? "Bidirectional" : "Unidirectional");
+    // LOG_INF("Resetting dongle right link! %s", bidirectional ? "Bidirectional" : "Unidirectional");
     if (bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }

@@ -86,7 +86,7 @@ void BtManager_EnterMode(pairing_mode_t mode, bool toggle) {
             if (mode == PairingMode_PairHid) {
                 BtConn_MakeSpaceForHid();
             }
-            BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in BtManager_EnterMode - start advertising");
+            BtManager_StartScanningAndAdvertisingAsync(false, "BtManager_EnterMode - start advertising");
             if (mode != defaultMode) {
                 EventScheduler_Reschedule(k_uptime_get_32() + USER_PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "User pairing mode timeout.");
             }
@@ -157,7 +157,7 @@ void BtPair_EndPairing(bool success, const char* msg) {
         BtAdvertise_Stop();
 #endif
 
-    BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in BtPair_EndPairing");
+    BtManager_StartScanningAndAdvertisingAsync(false, "BtPair_EndPairing");
 }
 
 struct delete_args_t {
