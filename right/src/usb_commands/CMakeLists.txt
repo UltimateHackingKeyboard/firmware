@@ -22,6 +22,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_i2c_baud_rate.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_led_pwm_brightness.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_test_led.c>
+    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_set_uhk60_led_state.c>
     usb_command_set_variable.c
     usb_command_switch_keymap.c
     usb_command_write_config.c

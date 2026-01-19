@@ -26,6 +26,7 @@
 #else
 #include "usb_commands/usb_command_set_test_led.h"
 #include "usb_commands/usb_command_set_led_pwm_brightness.h"
+#include "usb_commands/usb_command_set_uhk60_led_state.h"
 #include "usb_commands/usb_command_get_adc_value.h"
 #include "usb_commands/usb_command_jump_to_module_bootloader.h"
 #include "usb_commands/usb_command_send_kboot_command_to_module.h"
@@ -141,6 +142,9 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
             break;
         case UsbCommandId_SetI2cBaudRate:
             UsbCommand_SetI2cBaudRate(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_SetUhk60LedState:
+            UsbCommand_SetUhk60LedState(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #endif
         default:

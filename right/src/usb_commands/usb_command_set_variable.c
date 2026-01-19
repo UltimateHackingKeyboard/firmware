@@ -97,7 +97,7 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
                 StateSync_UpdateLayer(layerId, true);
             }
 #endif
-            EventVector_Set(EventVector_LedMapUpdateNeeded);
+            EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
             break;
         }
         default:
