@@ -5,39 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
-## [16.1.0] - 2026-01-14
+## [16.1.0] - 2026-01-16
 
 Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**12.0**
 
-- Fix: make bluetooth no longer reconnect during pairing.
-- Fix: when using overlayLayer, the first empty action after any nonempty action would be written through. (When in a sequence of at least two empty actions, to be precise.)
+- Fix: make Bluetooth no longer reconnect during pairing.
+- Fix: when using `overlayLayer`, the first empty action after any nonempty action would be overwritten. (In a sequence of at least two empty actions.) `SMARTMACROS:PATCH`
 - Fix: restart advertising when switch host selection ceases to be relevant.
-- Fix: change bluetooth disconnect reasons.
-- Wake shortly when key is tapped in light sleep.
-- Log remote wakeup error codes onto oled display.
-- Refactor uart and implement uart module support. (This should have no impacts.)
-- Make UHK bluetooth functionality not rely on Agent:
-  - Assign newly paired bluetooth connections into regular host slots.
+- Fix: change Bluetooth disconnect reasons.
+- Wake shortly when a key is tapped in light sleep mode.
+- Log remote wakeup error codes onto the OLED display.
+- Refactor UART and implement UART module support. (This should have no impacts.)
+- Make the UHK Bluetooth functionality not rely on Agent:
+  - Assign newly paired Bluetooth connections into regular host slots.
   - Don't unpair unknown devices upon config saves.
-  - Show bluetooth relevant events on the oled screen. ("Pairing...", "Slot freed", "Slot unassigned"...)
+  - Show Bluetooth relevant events on the OLED screen. ("Pairing...", "Slot freed", "Slot unassigned"...)
   - If native switch host action is held for 3 seconds, unpair the connection and free its slot for other devices.
-  - Add unpairHost macro command.
-  - For unpairHost and switchHost, allow numeric slot ids.
+  - Add the `unpairHost` macro command. `SMARTMACROS:MINOR`
+  - For `unpairHost` and `switchHost`, allow numeric slot ids. `SMARTMACROS:MINOR`
 - Macro string support:
   - Add STRING variable type and comparison operators. `SMARTMACROS:MINOR`
-  - Add $uhk.name virtual variable. `SMARTMACROS:MINOR`
+  - Add `$uhk.name` virtual variable. `SMARTMACROS:MINOR`
 - Macro templates:
-  - Distinguish &macroArg.1 and $macroArg.1 expansions `SMARTMACROS:MINOR`
+  - Distinguish `&macroArg.1` and `$macroArg.1` expansions `SMARTMACROS:MINOR`
   - Validate all macros in the context of their binding sites. `SMARTMACROS:PATCH`
 - Bluetooth behavior:
   - Reset host selection after 15 seconds if not successful.
-  - Implement exponential backoff for bluetooth when hosts try to connect aggresively.
-- Homerow mods (HMR) changes: Added a number of options to Secondary role keys, mainly focused on adding options to reduce false positive activations of the secondary roles, making them more viable for HRM usage:
+  - Implement exponential backoff for Bluetooth when hosts try to connect aggresively.
+- Homerow mods (HRM) changes: Added a number of options to secondary role keys, mainly focused on adding options to reduce false positive activations of the secondary roles, making them more viable for HRM usage:
   - Added `secondaryRole.advanced.acceptTriggersFromSameHalf` option and its inline `ignoreTriggersFromSameHalf | acceptTriggersFromSameHalf` overrides to allow Secondary Role Keys to ignore triggers from their own keyboard half. This reduces false secondary triggers on key rolls as well as allows multi-mod combos at all when using Trigger on press. `SMARTMACROS:MINOR`
-  - Added a `secondaryRole.advanced.minimumHoldTime <ms, 0-255 (INT)>` option. This is the minimum hold time of a key that is required to trigger it’s secondary role. `SMARTMACROS:MINOR`
+  - Added a `secondaryRole.advanced.minimumHoldTime <ms, 0-255 (INT)>` option. This is the minimum hold time of a key that is required to trigger its secondary role. `SMARTMACROS:MINOR`
   - Added a `secondaryRole.advanced.timeoutAction none` setting. `SMARTMACROS:MINOR`
-  - Moved the Double tap primary activation to timeout to allow the Secondary role key to be used for it’s primary role and then secondary role in quick succession `SMARTMACROS:PATCH`
-  - Refactor `secondaryRole.advanced.` `triggerByPress` and `triggerByRelease` to `secondaryRole.advanced.triggeringEvent { press | release | none }` `SMARTMACROS:MINOR`
+  - Moved the Double tap primary activation to timeout to allow the secondary role key to be used for its primary role and then secondary role in quick succession `SMARTMACROS:PATCH`
+  - Refactor `secondaryRole.advanced.triggerByPress` and `triggerByRelease` to `secondaryRole.advanced.triggeringEvent { press | release | none }` `SMARTMACROS:MINOR`
 
 ## [16.0.0] - 2025-12-24
 
