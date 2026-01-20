@@ -590,7 +590,7 @@ Internally, values are saved in one of the following types, and types are automa
 
 Key actions can be parametrized with macro arguments. These arguments can be expanded in two ways:
 
-- `$macroArg.<idx>` - in which case they are parsed as a single value. This is the normal and safe variant that prevents context corruption.
+- `$macroArg.<idx>` - in which case they are parsed as a single value - in the sense of valid macro variable expressions. This is the normal and safe variant that prevents context corruption. Abbreviations, shortcuts, and keys generally are not supported by this variant - use the `&` one.
 - `&macroArg.<idx>` - this variant substitutes the argument into current parser context. These allow substituing any string, including full commands or their parts. This is an experimental feature and might be unsafe in some contexts. Following limitations apply:
   - the argument bounds must correspond to token bounds in the fully expanded string
   - the argument cannot span multiple lines

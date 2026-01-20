@@ -24,6 +24,7 @@
     void PairingScreen_RegisterScancode(uint8_t scancode);
     void PairingScreen_AskForPassword(void);
     void PairingScreen_Feedback(bool success);
+    void PairingScreen_Cancel(void);
     const rgb_t* PairingScreen_ActionColor(key_action_t* action);
 
 #endif

@@ -16,7 +16,7 @@
 #include "bt_manager.h"
 
 
-#define HOST_CONNECTION_SELECT_TIMEOUT 10000
+#define HOST_CONNECTION_SELECT_TIMEOUT 30000
 
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
@@ -83,7 +83,7 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
 
 void HostConnection_Unselect() {
     HostConnection_SetSelectedConnection(ConnectionId_Invalid);
-    BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in HostConnection_Unselect");
+    BtManager_StartScanningAndAdvertisingAsync(false, "HostConnection_Unselect");
 }
 
 static void selectConnection(uint8_t connectionId) {

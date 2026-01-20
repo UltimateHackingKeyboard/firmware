@@ -25,6 +25,8 @@ void Reboot(bool rebootPeripherals) {
     StateWormhole.wasReboot = true;
     Trace_Printc("Rebooting...");
 #ifdef __ZEPHYR__
+    printk("Rebooting...");
+    k_sleep (K_MSEC(100)); //let it flush logs
     if (rebootPeripherals) {
         if (DEVICE_IS_UHK80_RIGHT) {
             Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_Reboot, NULL, 0);
@@ -55,8 +57,10 @@ void UsbCommand_Reenumerate(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
 {
     StateWormhole_Open();
     StateWormhole.wasReboot = true;
-    Trace_Printc("Rebooting...");
+    Trace_Printc("Reenumerating...");
 #ifdef __ZEPHYR__
+    printk("Reenumerating...");
+    k_sleep (K_MSEC(100)); //let it flush logs
     bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);
     sys_reboot(SYS_REBOOT_COLD);
 #else

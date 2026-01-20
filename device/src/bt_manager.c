@@ -30,10 +30,10 @@ bool BtManager_Restarting = false;
 static void bt_ready(int err)
 {
     if (err) {
-        LOG_WRN("Bluetooth init failed (err %d)\n", err);
+        LOG_WRN("Bluetooth init failed (err %d)", err);
         Bt_HandleError("bt_ready", err);
     } else {
-        LOG_INF("Bluetooth initialized successfully\n");
+        LOG_INF("Bluetooth initialized successfully");
     }
 }
 
@@ -44,7 +44,7 @@ void BtManager_InitBt() {
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         int err = NusServer_Init();
         if (err) {
-            LOG_WRN("NusServer_Init failed with error %d\n", err);
+            LOG_WRN("NusServer_Init failed with error %d", err);
             Bt_HandleError("NusServer_Init", err);
         }
     }
@@ -57,7 +57,7 @@ void BtManager_InitBt() {
 
 void BtManager_StartBt() {
     BT_TRACE_AND_ASSERT("bm2");
-    LOG_INF("Starting bluetooth services.\n");
+    LOG_INF("Starting bluetooth services.");
 
     if (!Cfg.Bt_Enabled) {
         return;
@@ -72,19 +72,39 @@ void BtManager_StartBt() {
 
 void BtManager_StopBt() {
     BT_TRACE_AND_ASSERT("bm3");
-    if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Disable();
-    }
+
+    k_sleep(K_MSEC(10));
+
+    LOG_INF("OOB: Stopping bluetooth services.");
+
+    EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
 
     if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
         BtAdvertise_Stop();
     }
 
+    k_sleep(K_MSEC(10));
+
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         BtScan_Stop();
     }
 
+    EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
+
+    k_sleep(K_MSEC(10));
+
+    BtConn_DisconnectAll();
+
+    k_sleep(K_MSEC(10));
+
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HOGP_Disable();
+    }
+
     BtAdvertise_DisableAdvertisingIcon();
+
+    LOG_INF("OOB: Bluetooth stopped");
 }
 
 
@@ -92,16 +112,30 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     BT_TRACE_AND_ASSERT("bm4");
     uint32_t maxDelay = 5000;
     uint32_t minDelay = 100;
+    uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 
-    aggressiveTries = wasAggresive ? aggressiveTries + 1 : 0;
-    aggressiveTries = MAX(0, aggressiveTries);
-    aggressiveTries = MIN(aggressiveTries, 16);
+    if (BtPair_PairingMode == PairingMode_Oob) {
+        return;
+    }
 
-    uint32_t expDelay = MIN(maxDelay, minDelay << aggressiveTries);
+    bool weArePairing = BtPair_PairingMode == PairingMode_PairHid;
+    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
 
+    if (weArePairing || weAreSwitching) {
+        expDelay = minDelay;
+    } else {
+        if (wasAggresive) {
+            aggressiveTries = aggressiveTries + 1;
+        } else {
+            aggressiveTries = 0;
+        }
+        aggressiveTries = MAX(0, aggressiveTries);
+        aggressiveTries = MIN(aggressiveTries, 64);
+        expDelay = MIN(maxDelay, minDelay << (aggressiveTries/2));
+    }
 
-    LOG_INF("btManager: BtManager_StartScanningAndAdvertisingAsync because %s, delay %d\n", eventLabel, expDelay);
+    LOG_INF("BtManager: Scheduling scan/adv in %dms. (%s)", expDelay, eventLabel);
     EventScheduler_Reschedule(Timer_GetCurrentTime() + expDelay, EventSchedulerEvent_BtStartScanningAndAdvertising, eventLabel);
 }
 
@@ -143,8 +177,6 @@ void BtManager_StartScanningAndAdvertising() {
     bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
     bool shouldScan = rightShouldScanForPeer || rightShouldScanForOob || dongleShouldScanForPeer || dongleShouldScanForOob;
 
-    LOG_INF("btManager: should scanAndAdvertise %d %d\n", shouldScan, shouldAdvertise);
-
     if (shouldAdvertise || shouldScan) {
         const char* label = "";
         if (shouldAdvertise && shouldScan) {
@@ -154,7 +186,7 @@ void BtManager_StartScanningAndAdvertising() {
         } else if (shouldScan) {
             label = "scanning";
         }
-        LOG_INF("Starting %s, try %d!\n", label, try);
+        LOG_INF("BtManager: Start '%s' (%d).", label, try);
     }
 
 #ifdef CONFIG_BT_PERIPHERAL
@@ -188,7 +220,7 @@ void BtManager_StartScanningAndAdvertising() {
 
 void BtManager_RestartBt() {
     BT_TRACE_AND_ASSERT("bm6");
-    LOG_INF("Going to reset bluetooth stack\n");
+    LOG_INF("Going to reset bluetooth stack");
 
     BtManager_Restarting = true;
     int err;
@@ -199,7 +231,7 @@ void BtManager_RestartBt() {
 
     err = bt_disable();
     if (err) {
-        LOG_WRN("Bluetooth disable failed (err %d)\n", err);
+        LOG_WRN("Bluetooth disable failed (err %d)", err);
         Bt_HandleError("bt_disable", err);
         return;
     }
@@ -209,13 +241,13 @@ void BtManager_RestartBt() {
 
     err = bt_hci_cmd_send(BT_HCI_OP_RESET, NULL);
     if (err) {
-        LOG_WRN("HCI Reset failed (err %d)\n", err);
+        LOG_WRN("HCI Reset failed (err %d)", err);
         Bt_HandleError("bt_hci_cmd_send", err);
     }
 
     err = bt_enable(bt_ready);
     if (err) {
-        LOG_WRN("Bluetooth init failed (err %d)\n", err);
+        LOG_WRN("Bluetooth init failed (err %d)", err);
         Bt_HandleError("bt_enable", err);
     }
 
@@ -225,7 +257,7 @@ void BtManager_RestartBt() {
 
     BtManager_Restarting = false;
 
-    LOG_INF("Bluetooth subsystem restart finished\n");
+    LOG_INF("Bluetooth subsystem restart finished");
 }
 
 void BtManager_RestartBtAsync() {

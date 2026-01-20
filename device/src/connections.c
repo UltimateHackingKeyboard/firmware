@@ -16,6 +16,9 @@
 #include "config_manager.h"
 #include "bt_pair.h"
 #include "usb_commands/usb_command_get_new_pairings.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(Conn, LOG_LEVEL_INF);
 
 connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_UsbHidRight] = { .isAlias = true },
@@ -88,7 +91,7 @@ const char* Connections_GetStaticName(connection_id_t connectionId) {
     return getStaticName(connectionId);
 }
 
-static void reportConnectionState(connection_id_t connectionId, const char* message) {
+static void reportConnectionState(connection_id_t connectionId) {
     connectionId = resolveAliases(connectionId);
 
     bool isHostConnection = false;
@@ -117,9 +120,9 @@ static void reportConnectionState(connection_id_t connectionId, const char* mess
 
     if (isHostConnection) {
         host_connection_t* hc = HostConnection(connectionId);
-        LogU("%s: %s%d(%.*s, %s)%s%s%s%s\n", message, name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LOG_INF("%s: %d(%.*s, %s)%s%s%s%s", name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     } else {
-        LogU("%s: %s(%s)%s%s%s%s\n", message, name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LOG_INF("%s: (%s)%s%s%s%s", name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
     }
 }
 
@@ -131,7 +134,7 @@ void Connections_ResetWatermarks(connection_id_t connectionId) {
 }
 
 void Connections_ReportState(connection_id_t connectionId) {
-    reportConnectionState(connectionId, "Conn state");
+    reportConnectionState(connectionId);
 }
 
 connection_state_t Connections_GetState(connection_id_t connectionId) {
@@ -144,7 +147,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
 
     if ( Connections[connectionId].state != state ) {
         Connections[connectionId].state = state;
-        reportConnectionState(connectionId, "Conn state");
+        reportConnectionState(connectionId);
 
         Connections_ResetWatermarks(connectionId);
 
@@ -195,7 +198,7 @@ connection_type_t Connections_Type(connection_id_t connectionId) {
             return ConnectionType_Unknown;
             break;
     }
-    printk("Unhandled connectionId %d\n", connectionId);
+    LOG_ERR("Unhandled connectionId %d", connectionId);
     return ConnectionType_Unknown;
 }
 
@@ -233,7 +236,7 @@ connection_target_t Connections_Target(connection_id_t connectionId) {
         case ConnectionId_Invalid:
             return ConnectionTarget_None;
     }
-    printk("Unhandled connectionId %d\n", connectionId);
+    LOG_ERR("Unhandled connectionId %d", connectionId);
     return ConnectionTarget_None;
 }
 
@@ -382,8 +385,8 @@ bool Connections_IsActiveHostConnection(connection_id_t connectionId) {
     return resolveAliases(connectionId) == ActiveHostConnectionId;
 }
 
-static void setCurrentDongleToStandby() {
-    if (Connections_IsHostConnection(ActiveHostConnectionId) && HostConnection(ActiveHostConnectionId)->type == HostConnectionType_Dongle) {
+static void setDongleToStandby(connection_id_t connectionId) {
+    if (Connections_IsHostConnection(connectionId) && HostConnection(connectionId)->type == HostConnectionType_Dongle) {
         bool standby = true;
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
     }
@@ -428,9 +431,11 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         bool connectionIsSelected = SelectedHostConnectionId == connectionId;
         bool noHostIsConnected = ActiveHostConnectionId == ConnectionId_Invalid;
         if (hostConnection->switchover || noHostIsConnected || forceSwitch || connectionIsSelected) {
-            setCurrentDongleToStandby();
+            if (connectionId != ActiveHostConnectionId) {
+                setDongleToStandby(ActiveHostConnectionId);
+            }
             switchOver(connectionId);
-            reportConnectionState(connectionId, "Conn state");
+            reportConnectionState(connectionId);
         }
     }
 
@@ -440,7 +445,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
             if (Connections[i].state == ConnectionState_Ready) {
                 switchOver(i);
-                reportConnectionState(i, "Conn state");
+                reportConnectionState(i);
                 break;
             }
         }
