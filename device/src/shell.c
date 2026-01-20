@@ -381,6 +381,13 @@ static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
+{
+    ProxyLog_SnapToStatusBuffer();
+    printk("Log snapped to status buffer.\n");
+    return 0;
+}
+
 
 static int reinitShell(const struct device *const dev)
 {
@@ -485,6 +492,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 0),
         SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
         SHELL_CMD_ARG(logs, NULL, "Set/get proxy log enabled", cmd_uhk_logs, 1, 1),
+        SHELL_CMD_ARG(snaplog, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_SUBCMD_SET_END);

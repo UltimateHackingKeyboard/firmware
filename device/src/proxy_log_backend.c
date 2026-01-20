@@ -77,6 +77,20 @@ void ProxyLog_GetFill(uint16_t* occupied, uint16_t* length) {
     *length = PROXY_BACKEND_BUFFER_SIZE;
 }
 
+void ProxyLog_SnapToStatusBuffer(void) {
+    StateWormhole_Open();
+    StateWormhole.persistStatusBuffer = true;
+
+    uint16_t pos = bufferPosition;
+    uint16_t len = bufferLength;
+
+    for (uint16_t i = 0; i < len; i++) {
+        char c = buffer[pos];
+        Macros_SanitizedPut(&c, &c + 1);
+        pos = (pos + 1) % PROXY_BACKEND_BUFFER_SIZE;
+    }
+}
+
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
 void panic(const struct log_backend *const backend) {
