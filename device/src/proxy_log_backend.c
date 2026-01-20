@@ -100,6 +100,7 @@ static int outputFunc(uint8_t *data, size_t length, void *ctx)
     }
     if (ProxyLog_IsAttached) {
         printToOurBuffer(data, length);
+        LogO("%.*s", length, data);
     }
     return length;
 }
