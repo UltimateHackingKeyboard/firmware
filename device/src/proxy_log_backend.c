@@ -72,6 +72,11 @@ void printToOurBuffer(uint8_t *data, size_t length) {
     updateNonemptyFlag();
 }
 
+void ProxyLog_GetFill(uint16_t* occupied, uint16_t* length) {
+    *occupied = bufferLength;
+    *length = PROXY_BACKEND_BUFFER_SIZE;
+}
+
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
 void panic(const struct log_backend *const backend) {

@@ -5,6 +5,7 @@
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
 #include "logger.h"
+#include "proxy_log_backend.h"
 #include "usb/usb.h"
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/gpio.h>
@@ -352,6 +353,7 @@ static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char
 
 static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *argv[])
 {
+
     if (argc > 1 && argv[1][0] == 'h') {
         Logger_SetPriority(true);
         shell_fprintf(shell, SHELL_NORMAL, "Log priority set to high.\n");
@@ -361,6 +363,24 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
     }
     return 0;
 }
+
+static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1 || argv[1][0] == '1') {
+        ProxyLog_SetAttached(true);
+    } else if (argc == 1 || argv[1][0] == '0') {
+        ProxyLog_SetAttached(false);
+    }
+
+    uint16_t usbBufferFill, usbBufferSize;
+    ProxyLog_GetFill(&usbBufferFill, &usbBufferSize);
+
+    printk("Usb logging enabled: %d\n", ProxyLog_IsAttached);
+    printk("Has log: %d\n", ProxyLog_HasLog);
+    printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
+    return 0;
+}
+
 
 static int reinitShell(const struct device *const dev)
 {
@@ -462,8 +482,9 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
-        SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 2),
-        SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 1, 2),
+        SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 0),
+        SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
+        SHELL_CMD_ARG(logs, NULL, "Set/get proxy log enabled", cmd_uhk_logs, 1, 1),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_SUBCMD_SET_END);
