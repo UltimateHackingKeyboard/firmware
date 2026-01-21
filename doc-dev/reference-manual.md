@@ -284,7 +284,6 @@ KEYID_ABBREV = leftModule.key1 | leftModule.key2 | leftModule.key3 | leftModule.
 KEYID_ABBREV = rightAlt | rightCtrl | rightFn | rightMod | rightShift | rightSpace | rightSuper | rightModule.leftButton | rightModule.rightButton | rightFn2
 KEYID_ABBREV = escape | f1 | f2 | f3 | f4 | f5 | f6 |  f7 | f8 | f9 | f10 | f11 | f12
 KEYID_ABBREV = print | delete | insert | scrollLock | pause | home | pageUp | end | pageDown | previous | upArrow | next | leftArrow | downArrow | rightArrow
-KEYID_ABBREV = template
 MACRONAME = <macro name (IDENTIFIER)>
 #####################
 # DEVELOPMENT TOOLS #
@@ -590,7 +589,7 @@ Internally, values are saved in one of the following types, and types are automa
 
 Key actions can be parametrized with macro arguments. These arguments can be expanded in two ways:
 
-- `$macroArg.<idx>` - in which case they are parsed as a single value - in the sense of valid macro variable expressions. This is the normal and safe variant that prevents context corruption. Abbreviations, shortcuts, and keys generally are not supported by this variant - use the `&` one.
+- `$macroArg.<idx>` - in which case they are parsed as a single value - in the sense of valid macro variable expressions - such as INT, FLOAT, BOOL or STRING. This is a safe subsitution that prevents context corruption. Abbreviations, shortcuts, and keys generally are not supported by this variant - use the `&` one.
 - `&macroArg.<idx>` - this variant substitutes the argument into current parser context. These allow substituing any string, including full commands or their parts. This is an experimental feature and might be unsafe in some contexts. Following limitations apply:
   - the argument bounds must correspond to token bounds in the fully expanded string
   - the argument cannot span multiple lines
