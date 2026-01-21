@@ -12,6 +12,12 @@ Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User
 - Fix: fix bluetooth issues caused by returning bad disconnect reasons: failing OOB pairing, connected but otherwise unhandled connections.
 - Fix: when the same dongle is switched to multiple times, it now remains green instead of turning blue.
 - Fix: exempt pairing scenarios from exponential advertising delay backoff.
+- Fix: adjust the advertising exponential backoff.
+- Fix: make sure that dongle doesn't cause pairing screen to pop up.
+- Make it possible to gather logs from a disconnected UHK:
+  - `zephyr uhk logs 1` now allows turning on the log buffer from a macro.
+  - `zephyr uhk snaplog` allows dumping the log into the status buffer, and later retrieval from Agent.
+  - when logging is enabled via the logs variable, logs are also shown on the oled.
 
 ## [16.1.0] - 2026-01-16
 
