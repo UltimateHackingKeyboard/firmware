@@ -111,6 +111,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     postponer_buffer_record_type_t *dualRoleRelease;
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     const int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - resolutionStartTime;
+    bool mouseSecondaryRequested = activateSecondaryImmediately;
+    // sometimes, the trackball or keycluster scroll ball will trigger on vibration on keypress
+    // for this reason, we ignore all such activations until the key has been pressed long enough to be allowed secondary
+    // the request is reset here to prevent the unintentional vibration activation from just activating when minimum hold time is reached
+    activateSecondaryImmediately = false;
 
     // handle things we can know without another key
     // doubletap and active timeout
@@ -187,6 +192,11 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
         AWAITEVENT(waitUntil);
     }
 
+    // handle mouse activation
+    if (mouseSecondaryRequested) {
+        RESOLVED(SecondaryRoleState_Secondary);
+    }
+
     // handle action key activation
     if (actionEvent != NULL) {
         RESOLVED(SecondaryRoleState_Secondary);
@@ -196,13 +206,16 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     if (isActiveTimeout || isDoubletap) {
         AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
-    
+
     // otherwise, keep postponing until key action
     return SecondaryRoleState_DontKnowYet;
 }
 
 static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 {
+    if (activateSecondaryImmediately) {
+        RESOLVED(SecondaryRoleState_Secondary);
+    }
     if (PostponerQuery_PendingKeypressCount() > 0 && !PostponerQuery_IsKeyReleased(resolutionKey)) {
         RESOLVED(SecondaryRoleState_Secondary);
     } else if (PostponerQuery_IsKeyReleased(resolutionKey) /*assume PostponerQuery_PendingKeypressCount() == 0, but gather race conditions too*/) {
@@ -217,10 +230,6 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowSimple()
 
 static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strategy)
 {
-    if (activateSecondaryImmediately) {
-        activateSecondaryImmediately = false;
-        RESOLVED(SecondaryRoleState_Secondary);
-    }
     switch (strategy) {
         case SecondaryRoleStrategy_Simple:
             return resolveCurrentKeyRoleIfDontKnowSimple();
@@ -246,6 +255,7 @@ static void startResolution(
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;
+    activateSecondaryImmediately = false;
     switch (actionFromSameHalf) {
         case SecondaryRole_AcceptTriggersFromSameHalf:
             acceptTriggersFromSameHalf = true;
@@ -290,6 +300,12 @@ void SecondaryRoles_ActivateSecondaryImmediately() {
             Macros_SetStatusString(" Got resolve request.\n", NULL);
         }
         activateSecondaryImmediately = true;
+        if (resolutionCallerIsMacroEngine) {
+            Macros_WakeBecauseOfKeystateChange();
+        }
+        else {
+            EventVector_Set(EventVector_NativeActions);
+        }
     }
 }
 
