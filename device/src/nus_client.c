@@ -25,7 +25,7 @@
 #include "trace.h"
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_DECLARE(Bt);
+LOG_MODULE_REGISTER(NusClient, LOG_LEVEL_INF);
 
 static struct bt_nus_client nus_client;
 
@@ -35,7 +35,7 @@ static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len) {
     k_sem_give(&nusBusy);
     if (err) {
-        LOG_WRN("Bt: ATT error code: 0x%02X\n", err);
+        LOG_WRN("Bt: ATT error code: 0x%02X", err);
     }
 }
 
@@ -66,25 +66,25 @@ static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
     err = bt_nus_handles_assign(dm, nus);
 
     if (err) {
-        LOG_WRN("Could not assign NUS handles (err %d)\n", err);
+        LOG_WRN("Could not assign NUS handles (err %d)", err);
         return;
     }
 
     err = bt_nus_subscribe_receive(nus);
 
     if (err) {
-        LOG_WRN("Could not subscribe to NUS notifications (err %d)\n", err);
+        LOG_WRN("Could not subscribe to NUS notifications (err %d)", err);
         return;
     }
 
     err = bt_gatt_dm_data_release(dm);
 
     if (err) {
-        LOG_WRN("Could not release the discovery data (err %d)\n", err);
+        LOG_WRN("Could not release the discovery data (err %d)", err);
         return;
     }
 
-    LOG_INF("NUS connection with %s successfully established\n", GetPeerStringByConn(nus->conn));
+    LOG_DBG("NUS connection with %s successfully established", GetPeerStringByConn(nus->conn));
 
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         Bt_SetConnectionConfigured(Peers[PeerIdLeft].conn);
@@ -95,11 +95,11 @@ static void discovery_complete(struct bt_gatt_dm *dm, void *context) {
 }
 
 static void discovery_service_not_found(struct bt_conn *conn, void *context) {
-    LOG_WRN("Service not found\n");
+    LOG_WRN("Service not found");
 }
 
 static void discovery_error(struct bt_conn *conn, int err, void *context) {
-    LOG_WRN("Error while discovering GATT database: (%d)\n", err);
+    LOG_WRN("Error while discovering GATT database: (%d)", err);
 }
 
 struct bt_gatt_dm_cb discovery_cb = {
@@ -111,15 +111,15 @@ struct bt_gatt_dm_cb discovery_cb = {
 static void gatt_discover(struct bt_conn *conn) {
     int err = bt_gatt_dm_start(conn, BT_UUID_NUS_SERVICE, &discovery_cb, &nus_client);
     if (err) {
-        LOG_WRN("could not start the discovery procedure, error code: %d\n", err);
+        LOG_WRN("could not start the discovery procedure, error code: %d", err);
     }
 }
 
 static void exchange_func(struct bt_conn *conn, uint8_t err, struct bt_gatt_exchange_params *params) {
     if (err) {
-        LOG_WRN("MTU exchange failed with %s (err %u)\n", GetPeerStringByConn(conn), err);
+        LOG_WRN("MTU exchange failed with %s (err %u)", GetPeerStringByConn(conn), err);
     } else {
-        LOG_INF("MTU exchange done with %s\n", GetPeerStringByConn(conn));
+        LOG_DBG("MTU exchange done with %s", GetPeerStringByConn(conn));
     }
 }
 
@@ -129,14 +129,14 @@ void NusClient_Connect(struct bt_conn *conn) {
     exchange_params.func = exchange_func;
     int err = bt_gatt_exchange_mtu(conn, &exchange_params);
     if (err) {
-        LOG_WRN("MTU exchange failed with %s, err %d\n", GetPeerStringByConn(conn), err);
+        LOG_WRN("MTU exchange failed with %s, err %d", GetPeerStringByConn(conn), err);
     }
 
     gatt_discover(conn);
 
     err = bt_scan_stop();
     if (err && (err != -EALREADY)) {
-        LOG_WRN("Stop LE scan failed (err %d)\n", err);
+        LOG_WRN("Stop LE scan failed (err %d)", err);
     }
 }
 
@@ -160,11 +160,11 @@ void NusClient_Init(void) {
 
     err = bt_nus_client_init(&nus_client, &init);
     if (err) {
-        LOG_WRN("NUS Client initialization failed (err %d)\n", err);
+        LOG_WRN("NUS Client initialization failed (err %d)", err);
         return;
     }
 
-    LOG_INF("NUS Client module initialized\n");
+    LOG_INF("NUS Client module initialized");
 }
 
 bool NusClient_Availability(messenger_availability_op_t operation) {
@@ -186,7 +186,7 @@ static void send_raw_buffer(const uint8_t *data, uint16_t len) {
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
         k_sem_give(&nusBusy);
-        LOG_WRN("Client failed to send data over BLE connection (err %d)\n", err);
+        LOG_WRN("Client failed to send data over BLE connection (err %d)", err);
     }
 }
 
@@ -209,7 +209,7 @@ void NusClient_SendMessage(message_t* msg) {
     }
 
     if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
-        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]\n", buffer[0], buffer[1]);
+        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", buffer[0], buffer[1]);
         Trace_Printc("E1");
         Trace_Printc("r2");
         return;

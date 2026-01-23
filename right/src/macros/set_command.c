@@ -386,12 +386,12 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
         ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertiseHid);
 #if DEVICE_IS_UHK80_RIGHT
         BtManager_EnterMode(PairingMode_Default, false);
-        BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in set_command - alwaysAdvertiseHid changed");
+        BtManager_StartScanningAndAdvertisingAsync(false, "set_command - alwaysAdvertiseHid changed");
 #endif
     } else if (ConsumeToken(ctx, "directedAdvertisingAllowed")) {
         ASSIGN_BOOL(Cfg.Bt_DirectedAdvertisingAllowed);
 #ifdef __ZEPHYR__
-        BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in set_command - directedAdvertisingAllowed changed");
+        BtManager_StartScanningAndAdvertisingAsync(false, "set_command - directedAdvertisingAllowed changed");
 #endif
     } else {
         Macros_ReportErrorTok(ctx, "Parameter not recognized:");

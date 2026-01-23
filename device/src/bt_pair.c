@@ -36,10 +36,9 @@ static pairing_mode_t defaultPairingMode() {
 }
 
 static void enterOobPairingMode() {
-    printk("--- Entering pairing mode. Going to stop BT and disconnect all connections. ---\n");
+    printk("------ Entering oob pairing mode. Going to stop BT and disconnect all connections. ------\n");
     BtPair_PairingMode = PairingMode_Oob;
     BtManager_StopBt();
-    BtConn_DisconnectAll();
 }
 
 struct bt_le_oob* BtPair_GetLocalOob() {
@@ -87,7 +86,7 @@ void BtManager_EnterMode(pairing_mode_t mode, bool toggle) {
             if (mode == PairingMode_PairHid) {
                 BtConn_MakeSpaceForHid();
             }
-            BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in BtManager_EnterMode - start advertising");
+            BtManager_StartScanningAndAdvertisingAsync(false, "BtManager_EnterMode - start advertising");
             if (mode != defaultMode) {
                 EventScheduler_Reschedule(k_uptime_get_32() + USER_PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "User pairing mode timeout.");
             }
@@ -112,8 +111,9 @@ void BtPair_PairCentral() {
     BtPair_PairingAsCentral = true;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
+    printk ("OOB: Scanning preparing...\n");
     BtScan_Start();
-    printk ("Scanning for pairable device\n");
+    printk ("OOB: Scanning for pairable device\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
 #endif
@@ -124,8 +124,9 @@ void BtPair_PairPeripheral() {
     BtPair_PairingAsCentral = false;
     Settings_Reload();
     bt_le_oob_set_sc_flag(true);
+    printk ("OOB: Advertisement preparing...\n");
     BtAdvertise_Start(BtAdvertise_Config());
-    printk ("Waiting for central to pair to me.\n");
+    printk ("OOB: Waiting for central to pair to me.\n");
     EventScheduler_Reschedule(k_uptime_get_32() + PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "Oob pairing timeout.");
 }
 #endif
@@ -156,7 +157,7 @@ void BtPair_EndPairing(bool success, const char* msg) {
         BtAdvertise_Stop();
 #endif
 
-    BtManager_StartScanningAndAdvertisingAsync(false, "StartScanningAndAdvertisingAsync in BtPair_EndPairing");
+    BtManager_StartScanningAndAdvertisingAsync(false, "BtPair_EndPairing");
 }
 
 struct delete_args_t {
@@ -242,6 +243,8 @@ void BtPair_Unpair(const bt_addr_le_t addr) {
     // Update settings
     Settings_Reload();
     UsbCommand_UpdateNewPairingsFlag();
+
+    BT_TRACE_AND_ASSERT("bpr6");
 }
 
 static void bt_foreach_bond_cb_delete_non_lr(const struct bt_bond_info *info, void *user_data) {

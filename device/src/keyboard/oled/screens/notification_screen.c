@@ -4,6 +4,9 @@
 #include "screen_manager.h"
 #include <zephyr/kernel.h>
 #include "event_scheduler.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(Notify, LOG_LEVEL_INF);
 
 static widget_t notificationWidget;
 
@@ -17,7 +20,7 @@ void NotificationScreen_Init(void) {
 }
 
 void NotificationScreen_NotifyFor(const char* message, uint16_t duration) {
-    printk("Notification: %s\n", message);
+    LOG_INF("Notification: %s", message);
     TextWidget_SetText(&notificationWidget, message);
     ScreenManager_ActivateScreen(ScreenId_Notification);
 

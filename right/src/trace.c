@@ -1,11 +1,7 @@
 #include "trace.h"
-#include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 #include "macros/status_buffer.h"
 #include "trace_reasons.h"
-#include "wormhole.h"
-#include "event_scheduler.h"
 #include "logger.h"
 #include "versioning.h"
 
@@ -17,59 +13,7 @@
 #define ProxyLog_IsInPanicMode false
 #endif
 
-static bool enabled = true;
-
-#define EXPAND_STRING(BUFFER, MAX_LOG_LENGTH)  \
-char BUFFER[MAX_LOG_LENGTH]; \
-{ \
-    va_list myargs; \
-    va_start(myargs, fmt); \
-    BUFFER[MAX_LOG_LENGTH-1] = '\0'; \
-    vsnprintf(BUFFER, MAX_LOG_LENGTH-1, fmt, myargs); \
-}
-
-#define TraceBuffer StateWormhole.traceBuffer.data
-#define TraceBufferPosition StateWormhole.traceBuffer.position
-
-void Trace(char a) {
-    if (enabled) {
-        StateWormhole.traceBuffer.eventVector = EventScheduler_Vector;
-        TraceBuffer[TraceBufferPosition] = a;
-        TraceBufferPosition = (TraceBufferPosition + 1) % TRACE_BUFFER_SIZE;
-    }
-}
-
-void Trace_Printf(const char *fmt, ...) {
-    if (enabled) {
-        EXPAND_STRING(buffer, TRACE_BUFFER_SIZE);
-
-        for (uint16_t i = 0; i < TRACE_BUFFER_SIZE; i++) {
-            if (buffer[i] == '\0' || buffer[i] > 126) {
-                break;
-            }
-            if (buffer[i] == '\n') {
-                Trace(' ');
-                continue;
-            }
-            Trace(buffer[i]);
-        }
-    }
-}
-
-void Trace_Printc(const char* s) {
-    if (enabled) {
-        for (uint16_t i = 0; s[i] != '\0'; i++) {
-            if (s[i] == '\0' || s[i] > 126) {
-                break;
-            }
-            if (s[i] == '\n') {
-                Trace(' ');
-                continue;
-            }
-            Trace(s[i]);
-        }
-    }
-}
+bool Trace_Enabled = true;
 
 void Trace_Init(void) {
     for (uint16_t i = 0; i < TRACE_BUFFER_SIZE; i++) {
@@ -85,7 +29,7 @@ void Trace_Init(void) {
 
 void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     uint16_t iter;
-    enabled = false;
+    Trace_Enabled = false;
 
     device_id_t targetDeviceId = DEVICE_ID;
     log_target_t targetInterface = 0;
@@ -124,7 +68,7 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
         }
     }
 
-    enabled = true;
+    Trace_Enabled = true;
 #undef LINE_LENGTH
 }
 

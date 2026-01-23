@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [16.1.1] - 2026-01-21
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.12.0
+
+- Fix: fix Bluetooth issues caused by returning bad disconnect reasons: failing OOB pairing, connected but otherwise unhandled connections.
+- Fix: when the same dongle is switched to multiple times, it now remains green instead of turning blue.
+- Fix: exempt pairing scenarios from exponential advertising delay backoff.
+- Fix: adjust the advertising exponential backoff.
+- Fix: make sure that the dongle doesn't cause the pairing screen to pop up.
+- Make it possible to gather logs from a disconnected UHK:
+  - `zephyr uhk logs 1` now allows turning on the log buffer from a macro.
+  - `zephyr uhk snaplog` allows dumping the log into the status buffer and later retrieval from Agent.
+  - when logging is enabled via the logs variable, logs are also shown on the OLED display.
+
 ## [16.1.0] - 2026-01-16
 
 Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.**12.0**
