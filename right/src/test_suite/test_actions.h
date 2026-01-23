@@ -16,11 +16,17 @@
 #define TEST_DELAY(ms) \
     { .type = TestAction_Delay, .delayMs = (ms) }
 
+// Expect: OutputMachine validates on next report change
+// InputMachine stops here until OutputMachine advances
 #define TEST_EXPECT(mods, ...) \
     { .type = TestAction_Expect, .expect = { .modifiers = (mods), .scancodes = { __VA_ARGS__ } } }
 
 #define TEST_EXPECT_EMPTY() \
     { .type = TestAction_Expect, .expect = { 0 } }
+
+// CheckNow: validate current report immediately (InputMachine)
+#define TEST_CHECK_NOW(mods, ...) \
+    { .type = TestAction_CheckNow, .expect = { .modifiers = (mods), .scancodes = { __VA_ARGS__ } } }
 
 #define TEST_SET_SCANCODE(key_id, scancode) \
     { .type = TestAction_SetAction, .keyId = (key_id), .action = { \
@@ -38,8 +44,9 @@ typedef enum {
     TestAction_Press,
     TestAction_Release,
     TestAction_Delay,
-    TestAction_Expect,
     TestAction_SetAction,
+    TestAction_Expect,    // OutputMachine only
+    TestAction_CheckNow,  // Both machines
 } test_action_type_t;
 
 typedef struct {
