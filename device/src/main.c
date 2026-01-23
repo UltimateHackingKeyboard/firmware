@@ -288,6 +288,8 @@ void mainRuntime(void) {
 
     RoundTripTest_Init();
 
+    TestSuite_Init();
+
     if (DEBUG_RUN_TESTS) {
         MacroVariables_RunTests();
 #if DEVICE_IS_KEYBOARD
@@ -299,9 +301,6 @@ void mainRuntime(void) {
 
     // Call after all threads have been created
     ThreadStats_Init();
-
-    TestSuite_Init();
-    TestSuite_RunAll();
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)

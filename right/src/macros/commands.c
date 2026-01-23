@@ -39,6 +39,7 @@
 #include "trace.h"
 #include "peripherals/leakage_test.h"
 #include "oneshot.h"
+#include "test_suite/test_suite.h"
 
 #ifdef __ZEPHYR__
 #include "connections.h"
@@ -2596,6 +2597,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
             }
             else if (ConsumeToken(ctx, "testLeakage")) {
                 return processTestLeakageCommand(ctx);
+            }
+            else if (ConsumeToken(ctx, "testSuite")) {
+                if (!Macros_DryRun) {
+                    TestSuite_RunAll();
+                }
+                return MacroResult_Finished;
             }
             else {
                 goto failed;

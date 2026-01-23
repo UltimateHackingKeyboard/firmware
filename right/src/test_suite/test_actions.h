@@ -3,7 +3,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "key_action.h"
 
 // Helper macros for defining tests
 
@@ -17,22 +16,17 @@
     { .type = TestAction_Delay, .delayMs = (ms) }
 
 // Expect: OutputMachine validates on next report change
-// InputMachine stops here until OutputMachine advances
-#define TEST_EXPECT(mods, ...) \
-    { .type = TestAction_Expect, .expect = { .modifiers = (mods), .scancodes = { __VA_ARGS__ } } }
-
-#define TEST_EXPECT_EMPTY() \
-    { .type = TestAction_Expect, .expect = { 0 } }
+// Takes space-separated shortcuts, e.g., TEST_EXPECT("a"), TEST_EXPECT("CS-b a"), TEST_EXPECT("")
+#define TEST_EXPECT(shortcuts) \
+    { .type = TestAction_Expect, .expectShortcuts = (shortcuts) }
 
 // CheckNow: validate current report immediately (InputMachine)
-#define TEST_CHECK_NOW(mods, ...) \
-    { .type = TestAction_CheckNow, .expect = { .modifiers = (mods), .scancodes = { __VA_ARGS__ } } }
+#define TEST_CHECK_NOW(shortcuts) \
+    { .type = TestAction_CheckNow, .expectShortcuts = (shortcuts) }
 
-#define TEST_SET_SCANCODE(key_id, scancode) \
-    { .type = TestAction_SetAction, .keyId = (key_id), .action = { \
-        .type = KeyActionType_Keystroke, \
-        .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = (scancode) } \
-    } }
+// SetAction: assign a key action using macro shortcut syntax
+#define TEST_SET_ACTION(key_id, shortcut) \
+    { .type = TestAction_SetAction, .keyId = (key_id), .shortcutStr = (shortcut) }
 
 #define TEST_END() \
     { .type = TestAction_End }
@@ -50,17 +44,12 @@ typedef enum {
 } test_action_type_t;
 
 typedef struct {
-    uint8_t modifiers;
-    uint8_t scancodes[6];
-} test_expected_report_t;
-
-typedef struct {
     test_action_type_t type;
     const char *keyId;
     union {
         uint16_t delayMs;
-        test_expected_report_t expect;
-        key_action_t action;
+        const char *expectShortcuts;  // Space-separated shortcut strings
+        const char *shortcutStr;      // For SetAction
     };
 } test_action_t;
 
