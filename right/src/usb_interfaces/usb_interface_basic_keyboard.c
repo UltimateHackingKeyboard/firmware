@@ -12,6 +12,7 @@
 #endif
 
 #include "utils.h"
+#include "test_suite/test_hooks.h"
 
 #ifndef USB_HID_BOOT_PROTOCOL
 #define USB_HID_BOOT_PROTOCOL   0U
@@ -199,6 +200,9 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 void UsbBasicKeyboardSendActiveReport(void)
 {
+    if (TestHooks_Active) {
+        TestHooks_CaptureReport(ActiveUsbBasicKeyboardReport);
+    }
 #ifdef __ZEPHYR__
     UsbCompatibility_SendKeyboardReport(ActiveUsbBasicKeyboardReport);
     SwitchActiveUsbBasicKeyboardReport();

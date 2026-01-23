@@ -17,4 +17,7 @@ extern bool TestHooks_KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 // Called by USB code to capture reports for validation
 void TestHooks_CaptureReport(const usb_basic_keyboard_report_t *report);
 
+// Called by key scanner to advance the test state machine
+void TestHooks_Tick(void);
+
 #endif
