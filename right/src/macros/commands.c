@@ -1136,6 +1136,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
     bool orGate = false;
     uint16_t cancelIn = 0;
     uint16_t timeoutIn= 0;
+    uint16_t defaultTimeoutIn = 500;
 
     bool parsingOptions = true;
     while(parsingOptions) {
@@ -1195,12 +1196,12 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             uint16_t elapsedSinceReference = Timer_GetElapsedTime(&referenceTime);
 
             bool shortcutTimedOut = untilRelease && !Macros_CurrentMacroKeyIsActive() && (!transitive || !someoneNotReleased);
-            bool gestureDefaultTimedOut = !untilRelease && cancelIn == 0 && timeoutIn == 0 && elapsedSinceReference > 1000;
+            bool gestureDefaultTimedOut = !untilRelease && cancelIn == 0 && timeoutIn == 0 && elapsedSinceReference > defaultTimeoutIn;
             bool cancelInTimedOut = cancelIn != 0 && elapsedSinceReference > cancelIn;
             bool timeoutInTimedOut = timeoutIn != 0 && elapsedSinceReference > timeoutIn;
             if (!shortcutTimedOut && !gestureDefaultTimedOut && !cancelInTimedOut && !timeoutInTimedOut) {
                 if (!untilRelease && cancelIn == 0 && timeoutIn == 0) {
-                    Macros_SleepTillTime(referenceTime+1000, "Macros - shortcut timeout");
+                    Macros_SleepTillTime(referenceTime+defaultTimeoutIn, "Macros - shortcut timeout");
                 }
                 if (cancelIn != 0) {
                     Macros_SleepTillTime(referenceTime+cancelIn, "Macros - shortcut cancelIn");
