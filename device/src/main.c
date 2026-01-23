@@ -48,6 +48,7 @@
 #include "thread_stats.h"
 #include "power_mode.h"
 #include "mouse_controller.h"
+#include "test_suite/test_suite.h"
 #include "wormhole.h"
 #include "power_mode.h"
 #include "proxy_log_backend.h"
@@ -298,6 +299,9 @@ void mainRuntime(void) {
 
     // Call after all threads have been created
     ThreadStats_Init();
+
+    TestSuite_Init();
+    TestSuite_RunAll();
 
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
