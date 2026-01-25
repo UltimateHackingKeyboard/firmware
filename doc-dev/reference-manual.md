@@ -8,7 +8,7 @@ This file contains (semi)formal documentation of all features of the extended en
 
 - Most values in the following text are just recommended ranges. The firmware will usually accept even values outside these ranges.
 
-### Error handling, troubleshooting, crash logs
+## Error handling, troubleshooting, crash logs
 
 Whenever a garbled command is encountered, `ERR` will light up on the display, and details are appended to the error buffer. You can retrieve it by running a `printStatus` macro command over a focused text editor.
 
@@ -28,28 +28,33 @@ set devMode true
 
 Macro events allow hooking special behaviour, such as applying a specific configuration to events. This is done via a special naming scheme. Currently, the following names are supported:
 
-    $onInit
-    $onKeymapChange {KEYMAPID|any}
-    $onLayerChange {LAYERID|any}
-    $onKeymapLayerChange KEYMAPID LAYERID
-    $onCapsLockStateChange
-    $onNumLockStateChange
-    $onScrollLockStateChange
-    $onError
-    $onJoin
-    $onSplit
+```
+$onInit
+$onKeymapChange {KEYMAPID|any}
+$onLayerChange {LAYERID|any}
+$onKeymapLayerChange KEYMAPID LAYERID
+$onCapsLockStateChange
+$onNumLockStateChange
+$onScrollLockStateChange
+$onError
+$onJoin
+$onSplit
+```
 
-I.e., if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR`, with content e.g.:
+i.e., if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR`, with content e.g.:
 
-    set module.trackball.baseSpeed 0.5
-    set module.trackball.speed 1.0
-    set module.trackball.xceleration 1.0
+```
+set module.trackball.baseSpeed 0.5
+set module.trackball.speed 1.0
+set module.trackball.xceleration 1.0
+```
 
 (Also note, that the above will *not* restore original settings when you leave the keymap. You will need another macro event for that.)
 
-Regarding `$onScrollLockStateChange`, please note that:
-  - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
-  - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
+Regarding `$onScrollLockStateChange`, please note:
+
+- under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
+- under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 
 ## Macro commands
 
@@ -353,14 +358,14 @@ COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
 COMMAND = setEmergencyKey KEYID
 ```
 
-### Uncategorized commands:
+### Uncategorized commands
 
 - `setLedTxt <time> { STRING | VALUE }` will set led display to the supplemented text and block for the given time before updating display back to default value.
-    - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will return immediately.
-    - If `VALUE` is given (e.g., `$keystrokeDelay`), will be shown in notation that shows first two significant digits and a letter denoting floating point shift. E.g., `A23 = 2.3`, `Y23 = -0.23`, `23B = 2300`...
-    - If location is given, the text will be show there. For uhk60, only "abbrev" location is valid (and default); others will be ignored. For uhk80, "notification" is default, and "abbrev" is ignored. E.g.:
-      - `setLedTxt 2000 abbrev "HLW" "Hello world!"` will display `HLW` on uhk60 and `Hello world!` on uhk80
-      - `setLedTxt 2000 leftStatus "0" rightStatus "35 T"` will not display anything on uhk60 and change the leftStatus and rightStatus on uhk80
+  - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will return immediately.
+  - If `VALUE` is given (e.g., `$keystrokeDelay`), will be shown in notation that shows first two significant digits and a letter denoting floating point shift. E.g., `A23 = 2.3`, `Y23 = -0.23`, `23B = 2300`...
+  - If location is given, the text will be show there. For uhk60, only "abbrev" location is valid (and default); others will be ignored. For uhk80, "notification" is default, and "abbrev" is ignored. E.g.:
+  - `setLedTxt 2000 abbrev "HLW" "Hello world!"` will display `HLW` on uhk60 and `Hello world!` on uhk80
+  - `setLedTxt 2000 leftStatus "0" rightStatus "35 T"` will not display anything on uhk60 and change the leftStatus and rightStatus on uhk80
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
@@ -375,7 +380,8 @@ COMMAND = setEmergencyKey KEYID
     - If `toggle` is specified and the device is already in the (exact) sleep mode, it will wake the device instead.
 - `reboot` - reboots the right half, and in case of uhk80, also left half and connected dongles. (Uhk60 left half shouldn't need reboot as it is a simple module.)
 
-### Bluetooth:
+### Bluetooth
+
 - `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
   - `pair` will start pairing mode. The device will be discoverable for 2 minutes, and will refuse connections from all known devices so that it is possible to pair a new device.
   - `advertise` will make the device discoverable for 2 minutes. This allows ble hid devices to either connect or pair.
@@ -390,7 +396,7 @@ COMMAND = setEmergencyKey KEYID
 - `unpairHost { <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> }` unpairs the given host connection. If the slot is in User Configuration, it only unpairs the host, but keeps the connection information. If the slot is not in User Configuration, it removes the entire connection information and makes the slot available to pairing another device.
 - `reconnect` disconnects current active host, waits 100ms and then attempts to connect to it again (i.e., similar to calling switchHost).
 
-### Triggering keyboard actions (pressing keys, clicking, etc.):
+### Triggering keyboard actions (pressing keys, clicking, etc.)
 
 - `write <custom text>` will type the provided string. Strings are single quote- (for literal strings) or double quote- (for interpolated strings) enclosed. E.g., `write "keystrokeDelay is $keystrokeDelay, 1+1=$(1+1)\n"`, or `'$ will show as literal dollar sign.'`.
 - `startMouse/stopMouse` start/stop corresponding mouse action. E.g., `startMouse move left`
@@ -413,18 +419,18 @@ COMMAND = setEmergencyKey KEYID
     - `{S|C|A|G}` - Shift Control Alt Gui. (Windows, Super, and Gui are the same thing.)
     - `[L|R]` - Left Right (which hand side modifier should be used) E.g. `holdKey RA-c` (right alt + c).
     - `{s|i|o}` - modifiers (ctrl, alt, shift, gui) exist in three composition modes within UHK - sticky, input, output:
-        - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until the next (physical) key press. In certain contexts, they will take effect even after their activation key is released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
-        - **input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
-        - **output modifiers** are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
+      - **sticky modifiers** are modifiers of composite shortcuts. These are applied only until the next (physical) key press. In certain contexts, they will take effect even after their activation key is released (e.g., to support alt + tab on non-base layers, you can do `holdKey sLA-tab`).
+      - **input modifiers** are queried by `ifMod` conditions, and can be suppressed by `suppressMods`. E.g. `holdKey iLS`.
+      - **output modifiers** are ignored by `ifMod` conditions, and are not suppressed by `suppressMods`.
 
       By default:
-        - modifiers of normal non-macro scancode actions are treated as **sticky** when accompanied by a scancode.
-        - normal non-macro modifiers (not accompanied by a scancode) are treated as **input** by default.
-        - macro modifiers are treated as **output**.
+      - modifiers of normal non-macro scancode actions are treated as **sticky** when accompanied by a scancode.
+      - normal non-macro modifiers (not accompanied by a scancode) are treated as **input** by default.
+      - macro modifiers are treated as **output**.
     - `{p|r|h|t}` - press release hold tap - by default corresponds to the command used to invoke the sequence, but can be overridden for any.
     - windows, super, gui - all these are different names for the same key. For the sake of consistency, we choose `gui`.
 
-### Control flow, macro execution (aka "functions"):
+### Control flow, macro execution (aka "functions")
 
 - `goTo ADDRESS` will go to action index int. Actions are indexed from zero. See `ADDRESS`
 - `repeatFor <variable name> ADDRESS` - abbreviation to simplify cycles. Will decrement the supplemented variable and perform `goTo` to `adr` if the value is still greater than zero. Intended use case - place after command which is to be repeated with the variable containing the number of repeats and address `($currentAddress-1)` (or similar).
@@ -451,30 +457,34 @@ COMMAND = setEmergencyKey KEYID
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
 - `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
 
-### Delays:
+### Delays
 
 - `delayUntil <timeout>` sleeps the macro until timeout (in ms) is reached.
 - `delayUntilRelease` sleeps the macro until its activation key is released. Can be used to set action on key release.
 - `delayUntilReleaseMax <timeout>` same as `delayUntilRelease`, but is also broken when timeout (in ms) is reached.
 
-### Layer/Keymap switching:
+### Layer/Keymap switching
 
 Layer/Keymap switching mechanism allows toggling/switching of keymaps or layers. We keep layer records in a stack of limited size, which can be used for nested toggling and/or holds.
 
 special ids:
+
 - `previous` refers to the second stack record (i.e., `stackTop-1`)
 - `last` always refers to the previously used layer/keymap (i.e., `stackTop-1` or `stackTop+1`)
 
 terminology:
+
 - switch means loading the target keymap and resetting layer-switching context
 - toggle refers to activating a layer and remaining there (plus the activated layer is pushed onto the layer stack)
 - hold refers to activating a layer, waiting until the key is released, and then switching back (plus the activated layer is pushed onto the layer stack and then removed again)
 
 implementation details:
+
 - layer stack contains information about switch type (held or toggle) and a boolean which indicates whether the record is active. Once hold ends or untoggle is issued, the corresponding record (not necessarily the top record) is marked as "inactive". Whenever some record is marked inactive, all inactive records are popped from the top of the stack.
 - the stack contains both layer id and keymap id. If keymap ids of previous/current records do not match, the full keymap is reloaded.
 
 Commands:
+
 - `switchKeymap` will load the keymap by its abbreviation and reset the stack.
 - `toggleLayer` toggles the layer.
 - `untoggleLayer` pops topmost non-held layer from the stack. (I.e., untoggles layer which was toggled via "toggle" or "switch" feature.)
@@ -484,7 +494,7 @@ Commands:
 - `holdLayerMax/holdKeymapLayerMax` will timeout after <timeout> ms if no action is performed in that time.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | ignoreTriggersFromSameHalf | acceptTriggersFromSameHalf ]... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.
 
-### Layer/Keymap loading manipulation / shared layers:
+### Layer/Keymap loading manipulation / shared layers
 
 Following commands allow altering current keymap in RAM. Typically, you can use this to share layers among keymaps, or modify/construct your layers/keymaps on the fly out of pre-fabricated pieces (e.g., changing ijkl to arrows by a shortcut).
 
@@ -495,7 +505,7 @@ These alterations will last only until keymap is reloaded. I.e., switching keyma
 - `overlayKeymap KEYMAPID` as `overlayLayer`, but overlays all layers by corresponding layers of the provided keymap.
 - `replaceKeymap KEYMAPID` as `replaceLayer`, but replaces all layers by corresponding layers of the provided keymap. This is very similar to `switchKeymap`, but is useful for `$onKeymapChange` magic.
 
-### Postponing mechanisms.
+### Postponing mechanisms
 
 We allow postponing key activations in order to allow deciding between some scenarios depending on the next pressed key and then activating the keys pressed in "past" in the newly determined context. The postponing mechanism happens in key state preprocessing phase - i.e., works prior to activation of the key's action, including all macros. Postponing mechanism registers and postpones both key presses and releases, but does not preserve delays between them. Postponing affects even macro keystate queries, unless the macro in question is the one which initiates the postponing state (otherwise `postponeKeys delayUntilRelease` would indefinitely postpone its own release). Replay of postponed keys happens every `CYCLES_PER_ACTIVATION` update cycles, currently 2. The following commands either use this feature or allow control of the queue.
 
@@ -539,8 +549,8 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `ifShift/ifAlt/ifCtrl/ifGui/ifAnyMod/ifNotShift/ifNotAlt/ifNotCtrl/ifNotGui/ifNotAnyMod` is true if either right or left modifier was held in the previous update cycle. This does not indicate modifiers which were triggered from macroes.
 - `ifCapsLockOn/ifNotCapsLockOn/ifScrollLockOn/ifNotScrollLockOn/ifNumLockOn/ifNotNumLockOn` is true if corresponding caps lock / num lock / scroll lock is set to true by the host OS.
   - Please note that:
-      - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
-      - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
+    - under Linux, scroll lock is disabled by default. As a consequence, the macro event does not trigger.
+    - under MacOS, scroll lock dims the screen but does not toggle the scroll lock state. As a consequence, the macro event does not trigger.
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument.
 - `{ifLayerToggled|ifNotLayerToggled}` will return true if current layer is toggled. It will return true if the toggled layer is on top of the stack, or anywhere else as long as only the same (currently active) layers are above it in the layer stack.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
@@ -558,7 +568,7 @@ Modifiers modify behaviour of the rest of the keyboard while the rest of the com
 - `autoRepeat` will continuously repeats the following command while holding the macro key, with some configurable delay. See `set autoRepeatDelay <time>` and `set autoRepeatRate <time>` for more details. This enables you to use keyrepeat feature (which is typically implemented in the OS level) with any macro action. For example, you can use something like `autoRepeat tapKey down` or `ifShift autoRepeat tapKeySeq C-right right`.
 - `oneShot` prolongs this key's press until another action takes place or oneShot times out. E.g., `oneShot holdLayer mod`. Set timeout by `set oneShotTimeout 500`.
 
-### Runtime macros:
+### Runtime macros
 
 Macro recorder targets vim-like macro functionality.
 
@@ -575,17 +585,18 @@ Macro slots are identified by a single character or a number or `$thisKeyId` (me
 - If the `MACROID` argument is omitted, the last used id is used.
 - `{startRecordingBlind | stopRecordingBlind | recordMacroBlind} ...` work similarly, except that the basic scancode output of the keyboard is suppressed.
 
-### Named variables:
+### Named variables
 
 `setVar <name> <value>` allows setting/creating custom named variable. E.g., `setVar foo ($abc + 3)`. Value then can be accessed via `$foo` in place of numeric argument.
 
 Internally, values are saved in one of the following types, and types are automatically converted as needed in expressions:
+
 - `INT` - as a int32_t. E.g., `(7/3)` yields 2
 - `FLOAT` - as 32-bit floating point value. E.g., `(7/3.0)` yields 2.333...
 - `BOOL` - 1 or 0 value
 - `STRING` - a string _reference_. These strings can use interpolation, but this interpolation is always applied at the expansion site / time.
 
-### Argument expansion:
+### Argument expansion
 
 Key actions can be parametrized with macro arguments. These arguments can be expanded in two ways:
 
@@ -594,7 +605,7 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
   - the argument bounds must correspond to token bounds in the fully expanded string
   - the argument cannot span multiple lines
 
-### Configuration options:
+### Configuration options
 
 - `set stickyModifiers {never|smart|always}` globally turns on or off sticky modifiers. This affects only standard scancode actions. Macro actions (both gui and command ones) are always nonsticky, unless `sticky` flag is included in `tapKey|holdKey|pressKey` commands. Default value is `smart`, which is the official behaviour - i.e., `<alt/ctrl/gui> + <tab/arrows>` are sticky.
 - `set diagonalSpeedCompensation BOOL` will divide diagonal mouse speed by sqrt(2) if enabled.
@@ -629,45 +640,45 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
   - `midSpeed` represents "middle" speed, where the user can easily imagine behaviour of the device (currently fixed 3000 px/s) and henceforth easily set the coefficient. At this speed, acceleration formula yields `1.0`, i.e., `speedModifier = (baseSpeed + speed)`.
 
   General guidelines are:
-    - If your cursor is sluggish at low speeds, you want to:
-      - either lower xceleration
-      - or increase baseSpeed
-    - If you struggle to cover large distances with a single swipe, you want to:
-      - set xceleration to either `0.5` or `1.0` (or somewhere in-between)
-      - and then increase speed till you are satisfied
-    - If the cursor moves non-intuitively:
-      - you want to either lower xceleration (`0.5` is a reasonable value)
-      - or increase baseSpeed
-    - If you want to make the cursor more responsive overall:
-      - you want to increase speed
+  - If your cursor is sluggish at low speeds, you want to:
+    - either lower xceleration
+    - or increase baseSpeed
+  - If you struggle to cover large distances with a single swipe, you want to:
+    - set xceleration to either `0.5` or `1.0` (or somewhere in-between)
+    - and then increase speed till you are satisfied
+  - If the cursor moves non-intuitively:
+    - you want to either lower xceleration (`0.5` is a reasonable value)
+    - or increase baseSpeed
+  - If you want to make the cursor more responsive overall:
+    - you want to increase speed
 
   (Mostly) reasonable examples (`baseSpeed speed xceleration midSpeed`):
-    - `0.0 1.0 0.0 3000` (no xceleration)
-      - speed multiplier is always 1x at all speeds
-    - `0.0 1.0 0.5 3000` (square root multiplier)
-      - starts at 0x speed multiplier - allowing for very precise movement at low speed)
-      - at 3000 px/s, yields cursor speed equal to the actual picked-up movement
-      - at 12000 px/s, cursor speed is going to be twice the movement (because `sqrt(4) = 2`)
-    - `0.5 0.5 1.0 3000` (linear speedup starting at 0.5)
-      - starts at 0.5x speed multiplier - meaning that the resulting cursor speed is half the picked-up movement at low speeds
-      - at 3000 px/s, speed multiplier is 1x
-      - at 12000 px/s, speed multiplier is 2.5x
-      - (notice that linear xceleration actually means quadratic overall curve)
-    - `1.0 1.0 1.0 3000`
-      - the same as before, but the resulting cursor speed is double. I.e., 1x at 0 speed, 2x at 3000 px/s, 5x at 12000 px/s
-    - `0.0 1.0 1.0 3000` (linear speedup starting at 0)
-      - again very precise at low speed
-      - at 3000 px/s, speed multiplier is 1x
-      - at 6000 px/s, speed multiplier is 4x
-      - not recommended - the curve will behave in a very non-linear fashion.
+  - `0.0 1.0 0.0 3000` (no xceleration)
+    - speed multiplier is always 1x at all speeds
+  - `0.0 1.0 0.5 3000` (square root multiplier)
+    - starts at 0x speed multiplier - allowing for very precise movement at low speed)
+    - at 3000 px/s, yields cursor speed equal to the actual picked-up movement
+    - at 12000 px/s, cursor speed is going to be twice the movement (because `sqrt(4) = 2`)
+  - `0.5 0.5 1.0 3000` (linear speedup starting at 0.5)
+    - starts at 0.5x speed multiplier - meaning that the resulting cursor speed is half the picked-up movement at low speeds
+    - at 3000 px/s, speed multiplier is 1x
+    - at 12000 px/s, speed multiplier is 2.5x
+    - (notice that linear xceleration actually means quadratic overall curve)
+  - `1.0 1.0 1.0 3000`
+    - the same as before, but the resulting cursor speed is double. I.e., 1x at 0 speed, 2x at 3000 px/s, 5x at 12000 px/s
+  - `0.0 1.0 1.0 3000` (linear speedup starting at 0)
+    - again very precise at low speed
+    - at 3000 px/s, speed multiplier is 1x
+    - at 6000 px/s, speed multiplier is 4x
+    - not recommended - the curve will behave in a very non-linear fashion.
 - `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection|invertScrollDirectionX|invertScrollDirectionY}` modifies scrolling and caret behaviour:
-    - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is further modified by axisLocking skew, as well as by acceleration.)
-    - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is further modified by axisLocking skew, as well as acceleration.)
-    - `pinchZoomDivisor` (default: 4 (?)) is used specifically for the touchpad's zoom gesture, therefore its default value is nonstandard. Only valid for touchpad.
-    - `swapAxes` swaps the x and y coordinates of the module. The intended use is for the keycluster trackball, since sideways scrolling is easier.
-    - `invertScrollDirection` inverts the scroll direction in the y-axis...
-    - `invertScrollDirectionX` explicitly inverts the scroll direction in the x-axis...
-    - `invertScrollDirectionY` explicitly inverts the scroll direction in the y-axis...
+  - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is further modified by axisLocking skew, as well as by acceleration.)
+  - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is further modified by axisLocking skew, as well as acceleration.)
+  - `pinchZoomDivisor` (default: 4 (?)) is used specifically for the touchpad's zoom gesture, therefore its default value is nonstandard. Only valid for touchpad.
+  - `swapAxes` swaps the x and y coordinates of the module. The intended use is for the keycluster trackball, since sideways scrolling is easier.
+  - `invertScrollDirection` inverts the scroll direction in the y-axis...
+  - `invertScrollDirectionX` explicitly inverts the scroll direction in the x-axis...
+  - `invertScrollDirectionY` explicitly inverts the scroll direction in the y-axis...
 
 - `set module.MODULEID.{axisLockSkew|axisLockFirstTickSkew|cursorAxisLock|scrollAxisLock}` control axis locking feature:
 
@@ -713,9 +724,9 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
 
 - `macroEngine`
   - terminology:
-       - action - one action as shown in the agent.
-       - subAction - some actions have multiple phases (such as tapKey which consists at least of press and release, or delay). Such actions may take multiple update cycles to complete.
-       - command - in case of command action, the action consists of multiple commands. A command is defined as any nonempty text line. Commands are treated as actions, which means that the macro action context is resetted for every command line. Every command line has its own address.
+    - action - one action as shown in the agent.
+    - subAction - some actions have multiple phases (such as tapKey which consists at least of press and release, or delay). Such actions may take multiple update cycles to complete.
+    - command - in case of command action, the action consists of multiple commands. A command is defined as any nonempty text line. Commands are treated as actions, which means that the macro action context is resetted for every command line. Every command line has its own address.
   - `scheduler` controls how are macros executed.
     - `preemptive` default old one - freely interleaves commands. It gives every macro slot an oppotunity to execute one action or subaction or command. This means that no macro can block operation of ther macros, but comes at a cost of quirkiness and nondeterminism.
       - `batchSize` limits how many commands can be executed per one macro slot per macro engine invocation.
@@ -729,17 +740,17 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
         - Backward jump - any backward jump also yields. This should prevent unwanted endless loops, as well as the need for the user to manage yielding logic manually.
 
 - backlight:
-    - `backlight.strategy { functional | constantRgb | perKeyRgb }` sets backlight strategy.
-    - `backlight.constantRgb.rgb INT INT INT` allows setting custom constant colour for the entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
-    - `backlight.keyRgb.LAYERID.KEYID INT INT INT` allows overriding color of the key. This override will last until reload of keymap and will apply to all backlight strategies.
+  - `backlight.strategy { functional | constantRgb | perKeyRgb }` sets backlight strategy.
+  - `backlight.constantRgb.rgb INT INT INT` allows setting custom constant colour for the entire keyboard. E.g.: `set backlight.strategy constantRgb; set backlight.constantRgb.rgb 255 0 0` to make entire keyboard shine red.
+  - `backlight.keyRgb.LAYERID.KEYID INT INT INT` allows overriding color of the key. This override will last until reload of keymap and will apply to all backlight strategies.
 
 - general led configuration:
-    - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
-    - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
-    - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
+  - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
+  - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
+  - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
 
 - modifier layer triggers:
-    - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
+  - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
 - `set devMode BOOL`: mostly enables extra consistency checks and logs suspicious conditions as errors. At the moment of writing this: 
   - crash logs
@@ -781,7 +792,7 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
 - `LABEL` is an identifier marking some lines of the macro. When a string is encountered in a context of an address, UHK looks for a command beginning by `<the string>:` and returns its addres (index). If the same label is present multiple times, the next one w.r.t. currently processed command is returned.
 - `ADDRESS` addresses allow jumping between macro instructions. Every action or command has its own address, numbered from zero. Formally, address is either a `INT` or a string which denotes label identifier. Every action consumes at least one address. (Except for command action, exactly one.) Every command (non-empty line of command action) consumes one address. E.g., `goTo 0` (go to beginning), `goTo ($currentAddress-1)` (go to the previous command), `goTo $currentAddress` (active waiting), `goTo default` (go to a line which begins by `default: ...`).
 
-### Navigation modes:
+### Navigation modes
 
 UHK modules feature four navigation modes, which are mapped by layer and module. This mapping can be changed by the `set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE` command.
 
@@ -794,24 +805,26 @@ UHK modules feature four navigation modes, which are mapped by layer and module.
 
 Caret and media modes can be customized by `set navigationModeAction` command.
 
-### bluetooth connectiviy rules:
+### Bluetooth connectiviy rules
 
 Dongle colors:
+
 - red means the dongle is either not paired to any device, or not actively trying to connect.
 - violet means the dongle is paired to some UHK and is actively trying to establish a connection.
 - blue means a dongle is connected to some uhk, but is not its usb report target. These are dongles that are prepared for action and can be immediately switched to via `switchHost` command.
 - green is the currently active dongle.
 
 Connection counts:
+
 - Uhk can handle up to 3 peripheral connections at a time, including 3 simultaneously connected dongles. Peripheral connection can be a ble hid connection (for instance a smartphone), a dongle connection, or ble advertising.
 - Uhk handles at most one BLE HID at a time.
 
 Rules:
+
 - Uhk will iterate over connected devices (blue dongles, usb, ble hid) by `switchHost {previous | next | last}`. This switchover is almost instantaneous, but can reach only currently connected devices.
 - Uhk can connect to violet dongles or additional ble hids by calling `switchHost <host connection name(STRING)>`. In that case, it reserves one connection slot for the selected device. This may mean disconnecting some of the currently connected devices. This kind of switchover usually takes a second or so, but can reach all devices.
 
-
-### Modifier layers:
+### Modifier layers
 
 Modifier layers are meant to allow easy overriding of modifier scancodes. If you bind an action there, it will be activated from the base layer when the corresponding modifier is pressed. E.g., allowing different scancodes for shifted keys compared to non-shifted keys. As such, they are not really layers.
 
