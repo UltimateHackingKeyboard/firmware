@@ -220,6 +220,7 @@ int main(void)
         StateWormhole_Clean();
     } else {
         MacroStatusBuffer_InitNormal();
+        ConfigManager_InitWormCfg();
         StateWormhole_Clean();
         StateWormhole_Open();
         Trace_ResetUhk60Reasons();

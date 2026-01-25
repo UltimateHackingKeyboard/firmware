@@ -333,7 +333,7 @@ int main(void) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
-        if (StateWormhole.devMode) {
+        if (WormCfg->devMode) {
             MacroStatusBuffer_InitFromWormhole();
         } else {
             MacroStatusBuffer_InitNormal();
@@ -342,6 +342,7 @@ int main(void) {
     } else {
         printk("Wormhole is closed\n");
         MacroStatusBuffer_InitNormal();
+        ConfigManager_InitWormCfg();
         StateWormhole_Clean();
         StateWormhole_Open();
     }

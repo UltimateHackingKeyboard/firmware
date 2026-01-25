@@ -300,6 +300,16 @@ const config_t DefaultCfg = (config_t){
 
 config_t Cfg = {};
 
+worm_config_t* WormCfg = &StateWormhole.WormCfg;
+
+const worm_config_t DefaultWormCfg = {
+    .devMode = false,
+};
+
+void ConfigManager_InitWormCfg(void) {
+    memcpy(WormCfg, &DefaultWormCfg, sizeof(worm_config_t));
+}
+
 void ConfigManager_ResetConfiguration(bool updateLeds) {
     memcpy(&Cfg, &DefaultCfg, sizeof(Cfg));
 #ifndef __ZEPHYR__
