@@ -16,7 +16,6 @@
 #include "slave_protocol.h"
 #include "str_utils.h"
 #include "timer.h"
-#include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_report_updater.h"
 #include "config_manager.h"
 #include "logger.h"
@@ -24,13 +23,14 @@
 #include "utils.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
-    // 254 is reserved for USB command execution
+    // 254 is reserved for USB command execution and inline macros
     // 255 is reserved as empty value
     [MacroIndex_UsbCmdReserved] = {
         .macroActionsCount = 1,
     }
 };
 uint8_t AllMacrosCount;
+
 
 bool Macros_WakedBecauseOfOneShot = false;
 bool Macros_WakedBecauseOfTime = false;
@@ -297,18 +297,10 @@ static macro_result_t endMacro(void)
 
 static void loadAction()
 {
-    if (S->ms.currentMacroIndex == MacroIndex_UsbCmdReserved) {
-        // fill in action from memory
-        S->ms.currentMacroAction = (macro_action_t){
-            .type = MacroActionType_Command,
-            .cmd = {
-                .text = UsbMacroCommand,
-                .textLen = UsbMacroCommandLength,
-                .cmdCount = CountCommands(UsbMacroCommand, UsbMacroCommandLength)
-            }
-        };
+    if (S->ms.currentMacroAction.type == MacroActionType_Command && S->ms.currentMacroAction.cmd.text != NULL) {
+        // Already set up (inline command), don't overwrite
     } else {
-        // parse one macro action
+        // parse one macro action from EEPROM
         ValidatedUserConfigBuffer.offset = S->ms.bufferOffset;
         ParseMacroAction(&ValidatedUserConfigBuffer, &S->ms.currentMacroAction);
         S->ms.bufferOffset = ValidatedUserConfigBuffer.offset;
@@ -409,7 +401,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, parentSlotIndex, true);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, parentSlotIndex, true, NULL);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -423,11 +415,11 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, 255, true);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, 255, true, NULL);
     return MacroResult_Finished;
 }
 
-uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot)
+uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, const char *inlineText)
 {
     if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
@@ -445,6 +437,21 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset,
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
 
+    // If inline text is provided, set up the action before resetToAddressZero
+    if (inlineText != NULL) {
+        uint16_t textLen = 0;
+        while (inlineText[textLen] != '\0') textLen++;
+
+        S->ms.currentMacroAction = (macro_action_t){
+            .type = MacroActionType_Command,
+            .cmd = {
+                .text = inlineText,
+                .textLen = textLen,
+                .cmdCount = CountCommands(inlineText, textLen)
+            }
+        };
+    }
+
     //this loads the first action and resets all adresses
     resetToAddressZero(index);
 
@@ -453,11 +460,11 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset,
 
 
 //partentMacroSlot == 255 means no parent
-uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction)
+uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, timestamp, parentMacroSlot);
+    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, timestamp, parentMacroSlot, inlineText);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -481,9 +488,14 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumen
     return slotIndex;
 }
 
+uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t timestamp)
+{
+    return Macros_StartMacro(MacroIndex_UsbCmdReserved, keyState, 0, timestamp, 255, true, text);
+}
+
 void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
     bool wasValid = true;
-    uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255);
+    uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255, NULL);
 
     if (slotIndex == 255) {
         S = NULL;
@@ -548,7 +560,7 @@ uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestam
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, 0, timestamp, 255);
+    uint8_t slotIndex = initMacro(index, keyState, 0, timestamp, 255, NULL);
 
     if (slotIndex == 255) {
         return slotIndex;

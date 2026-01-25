@@ -134,9 +134,9 @@ void InputMachine_Tick(void) {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
                     KeyStates[slotId][keyId].hardwareSwitchState = true;
+                    LogU("[TEST] > Press '%s'\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
-                    LogU("[TEST] > Press '%s'\n", action->keyId);
                 } else {
                     LogU("[TEST] FAIL: Press '%s' - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
@@ -150,9 +150,9 @@ void InputMachine_Tick(void) {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
                     KeyStates[slotId][keyId].hardwareSwitchState = false;
+                    LogU("[TEST] > Release '%s'\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
-                    LogU("[TEST] > Release '%s'\n", action->keyId);
                 } else {
                     LogU("[TEST] FAIL: Release '%s' - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
@@ -198,6 +198,27 @@ void InputMachine_Tick(void) {
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
                 LogU("[TEST] > SetAction '%s' = '%s'\n", action->keyId, action->shortcutStr);
+                InputMachine_ActionIndex++;
+                break;
+            }
+
+            case TestAction_SetMacro: {
+                uint8_t slotId, keyId;
+                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                    LogU("[TEST] FAIL: SetMacro '%s' - invalid key\n", action->keyId);
+                    InputMachine_Failed = true;
+                    return;
+                }
+
+                key_action_t keyAction = {
+                    .type = KeyActionType_InlineMacro,
+                    .inlineMacro = {
+                        .text = action->macroText
+                    }
+                };
+
+                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                LogU("[TEST] > SetMacro '%s' = '%s'\n", action->keyId, action->macroText);
                 InputMachine_ActionIndex++;
                 break;
             }

@@ -28,6 +28,10 @@
 #define TEST_SET_ACTION(key_id, shortcut) \
     { .type = TestAction_SetAction, .keyId = (key_id), .shortcutStr = (shortcut) }
 
+// SetMacro: assign an inline macro to a key
+#define TEST_SET_MACRO(key_id, macro_text) \
+    { .type = TestAction_SetMacro, .keyId = (key_id), .macroText = (macro_text) }
+
 #define TEST_END() \
     { .type = TestAction_End }
 
@@ -39,6 +43,7 @@ typedef enum {
     TestAction_Release,
     TestAction_Delay,
     TestAction_SetAction,
+    TestAction_SetMacro,
     TestAction_Expect,    // OutputMachine only
     TestAction_CheckNow,  // Both machines
 } test_action_type_t;
@@ -50,6 +55,7 @@ typedef struct {
         uint16_t delayMs;
         const char *expectShortcuts;  // Space-separated shortcut strings
         const char *shortcutStr;      // For SetAction
+        const char *macroText;        // For SetMacro
     };
 } test_action_t;
 

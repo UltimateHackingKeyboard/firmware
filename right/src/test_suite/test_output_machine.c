@@ -79,26 +79,30 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
             case TestAction_Release:
             case TestAction_Delay:
             case TestAction_SetAction:
+            case TestAction_SetMacro:
                 OutputMachine_ActionIndex++;
                 break;
 
             case TestAction_CheckNow:
             case TestAction_Expect:
-                // Check if this is a duplicate of last seen
+                // Try to validate against current expect
+                if (validateReport(report, action->expectShortcuts, false)) {
+                    // Match - continue processing (there may be more expects matching this report)
+                    LogU("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
+                    lastSeenActionIndex = OutputMachine_ActionIndex;
+                    OutputMachine_ActionIndex++;
+                    break;  // Continue loop to check next action
+                }
+                // No match - check if this is a duplicate of last seen
                 if (lastSeenActionIndex >= 0) {
                     const test_action_t *lastSeenAction = &OutputMachine_CurrentTest->actions[lastSeenActionIndex];
                     if (validateReport(report, lastSeenAction->expectShortcuts, false)) {
-                        return;  // Duplicate, ignore
+                        return;  // Duplicate of last seen, ignore
                     }
                 }
-                // Validate against expected
-                if (!validateReport(report, action->expectShortcuts, true)) {
-                    OutputMachine_Failed = true;
-                    return;
-                }
-                LogU("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
-                lastSeenActionIndex = OutputMachine_ActionIndex;
-                OutputMachine_ActionIndex++;
+                // Not a match and not a duplicate - fail
+                validateReport(report, action->expectShortcuts, true);  // Log the failure
+                OutputMachine_Failed = true;
                 return;
 
             case TestAction_End:

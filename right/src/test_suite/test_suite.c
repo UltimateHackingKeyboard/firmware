@@ -5,6 +5,9 @@
 #include "test_output_machine.h"
 #include "tests/tests.h"
 #include "logger.h"
+#include "timer.h"
+
+#define INTER_TEST_DELAY_MS 100
 
 // Test hooks state
 bool TestHooks_Active = false;
@@ -13,6 +16,10 @@ bool TestHooks_Active = false;
 static uint16_t currentTestIndex = 0;
 static uint16_t passedCount = 0;
 static uint16_t failedCount = 0;
+
+// Inter-test delay state
+static bool inInterTestDelay = false;
+static uint32_t interTestDelayStart = 0;
 
 void TestHooks_CaptureReport(const usb_basic_keyboard_report_t *report) {
     if (!TestHooks_Active) {
@@ -23,6 +30,19 @@ void TestHooks_CaptureReport(const usb_basic_keyboard_report_t *report) {
 
 void TestHooks_Tick(void) {
     if (!TestHooks_Active) {
+        return;
+    }
+
+    // Handle inter-test delay
+    if (inInterTestDelay) {
+        if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY_MS) {
+            inInterTestDelay = false;
+            const test_t *nextTest = &AllTests[currentTestIndex];
+            LogU("[TEST] ----------------------\n");
+            LogU("[TEST] Running: %s\n", nextTest->name);
+            InputMachine_Start(nextTest);
+            OutputMachine_Start(nextTest);
+        }
         return;
     }
 
@@ -51,11 +71,9 @@ void TestHooks_Tick(void) {
         // Move to next test
         currentTestIndex++;
         if (currentTestIndex < AllTestsCount) {
-            const test_t *nextTest = &AllTests[currentTestIndex];
-            LogU("[TEST] ----------------------\n");
-            LogU("[TEST] Running: %s\n", nextTest->name);
-            InputMachine_Start(nextTest);
-            OutputMachine_Start(nextTest);
+            // Start inter-test delay
+            inInterTestDelay = true;
+            interTestDelayStart = Timer_GetCurrentTime();
         } else {
             LogU("[TEST] ----------------------\n");
             LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
@@ -72,6 +90,7 @@ uint8_t TestSuite_RunAll(void) {
     currentTestIndex = 0;
     passedCount = 0;
     failedCount = 0;
+    inInterTestDelay = false;
 
     LogU("[TEST] Starting test suite (%d tests)\n", AllTestsCount);
 
