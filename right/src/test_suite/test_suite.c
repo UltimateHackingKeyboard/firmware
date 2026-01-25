@@ -5,11 +5,9 @@
 #include "test_output_machine.h"
 #include "tests/tests.h"
 #include "logger.h"
-#include <string.h>
 
 // Test hooks state
 bool TestHooks_Active = false;
-bool TestHooks_KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 // Test tracking
 static uint16_t currentTestIndex = 0;
@@ -56,7 +54,6 @@ void TestHooks_Tick(void) {
             const test_t *nextTest = &AllTests[currentTestIndex];
             LogU("[TEST] ----------------------\n");
             LogU("[TEST] Running: %s\n", nextTest->name);
-            memset(TestHooks_KeyStates, 0, sizeof(TestHooks_KeyStates));
             InputMachine_Start(nextTest);
             OutputMachine_Start(nextTest);
         } else {
@@ -69,7 +66,6 @@ void TestHooks_Tick(void) {
 
 void TestSuite_Init(void) {
     TestHooks_Active = false;
-    memset(TestHooks_KeyStates, 0, sizeof(TestHooks_KeyStates));
 }
 
 uint8_t TestSuite_RunAll(void) {
@@ -87,7 +83,6 @@ uint8_t TestSuite_RunAll(void) {
     const test_t *firstTest = &AllTests[0];
     LogU("[TEST] ----------------------\n");
     LogU("[TEST] Running: %s\n", firstTest->name);
-    memset(TestHooks_KeyStates, 0, sizeof(TestHooks_KeyStates));
     InputMachine_Start(firstTest);
     OutputMachine_Start(firstTest);
     TestHooks_Active = true;

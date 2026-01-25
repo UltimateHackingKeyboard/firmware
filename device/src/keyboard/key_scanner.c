@@ -209,27 +209,6 @@ static bool quickScan() {
     return someKeyPressed;
 }
 
-static void scanTestKeys() {
-    bool somethingChanged = false;
-
-    for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
-        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            bool newState = TestHooks_KeyStates[slotId][keyId];
-            if (KeyStates[slotId][keyId].hardwareSwitchState != newState) {
-                KeyStates[slotId][keyId].hardwareSwitchState = newState;
-                somethingChanged = true;
-            }
-        }
-    }
-
-    if (somethingChanged) {
-        EventVector_Set(EventVector_StateMatrix);
-        EventVector_WakeMain();
-    }
-
-    // Run test state machine from scanner thread
-    TestHooks_Tick();
-}
 
 static void scanAllKeys() {
     bool somethingChanged = false;
@@ -328,7 +307,7 @@ static void scanKeys() {
         KeyScanner_ScanAndWakeOnSfjl(true, true);
     } else if (!USE_QUICK_SCAN || KeyPressed || quickScan() || TestHooks_Active) {
         if (TestHooks_Active) {
-            scanTestKeys();
+            TestHooks_Tick();
         } else {
             scanAllKeys();
         }

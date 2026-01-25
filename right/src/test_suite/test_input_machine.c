@@ -4,8 +4,10 @@
 #include "macros/shortcut_parser.h"
 #include "str_utils.h"
 #include "key_action.h"
+#include "key_states.h"
 #include "keymap.h"
 #include "timer.h"
+#include "event_scheduler.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "logger.h"
 
@@ -131,7 +133,9 @@ void InputMachine_Tick(void) {
             case TestAction_Press: {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
-                    TestHooks_KeyStates[slotId][keyId] = true;
+                    KeyStates[slotId][keyId].hardwareSwitchState = true;
+                    EventVector_Set(EventVector_StateMatrix);
+                    EventVector_WakeMain();
                     LogU("[TEST] > Press '%s'\n", action->keyId);
                 } else {
                     LogU("[TEST] FAIL: Press '%s' - invalid key\n", action->keyId);
@@ -145,7 +149,9 @@ void InputMachine_Tick(void) {
             case TestAction_Release: {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
-                    TestHooks_KeyStates[slotId][keyId] = false;
+                    KeyStates[slotId][keyId].hardwareSwitchState = false;
+                    EventVector_Set(EventVector_StateMatrix);
+                    EventVector_WakeMain();
                     LogU("[TEST] > Release '%s'\n", action->keyId);
                 } else {
                     LogU("[TEST] FAIL: Release '%s' - invalid key\n", action->keyId);
