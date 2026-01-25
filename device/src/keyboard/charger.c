@@ -98,6 +98,10 @@ static bool setPercentage(uint16_t voltage, uint8_t perc) {
     return false;
 }
 
+static void updateMaxCharge() {
+    batteryState.maxCharge = BatteryManager_GetCurrentBatteryConfig()->maxVoltage;
+}
+
 static bool updateBatteryPresent() {
     uint32_t statPeriod = MIN((uint32_t)(lastStatZeroTime - lastStatOneTime), (uint32_t)(lastStatOneTime-lastStatZeroTime));
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
@@ -258,6 +262,7 @@ void Charger_UpdateBatteryCharging() {
         stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
     }
     if (stateChanged) {
+        updateMaxCharge();
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
     }
 }
@@ -353,6 +358,7 @@ void Charger_UpdateBatteryState() {
     }
 
     if (stateChanged) {
+        updateMaxCharge();
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
 
 #ifdef CONFIG_BT_BAS
@@ -392,6 +398,7 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
     stateChanged |= updateBatteryPresent();
     stateChanged |= updatePowered();
     if (stateChanged) {
+        updateMaxCharge();
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
     }
     if (Shell.statLog) {
