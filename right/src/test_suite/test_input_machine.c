@@ -6,6 +6,7 @@
 #include "key_action.h"
 #include "key_states.h"
 #include "keymap.h"
+#include "layer.h"
 #include "timer.h"
 #include "event_scheduler.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
@@ -219,6 +220,53 @@ void InputMachine_Tick(void) {
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
                 LogU("[TEST] > SetMacro '%s' = '%s'\n", action->keyId, action->macroText);
+                InputMachine_ActionIndex++;
+                break;
+            }
+
+            case TestAction_SetLayerHold: {
+                uint8_t slotId, keyId;
+                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                    LogU("[TEST] FAIL: SetLayerHold '%s' - invalid key\n", action->keyId);
+                    InputMachine_Failed = true;
+                    return;
+                }
+
+                key_action_t keyAction = {
+                    .type = KeyActionType_SwitchLayer,
+                    .switchLayer = {
+                        .layer = action->layerId,
+                        .mode = SwitchLayerMode_Hold
+                    }
+                };
+
+                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                LogU("[TEST] > SetLayerHold '%s' = layer %d\n", action->keyId, action->layerId);
+                InputMachine_ActionIndex++;
+                break;
+            }
+
+            case TestAction_SetLayerAction: {
+                uint8_t slotId, keyId;
+                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                    LogU("[TEST] FAIL: SetLayerAction '%s' - invalid key\n", action->keyId);
+                    InputMachine_Failed = true;
+                    return;
+                }
+
+                const char *shortcut = action->shortcutStr;
+                const char *shortcutEnd = shortcut;
+                while (*shortcutEnd != '\0') shortcutEnd++;
+
+                key_action_t keyAction = { 0 };
+                if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
+                    LogU("[TEST] FAIL: SetLayerAction layer %d '%s' = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
+                    InputMachine_Failed = true;
+                    return;
+                }
+
+                CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
+                LogU("[TEST] > SetLayerAction layer %d '%s' = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
             }

@@ -4,7 +4,21 @@
 #include "test_suite/test_actions.h"
 #include <stdint.h>
 
-extern const test_t AllTests[];
-extern const uint16_t AllTestsCount;
+// Test module: a collection of related tests
+typedef struct {
+    const char *name;
+    const test_t *tests;
+    uint16_t testCount;
+} test_module_t;
+
+// All test modules (defined in tests.c)
+extern const test_module_t * const AllTestModules[];
+extern const uint16_t AllTestModulesCount;
+
+// Individual test modules (defined in separate files)
+extern const test_module_t TestModule_Basic;
+extern const test_module_t TestModule_Modifiers;
+extern const test_module_t TestModule_Layers;
+extern const test_module_t TestModule_Macros;
 
 #endif

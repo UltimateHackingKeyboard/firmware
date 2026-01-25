@@ -32,6 +32,14 @@
 #define TEST_SET_MACRO(key_id, macro_text) \
     { .type = TestAction_SetMacro, .keyId = (key_id), .macroText = (macro_text) }
 
+// SetLayerHold: assign a layer hold action to a key
+#define TEST_SET_LAYER_HOLD(key_id, layer_id) \
+    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id) }
+
+// SetLayerAction: assign a key action on a specific layer
+#define TEST_SET_LAYER_ACTION(layer_id, key_id, shortcut) \
+    { .type = TestAction_SetLayerAction, .keyId = (key_id), .layerId = (layer_id), .shortcutStr = (shortcut) }
+
 #define TEST_END() \
     { .type = TestAction_End }
 
@@ -44,6 +52,8 @@ typedef enum {
     TestAction_Delay,
     TestAction_SetAction,
     TestAction_SetMacro,
+    TestAction_SetLayerHold,
+    TestAction_SetLayerAction,
     TestAction_Expect,    // OutputMachine only
     TestAction_CheckNow,  // Both machines
 } test_action_type_t;
@@ -51,10 +61,11 @@ typedef enum {
 typedef struct {
     test_action_type_t type;
     const char *keyId;
+    uint8_t layerId;              // For SetLayerHold, SetLayerAction
     union {
         uint16_t delayMs;
         const char *expectShortcuts;  // Space-separated shortcut strings
-        const char *shortcutStr;      // For SetAction
+        const char *shortcutStr;      // For SetAction, SetLayerAction
         const char *macroText;        // For SetMacro
     };
 } test_action_t;

@@ -80,6 +80,8 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
             case TestAction_Delay:
             case TestAction_SetAction:
             case TestAction_SetMacro:
+            case TestAction_SetLayerHold:
+            case TestAction_SetLayerAction:
                 OutputMachine_ActionIndex++;
                 break;
 

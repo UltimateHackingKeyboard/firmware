@@ -13,13 +13,28 @@
 bool TestHooks_Active = false;
 
 // Test tracking
+static uint16_t currentModuleIndex = 0;
 static uint16_t currentTestIndex = 0;
+static uint16_t totalTestCount = 0;
 static uint16_t passedCount = 0;
 static uint16_t failedCount = 0;
 
 // Inter-test delay state
 static bool inInterTestDelay = false;
 static uint32_t interTestDelayStart = 0;
+
+static const test_t* getCurrentTest(void) {
+    return &AllTestModules[currentModuleIndex]->tests[currentTestIndex];
+}
+
+static bool advanceToNextTest(void) {
+    currentTestIndex++;
+    if (currentTestIndex >= AllTestModules[currentModuleIndex]->testCount) {
+        currentModuleIndex++;
+        currentTestIndex = 0;
+    }
+    return currentModuleIndex < AllTestModulesCount;
+}
 
 void TestHooks_CaptureReport(const usb_basic_keyboard_report_t *report) {
     if (!TestHooks_Active) {
@@ -37,9 +52,10 @@ void TestHooks_Tick(void) {
     if (inInterTestDelay) {
         if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY_MS) {
             inInterTestDelay = false;
-            const test_t *nextTest = &AllTests[currentTestIndex];
+            const test_t *nextTest = getCurrentTest();
+            const test_module_t *module = AllTestModules[currentModuleIndex];
             LogU("[TEST] ----------------------\n");
-            LogU("[TEST] Running: %s\n", nextTest->name);
+            LogU("[TEST] Running: %s/%s\n", module->name, nextTest->name);
             InputMachine_Start(nextTest);
             OutputMachine_Start(nextTest);
         }
@@ -55,22 +71,22 @@ void TestHooks_Tick(void) {
     bool timedOut = InputMachine_TimedOut && !outputDone;
 
     if (inputDone && (outputDone || timedOut || failed)) {
-        const test_t *test = &AllTests[currentTestIndex];
+        const test_t *test = getCurrentTest();
+        const test_module_t *module = AllTestModules[currentModuleIndex];
 
         if (failed) {
-            LogU("[TEST] Finished: %s - FAIL\n", test->name);
+            LogU("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
             failedCount++;
         } else if (timedOut) {
-            LogU("[TEST] Finished: %s - TIMEOUT\n", test->name);
+            LogU("[TEST] Finished: %s/%s - TIMEOUT\n", module->name, test->name);
             failedCount++;
         } else {
-            LogU("[TEST] Finished: %s - PASS\n", test->name);
+            LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
             passedCount++;
         }
 
         // Move to next test
-        currentTestIndex++;
-        if (currentTestIndex < AllTestsCount) {
+        if (advanceToNextTest()) {
             // Start inter-test delay
             inInterTestDelay = true;
             interTestDelayStart = Timer_GetCurrentTime();
@@ -87,24 +103,32 @@ void TestSuite_Init(void) {
 }
 
 uint8_t TestSuite_RunAll(void) {
+    currentModuleIndex = 0;
     currentTestIndex = 0;
     passedCount = 0;
     failedCount = 0;
     inInterTestDelay = false;
 
-    LogU("[TEST] Starting test suite (%d tests)\n", AllTestsCount);
+    // Count total tests
+    totalTestCount = 0;
+    for (uint16_t i = 0; i < AllTestModulesCount; i++) {
+        totalTestCount += AllTestModules[i]->testCount;
+    }
 
-    if (AllTestsCount == 0) {
+    LogU("[TEST] Starting test suite (%d tests in %d modules)\n", totalTestCount, AllTestModulesCount);
+
+    if (totalTestCount == 0) {
         return 0;
     }
 
     // Start first test
-    const test_t *firstTest = &AllTests[0];
+    const test_t *firstTest = getCurrentTest();
+    const test_module_t *module = AllTestModules[currentModuleIndex];
     LogU("[TEST] ----------------------\n");
-    LogU("[TEST] Running: %s\n", firstTest->name);
+    LogU("[TEST] Running: %s/%s\n", module->name, firstTest->name);
     InputMachine_Start(firstTest);
     OutputMachine_Start(firstTest);
     TestHooks_Active = true;
 
-    return AllTestsCount;
+    return totalTestCount;
 }
