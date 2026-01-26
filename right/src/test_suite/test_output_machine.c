@@ -5,6 +5,8 @@
 #include "logger.h"
 #include <string.h>
 
+#define REPORT_IS_EMPTY(report) ((report)->modifiers == 0 && UsbBasicKeyboard_ScancodeCount(report) == 0)
+
 // OutputMachine state
 const test_t *OutputMachine_CurrentTest = NULL;
 uint16_t OutputMachine_ActionIndex = 0;
@@ -95,7 +97,11 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                     OutputMachine_ActionIndex++;
                     break;  // Continue loop to check next action
                 }
-                // No match - check if this is a duplicate of last seen
+                // No match - ignore empty reports before first expect
+                if (lastSeenActionIndex < 0 && REPORT_IS_EMPTY(report)) {
+                    return;
+                }
+                // Check if this is a duplicate of last seen
                 if (lastSeenActionIndex >= 0) {
                     const test_action_t *lastSeenAction = &OutputMachine_CurrentTest->actions[lastSeenActionIndex];
                     if (validateReport(report, lastSeenAction->expectShortcuts, false)) {
