@@ -484,7 +484,7 @@ static bool parseMods(const char* str, const char* strEnd, macro_action_t* outMa
 
     if (success && outMacroAction != NULL) {
         if (outMacroAction->type != MacroActionType_Key && inputModMask != 0) {
-            Macros_ReportError("This action is not allowed to have modifiers!", str, strEnd);
+            Macros_ReportErrorPrintf(NULL, "Action of type %d is not allowed to have modifiers!", outMacroAction->type, str, strEnd);
         } else {
             outMacroAction->key.inputModMask = inputModMask;
             outMacroAction->key.outputModMask = outputModMask;
@@ -636,6 +636,18 @@ static bool parseAbbrev(const char* str, const char* strEnd, macro_action_t* out
     return true;
 }
 
+static void setFallbackKeyTypes(macro_action_t* outMacroAction, key_action_t* outKeyAction) {
+    if (outMacroAction != NULL) {
+        outMacroAction->type = MacroActionType_Key;
+        outMacroAction->key.type = KeystrokeType_Basic;
+    }
+
+    if (outKeyAction != NULL) {
+        outKeyAction->type = KeyActionType_Keystroke;
+        outKeyAction->keystroke.keystrokeType = KeystrokeType_Basic;
+    }
+}
+
 bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_action_t type, macro_action_t* outMacroAction, key_action_t* outKeyAction)
 {
     if (outMacroAction != NULL) {
@@ -655,6 +667,11 @@ bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_ac
             outMacroAction->key.action = type;
         }
 
+        if (!success) {
+            // Assume this is just modmask, so need to set key types.
+            setFallbackKeyTypes(outMacroAction, outKeyAction);
+        }
+
         success = success || parseMods(str, strEnd, outMacroAction, outKeyAction);
     }
     else {
@@ -664,6 +681,11 @@ bool MacroShortcutParser_Parse(const char* str, const char* strEnd, macro_sub_ac
 
         if (outMacroAction != NULL) {
             outMacroAction->key.action = type;
+        }
+
+        if (!success) {
+            // Assume this is just modmask, so need to set key types.
+            setFallbackKeyTypes(outMacroAction, outKeyAction);
         }
 
         success = success && parseMods(str, delim, outMacroAction, outKeyAction);
