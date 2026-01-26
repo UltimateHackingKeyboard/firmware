@@ -479,9 +479,10 @@ Firngrod's Home Row Mods (HRM) configuration (Recommended):
 set secondaryRole.defaultStrategy advanced
 set secondaryRole.advanced.triggeringEvent release
 set secondaryRole.advanced.timeout 300
-set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.timeoutType passive
+set secondaryRole.advanced.timeoutAction none
 set secondaryRole.advanced.doubletapToPrimary 1
-set secondaryRole.advanced.safetyMargin -100
+set secondaryRole.advanced.safetyMargin -40
 set secondaryRole.advanced.triggerByMouse 1
 set secondaryRole.advanced.minimumHoldTime 150
 set secondaryRole.advanced.acceptTriggersFromSameHalf 0
@@ -491,8 +492,9 @@ Full set of advanced strategy config values follows (for copy-paste convenience)
 
 ```
 set secondaryRole.defaultStrategy advanced
-set secondaryRole.advanced.timeout 500
+set secondaryRole.advanced.timeout 200
 set secondaryRole.advanced.timeoutAction secondary
+set secondaryRole.advanced.timeoutType active
 set secondaryRole.advanced.safetyMargin 0
 set secondaryRole.advanced.triggeringEvent press
 set secondaryRole.advanced.triggerByMouse 0

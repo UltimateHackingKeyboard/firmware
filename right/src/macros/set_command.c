@@ -296,6 +296,10 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         DEFINE_NONE_LIMITS();
         ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction, ConsumeSecondaryRoleTimeoutAction(ctx));
     }
+    else if (ConsumeToken(ctx, "timeoutType")) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_AdvancedStrategyTimeoutType, ConsumeSecondaryRoleTimeoutType(ctx));
+    }
     else if (ConsumeToken(ctx, "safetyMargin")) {
         DEFINE_INT_LIMITS(-32768, 32767);
         ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategySafetyMargin);
