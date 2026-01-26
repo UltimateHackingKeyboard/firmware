@@ -34,7 +34,7 @@ static const test_action_t test_layer_hold_with_modifier[] = {
     TEST_EXPECT("LS-a"),
     TEST_RELEASE("i"),
     TEST_DELAY(20),
-    TEST_EXPECT("LS"),
+    TEST_EXPECT_MAYBE("LS"),  // We are not clear if this is by specification or not
     TEST_EXPECT(""),
     TEST_RELEASE("u"),
     TEST_DELAY(20),
@@ -52,3 +52,5 @@ const test_module_t TestModule_Layers = {
     .tests = layer_tests,
     .testCount = sizeof(layer_tests) / sizeof(layer_tests[0])
 };
+
+

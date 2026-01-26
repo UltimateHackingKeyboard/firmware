@@ -281,11 +281,13 @@ void InputMachine_Tick(void) {
                 break;
 
             case TestAction_Expect:
-                // OutputMachine handles this
+            case TestAction_ExpectMaybe:
+                // OutputMachine handles these
                 InputMachine_ActionIndex++;
                 break;
 
             case TestAction_End:
+            default:
                 endReached = true;
                 endReachedTime = Timer_GetCurrentTime();
                 return;

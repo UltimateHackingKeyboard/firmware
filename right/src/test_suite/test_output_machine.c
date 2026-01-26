@@ -87,6 +87,18 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                 OutputMachine_ActionIndex++;
                 break;
 
+            case TestAction_ExpectMaybe:
+                // Optional expect - if matches, consume; if not, skip without failing
+                if (validateReport(report, action->expectShortcuts, false)) {
+                    LogU("[TEST] <   Ok - ExpectMaybe '%s'\n", action->expectShortcuts);
+                    lastSeenActionIndex = OutputMachine_ActionIndex;
+                    OutputMachine_ActionIndex++;
+                    break;  // Continue loop to check next action
+                }
+                // No match - skip this optional expect and continue
+                OutputMachine_ActionIndex++;
+                break;
+
             case TestAction_CheckNow:
             case TestAction_Expect:
                 // Try to validate against current expect
@@ -114,6 +126,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                 return;
 
             case TestAction_End:
+            default:
                 return;
         }
     }

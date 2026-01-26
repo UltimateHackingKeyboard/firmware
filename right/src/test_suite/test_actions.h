@@ -20,6 +20,10 @@
 #define TEST_EXPECT(shortcuts) \
     { .type = TestAction_Expect, .expectShortcuts = (shortcuts) }
 
+// ExpectMaybe: if report matches, consume; if not, skip without failing
+#define TEST_EXPECT_MAYBE(shortcuts) \
+    { .type = TestAction_ExpectMaybe, .expectShortcuts = (shortcuts) }
+
 // CheckNow: validate current report immediately (InputMachine)
 #define TEST_CHECK_NOW(shortcuts) \
     { .type = TestAction_CheckNow, .expectShortcuts = (shortcuts) }
@@ -54,8 +58,9 @@ typedef enum {
     TestAction_SetMacro,
     TestAction_SetLayerHold,
     TestAction_SetLayerAction,
-    TestAction_Expect,    // OutputMachine only
-    TestAction_CheckNow,  // Both machines
+    TestAction_Expect,       // OutputMachine only
+    TestAction_ExpectMaybe,  // OutputMachine only, optional
+    TestAction_CheckNow,     // Both machines
 } test_action_type_t;
 
 typedef struct {
