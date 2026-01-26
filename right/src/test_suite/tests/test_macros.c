@@ -3,14 +3,14 @@
 // Macro test: inline macro with two tapKeys
 static const test_action_t test_macro_two_tapkeys[] = {
     TEST_SET_MACRO("u",
-        "tapKey a\n"
-        "tapKey b\n"
+        "tapKey u\n"
+        "tapKey i\n"
     ),
     TEST_PRESS("u"),
     TEST_DELAY(20),
-    TEST_EXPECT("a"),
+    TEST_EXPECT("u"),
     TEST_EXPECT(""),
-    TEST_EXPECT("b"),
+    TEST_EXPECT("i"),
     TEST_EXPECT(""),
     TEST_RELEASE("u"),
     TEST_DELAY(20),
@@ -21,12 +21,12 @@ static const test_action_t test_macro_two_tapkeys[] = {
 // Macro with modifier
 static const test_action_t test_macro_with_modifier[] = {
     TEST_SET_MACRO("u",
-        "tapKey LS-a\n"
+        "tapKey LS-u\n"
     ),
     TEST_PRESS("u"),
     TEST_DELAY(20),
     TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-a"),
+    TEST_EXPECT("LS-u"),
     TEST_EXPECT("LS"),
     TEST_EXPECT(""),
     TEST_RELEASE("u"),

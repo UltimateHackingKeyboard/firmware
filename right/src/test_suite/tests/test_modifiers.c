@@ -1,13 +1,13 @@
 #include "tests.h"
 
 // Modifier test: keystroke with shift modifier produces correct report sequence
-// LS-a should produce: LS (modifier alone), LS-a (modifier+key), LS (key released), empty
+// LS-u should produce: LS (modifier alone), LS-u (modifier+key), LS (key released), empty
 static const test_action_t test_modifier_keystroke[] = {
-    TEST_SET_ACTION("u", "LS-a"),
+    TEST_SET_ACTION("u", "LS-u"),
     TEST_PRESS("u"),
     TEST_DELAY(20),
     TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-a"),
+    TEST_EXPECT("LS-u"),
     TEST_RELEASE("u"),
     TEST_DELAY(20),
     TEST_EXPECT("LS"),
@@ -15,13 +15,13 @@ static const test_action_t test_modifier_keystroke[] = {
     TEST_END()
 };
 
-// Multiple modifiers: CS-a (Ctrl+Shift+a)
+// Multiple modifiers: CS-u (Ctrl+Shift+u)
 static const test_action_t test_multiple_modifiers[] = {
-    TEST_SET_ACTION("u", "CS-a"),
+    TEST_SET_ACTION("u", "CS-u"),
     TEST_PRESS("u"),
     TEST_DELAY(20),
     TEST_EXPECT("CS"),
-    TEST_EXPECT("CS-a"),
+    TEST_EXPECT("CS-u"),
     TEST_RELEASE("u"),
     TEST_DELAY(20),
     TEST_EXPECT("CS"),

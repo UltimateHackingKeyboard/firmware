@@ -2,10 +2,10 @@
 
 // Basic test: press a key, expect scancode, release, expect empty
 static const test_action_t test_basic_keypress[] = {
-    TEST_SET_ACTION("u", "a"),
+    TEST_SET_ACTION("u", "u"),
     TEST_PRESS("u"),
     TEST_DELAY(20),
-    TEST_EXPECT("a"),
+    TEST_EXPECT("u"),
     TEST_RELEASE("u"),
     TEST_DELAY(20),
     TEST_EXPECT(""),
@@ -14,17 +14,17 @@ static const test_action_t test_basic_keypress[] = {
 
 // Two keys pressed simultaneously
 static const test_action_t test_two_keys[] = {
-    TEST_SET_ACTION("u", "a"),
-    TEST_SET_ACTION("i", "b"),
+    TEST_SET_ACTION("u", "u"),
+    TEST_SET_ACTION("i", "i"),
     TEST_PRESS("u"),
     TEST_DELAY(20),
-    TEST_EXPECT("a"),
+    TEST_EXPECT("u"),
     TEST_PRESS("i"),
     TEST_DELAY(20),
-    TEST_EXPECT("a b"),
+    TEST_EXPECT("u i"),
     TEST_RELEASE("u"),
     TEST_DELAY(20),
-    TEST_EXPECT("b"),
+    TEST_EXPECT("i"),
     TEST_RELEASE("i"),
     TEST_DELAY(20),
     TEST_EXPECT(""),

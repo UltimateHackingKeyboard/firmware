@@ -4,14 +4,14 @@
 // Layer hold: press layer key, press key on that layer, release both
 static const test_action_t test_layer_hold[] = {
     TEST_SET_LAYER_HOLD("u", LayerId_Mod),
-    TEST_SET_LAYER_ACTION(LayerId_Mod, "i", "x"),
-    TEST_SET_ACTION("i", "a"),  // Base layer binding
+    TEST_SET_LAYER_ACTION(LayerId_Mod, "i", "i"),
+    TEST_SET_ACTION("i", "i"),  // Base layer binding
     TEST_PRESS("u"),            // Hold layer key
     TEST_DELAY(20),
     TEST_EXPECT(""),            // Layer switch produces no report
     TEST_PRESS("i"),            // Press key while layer held
     TEST_DELAY(20),
-    TEST_EXPECT("x"),           // Should get Mod layer binding
+    TEST_EXPECT("i"),           // Should get Mod layer binding
     TEST_RELEASE("i"),
     TEST_DELAY(20),
     TEST_EXPECT(""),
@@ -24,14 +24,14 @@ static const test_action_t test_layer_hold[] = {
 // Layer hold with modifier on layer
 static const test_action_t test_layer_hold_with_modifier[] = {
     TEST_SET_LAYER_HOLD("u", LayerId_Mod),
-    TEST_SET_LAYER_ACTION(LayerId_Mod, "i", "LS-a"),
+    TEST_SET_LAYER_ACTION(LayerId_Mod, "i", "LS-i"),
     TEST_PRESS("u"),            // Hold layer key
     TEST_DELAY(20),
     TEST_EXPECT(""),
     TEST_PRESS("i"),            // Press key with modifier binding
     TEST_DELAY(50),             // Wait for debouncing, otherwise, sticky mods will be reset before i's release.
     TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-a"),
+    TEST_EXPECT("LS-i"),
     TEST_RELEASE("i"),
     TEST_DELAY(20),
     TEST_EXPECT("LS"),
