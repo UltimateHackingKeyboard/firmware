@@ -7,6 +7,7 @@
 #include "logger.h"
 #include "timer.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "keymap.h"
 
 #define INTER_TEST_DELAY_MS 100
 
@@ -97,6 +98,8 @@ void TestHooks_Tick(void) {
             LogU("[TEST] ----------------------\n");
             LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
             TestHooks_Active = false;
+            // Reload keymap to restore any modifications made by tests
+            SwitchKeymapById(CurrentKeymapIndex, true);
         }
     }
 }
