@@ -6,6 +6,7 @@
 #include "tests/tests.h"
 #include "logger.h"
 #include "timer.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 
 #define INTER_TEST_DELAY_MS 100
 
@@ -58,6 +59,8 @@ void TestHooks_Tick(void) {
             LogU("[TEST] Running: %s/%s\n", module->name, nextTest->name);
             InputMachine_Start(nextTest);
             OutputMachine_Start(nextTest);
+            // Run one iteration with current report so initial state can be validated
+            OutputMachine_OnReportChange(ActiveUsbBasicKeyboardReport);
         }
         return;
     }
@@ -128,6 +131,8 @@ uint8_t TestSuite_RunAll(void) {
     LogU("[TEST] Running: %s/%s\n", module->name, firstTest->name);
     InputMachine_Start(firstTest);
     OutputMachine_Start(firstTest);
+    // Run one iteration with current report so initial state can be validated
+    OutputMachine_OnReportChange(ActiveUsbBasicKeyboardReport);
     TestHooks_Active = true;
 
     return totalTestCount;

@@ -25,7 +25,7 @@
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution and inline macros
     // 255 is reserved as empty value
-    [MacroIndex_UsbCmdReserved] = {
+    [MacroIndex_InlineMacro] = {
         .macroActionsCount = 1,
     }
 };
@@ -297,8 +297,10 @@ static macro_result_t endMacro(void)
 
 static void loadAction()
 {
-    if (S->ms.currentMacroAction.type == MacroActionType_Command && S->ms.currentMacroAction.cmd.text != NULL) {
-        // Already set up (inline command), don't overwrite
+    if (S->ms.currentMacroIndex == MacroIndex_InlineMacro) {
+        // For inline macros, the action is already set up in initMacro
+        ASSERT(S->ms.currentMacroAction.type == MacroActionType_Command);
+        ASSERT(S->ms.currentMacroAction.cmd.text != NULL);
     } else {
         // parse one macro action from EEPROM
         ValidatedUserConfigBuffer.offset = S->ms.bufferOffset;
@@ -490,7 +492,7 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumen
 
 uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t timestamp)
 {
-    return Macros_StartMacro(MacroIndex_UsbCmdReserved, keyState, 0, timestamp, 255, true, text);
+    return Macros_StartMacro(MacroIndex_InlineMacro, keyState, 0, timestamp, 255, true, text);
 }
 
 void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {

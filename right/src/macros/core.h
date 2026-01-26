@@ -28,7 +28,7 @@
     #define GUIMASK (HID_KEYBOARD_MODIFIER_LEFTGUI | HID_KEYBOARD_MODIFIER_RIGHTGUI)
 
     typedef enum {
-        MacroIndex_UsbCmdReserved = 254,
+        MacroIndex_InlineMacro = 254,
         MacroIndex_None = 255,
 
         MacroIndex_MaxUserDefinableCount = 254,
