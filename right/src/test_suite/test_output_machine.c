@@ -7,6 +7,46 @@
 
 #define REPORT_IS_EMPTY(report) ((report)->modifiers == 0 && UsbBasicKeyboard_ScancodeCount(report) == 0)
 
+// Format a USB report as a shortcut string (e.g., "LS-a b")
+// Returns pointer to static buffer
+static const char* formatReport(const usb_basic_keyboard_report_t *report) {
+    static char buf[64];
+    char *p = buf;
+    char *end = buf + sizeof(buf) - 1;
+
+    // Format modifiers
+    uint8_t mods = report->modifiers;
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTSHIFT) { *p++ = 'L'; *p++ = 'S'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTSHIFT) { *p++ = 'R'; *p++ = 'S'; }
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTCTRL) { *p++ = 'L'; *p++ = 'C'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTCTRL) { *p++ = 'R'; *p++ = 'C'; }
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTALT) { *p++ = 'L'; *p++ = 'A'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTALT) { *p++ = 'R'; *p++ = 'A'; }
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTGUI) { *p++ = 'L'; *p++ = 'G'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTGUI) { *p++ = 'R'; *p++ = 'G'; }
+
+    // Add dash if we have modifiers and will have scancodes
+    bool hasMods = (p > buf);
+    bool hasScancodes = UsbBasicKeyboard_ScancodeCount(report) > 0;
+    if (hasMods && hasScancodes && p < end) {
+        *p++ = '-';
+    }
+
+    // Format scancodes
+    bool first = !hasMods;
+    for (uint8_t sc = 4; sc < 232 && p < end - 1; sc++) {
+        if (UsbBasicKeyboard_ContainsScancode(report, sc)) {
+            if (!first && p < end) *p++ = ' ';
+            first = false;
+            char c = MacroShortcutParser_ScancodeToCharacter(sc);
+            *p++ = c;
+        }
+    }
+
+    *p = '\0';
+    return buf;
+}
+
 // OutputMachine state
 const test_t *OutputMachine_CurrentTest = NULL;
 uint16_t OutputMachine_ActionIndex = 0;
@@ -28,6 +68,11 @@ static bool validateReport(const usb_basic_keyboard_report_t *actual, const char
 
         const char *shortcutEnd = at;
         while (*shortcutEnd != '\0' && *shortcutEnd != ' ') shortcutEnd++;
+
+        // Skip empty tokens
+        if (shortcutEnd == at) {
+            continue;
+        }
 
         key_action_t keyAction = { 0 };
         if (!MacroShortcutParser_Parse(at, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
@@ -53,8 +98,8 @@ static bool validateReport(const usb_basic_keyboard_report_t *actual, const char
     if (UsbBasicKeyboard_ScancodeCount(actual) != scancodeCount) match = false;
 
     if (!match && logFailure) {
-        LogU("[TEST] <   FAIL: Expect '%s', got mods=0x%02x count=%d\n",
-            expectShortcuts, actual->modifiers, (int)UsbBasicKeyboard_ScancodeCount(actual));
+        LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
+            expectShortcuts, formatReport(actual));
     }
 
     return match;

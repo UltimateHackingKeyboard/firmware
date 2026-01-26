@@ -29,12 +29,12 @@ static const test_action_t test_layer_hold_with_modifier[] = {
     TEST_DELAY(20),
     TEST_EXPECT(""),
     TEST_PRESS("i"),            // Press key with modifier binding
-    TEST_DELAY(20),
+    TEST_DELAY(50),             // Wait for debouncing, otherwise, sticky mods will be reset before i's release.
     TEST_EXPECT("LS"),
     TEST_EXPECT("LS-a"),
     TEST_RELEASE("i"),
     TEST_DELAY(20),
-    TEST_EXPECT_MAYBE("LS"),  // We are not clear if this is by specification or not
+    TEST_EXPECT("LS"),
     TEST_EXPECT(""),
     TEST_RELEASE("u"),
     TEST_DELAY(20),

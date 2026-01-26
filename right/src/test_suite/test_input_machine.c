@@ -14,6 +14,41 @@
 
 #define TEST_TIMEOUT_MS 100
 
+// Format a USB report as a shortcut string (e.g., "LS-a b")
+static const char* formatReport(const usb_basic_keyboard_report_t *report) {
+    static char buf[64];
+    char *p = buf;
+    char *end = buf + sizeof(buf) - 1;
+
+    uint8_t mods = report->modifiers;
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTSHIFT) { *p++ = 'L'; *p++ = 'S'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTSHIFT) { *p++ = 'R'; *p++ = 'S'; }
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTCTRL) { *p++ = 'L'; *p++ = 'C'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTCTRL) { *p++ = 'R'; *p++ = 'C'; }
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTALT) { *p++ = 'L'; *p++ = 'A'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTALT) { *p++ = 'R'; *p++ = 'A'; }
+    if (mods & HID_KEYBOARD_MODIFIER_LEFTGUI) { *p++ = 'L'; *p++ = 'G'; }
+    if (mods & HID_KEYBOARD_MODIFIER_RIGHTGUI) { *p++ = 'R'; *p++ = 'G'; }
+
+    bool hasMods = (p > buf);
+    bool hasScancodes = UsbBasicKeyboard_ScancodeCount(report) > 0;
+    if (hasMods && hasScancodes && p < end) {
+        *p++ = '-';
+    }
+
+    bool first = !hasMods;
+    for (uint8_t sc = 4; sc < 232 && p < end - 1; sc++) {
+        if (UsbBasicKeyboard_ContainsScancode(report, sc)) {
+            if (!first && p < end) *p++ = ' ';
+            first = false;
+            *p++ = MacroShortcutParser_ScancodeToCharacter(sc);
+        }
+    }
+
+    *p = '\0';
+    return buf;
+}
+
 // InputMachine state
 const test_t *InputMachine_CurrentTest = NULL;
 uint16_t InputMachine_ActionIndex = 0;
@@ -72,6 +107,11 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
         const char *shortcutEnd = at;
         while (*shortcutEnd != '\0' && *shortcutEnd != ' ') shortcutEnd++;
 
+        // Skip empty tokens
+        if (shortcutEnd == at) {
+            continue;
+        }
+
         key_action_t keyAction = { 0 };
         if (!MacroShortcutParser_Parse(at, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
             if (logFailure) LogU("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
@@ -96,8 +136,8 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
     if (UsbBasicKeyboard_ScancodeCount(actual) != scancodeCount) match = false;
 
     if (!match && logFailure) {
-        LogU("[TEST] <   FAIL: Expect '%s', got mods=0x%02x count=%d\n",
-            expectShortcuts, actual->modifiers, (int)UsbBasicKeyboard_ScancodeCount(actual));
+        LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
+            expectShortcuts, formatReport(actual));
     }
 
     return match;
@@ -135,11 +175,11 @@ void InputMachine_Tick(void) {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
                     KeyStates[slotId][keyId].hardwareSwitchState = true;
-                    LogU("[TEST] > Press '%s'\n", action->keyId);
+                    LogU("[TEST] > Press [%s]\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
                 } else {
-                    LogU("[TEST] FAIL: Press '%s' - invalid key\n", action->keyId);
+                    LogU("[TEST] FAIL: Press [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -151,11 +191,11 @@ void InputMachine_Tick(void) {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
                     KeyStates[slotId][keyId].hardwareSwitchState = false;
-                    LogU("[TEST] > Release '%s'\n", action->keyId);
+                    LogU("[TEST] > Release [%s]\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
                 } else {
-                    LogU("[TEST] FAIL: Release '%s' - invalid key\n", action->keyId);
+                    LogU("[TEST] FAIL: Release [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -181,7 +221,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetAction: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetAction '%s' - invalid key\n", action->keyId);
+                    LogU("[TEST] FAIL: SetAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -192,13 +232,13 @@ void InputMachine_Tick(void) {
 
                 key_action_t keyAction = { 0 };
                 if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-                    LogU("[TEST] FAIL: SetAction '%s' = '%s' - invalid shortcut\n", action->keyId, action->shortcutStr);
+                    LogU("[TEST] FAIL: SetAction [%s] = '%s' - invalid shortcut\n", action->keyId, action->shortcutStr);
                     InputMachine_Failed = true;
                     return;
                 }
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetAction '%s' = '%s'\n", action->keyId, action->shortcutStr);
+                LogU("[TEST] > SetAction [%s] = '%s'\n", action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
             }
@@ -206,7 +246,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetMacro: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetMacro '%s' - invalid key\n", action->keyId);
+                    LogU("[TEST] FAIL: SetMacro [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -219,7 +259,7 @@ void InputMachine_Tick(void) {
                 };
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetMacro '%s' = '%s'\n", action->keyId, action->macroText);
+                LogU("[TEST] > SetMacro [%s] = '%s'\n", action->keyId, action->macroText);
                 InputMachine_ActionIndex++;
                 break;
             }
@@ -227,7 +267,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetLayerHold: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetLayerHold '%s' - invalid key\n", action->keyId);
+                    LogU("[TEST] FAIL: SetLayerHold [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -241,7 +281,7 @@ void InputMachine_Tick(void) {
                 };
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetLayerHold '%s' = layer %d\n", action->keyId, action->layerId);
+                LogU("[TEST] > SetLayerHold [%s] = layer %d\n", action->keyId, action->layerId);
                 InputMachine_ActionIndex++;
                 break;
             }
@@ -249,7 +289,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetLayerAction: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetLayerAction '%s' - invalid key\n", action->keyId);
+                    LogU("[TEST] FAIL: SetLayerAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -260,13 +300,13 @@ void InputMachine_Tick(void) {
 
                 key_action_t keyAction = { 0 };
                 if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-                    LogU("[TEST] FAIL: SetLayerAction layer %d '%s' = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
+                    LogU("[TEST] FAIL: SetLayerAction layer %d [%s] = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
                     InputMachine_Failed = true;
                     return;
                 }
 
                 CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetLayerAction layer %d '%s' = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
+                LogU("[TEST] > SetLayerAction layer %d [%s] = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
             }
