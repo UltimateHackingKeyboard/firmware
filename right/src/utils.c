@@ -84,63 +84,56 @@ void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx)
     *outSlotIdx = keyid%64;
 }
 
-static void Utils_SetStatusScancodeCharacter(uint8_t scancode)
-{
-    Macros_SetStatusChar(MacroShortcutParser_ScancodeToCharacter(scancode));
-}
+static char usbReportString[32];
 
-static bool reportModifiers(uint8_t modifiers)
+const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report)
 {
-    bool modifierFound = false;
-    for (uint8_t i = 0; i < 8; i++) {
-        uint8_t modifier = 1 << i;
-        if (modifiers & modifier) {
-            modifierFound = true;
-            switch (modifier) {
-                case HID_KEYBOARD_MODIFIER_LEFTCTRL:
-                    Macros_SetStatusString("LC", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_LEFTSHIFT:
-                    Macros_SetStatusString("LS", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_LEFTALT:
-                    Macros_SetStatusString("LA", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_LEFTGUI:
-                    Macros_SetStatusString("LG", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_RIGHTCTRL:
-                    Macros_SetStatusString("RC", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_RIGHTSHIFT:
-                    Macros_SetStatusString("RS", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_RIGHTALT:
-                    Macros_SetStatusString("RA", NULL);
-                    break;
-                case HID_KEYBOARD_MODIFIER_RIGHTGUI:
-                    Macros_SetStatusString("RG", NULL);
-      break;
-            }
+    char *p = usbReportString;
+    char *end = usbReportString + sizeof(usbReportString) - 1;
+
+    static const struct { uint8_t mask; const char id[3]; } mods[] = {
+        { HID_KEYBOARD_MODIFIER_LEFTCTRL,   "LC" },
+        { HID_KEYBOARD_MODIFIER_LEFTSHIFT,  "LS" },
+        { HID_KEYBOARD_MODIFIER_LEFTALT,    "LA" },
+        { HID_KEYBOARD_MODIFIER_LEFTGUI,    "LG" },
+        { HID_KEYBOARD_MODIFIER_RIGHTCTRL,  "RC" },
+        { HID_KEYBOARD_MODIFIER_RIGHTSHIFT, "RS" },
+        { HID_KEYBOARD_MODIFIER_RIGHTALT,   "RA" },
+        { HID_KEYBOARD_MODIFIER_RIGHTGUI,   "RG" },
+    };
+
+    for (uint8_t i = 0; i < sizeof(mods)/sizeof(mods[0]) && p < end - 2; i++) {
+        if (report->modifiers & mods[i].mask) {
+            *p++ = mods[i].id[0];
+            *p++ = mods[i].id[1];
         }
     }
-    return modifierFound;
+
+    bool hasMods = (p > usbReportString);
+    bool hasScancodes = UsbBasicKeyboard_ScancodeCount(report) > 0;
+
+    if (hasMods && hasScancodes && p < end) {
+        *p++ = '-';
+    }
+
+    bool first = !hasMods;
+    for (uint8_t sc = 4; sc < 232 && p < end - 1; sc++) {
+        if (UsbBasicKeyboard_ContainsScancode(report, sc)) {
+            if (!first && p < end) *p++ = ' ';
+            first = false;
+            *p++ = MacroShortcutParser_ScancodeToCharacter(sc);
+        }
+    }
+
+    *p = '\0';
+    return usbReportString;
 }
 
 void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report)
 {
     Macros_SetStatusString(prefix, NULL);
-
     Macros_SetStatusString(" ", NULL);
-
-    bool modifierFound = reportModifiers(report->modifiers);
-
-    if (modifierFound) {
-        Macros_SetStatusString(" ", NULL);
-    }
-
-    UsbBasicKeyboard_ForeachScancode(report, &Utils_SetStatusScancodeCharacter);
-
+    Macros_SetStatusString(Utils_GetUsbReportString(report), NULL);
     Macros_SetStatusString("\n", NULL);
 }
 
