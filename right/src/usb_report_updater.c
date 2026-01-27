@@ -43,6 +43,7 @@
 #include "led_manager.h"
 #include "power_mode.h"
 #include "oneshot.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
@@ -51,7 +52,6 @@
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
-#include "trace.h"
 #include "bt_pair.h"
 #else
 #include "stubs.h"
