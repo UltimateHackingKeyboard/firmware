@@ -40,6 +40,7 @@
 #include "wormhole.h"
 #include "trace.h"
 #include "trace_reasons.h"
+#include "config_manager.h"
 
 static volatile bool IsEepromInitialized = false;
 static volatile bool IsConfigInitialized = false;
@@ -220,7 +221,7 @@ int main(void)
         StateWormhole_Clean();
     } else {
         MacroStatusBuffer_InitNormal();
-        ConfigManager_InitWormCfg();
+        ConfigManager_ResetWormConfiguration();
         StateWormhole_Clean();
         StateWormhole_Open();
         Trace_ResetUhk60Reasons();

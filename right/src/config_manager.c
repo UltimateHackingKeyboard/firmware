@@ -306,7 +306,7 @@ const worm_config_t DefaultWormCfg = {
     .devMode = false,
 };
 
-void ConfigManager_InitWormCfg(void) {
+void ConfigManager_ResetWormConfiguration(void) {
     memcpy(WormCfg, &DefaultWormCfg, sizeof(worm_config_t));
 }
 

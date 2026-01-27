@@ -342,7 +342,7 @@ int main(void) {
     } else {
         printk("Wormhole is closed\n");
         MacroStatusBuffer_InitNormal();
-        ConfigManager_InitWormCfg();
+        ConfigManager_ResetWormConfiguration();
         StateWormhole_Clean();
         StateWormhole_Open();
     }

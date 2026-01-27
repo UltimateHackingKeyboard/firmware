@@ -116,6 +116,6 @@
 // Functions:
 
     void ConfigManager_ResetConfiguration(bool updateLeds);
-    void ConfigManager_InitWormCfg(void);
+    void ConfigManager_ResetWormConfiguration(void);
 
 #endif
