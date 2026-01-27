@@ -23,6 +23,7 @@
 
     typedef struct {
         uint16_t batteryVoltage;
+        uint16_t maxCharge;
         uint8_t batteryPercentage;
         bool batteryPresent;
         bool batteryCharging;
