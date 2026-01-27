@@ -393,7 +393,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         BtConn_UpdateHostConnectionPeerAllocations();
         UsbCommand_UpdateNewPairingsFlag();
 #endif
-        StateWormhole.devMode = Cfg.DevMode;
+        WormCfg->devMode = Cfg.DevMode;
         LedManager_FullUpdate();
         MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed

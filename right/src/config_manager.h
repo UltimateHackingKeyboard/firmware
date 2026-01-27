@@ -11,6 +11,7 @@
     #include "ledmap.h"
     #include "layer.h"
     #include "str_utils.h"
+    #include "wormhole.h"
 
 // Typedefs:
 
@@ -109,9 +110,12 @@
 // Variables:
 
     extern config_t Cfg;
+    extern worm_config_t* WormCfg;
+    extern const worm_config_t DefaultWormCfg;
 
 // Functions:
 
     void ConfigManager_ResetConfiguration(bool updateLeds);
+    void ConfigManager_ResetWormConfiguration(void);
 
 #endif
