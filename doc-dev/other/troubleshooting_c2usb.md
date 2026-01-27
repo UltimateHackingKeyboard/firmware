@@ -3,6 +3,7 @@
 Put this into a macro named `$onInit`:
 
 ```
+set devMode true
 zephyr uhk logs 1
 zephyr log enable wrn Battery
 zephyr log enable wrn Bt
