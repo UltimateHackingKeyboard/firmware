@@ -13,8 +13,9 @@
 #include "user_logic.h"
 #include "led_manager.h"
 #include "usb_commands/usb_command_apply_config.h"
-#ifdef __ZEPHYR__
 #include "trace.h"
+
+#ifdef __ZEPHYR__
 #else
 #include "stubs.h"
 #endif
