@@ -30,7 +30,7 @@ Reproduce the issue.
 
 Run the `snaplog` macro. This will export the usb log buffer into the persistent status buffer.
 
-Restart uhk using its reset button
+Bring usb back to life. If need be, restart uhk using its reset button, but do not powercycle it.
 
 Start Agent. 
 
