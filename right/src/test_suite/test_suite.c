@@ -8,6 +8,7 @@
 #include "timer.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "keymap.h"
+#include "config_manager.h"
 
 #define INTER_TEST_DELAY_MS 100
 
@@ -54,6 +55,7 @@ void TestHooks_Tick(void) {
     if (inInterTestDelay) {
         if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY_MS) {
             inInterTestDelay = false;
+            ConfigManager_ResetConfiguration(false);
             const test_t *nextTest = getCurrentTest();
             const test_module_t *module = AllTestModules[currentModuleIndex];
             LogU("[TEST] ----------------------\n");
@@ -128,6 +130,7 @@ uint8_t TestSuite_RunAll(void) {
     }
 
     // Start first test
+    ConfigManager_ResetConfiguration(false);
     const test_t *firstTest = getCurrentTest();
     const test_module_t *module = AllTestModules[currentModuleIndex];
     LogU("[TEST] ----------------------\n");

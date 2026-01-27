@@ -8,6 +8,7 @@
 #include "layer.h"
 #include "ledmap.h"
 #include "stubs.h"
+#include "test_suite/test_hooks.h"
 #include "test_switches.h"
 #include "slot.h"
 #include "keymap.h"
@@ -828,8 +829,9 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
-            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
+            if (TestHooks_Active || RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
                 //just switch reports without sending the report
+                TestHooks_CaptureReport(ActiveUsbBasicKeyboardReport);
                 SwitchActiveUsbBasicKeyboardReport();
             } else {
                 UsbBasicKeyboardSendActiveReport();

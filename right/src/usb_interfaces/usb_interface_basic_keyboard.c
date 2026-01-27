@@ -200,9 +200,6 @@ usb_status_t UsbBasicKeyboardCallback(class_handle_t handle, uint32_t event, voi
 
 void UsbBasicKeyboardSendActiveReport(void)
 {
-    if (TestHooks_Active) {
-        TestHooks_CaptureReport(ActiveUsbBasicKeyboardReport);
-    }
 #ifdef __ZEPHYR__
     UsbCompatibility_SendKeyboardReport(ActiveUsbBasicKeyboardReport);
     SwitchActiveUsbBasicKeyboardReport();
