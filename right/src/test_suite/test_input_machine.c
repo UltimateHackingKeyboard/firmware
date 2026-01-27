@@ -11,43 +11,9 @@
 #include "event_scheduler.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "logger.h"
+#include "utils.h"
 
 #define TEST_TIMEOUT_MS 100
-
-// Format a USB report as a shortcut string (e.g., "LS-a b")
-static const char* formatReport(const usb_basic_keyboard_report_t *report) {
-    static char buf[64];
-    char *p = buf;
-    char *end = buf + sizeof(buf) - 1;
-
-    uint8_t mods = report->modifiers;
-    if (mods & HID_KEYBOARD_MODIFIER_LEFTSHIFT) { *p++ = 'L'; *p++ = 'S'; }
-    if (mods & HID_KEYBOARD_MODIFIER_RIGHTSHIFT) { *p++ = 'R'; *p++ = 'S'; }
-    if (mods & HID_KEYBOARD_MODIFIER_LEFTCTRL) { *p++ = 'L'; *p++ = 'C'; }
-    if (mods & HID_KEYBOARD_MODIFIER_RIGHTCTRL) { *p++ = 'R'; *p++ = 'C'; }
-    if (mods & HID_KEYBOARD_MODIFIER_LEFTALT) { *p++ = 'L'; *p++ = 'A'; }
-    if (mods & HID_KEYBOARD_MODIFIER_RIGHTALT) { *p++ = 'R'; *p++ = 'A'; }
-    if (mods & HID_KEYBOARD_MODIFIER_LEFTGUI) { *p++ = 'L'; *p++ = 'G'; }
-    if (mods & HID_KEYBOARD_MODIFIER_RIGHTGUI) { *p++ = 'R'; *p++ = 'G'; }
-
-    bool hasMods = (p > buf);
-    bool hasScancodes = UsbBasicKeyboard_ScancodeCount(report) > 0;
-    if (hasMods && hasScancodes && p < end) {
-        *p++ = '-';
-    }
-
-    bool first = !hasMods;
-    for (uint8_t sc = 4; sc < 232 && p < end - 1; sc++) {
-        if (UsbBasicKeyboard_ContainsScancode(report, sc)) {
-            if (!first && p < end) *p++ = ' ';
-            first = false;
-            *p++ = MacroShortcutParser_ScancodeToCharacter(sc);
-        }
-    }
-
-    *p = '\0';
-    return buf;
-}
 
 // InputMachine state
 const test_t *InputMachine_CurrentTest = NULL;
@@ -137,7 +103,7 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
 
     if (!match && logFailure) {
         LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
-            expectShortcuts, formatReport(actual));
+            expectShortcuts, Utils_GetUsbReportString(actual));
     }
 
     return match;
