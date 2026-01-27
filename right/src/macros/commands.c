@@ -114,11 +114,11 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShot == 1;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
-        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
+        bool isSameActivation = (S->ms.currentMacroKey->activationTimestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     } else {
-        bool isSameActivation = (S->ms.currentMacroKey->timestamp == S->ms.currentMacroKeyStamp);
+        bool isSameActivation = (S->ms.currentMacroKey->activationTimestamp == S->ms.currentMacroKeyStamp);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
         return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     }
@@ -1595,20 +1595,20 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 
     if (append) {
         if (PostponerQuery_IsActiveEventually(key)) {
-            PostponerCore_TrackKeyEvent(key, false, layer);
-            PostponerCore_TrackKeyEvent(key, true, layer);
+            PostponerCore_TrackKeyEvent(key, false, layer, Timer_GetCurrentTime());
+            PostponerCore_TrackKeyEvent(key, true, layer, Timer_GetCurrentTime());
         } else {
-            PostponerCore_TrackKeyEvent(key, true, layer);
-            PostponerCore_TrackKeyEvent(key, false, layer);
+            PostponerCore_TrackKeyEvent(key, true, layer, Timer_GetCurrentTime());
+            PostponerCore_TrackKeyEvent(key, false, layer, Timer_GetCurrentTime());
         }
     } else {
         if (KeyState_Active(key)) {
             //reverse order when prepending
-            PostponerCore_PrependKeyEvent(key, true, layer);
-            PostponerCore_PrependKeyEvent(key, false, layer);
+            PostponerCore_PrependKeyEvent(key, true, layer, Timer_GetCurrentTime());
+            PostponerCore_PrependKeyEvent(key, false, layer, Timer_GetCurrentTime());
         } else {
-            PostponerCore_PrependKeyEvent(key, false, layer);
-            PostponerCore_PrependKeyEvent(key, true, layer);
+            PostponerCore_PrependKeyEvent(key, false, layer, Timer_GetCurrentTime());
+            PostponerCore_PrependKeyEvent(key, true, layer, Timer_GetCurrentTime());
         }
     }
     return MacroResult_Finished;

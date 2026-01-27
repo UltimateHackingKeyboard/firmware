@@ -30,7 +30,8 @@
     // of current from changing for next 50 ms whenever the key state changes.
 
     typedef struct {
-        uint8_t timestamp;
+        uint8_t debounceTimestamp;
+        uint8_t activationTimestamp;
         volatile bool hardwareSwitchState : 1;
         bool debouncedSwitchState : 1;
         bool current : 1;
