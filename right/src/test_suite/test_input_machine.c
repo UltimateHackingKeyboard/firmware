@@ -1,5 +1,6 @@
 #include "test_input_machine.h"
 #include "test_hooks.h"
+#include "test_suite.h"
 #include "macros/keyid_parser.h"
 #include "macros/shortcut_parser.h"
 #include "str_utils.h"
@@ -12,6 +13,8 @@
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "logger.h"
 #include "utils.h"
+
+#define LOG_VERBOSE(fmt, ...) do { if (TestSuite_Verbose) LogU(fmt, ##__VA_ARGS__); } while(0)
 
 #define TEST_TIMEOUT_MS 100
 
@@ -141,7 +144,7 @@ void InputMachine_Tick(void) {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
                     KeyStates[slotId][keyId].hardwareSwitchState = true;
-                    LogU("[TEST] > Press [%s]\n", action->keyId);
+                    LOG_VERBOSE("[TEST] > Press [%s]\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
                 } else {
@@ -157,7 +160,7 @@ void InputMachine_Tick(void) {
                 uint8_t slotId, keyId;
                 if (parseKeyId(action->keyId, &slotId, &keyId)) {
                     KeyStates[slotId][keyId].hardwareSwitchState = false;
-                    LogU("[TEST] > Release [%s]\n", action->keyId);
+                    LOG_VERBOSE("[TEST] > Release [%s]\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
                 } else {
@@ -176,7 +179,7 @@ void InputMachine_Tick(void) {
                     return;
                 } else {
                     if (Timer_GetElapsedTime(&delayStartTime) >= action->delayMs) {
-                        LogU("[TEST] > Delay %dms\n", action->delayMs);
+                        LOG_VERBOSE("[TEST] > Delay %dms\n", action->delayMs);
                         inDelay = false;
                         InputMachine_ActionIndex++;
                         break;
@@ -204,7 +207,7 @@ void InputMachine_Tick(void) {
                 }
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetAction [%s] = '%s'\n", action->keyId, action->shortcutStr);
+                LOG_VERBOSE("[TEST] > SetAction [%s] = '%s'\n", action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
             }
@@ -225,7 +228,7 @@ void InputMachine_Tick(void) {
                 };
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetMacro [%s] = '%s'\n", action->keyId, action->macroText);
+                LOG_VERBOSE("[TEST] > SetMacro [%s] = '%s'\n", action->keyId, action->macroText);
                 InputMachine_ActionIndex++;
                 break;
             }
@@ -247,7 +250,7 @@ void InputMachine_Tick(void) {
                 };
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetLayerHold [%s] = layer %d\n", action->keyId, action->layerId);
+                LOG_VERBOSE("[TEST] > SetLayerHold [%s] = layer %d\n", action->keyId, action->layerId);
                 InputMachine_ActionIndex++;
                 break;
             }
@@ -272,17 +275,17 @@ void InputMachine_Tick(void) {
                 }
 
                 CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
-                LogU("[TEST] > SetLayerAction layer %d [%s] = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
+                LOG_VERBOSE("[TEST] > SetLayerAction layer %d [%s] = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
             }
 
             case TestAction_CheckNow:
-                if (!validateReport(action->expectShortcuts, true)) {
+                if (!validateReport(action->expectShortcuts, TestSuite_Verbose)) {
                     InputMachine_Failed = true;
                     return;
                 }
-                LogU("[TEST] <   CheckNow '%s' - Ok\n", action->expectShortcuts);
+                LOG_VERBOSE("[TEST] <   CheckNow '%s' - Ok\n", action->expectShortcuts);
                 InputMachine_ActionIndex++;
                 break;
 

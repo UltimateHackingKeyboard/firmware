@@ -14,6 +14,7 @@
 
 // Test hooks state
 bool TestHooks_Active = false;
+bool TestSuite_Verbose = false;
 
 // Test tracking
 static uint16_t currentModuleIndex = 0;
@@ -21,6 +22,11 @@ static uint16_t currentTestIndex = 0;
 static uint16_t totalTestCount = 0;
 static uint16_t passedCount = 0;
 static uint16_t failedCount = 0;
+
+// Rerun state for failed tests
+static bool isRerunning = false;
+static uint16_t rerunModuleIndex = 0;
+static uint16_t rerunTestIndex = 0;
 
 // Inter-test delay state
 static bool inInterTestDelay = false;
@@ -39,6 +45,17 @@ static bool advanceToNextTest(void) {
     return currentModuleIndex < AllTestModulesCount;
 }
 
+static void startTest(const test_t *test, const test_module_t *module) {
+    ConfigManager_ResetConfiguration(false);
+    if (TestSuite_Verbose) {
+        LogU("[TEST] ----------------------\n");
+        LogU("[TEST] Running: %s/%s\n", module->name, test->name);
+    }
+    InputMachine_Start(test);
+    OutputMachine_Start(test);
+    OutputMachine_OnReportChange(ActiveUsbBasicKeyboardReport);
+}
+
 void TestHooks_CaptureReport(const usb_basic_keyboard_report_t *report) {
     if (!TestHooks_Active) {
         return;
@@ -55,15 +72,9 @@ void TestHooks_Tick(void) {
     if (inInterTestDelay) {
         if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY_MS) {
             inInterTestDelay = false;
-            ConfigManager_ResetConfiguration(false);
             const test_t *nextTest = getCurrentTest();
             const test_module_t *module = AllTestModules[currentModuleIndex];
-            LogU("[TEST] ----------------------\n");
-            LogU("[TEST] Running: %s/%s\n", module->name, nextTest->name);
-            InputMachine_Start(nextTest);
-            OutputMachine_Start(nextTest);
-            // Run one iteration with current report so initial state can be validated
-            OutputMachine_OnReportChange(ActiveUsbBasicKeyboardReport);
+            startTest(nextTest, module);
         }
         return;
     }
@@ -80,30 +91,62 @@ void TestHooks_Tick(void) {
         const test_t *test = getCurrentTest();
         const test_module_t *module = AllTestModules[currentModuleIndex];
 
-        if (failed) {
-            LogU("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
-            failedCount++;
-        } else if (timedOut) {
-            LogU("[TEST] Finished: %s/%s - TIMEOUT\n", module->name, test->name);
-            failedCount++;
+        if (failed || timedOut) {
+            if (isRerunning) {
+                // Already rerunning with verbose, log final result
+                if (failed) {
+                    LogU("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
+                } else {
+                    LogU("[TEST] Finished: %s/%s - TIMEOUT\n", module->name, test->name);
+                }
+                LogU("[TEST] ----------------------\n");
+                failedCount++;
+                isRerunning = false;
+                TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
+
+                // Continue from where we left off
+                currentModuleIndex = rerunModuleIndex;
+                currentTestIndex = rerunTestIndex;
+                if (advanceToNextTest()) {
+                    inInterTestDelay = true;
+                    interTestDelayStart = Timer_GetCurrentTime();
+                } else {
+                    goto finish;
+                }
+            } else {
+                // First failure - save position and rerun with verbose
+                rerunModuleIndex = currentModuleIndex;
+                rerunTestIndex = currentTestIndex;
+                isRerunning = true;
+                TestSuite_Verbose = true;
+
+                inInterTestDelay = true;
+                interTestDelayStart = Timer_GetCurrentTime();
+            }
         } else {
             LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
             passedCount++;
-        }
+            if (isRerunning) {
+                isRerunning = false;
+                TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
+            }
 
-        // Move to next test
-        if (advanceToNextTest()) {
-            // Start inter-test delay
-            inInterTestDelay = true;
-            interTestDelayStart = Timer_GetCurrentTime();
-        } else {
-            LogU("[TEST] ----------------------\n");
-            LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
-            TestHooks_Active = false;
-            // Reload keymap to restore any modifications made by tests
-            SwitchKeymapById(CurrentKeymapIndex, true);
+            // Move to next test
+            if (advanceToNextTest()) {
+                inInterTestDelay = true;
+                interTestDelayStart = Timer_GetCurrentTime();
+            } else {
+                goto finish;
+            }
         }
     }
+    return;
+
+finish:
+    LogU("[TEST] ----------------------\n");
+    LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
+    TestHooks_Active = false;
+    ConfigManager_ResetConfiguration(false);
 }
 
 void TestSuite_Init(void) {
@@ -116,6 +159,8 @@ uint8_t TestSuite_RunAll(void) {
     passedCount = 0;
     failedCount = 0;
     inInterTestDelay = false;
+    isRerunning = false;
+    TestSuite_Verbose = false;
 
     // Count total tests
     totalTestCount = 0;
@@ -130,15 +175,9 @@ uint8_t TestSuite_RunAll(void) {
     }
 
     // Start first test
-    ConfigManager_ResetConfiguration(false);
     const test_t *firstTest = getCurrentTest();
     const test_module_t *module = AllTestModules[currentModuleIndex];
-    LogU("[TEST] ----------------------\n");
-    LogU("[TEST] Running: %s/%s\n", module->name, firstTest->name);
-    InputMachine_Start(firstTest);
-    OutputMachine_Start(firstTest);
-    // Run one iteration with current report so initial state can be validated
-    OutputMachine_OnReportChange(ActiveUsbBasicKeyboardReport);
+    startTest(firstTest, module);
     TestHooks_Active = true;
 
     return totalTestCount;

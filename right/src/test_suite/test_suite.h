@@ -2,6 +2,10 @@
 #define __TEST_SUITE_H__
 
 #include <stdint.h>
+#include <stdbool.h>
+
+// Verbose logging mode - when true, logs each action
+extern bool TestSuite_Verbose;
 
 // Initialize the test suite. Call once at startup.
 void TestSuite_Init(void);

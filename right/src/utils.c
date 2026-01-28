@@ -16,6 +16,7 @@
 #include "macros/keyid_parser.h"
 #include "macros/status_buffer.h"
 #include "macros/shortcut_parser.h"
+#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "led_display.h"
 
 #if !defined(MIN)
@@ -117,11 +118,23 @@ const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report)
     }
 
     bool first = !hasMods;
-    for (uint8_t sc = 4; sc < 232 && p < end - 1; sc++) {
+    for (uint8_t sc = 4; sc < 232 && p < end - 4; sc++) {
+        // Skip modifier scancodes (0xE0-0xE7) - they're already printed as modifiers above
+        if (UsbBasicKeyboard_IsModifier(sc)) {
+            continue;
+        }
         if (UsbBasicKeyboard_ContainsScancode(report, sc)) {
             if (!first && p < end) *p++ = ' ';
             first = false;
-            *p++ = MacroShortcutParser_ScancodeToCharacter(sc);
+            char c = MacroShortcutParser_ScancodeToCharacter(sc);
+            if (c == DEFAULT_SCANCODE_ABBREVIATION) {
+                // Print as 3-digit zero-padded number
+                *p++ = '0' + (sc / 100);
+                *p++ = '0' + ((sc / 10) % 10);
+                *p++ = '0' + (sc % 10);
+            } else {
+                *p++ = c;
+            }
         }
     }
 

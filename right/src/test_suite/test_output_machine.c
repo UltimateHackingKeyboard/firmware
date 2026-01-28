@@ -1,10 +1,13 @@
 #include "test_output_machine.h"
+#include "test_suite.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "macros/shortcut_parser.h"
 #include "key_action.h"
 #include "logger.h"
 #include "utils.h"
 #include <string.h>
+
+#define LOG_VERBOSE(fmt, ...) do { if (TestSuite_Verbose) LogU(fmt, ##__VA_ARGS__); } while(0)
 
 #define REPORT_IS_EMPTY(report) ((report)->modifiers == 0 && UsbBasicKeyboard_ScancodeCount(report) == 0)
 
@@ -96,12 +99,13 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
             case TestAction_ExpectMaybe:
                 // Optional expect - if matches, consume; if not, skip without failing
                 if (validateReport(report, action->expectShortcuts, false)) {
-                    LogU("[TEST] <   Ok - ExpectMaybe '%s'\n", action->expectShortcuts);
+                    LogU("[TEST] <   ExpectMaybe '%s' - matched\n", action->expectShortcuts);
                     lastSeenActionIndex = OutputMachine_ActionIndex;
                     OutputMachine_ActionIndex++;
                     break;  // Continue loop to check next action
                 }
-                // No match - skip this optional expect and continue
+                // No match - skip this optional expect and continue checking next action
+                LogU("[TEST] <   ExpectMaybe '%s' - not matched\n", action->expectShortcuts);
                 OutputMachine_ActionIndex++;
                 break;
 
@@ -110,7 +114,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                 // Try to validate against current expect
                 if (validateReport(report, action->expectShortcuts, false)) {
                     // Match - continue processing (there may be more expects matching this report)
-                    LogU("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
+                    LOG_VERBOSE("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
                     lastSeenActionIndex = OutputMachine_ActionIndex;
                     OutputMachine_ActionIndex++;
                     break;  // Continue loop to check next action
@@ -127,7 +131,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                     }
                 }
                 // Not a match and not a duplicate - fail
-                validateReport(report, action->expectShortcuts, true);  // Log the failure
+                validateReport(report, action->expectShortcuts, TestSuite_Verbose);  // Log failure only in verbose mode
                 OutputMachine_Failed = true;
                 return;
 
