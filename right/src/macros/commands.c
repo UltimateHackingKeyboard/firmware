@@ -2381,6 +2381,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
             if (ConsumeToken(ctx, "noOp")) {
                 return processNoOpCommand();
             }
+            else if (ConsumeToken(ctx, "notify")) {
+                return Macros_ProcessNotifyCommand(ctx);
+            }
             else {
                 goto failed;
             }

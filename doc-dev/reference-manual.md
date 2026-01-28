@@ -114,6 +114,7 @@ COMMAND = {exec|call|fork} MACRONAME
 COMMAND = resetTrackpoint
 COMMAND = printStatus
 COMMAND = setLedTxt <timeout, or 0 forever (INT)> [ DISPLAY_LOCATION STRING ]+ { STRING | VALUE }
+COMMAND = notify STRING
 COMMAND = write STRING
 COMMAND = goTo <index (ADDRESS)>
 COMMAND = repeatFor <var name (IDENTIFIER)> <action adr (ADDRESS)>
@@ -364,8 +365,9 @@ COMMAND = setEmergencyKey KEYID
   - If the given time is zero, i.e. `<time> = 0`, the led text will be set indefinitely (until the display is refreshed by other text) and this command will return immediately.
   - If `VALUE` is given (e.g., `$keystrokeDelay`), will be shown in notation that shows first two significant digits and a letter denoting floating point shift. E.g., `A23 = 2.3`, `Y23 = -0.23`, `23B = 2300`...
   - If location is given, the text will be show there. For uhk60, only "abbrev" location is valid (and default); others will be ignored. For uhk80, "notification" is default, and "abbrev" is ignored. E.g.:
-  - `setLedTxt 2000 abbrev "HLW" "Hello world!"` will display `HLW` on uhk60 and `Hello world!` on uhk80
-  - `setLedTxt 2000 leftStatus "0" rightStatus "35 T"` will not display anything on uhk60 and change the leftStatus and rightStatus on uhk80
+    - `setLedTxt 2000 abbrev "HLW" "Hello world!"` will display `HLW` on uhk60 and `Hello world!` on uhk80
+    - `setLedTxt 2000 leftStatus "0" rightStatus "35 T"` will not display anything on uhk60 and change the leftStatus and rightStatus on uhk80
+  - `notify STRING` displays a notification with the given text on the OLED display. The notification will automatically disappear after the default timeout (3 seconds). Only works on devices with OLED displays (UHK 80).
 - `progressHue` or better `autoRepeat progressHue` will slowly adjust constantRGB value in order to rotate the per-key-RGB backlight through all hues.
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
