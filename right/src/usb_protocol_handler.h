@@ -69,6 +69,8 @@
         UsbCommandId_EraseBleSettings         = 0x1d,
         UsbCommandId_ExecShellCommand         = 0x1e,
         UsbCommandId_ReadOled                 = 0x1f,
+        UsbCommandId_SetUhk60LedState         = 0x20,
+        UsbCommandId_SetPerKeyRgb             = 0x21,
     } usb_command_id_t;
 
     typedef enum {
@@ -82,6 +84,7 @@
         UsbVariable_ShellEnabled              = 0x07,
         UsbVariable_ShellBuffer               = 0x08,
         UsbVariable_FirmwareVersionCheckEnabled = 0x09,
+        UsbVariable_LedOverride               = 0x0a,
     } usb_variable_id_t;
 
     typedef enum {

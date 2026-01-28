@@ -48,7 +48,9 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
             screenPtr = MainScreen;
             break;
         case ScreenId_Canvas:
-            EventScheduler_Reschedule(Timer_GetCurrentTime() + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
+            if (!OledOverrideMode) {
+                EventScheduler_Reschedule(Timer_GetCurrentTime() + CANVAS_TIMEOUT, EventSchedulerEvent_SwitchScreen, "ScreenManager - switch to main screen");
+            }
             screenPtr = CanvasScreen;
             break;
         case ScreenId_Notification:
@@ -70,7 +72,11 @@ void ScreenManager_ActivateScreen(screen_id_t screen)
 
 void ScreenManager_SwitchScreenEvent()
 {
-    ScreenManager_ActivateScreen(ScreenId_Main);
+    if (OledOverrideMode) {
+        ScreenManager_ActivateScreen(ScreenId_Canvas);
+    } else {
+        ScreenManager_ActivateScreen(ScreenId_Main);
+    }
 }
 
 void ScreenManager_Init()

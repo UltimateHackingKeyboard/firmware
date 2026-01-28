@@ -12,6 +12,8 @@
 
 #if DEVICE_HAS_OLED
 
+uint8_t OledOverrideMode = 0;
+
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "keyboard/oled/oled.h"
@@ -348,6 +350,8 @@ void InitOled(void) {
 }
 
 #else // DEVICE_HAS_OLED
+
+uint8_t OledOverrideMode = 0;
 
 void Oled_ActivateScreen(widget_t* screen, bool forceRedraw){};
 void Oled_RequestRedraw(){};

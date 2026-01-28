@@ -5,3 +5,8 @@ build
 .vscode/settings.json
 .jj
 mcux_include.json
+compile_commands.json
+.devices
+Makefile
+createTags.sh
+tags

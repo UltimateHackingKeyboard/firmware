@@ -7,6 +7,8 @@
 
 // Variables:
 
+    extern uint8_t OledOverrideMode;
+
     extern const struct gpio_dt_spec oledEn;
     extern const struct gpio_dt_spec oledResetDt;
     extern const struct gpio_dt_spec oledCsDt;
