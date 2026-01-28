@@ -3,6 +3,7 @@
 #include "test_suite.h"
 #include "macros/keyid_parser.h"
 #include "macros/shortcut_parser.h"
+#include "macros/set_command.h"
 #include "str_utils.h"
 #include "key_action.h"
 #include "key_states.h"
@@ -11,6 +12,7 @@
 #include "timer.h"
 #include "event_scheduler.h"
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
+#include "secondary_role_driver.h"
 #include "logger.h"
 #include "utils.h"
 
@@ -276,6 +278,51 @@ void InputMachine_Tick(void) {
 
                 CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
                 LOG_VERBOSE("[TEST] > SetLayerAction layer %d [%s] = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
+                InputMachine_ActionIndex++;
+                break;
+            }
+
+            case TestAction_SetSecondaryRole: {
+                uint8_t slotId, keyId;
+                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                    LogU("[TEST] FAIL: SetSecondaryRole [%s] - invalid key\n", action->keyId);
+                    InputMachine_Failed = true;
+                    return;
+                }
+
+                key_action_t keyAction = {
+                    .type = KeyActionType_Keystroke,
+                    .keystroke = {
+                        .keystrokeType = KeystrokeType_Basic,
+                        .scancode = action->primaryScancode,
+                        .secondaryRole = action->secondaryRoleId,
+                        .modifiers = 0
+                    }
+                };
+
+                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                LOG_VERBOSE("[TEST] > SetSecondaryRole [%s] = scancode %d, secondary %d\n",
+                    action->keyId, action->primaryScancode, action->secondaryRoleId);
+                InputMachine_ActionIndex++;
+                break;
+            }
+
+            case TestAction_SetConfig: {
+                const char *configText = action->configText;
+                const char *configEnd = configText;
+                while (*configEnd != '\0') configEnd++;
+
+                parser_context_t ctx = {
+                    .macroState = NULL,
+                    .begin = configText,
+                    .at = configText,
+                    .end = configEnd,
+                    .nestingLevel = 0,
+                    .nestingBound = 0,
+                };
+
+                Macro_ProcessSetCommand(&ctx);
+                LOG_VERBOSE("[TEST] > SetConfig '%s'\n", action->configText);
                 InputMachine_ActionIndex++;
                 break;
             }

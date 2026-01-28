@@ -7,4 +7,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_modifiers.c
     tests/test_layers.c
     tests/test_macros.c
+    tests/test_secondary_roles.c
+    tests/test_oneshot.c
+    tests/test_autorepeat.c
 )

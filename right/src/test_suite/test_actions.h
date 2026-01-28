@@ -44,6 +44,15 @@
 #define TEST_SET_LAYER_ACTION(layer_id, key_id, shortcut) \
     { .type = TestAction_SetLayerAction, .keyId = (key_id), .layerId = (layer_id), .shortcutStr = (shortcut) }
 
+// SetSecondaryRole: assign a keystroke with secondary role modifier
+// secondary_role is one of: SecondaryRole_LeftShift, SecondaryRole_LeftCtrl, etc.
+#define TEST_SET_SECONDARY_ROLE(key_id, primary_scancode, secondary_role) \
+    { .type = TestAction_SetSecondaryRole, .keyId = (key_id), .primaryScancode = (primary_scancode), .secondaryRoleId = (secondary_role) }
+
+// SetConfig: run a set command to configure settings
+#define TEST_SET_CONFIG(config_text) \
+    { .type = TestAction_SetConfig, .configText = (config_text) }
+
 #define TEST_END() \
     { .type = TestAction_End }
 
@@ -58,6 +67,8 @@ typedef enum {
     TestAction_SetMacro,
     TestAction_SetLayerHold,
     TestAction_SetLayerAction,
+    TestAction_SetSecondaryRole,
+    TestAction_SetConfig,
     TestAction_Expect,       // OutputMachine only
     TestAction_ExpectMaybe,  // OutputMachine only, optional
     TestAction_CheckNow,     // Both machines
@@ -67,11 +78,14 @@ typedef struct {
     test_action_type_t type;
     const char *keyId;
     uint8_t layerId;              // For SetLayerHold, SetLayerAction
+    uint8_t primaryScancode;      // For SetSecondaryRole
+    uint8_t secondaryRoleId;      // For SetSecondaryRole
     union {
         uint16_t delayMs;
         const char *expectShortcuts;  // Space-separated shortcut strings
         const char *shortcutStr;      // For SetAction, SetLayerAction
         const char *macroText;        // For SetMacro
+        const char *configText;       // For SetConfig
     };
 } test_action_t;
 

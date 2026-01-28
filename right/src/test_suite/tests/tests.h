@@ -20,5 +20,8 @@ extern const test_module_t TestModule_Basic;
 extern const test_module_t TestModule_Modifiers;
 extern const test_module_t TestModule_Layers;
 extern const test_module_t TestModule_Macros;
+extern const test_module_t TestModule_SecondaryRoles;
+extern const test_module_t TestModule_Oneshot;
+extern const test_module_t TestModule_Autorepeat;
 
 #endif
