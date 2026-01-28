@@ -99,24 +99,16 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                 break;
 
             case TestAction_ExpectMaybe:
-                // Optional expect - if matches, consume; if not, skip without failing
-                if (validateReport(report, action->expectShortcuts, false)) {
-                    LogU("[TEST] <   ExpectMaybe '%s' - matched\n", action->expectShortcuts);
-                    lastSeenActionIndex = OutputMachine_ActionIndex;
-                    OutputMachine_ActionIndex++;
-                    break;  // Continue loop to check next action
-                }
-                // No match - skip this optional expect and continue checking next action
-                LogU("[TEST] <   ExpectMaybe '%s' - not matched\n", action->expectShortcuts);
-                OutputMachine_ActionIndex++;
-                break;
-
             case TestAction_CheckNow:
             case TestAction_Expect:
                 // Try to validate against current expect
                 if (validateReport(report, action->expectShortcuts, false)) {
                     // Match - continue processing (there may be more expects matching this report)
-                    LOG_VERBOSE("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
+                    if (action->type == TestAction_ExpectMaybe) {
+                        LogU("[TEST] <   ExpectMaybe '%s' - matched\n", action->expectShortcuts);
+                    } else {
+                        LOG_VERBOSE("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
+                    }
                     lastSeenActionIndex = OutputMachine_ActionIndex;
                     OutputMachine_ActionIndex++;
                     break;  // Continue loop to check next action
@@ -132,7 +124,13 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                         return;  // Duplicate of last seen, ignore
                     }
                 }
-                // Not a match and not a duplicate - fail
+                // Not a match and not a duplicate - would fail, but if ExpectMaybe, skip instead
+                if (action->type == TestAction_ExpectMaybe) {
+                    LogU("[TEST] <   ExpectMaybe '%s' - skipped\n", action->expectShortcuts);
+                    OutputMachine_ActionIndex++;
+                    break;  // Continue loop to check next action
+                }
+                // Fail
                 validateReport(report, action->expectShortcuts, TestSuite_Verbose);  // Log failure only in verbose mode
                 OutputMachine_Failed = true;
                 return;
