@@ -1707,6 +1707,42 @@ static macro_result_t processTestLeakageCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+static macro_result_t processTestSuiteCommand(parser_context_t* ctx)
+{
+    // Check for optional parameters
+    if (!IsEnd(ctx)) {
+        // Check for "all" keyword
+        if (ConsumeToken(ctx, "all")) {
+            if (!Macros_DryRun) {
+                TestSuite_RunAll();
+            }
+        } else {
+            // Parse module name
+            const char* moduleStart = ctx->at;
+            const char* moduleEnd = TokEnd(ctx->at, ctx->end);
+            ConsumeAnyToken(ctx);
+
+            // Parse test name
+            if (!IsEnd(ctx)) {
+                const char* testStart = ctx->at;
+                const char* testEnd = TokEnd(ctx->at, ctx->end);
+                ConsumeAnyToken(ctx);
+
+                if (!Macros_DryRun) {
+                    TestSuite_RunSingle(moduleStart, moduleEnd, testStart, testEnd);
+                }
+            } else {
+                Macros_ReportError("testSuite requires both module and test name", NULL, NULL);
+            }
+        }
+    } else {
+        if (!Macros_DryRun) {
+            TestSuite_RunAll();
+        }
+    }
+
+    return MacroResult_Finished;
+}
 
 static macro_result_t processResetTrackpointCommand()
 {
@@ -2599,10 +2635,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
                 return processTestLeakageCommand(ctx);
             }
             else if (ConsumeToken(ctx, "testSuite")) {
-                if (!Macros_DryRun) {
-                    TestSuite_RunAll();
-                }
-                return MacroResult_Finished;
+                return processTestSuiteCommand(ctx);
             }
             else {
                 goto failed;

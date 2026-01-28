@@ -23,6 +23,9 @@ static uint16_t totalTestCount = 0;
 static uint16_t passedCount = 0;
 static uint16_t failedCount = 0;
 
+// Single test mode
+static bool singleTestMode = false;
+
 // Rerun state for failed tests
 static bool isRerunning = false;
 static uint16_t rerunModuleIndex = 0;
@@ -92,8 +95,8 @@ void TestHooks_Tick(void) {
         const test_module_t *module = AllTestModules[currentModuleIndex];
 
         if (failed || timedOut) {
-            if (isRerunning) {
-                // Already rerunning with verbose, log final result
+            if (isRerunning || singleTestMode) {
+                // Already rerunning with verbose (or single test mode), log final result
                 if (failed) {
                     LogU("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
                 } else {
@@ -103,6 +106,10 @@ void TestHooks_Tick(void) {
                 failedCount++;
                 isRerunning = false;
                 TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
+
+                if (singleTestMode) {
+                    goto finish;
+                }
 
                 // Continue from where we left off
                 currentModuleIndex = rerunModuleIndex;
@@ -129,6 +136,10 @@ void TestHooks_Tick(void) {
             if (isRerunning) {
                 isRerunning = false;
                 TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
+            }
+
+            if (singleTestMode) {
+                goto finish;
             }
 
             // Move to next test
@@ -160,6 +171,7 @@ uint8_t TestSuite_RunAll(void) {
     failedCount = 0;
     inInterTestDelay = false;
     isRerunning = false;
+    singleTestMode = false;
     TestSuite_Verbose = false;
 
     // Count total tests
@@ -181,4 +193,45 @@ uint8_t TestSuite_RunAll(void) {
     TestHooks_Active = true;
 
     return totalTestCount;
+}
+
+static bool streq(const char *a, const char *aEnd, const char *b) {
+    while (a < aEnd && *b) {
+        if (*a++ != *b++) return false;
+    }
+    return a == aEnd && *b == '\0';
+}
+
+uint8_t TestSuite_RunSingle(const char *moduleStart, const char *moduleEnd, const char *testStart, const char *testEnd) {
+    // Find the module and test
+    for (uint16_t mi = 0; mi < AllTestModulesCount; mi++) {
+        const test_module_t *module = AllTestModules[mi];
+        if (!streq(moduleStart, moduleEnd, module->name)) continue;
+
+        for (uint16_t ti = 0; ti < module->testCount; ti++) {
+            const test_t *test = &module->tests[ti];
+            if (!streq(testStart, testEnd, test->name)) continue;
+
+            // Found it - run with verbose logging
+            currentModuleIndex = mi;
+            currentTestIndex = ti;
+            passedCount = 0;
+            failedCount = 0;
+            inInterTestDelay = false;
+            isRerunning = false;
+            singleTestMode = true;
+            TestSuite_Verbose = true;  // Always verbose for single test
+
+            LogU("[TEST] Running single test: %s/%s\n", module->name, test->name);
+            startTest(test, module);
+            TestHooks_Active = true;
+
+            return 0;
+        }
+    }
+
+    LogU("[TEST] Test not found: %.*s/%.*s\n",
+        (int)(moduleEnd - moduleStart), moduleStart,
+        (int)(testEnd - testStart), testStart);
+    return 255;
 }
