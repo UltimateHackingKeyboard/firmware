@@ -9,7 +9,6 @@
 
 #include "usb_log_buffer.h"
 #ifdef __ZEPHYR__
-#include "proxy_log_backend.h"
 #include "state_sync.h"
 #endif
 
@@ -43,9 +42,7 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             }
             break;
         case UsbVariable_ShellEnabled:
-            #ifdef __ZEPHYR__
-                SetUsbTxBufferUint8(1, ProxyLog_IsAttached);
-            #endif
+            SetUsbTxBufferUint8(1, WormCfg->UsbLogEnabled);
             break;
         case UsbVariable_ShellBuffer:
             UsbLogBuffer_Consume(GenericHidInBuffer + 1, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);

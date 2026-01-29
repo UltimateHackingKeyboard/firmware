@@ -368,15 +368,15 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
 static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1 || argv[1][0] == '1') {
-        ProxyLog_SetAttached(true);
+        WormCfg->UsbLogEnabled = true;
     } else if (argc == 1 || argv[1][0] == '0') {
-        ProxyLog_SetAttached(false);
+        WormCfg->UsbLogEnabled = false;
     }
 
     uint16_t usbBufferFill, usbBufferSize;
     UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
 
-    printk("Usb logging enabled: %d\n", ProxyLog_IsAttached);
+    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
     printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
     return 0;

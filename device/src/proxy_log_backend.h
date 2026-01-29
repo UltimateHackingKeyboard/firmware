@@ -12,12 +12,10 @@
 
 // Variables:
 
-    extern bool ProxyLog_IsAttached;
     extern bool ProxyLog_IsInPanicMode;
 
 // Functions:
 
-    void ProxyLog_SetAttached(bool attached);
     void InitProxyLogBackend(void);
 
 #endif

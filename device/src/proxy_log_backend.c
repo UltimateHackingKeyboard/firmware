@@ -18,6 +18,7 @@
 #include "zephyr/logging/log_core.h"
 #include "config_manager.h"
 #include "usb_log_buffer.h"
+#include "config_manager.h"
 
 typedef struct {
     bool outputToStatusBuffer;
@@ -28,11 +29,6 @@ typedef struct {
 #define PROXY_BACKEND_BUFFER_SIZE 2048
 
 bool ProxyLog_IsInPanicMode = false;
-bool ProxyLog_IsAttached = false;
-
-void ProxyLog_SetAttached(bool attached) {
-    ProxyLog_IsAttached = attached;
-}
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
@@ -95,7 +91,7 @@ static void processLog(const struct log_backend *const backend, union log_msg_ge
             .outputToOled = false,
     };
 
-    if (ProxyLog_IsAttached) {
+    if (WormCfg->UsbLogEnabled) {
         outputs.outputToUsbBuffer = true;
         outputs.outputToOled = true;
     }
@@ -115,7 +111,6 @@ static void processLog(const struct log_backend *const backend, union log_msg_ge
 
     if (outputs.outputToStatusBuffer || outputs.outputToUsbBuffer || outputs.outputToOled) {
         log_output_ctx_set(&logOutput, &outputs);
-
         uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
         log_output_msg_process(&logOutput, &msg->log, flags);
     }
