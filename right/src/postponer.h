@@ -47,6 +47,7 @@
             bool active;
             uint8_t layer;
             uint8_t modifiers;
+            uint8_t pressTimestamp;
            } ATTR_PACKED key;
            struct {
             uint32_t length;
@@ -74,8 +75,8 @@
     bool PostponerCore_EventsShouldBeQueued(void);
     /* void PostponerCore_PostponeNCycles(uint8_t n); */
     bool PostponerCore_RunKey(key_state_t* key, bool active);
-    void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
-    void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer);
+    void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer, uint8_t pressTimestamp);
+    void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer, uint8_t pressTimestamp);
     void PostponerCore_TrackDelay(uint32_t length) ;
     void PostponerCore_RunPostponedEvents(void);
     void PostponerCore_FinishCycle(void);
