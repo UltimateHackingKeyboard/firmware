@@ -6,6 +6,7 @@
 #include "keyboard/oled/oled.h"
 #include "logger.h"
 #include "proxy_log_backend.h"
+#include "usb_log_buffer.h"
 #include "usb/usb.h"
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/gpio.h>
@@ -373,17 +374,17 @@ static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
     }
 
     uint16_t usbBufferFill, usbBufferSize;
-    ProxyLog_GetFill(&usbBufferFill, &usbBufferSize);
+    UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
 
     printk("Usb logging enabled: %d\n", ProxyLog_IsAttached);
-    printk("Has log: %d\n", ProxyLog_HasLog);
+    printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
     return 0;
 }
 
 static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
 {
-    ProxyLog_SnapToStatusBuffer();
+    UsbLogBuffer_SnapToStatusBuffer();
     printk("Log snapped to status buffer.\n");
     return 0;
 }

@@ -6,6 +6,7 @@
 #include "macros/status_buffer.h"
 #include "macro_events.h"
 #include "debug.h"
+#include "usb_log_buffer.h"
 
 
 #ifdef __ZEPHYR__
@@ -119,6 +120,10 @@ void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffe
 #ifdef __ZEPHYR__
         if ((logMask & LogTarget_Uart) && DEBUG_LOG_UART) {
             Uart_LogConstant(buffer);
+        }
+#else
+        if (logMask & LogTarget_Uart) {
+            UsbLogBuffer_Print((uint8_t*)buffer, strlen(buffer));
         }
 #endif
         if (logMask & LogTarget_ErrorBuffer) {

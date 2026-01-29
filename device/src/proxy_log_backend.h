@@ -12,17 +12,12 @@
 
 // Variables:
 
-
     extern bool ProxyLog_IsAttached;
-    extern bool ProxyLog_HasLog;
     extern bool ProxyLog_IsInPanicMode;
 
 // Functions:
 
     void ProxyLog_SetAttached(bool attached);
     void InitProxyLogBackend(void);
-    uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize);
-    void ProxyLog_GetFill(uint16_t* occupied, uint16_t* length);
-    void ProxyLog_SnapToStatusBuffer(void);
 
-#endif /* __MACRO_SET_COMMAND_H__ */
+#endif
