@@ -12,6 +12,7 @@
 #endif
 
 #include "utils.h"
+#include "test_suite/test_hooks.h"
 
 #ifndef USB_HID_BOOT_PROTOCOL
 #define USB_HID_BOOT_PROTOCOL   0U

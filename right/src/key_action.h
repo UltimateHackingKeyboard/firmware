@@ -21,6 +21,7 @@
         KeyActionType_SwitchLayer,
         KeyActionType_SwitchKeymap,
         KeyActionType_PlayMacro,
+        KeyActionType_InlineMacro,
         KeyActionType_Connections,
         KeyActionType_Other,
     } key_action_type_t;
@@ -102,6 +103,9 @@
                 uint8_t macroId;
                 uint16_t offset;
             } ATTR_PACKED playMacro;
+            struct {
+                const char* text;
+            } ATTR_PACKED inlineMacro;
             struct {
                 connection_action_t command;
                 uint8_t hostConnectionId;

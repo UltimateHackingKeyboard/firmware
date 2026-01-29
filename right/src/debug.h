@@ -18,7 +18,6 @@
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
-#define DEBUG_RUN_TESTS false
 
 #define DEBUG_BATTERY_TESTING true
 #define DEBUG_UHK60_SLEEPS false

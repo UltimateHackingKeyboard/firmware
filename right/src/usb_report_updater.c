@@ -8,6 +8,7 @@
 #include "layer.h"
 #include "ledmap.h"
 #include "stubs.h"
+#include "test_suite/test_hooks.h"
 #include "test_switches.h"
 #include "slot.h"
 #include "keymap.h"
@@ -471,6 +472,12 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
                 Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationTimestamp, 255, true);
             }
             break;
+        case KeyActionType_InlineMacro:
+            if (KeyState_ActivatedNow(keyState)) {
+                resetStickyMods(cachedAction);
+                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->timestamp);
+            }
+            break;
         case KeyActionType_Connections:
             applyConnectionAction(keyState, action->connections.command, action->connections.hostConnectionId);
             break;
@@ -825,8 +832,9 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
 
-            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
+            if (TestHooks_Active || RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
                 //just switch reports without sending the report
+                TestHooks_CaptureReport(ActiveUsbBasicKeyboardReport);
                 SwitchActiveUsbBasicKeyboardReport();
             } else {
                 UsbBasicKeyboardSendActiveReport();

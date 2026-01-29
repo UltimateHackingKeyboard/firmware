@@ -25,6 +25,7 @@
 #include "test_switches.h"
 #include "power_mode.h"
 #include "keyboard/leds.h"
+#include "test_suite/test_hooks.h"
 
 // Thread definitions
 
@@ -208,6 +209,7 @@ static bool quickScan() {
     return someKeyPressed;
 }
 
+
 static void scanAllKeys() {
     bool somethingChanged = false;
     static bool keyStateBuffer[KEY_MATRIX_ROWS*KEY_MATRIX_COLS];
@@ -303,8 +305,12 @@ bool KeyScanner_ScanAndWakeOnSfjl(bool fullScan, bool wake) {
 static void scanKeys() {
     if (CurrentPowerMode > PowerMode_LightSleep) {
         KeyScanner_ScanAndWakeOnSfjl(true, true);
-    } else if (!USE_QUICK_SCAN || KeyPressed || quickScan()) {
-        scanAllKeys();
+    } else if (!USE_QUICK_SCAN || KeyPressed || quickScan() || TestHooks_Active) {
+        if (TestHooks_Active) {
+            TestHooks_Tick();
+        } else {
+            scanAllKeys();
+        }
     }
 }
 

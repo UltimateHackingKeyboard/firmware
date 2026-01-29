@@ -48,17 +48,12 @@
 #include "thread_stats.h"
 #include "power_mode.h"
 #include "mouse_controller.h"
+#include "test_suite/test_suite.h"
 #include "wormhole.h"
 #include "power_mode.h"
 #include "proxy_log_backend.h"
 #include "logger_priority.h"
 #include "keyboard/uart_modules.h"
-
-#if DEVICE_IS_KEYBOARD
-#include "keyboard/battery_unloaded_calculator.h"
-#include "keyboard/battery_percent_calculator.h"
-#endif
-
 
 /**
  * 5.1mA - base. Isn't that quite a lot? (Although this is on 5V usb - will be less on battery)
@@ -287,14 +282,7 @@ void mainRuntime(void) {
 
     RoundTripTest_Init();
 
-    if (DEBUG_RUN_TESTS) {
-        MacroVariables_RunTests();
-#if DEVICE_IS_KEYBOARD
-        MouseController_RunTests();
-        BatteryCalculator_RunTests();
-        BatteryCalculator_RunPercentTests();
-#endif
-    }
+    TestSuite_Init();
 
     // Call after all threads have been created
     ThreadStats_Init();

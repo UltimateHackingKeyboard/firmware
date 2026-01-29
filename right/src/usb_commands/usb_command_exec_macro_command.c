@@ -33,7 +33,7 @@ static bool canExecute()
         return false;
     }
 
-    if (Macros_MacroHasActiveInstance(MacroIndex_UsbCmdReserved)) {
+    if (Macros_MacroHasActiveInstance(MacroIndex_InlineMacro)) {
         return false;
     }
 
@@ -42,7 +42,7 @@ static bool canExecute()
 
 void UsbMacroCommand_ExecuteSynchronously()
 {
-    Macros_StartMacro(MacroIndex_UsbCmdReserved, &dummyState, 0, 255, MacroIndex_None, false);
+    Macros_StartMacro(MacroIndex_InlineMacro, &dummyState, 0, 255, MacroIndex_None, false, UsbMacroCommand);
     EventVector_Unset(EventVector_UsbMacroCommandWaitingForExecution);
 }
 

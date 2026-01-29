@@ -354,7 +354,7 @@ static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char
 static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *argv[])
 {
 
-    if (argc > 1 && argv[1][0] == 'h') {
+    if (argc > 1 && (argv[1][0] == 'h' || argv[1][0] == '1')) {
         Logger_SetPriority(true);
         shell_fprintf(shell, SHELL_NORMAL, "Log priority set to high.\n");
     } else {
