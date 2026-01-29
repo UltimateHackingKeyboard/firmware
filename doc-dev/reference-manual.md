@@ -10,7 +10,7 @@ This file contains (semi)formal documentation of all features of the extended en
 
 ## Error handling, troubleshooting, crash logs
 
-Whenever a garbled command is encountered, `ERR` will light up on the display (on UHK60), a triangle warning icon `⚠️` will be shown on the display (on UHK80), and details are appended to an error buffer. You can retrieve the contents of the error buffer by running a `printStatus` macro command over a focused text editor. The contents of the error buffer will also be shown in Agent in a yellow error pane. The pane will automatically appear in Agent when an error has been recorded in the error buffer. The error is cleared with the `clearError` macro command or by saving a new configuration to the keyboard from Agent.
+Whenever a garbled command is encountered, `ERR` will light up on the display (on UHK60), a triangle warning icon `⚠️` will be shown on the display (on UHK80), and details are appended to an error buffer. You can retrieve the contents of the error buffer by running a `printStatus` macro command over a focused text editor. The contents of the error buffer will also be shown in Agent in a yellow error pane. The pane will automatically appear in Agent when an error has been recorded in the error buffer. The error is cleared with the `clearStatus` macro command or by saving a new configuration to the keyboard from Agent.
 
 Errors have the following format:
 
