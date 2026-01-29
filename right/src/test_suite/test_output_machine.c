@@ -105,7 +105,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                 if (validateReport(report, action->expectShortcuts, false)) {
                     // Match - continue processing (there may be more expects matching this report)
                     if (action->type == TestAction_ExpectMaybe) {
-                        LogU("[TEST] <   ExpectMaybe '%s' - matched\n", action->expectShortcuts);
+                        LOG_VERBOSE("[TEST] <   ExpectMaybe '%s' - matched\n", action->expectShortcuts);
                     } else {
                         LOG_VERBOSE("[TEST] <   Ok - Expect '%s'\n", action->expectShortcuts);
                     }
@@ -126,12 +126,12 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
                 }
                 // Not a match and not a duplicate - would fail, but if ExpectMaybe, skip instead
                 if (action->type == TestAction_ExpectMaybe) {
-                    LogU("[TEST] <   ExpectMaybe '%s' - skipped\n", action->expectShortcuts);
+                    LOG_VERBOSE("[TEST] <   ExpectMaybe '%s' - skipped\n", action->expectShortcuts);
                     OutputMachine_ActionIndex++;
                     break;  // Continue loop to check next action
                 }
-                // Fail
-                validateReport(report, action->expectShortcuts, TestSuite_Verbose);  // Log failure only in verbose mode
+                // Fail - always log the failure details
+                validateReport(report, action->expectShortcuts, true);
                 OutputMachine_Failed = true;
                 return;
 

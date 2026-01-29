@@ -121,7 +121,12 @@ void TestHooks_Tick(void) {
                     goto finish;
                 }
             } else {
-                // First failure - save position and rerun with verbose
+                // First failure - log and save position for rerun with verbose
+                if (failed) {
+                    LogU("[TEST] Finished: %s/%s - FAIL (rerunning verbose)\n", module->name, test->name);
+                } else {
+                    LogU("[TEST] Finished: %s/%s - TIMEOUT (rerunning verbose)\n", module->name, test->name);
+                }
                 rerunModuleIndex = currentModuleIndex;
                 rerunTestIndex = currentTestIndex;
                 isRerunning = true;

@@ -328,7 +328,7 @@ void InputMachine_Tick(void) {
             }
 
             case TestAction_CheckNow:
-                if (!validateReport(action->expectShortcuts, TestSuite_Verbose)) {
+                if (!validateReport(action->expectShortcuts, true)) {  // Always log failures
                     InputMachine_Failed = true;
                     return;
                 }
