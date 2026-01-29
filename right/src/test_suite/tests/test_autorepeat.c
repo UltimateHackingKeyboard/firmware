@@ -11,20 +11,20 @@ static const test_action_t test_autorepeat_basic[] = {
     TEST_SET_MACRO("u", "autoRepeat tapKey u\n"),
 
     // Press the key - should produce initial keystroke
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("u"),
-    TEST_EXPECT(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
 
     // Wait for autorepeat to trigger at least one more keystroke
-    TEST_DELAY(50),
-    TEST_EXPECT("u"),
-    TEST_EXPECT(""),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
 
     // Release key
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
 
     TEST_END()
 };
@@ -39,24 +39,24 @@ static const test_action_t test_autorepeat_with_modifier[] = {
     TEST_SET_MACRO("u", "autoRepeat tapKey LS-u\n"),
 
     // Press the key - should produce initial shifted keystroke
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-u"),
-    TEST_EXPECT("LS"),
-    TEST_EXPECT(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________("LS-u"),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________(""),
 
     // Wait for autorepeat
-    TEST_DELAY(50),
-    TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-u"),
-    TEST_EXPECT("LS"),
-    TEST_EXPECT(""),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________("LS-u"),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________(""),
 
     // Release key
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
 
     TEST_END()
 };

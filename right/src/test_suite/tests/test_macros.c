@@ -6,15 +6,15 @@ static const test_action_t test_macro_two_tapkeys[] = {
         "tapKey u\n"
         "tapKey i\n"
     ),
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("u"),
-    TEST_EXPECT(""),
-    TEST_EXPECT("i"),
-    TEST_EXPECT(""),
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
+    TEST_EXPECT__________("i"),
+    TEST_EXPECT__________(""),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
     TEST_END()
 };
 
@@ -23,15 +23,15 @@ static const test_action_t test_macro_with_modifier[] = {
     TEST_SET_MACRO("u",
         "tapKey LS-u\n"
     ),
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-u"),
-    TEST_EXPECT("LS"),
-    TEST_EXPECT(""),
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________("LS-u"),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________(""),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
     TEST_END()
 };
 

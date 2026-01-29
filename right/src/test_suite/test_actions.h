@@ -6,22 +6,22 @@
 
 // Helper macros for defining tests
 
-#define TEST_PRESS(key_id) \
+#define TEST_PRESS______(key_id) \
     { .type = TestAction_Press, .keyId = (key_id) }
 
-#define TEST_RELEASE(key_id) \
+#define TEST_RELEASE__U(key_id) \
     { .type = TestAction_Release, .keyId = (key_id) }
 
-#define TEST_DELAY(ms) \
+#define TEST_DELAY__(ms) \
     { .type = TestAction_Delay, .delayMs = (ms) }
 
 // Expect: OutputMachine validates on next report change
-// Takes space-separated shortcuts, e.g., TEST_EXPECT("a"), TEST_EXPECT("CS-b a"), TEST_EXPECT("")
-#define TEST_EXPECT(shortcuts) \
+// Takes space-separated shortcuts, e.g., TEST_EXPECT__________("a"), TEST_EXPECT__________("CS-b a"), TEST_EXPECT__________("")
+#define TEST_EXPECT__________(shortcuts) \
     { .type = TestAction_Expect, .expectShortcuts = (shortcuts) }
 
 // ExpectMaybe: if report matches, consume; if not, skip without failing
-#define TEST_EXPECT_MAYBE(shortcuts) \
+#define TEST_EXPECT___________MAYBE(shortcuts) \
     { .type = TestAction_ExpectMaybe, .expectShortcuts = (shortcuts) }
 
 // CheckNow: validate current report immediately (InputMachine)

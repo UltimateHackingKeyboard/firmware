@@ -1,33 +1,33 @@
 #include "tests.h"
 
-// Basic test: press a key, expect scancode, release, expect empty
+// press u, release u
 static const test_action_t test_basic_keypress[] = {
     TEST_SET_ACTION("u", "u"),
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("u"),
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("u"),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
     TEST_END()
 };
 
-// Two keys pressed simultaneously
+// Press u, press i, release u, release i
 static const test_action_t test_two_keys[] = {
     TEST_SET_ACTION("u", "u"),
     TEST_SET_ACTION("i", "i"),
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("u"),
-    TEST_PRESS("i"),
-    TEST_DELAY(20),
-    TEST_EXPECT("u i"),
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-    TEST_EXPECT("i"),
-    TEST_RELEASE("i"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("u"),
+    TEST_PRESS______("i"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("u i"),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("i"),
+    TEST_RELEASE__U("i"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
     TEST_END()
 };
 

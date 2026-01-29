@@ -20,27 +20,27 @@ static const test_action_t test_secondary_role_positive_safety[] = {
     TEST_SET_ACTION("i", "i"),
 
     // Press u (secondary role key) - nothing happens yet (postponed)
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
 
     // Press i while holding u - this may trigger secondary depending on config
-    TEST_PRESS("i"),
-    TEST_DELAY(60),
+    TEST_PRESS______("i"),
+    TEST_DELAY__(60),
 
     // Release i first - with release-order triggering and positive margin,
     // releasing i before u should trigger secondary role
-    TEST_RELEASE("i"),
-    TEST_DELAY(20),
+    TEST_RELEASE__U("i"),
+    TEST_DELAY__(20),
 
     // Release u - secondary role (LS) should now activate
-    TEST_RELEASE("u"),
-    TEST_DELAY(50),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(50),
 
     // Expected: LS activated, i typed with LS modifier, then both released
-    TEST_EXPECT("u"),
-    TEST_EXPECT("u i"),
-    TEST_EXPECT("u "),
-    TEST_EXPECT(""),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________("u i"),
+    TEST_EXPECT__________("u "),
+    TEST_EXPECT__________(""),
 
     TEST_END()
 };
@@ -56,35 +56,20 @@ static const test_action_t test_secondary_role_negative_safety[] = {
     TEST_SET_CONFIG("secondaryRole.advanced.timeoutAction secondary"),
     TEST_SET_CONFIG("secondaryRole.advanced.safetyMargin -50"),
     TEST_SET_CONFIG("secondaryRole.advanced.triggeringEvent release"),
-
-    // Set up u as secondary role key: tap=u, hold=LS
     TEST_SET_SECONDARY_ROLE("u", HID_KEYBOARD_SC_U, SecondaryRole_LeftShift),
-    // Set i to output i
     TEST_SET_ACTION("i", "i"),
-
-    // Press u (secondary role key) - nothing happens yet (postponed)
-    TEST_PRESS("u"),
-    TEST_DELAY(20),
-
-    // Press i while holding u
-    TEST_PRESS("i"),
-    TEST_DELAY(60),
-
-    // Release u first - with negative safetyMargin this should still trigger secondary
-    // because the margin biases towards secondary role
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
-
-    // Release i
-    TEST_RELEASE("i"),
-    TEST_DELAY(50),
-
-    // Expected: LS activated (secondary role), i typed with LS modifier
-    TEST_EXPECT("LS"),
-    TEST_EXPECT("LS-i"),
-    TEST_EXPECT("i"),
-    TEST_EXPECT(""),
-
+    TEST_PRESS______("u"),
+    TEST_DELAY__(20),
+    TEST_PRESS______("i"),
+    TEST_DELAY__(60),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
+    TEST_RELEASE__U("i"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("LS"),
+    TEST_EXPECT__________("LS-i"),
+    TEST_EXPECT__________("i"),
+    TEST_EXPECT__________(""),
     TEST_END()
 };
 

@@ -10,7 +10,7 @@
 #include "keymap.h"
 #include "config_manager.h"
 
-#define INTER_TEST_DELAY_MS 100
+#define INTER_TEST_DELAY___MS 100
 
 // Test hooks state
 bool TestHooks_Active = false;
@@ -73,7 +73,7 @@ void TestHooks_Tick(void) {
 
     // Handle inter-test delay
     if (inInterTestDelay) {
-        if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY_MS) {
+        if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY___MS) {
             inInterTestDelay = false;
             const test_t *nextTest = getCurrentTest();
             const test_module_t *module = AllTestModules[currentModuleIndex];

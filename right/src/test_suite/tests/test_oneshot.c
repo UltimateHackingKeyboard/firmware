@@ -10,37 +10,37 @@ static const test_action_t test_oneshot_modifiers[] = {
     TEST_SET_ACTION("p", "p"),
 
     // Trigger oneShot LS
-    TEST_PRESS("u"),
-    TEST_DELAY(60),
-    TEST_EXPECT("LS"),
-    TEST_RELEASE("u"),
-    TEST_DELAY(20),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(60),
+    TEST_EXPECT__________("LS"),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(20),
 
     // Trigger oneShot LC (should combine with LS)
-    TEST_PRESS("i"),
-    TEST_DELAY(60),
-    TEST_EXPECT("LSLC"),
-    TEST_RELEASE("i"),
-    TEST_DELAY(20),
+    TEST_PRESS______("i"),
+    TEST_DELAY__(60),
+    TEST_EXPECT__________("LSLC"),
+    TEST_RELEASE__U("i"),
+    TEST_DELAY__(20),
 
     // Tap o - should get both modifiers applied, then they release
-    TEST_PRESS("o"),
-    TEST_DELAY(60),
-    TEST_EXPECT("LSLC-o"),
-    TEST_EXPECT_MAYBE("LC-o"),
-    TEST_EXPECT_MAYBE("LS-o"),
-    TEST_RELEASE("o"),
-    TEST_DELAY(20),
-    TEST_EXPECT("o"),  // Modifiers unwind while key may still be releasing
-    TEST_EXPECT(""),
+    TEST_PRESS______("o"),
+    TEST_DELAY__(60),
+    TEST_EXPECT__________("LSLC-o"),
+    TEST_EXPECT___________MAYBE("LC-o"),
+    TEST_EXPECT___________MAYBE("LS-o"),
+    TEST_RELEASE__U("o"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________("o"),  // Modifiers unwind while key may still be releasing
+    TEST_EXPECT__________(""),
 
     // Tap p - should be unmodified now
-    TEST_PRESS("p"),
-    TEST_DELAY(60),
-    TEST_EXPECT("p"),
-    TEST_RELEASE("p"),
-    TEST_DELAY(20),
-    TEST_EXPECT(""),
+    TEST_PRESS______("p"),
+    TEST_DELAY__(60),
+    TEST_EXPECT__________("p"),
+    TEST_RELEASE__U("p"),
+    TEST_DELAY__(20),
+    TEST_EXPECT__________(""),
 
     TEST_END()
 };
