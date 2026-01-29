@@ -39,6 +39,7 @@
 // Functions:
 
     macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx);
+    macro_result_t Macros_ProcessNotifyCommand(parser_context_t* ctx);
 
 #endif
 
