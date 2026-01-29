@@ -1,6 +1,8 @@
 %{
 #include "command_ids.h"
 %}
+%readonly-tables
+%compare-strncmp
 struct command_entry { const char *name; command_id_t id; };
 %%
 activateKeyPostponed, CommandId_activateKeyPostponed

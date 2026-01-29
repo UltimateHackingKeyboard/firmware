@@ -111,12 +111,11 @@ bool IsEnd(parser_context_t* ctx) {
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
-        Trace_Printc("e3");
         while (*ctx->at <= 32 && !isEnd(ctx)) {
             ctx->at++;
         }
         if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
-            while (*ctx->at != '\n' && *ctx->at != '\r' && !isEnd(ctx)) {
+            while (*ctx->at != '\n' && !isEnd(ctx)) {
                 ctx->at++;
             }
         }
@@ -375,12 +374,12 @@ void ConsumeAnyToken(parser_context_t* ctx)
 
 const char* NextCmd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+    while(*cmd != '\n' && cmd < cmdEnd)    {
         cmd++;
     }
     const char* lastNewline = cmd;
     while(*cmd <= 32 && cmd < cmdEnd) {
-        if (*cmd == '\n' || *cmd == '\r') {
+        if (*cmd == '\n') {
             lastNewline = cmd;
         }
         cmd++;
@@ -395,7 +394,7 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
 
 const char* CmdEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+    while(*cmd != '\n' && cmd < cmdEnd)    {
         cmd++;
     }
     return cmd;
