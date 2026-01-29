@@ -10,4 +10,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_secondary_roles.c
     tests/test_oneshot.c
     tests/test_autorepeat.c
+    tests/test_chording.c
+    tests/test_autoshift.c
+    tests/test_ifshortcut_gesture.c
 )

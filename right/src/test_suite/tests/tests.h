@@ -23,5 +23,8 @@ extern const test_module_t TestModule_Macros;
 extern const test_module_t TestModule_SecondaryRoles;
 extern const test_module_t TestModule_Oneshot;
 extern const test_module_t TestModule_Autorepeat;
+extern const test_module_t TestModule_Chording;
+extern const test_module_t TestModule_AutoShift;
+extern const test_module_t TestModule_IfShortcutGesture;
 
 #endif

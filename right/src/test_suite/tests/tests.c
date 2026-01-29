@@ -9,6 +9,9 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_SecondaryRoles,
     &TestModule_Oneshot,
     &TestModule_Autorepeat,
+    &TestModule_Chording,
+    &TestModule_AutoShift,
+    &TestModule_IfShortcutGesture,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);
