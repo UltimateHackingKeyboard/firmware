@@ -32,5 +32,3 @@ void StateWormhole_Close(void) {
     StateWormhole.magicNumber = 0;
     StateWormhole_Clean();
 }
-
-

@@ -14,6 +14,10 @@
 // Typedefs:
 
     typedef struct {
+        bool devMode;
+    } worm_config_t;
+
+    typedef struct {
         uint64_t magicNumber;
 
         bool wasReboot;
@@ -25,7 +29,7 @@
         bool persistStatusBuffer;
         macro_status_buffer_t statusBuffer;
 
-        bool devMode;
+        worm_config_t WormCfg;
     } wormhole_data_t;
 
     bool StateWormhole_IsOpen(void);

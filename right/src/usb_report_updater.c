@@ -44,6 +44,7 @@
 #include "led_manager.h"
 #include "power_mode.h"
 #include "oneshot.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
@@ -52,7 +53,6 @@
 #include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
-#include "trace.h"
 #include "bt_pair.h"
 #else
 #include "stubs.h"
@@ -469,7 +469,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->timestamp, 255, true, NULL);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationTimestamp, 255, true);
             }
             break;
         case KeyActionType_InlineMacro:
@@ -554,7 +554,7 @@ static void mergeReports(void)
     }
 }
 
-static void commitKeyState(key_state_t *keyState, bool active)
+static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTimestamp)
 {
     WATCH_TRIGGER(keyState);
 
@@ -571,9 +571,10 @@ static void commitKeyState(key_state_t *keyState, bool active)
     }
 
     if (PostponerCore_EventsShouldBeQueued()) {
-        PostponerCore_TrackKeyEvent(keyState, active, 255);
+        PostponerCore_TrackKeyEvent(keyState, active, 255, pressTimestamp);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
+        keyState->activationTimestamp = pressTimestamp;
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();
@@ -583,28 +584,30 @@ static inline void preprocessKeyState(key_state_t *keyState)
 {
     uint32_t currentTime = Timer_GetCurrentTime();
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
-    if (keyState->debouncing && (uint8_t)(currentTime - keyState->timestamp) >= debounceTime) {
+    if (keyState->debouncing && (uint8_t)(currentTime - keyState->debounceTimestamp) >= debounceTime) {
         keyState->debouncing = false;
     }
 
     // read just once! Otherwise the key might get stuck
     bool hardwareState = keyState->hardwareSwitchState;
     if (!keyState->debouncing && keyState->debouncedSwitchState != hardwareState) {
-        if (keyState->timestamp == currentTime) {
-            keyState->timestamp = currentTime-1;
+        uint8_t oldTimestamp = keyState->debounceTimestamp;
+        if (keyState->debounceTimestamp == currentTime) {
+            keyState->debounceTimestamp = currentTime-1;
         } else {
-            keyState->timestamp = currentTime;
+            keyState->debounceTimestamp = currentTime;
         }
+        uint8_t pressTimestamp = hardwareState ? keyState->debounceTimestamp : oldTimestamp;
         keyState->debouncing = true;
         keyState->debouncedSwitchState = hardwareState;
 
         Trace_Printc("x1");
-        commitKeyState(keyState, keyState->debouncedSwitchState);
+        commitKeyState(keyState, keyState->debouncedSwitchState, pressTimestamp);
         Trace_Printc("x2");
     }
 
     if (keyState->debouncing) {
-        uint8_t timeSinceActivation = (uint8_t)(currentTime - keyState->timestamp);
+        uint8_t timeSinceActivation = (uint8_t)(currentTime - keyState->debounceTimestamp);
         Trace_Printc("x3");
         EventScheduler_Schedule(currentTime + (debounceTime - timeSinceActivation), EventSchedulerEvent_NativeActions, "debouncing");
         Trace_Printc("x4");
@@ -674,7 +677,7 @@ static void updateActionStates() {
             key_action_cached_t *cachedAction;
             key_action_t *actionBase;
 
-            if(((uint8_t*)keyState)[1] == 0) {
+            if(((uint8_t*)keyState)[2] == 0) {
                 continue;
             }
 
