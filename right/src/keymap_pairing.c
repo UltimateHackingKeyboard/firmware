@@ -7,6 +7,10 @@
 #include "lufa/HIDClassCommon.h"
 #include "macros/keyid_parser.h"
 
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#endif
+
 #define PAIRING_KEYMAP_INDEX 0xFF
 
 #define KEYID_TO_SLOT(keyId) ((keyId) / 64)
@@ -55,8 +59,10 @@ void Keymap_ActivatePairingKeymap(void)
     // Set up control keys
     setPairingKey("backspace", HID_KEYBOARD_SC_BACKSPACE);
     setPairingKey("escape", HID_KEYBOARD_SC_ESCAPE);
-    setPairingKey("capsLock", HID_KEYBOARD_SC_ESCAPE);
 
+#ifdef __ZEPHYR__
+    StateSync_UpdateLayer(LayerId_Base, true);
+#endif
     EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
