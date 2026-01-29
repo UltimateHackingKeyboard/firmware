@@ -112,7 +112,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     PostponerQuery_InfoByKeystate(resolutionKey, &dummy, &dualRoleRelease);
     const int32_t activeTime = (dualRoleRelease == NULL ? Timer_GetCurrentTime() : dualRoleRelease->time) - resolutionStartTime;
     bool mouseSecondaryRequested = activateSecondaryImmediately;
-    // sometimes, the trackball or keycluster scroll ball will trigger on vibration on keypress
+    // sometimes, the balls in keycluster or trackball modules will trigger on vibration on keypress
     // for this reason, we ignore all such activations until the key has been pressed long enough to be allowed secondary
     // the request is reset here to prevent the unintentional vibration activation from just activating when minimum hold time is reached
     activateSecondaryImmediately = false;
