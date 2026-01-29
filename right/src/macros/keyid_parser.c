@@ -4,6 +4,7 @@
 #include "str_utils.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 #include "debug.h"
 
 
@@ -196,4 +197,10 @@ const char* MacroKeyIdParser_KeyIdToAbbreviation(uint8_t keyId)
         }
     }
     return "?";
+}
+
+uint8_t KeyIdParser_KeyIdFromString(const char* str)
+{
+    const lookup_record_t* record = lookup(0, lookup_size-1, str, str + strlen(str));
+    return record ? record->keyId : 255;
 }
