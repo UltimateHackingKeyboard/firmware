@@ -9,6 +9,14 @@
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "keymap.h"
 #include "config_manager.h"
+#include "macros/vars.h"
+#include "mouse_controller.h"
+
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
+#include "keyboard/battery_unloaded_calculator.h"
+#include "keyboard/battery_percent_calculator.h"
+#endif
+
 
 #define INTER_TEST_DELAY___MS 100
 
@@ -184,6 +192,14 @@ uint8_t TestSuite_RunAll(void) {
     for (uint16_t i = 0; i < AllTestModulesCount; i++) {
         totalTestCount += AllTestModules[i]->testCount;
     }
+
+    LogU("[TEST] Running custom unit tests...\n");
+
+    MacroVariables_RunTests();
+#if DEVICE_IS_KEYBOARD
+    BatteryCalculator_RunTests();
+    BatteryCalculator_RunPercentTests();
+#endif
 
     LogU("[TEST] Starting test suite (%d tests in %d modules)\n", totalTestCount, AllTestModulesCount);
 

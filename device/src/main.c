@@ -55,12 +55,6 @@
 #include "logger_priority.h"
 #include "keyboard/uart_modules.h"
 
-#if DEVICE_IS_KEYBOARD
-#include "keyboard/battery_unloaded_calculator.h"
-#include "keyboard/battery_percent_calculator.h"
-#endif
-
-
 /**
  * 5.1mA - base. Isn't that quite a lot? (Although this is on 5V usb - will be less on battery)
  *-----------
@@ -289,15 +283,6 @@ void mainRuntime(void) {
     RoundTripTest_Init();
 
     TestSuite_Init();
-
-    if (DEBUG_RUN_TESTS) {
-        MacroVariables_RunTests();
-#if DEVICE_IS_KEYBOARD
-        MouseController_RunTests();
-        BatteryCalculator_RunTests();
-        BatteryCalculator_RunPercentTests();
-#endif
-    }
 
     // Call after all threads have been created
     ThreadStats_Init();
