@@ -469,13 +469,13 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationTimestamp, 255, true);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationTimestamp, 255, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->timestamp);
+                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationTimestamp);
             }
             break;
         case KeyActionType_Connections:
