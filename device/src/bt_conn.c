@@ -981,9 +981,6 @@ void BtConn_Init(void) {
 void num_comp_reply(int passkey) {
     struct bt_conn *conn;
 
-#if DEVICE_HAS_OLED
-    NotificationScreen_NotifyFor("Pairing...", 10000);
-#endif
 
     if (!auth_conn) {
         return;
@@ -994,8 +991,14 @@ void num_comp_reply(int passkey) {
     if (passkey >= 0) {
         bt_conn_auth_passkey_entry(conn, passkey);
         LOG_INF("Sending passkey to conn %s", GetPeerStringByConn(conn));
+#if DEVICE_HAS_OLED
+        NotificationScreen_NotifyFor("Pairing...", 10000);
+#endif
     } else {
         conn = unsetAuthConn(true);
+#if DEVICE_HAS_OLED
+        PairingScreen_Feedback(false);
+#endif
     }
 }
 

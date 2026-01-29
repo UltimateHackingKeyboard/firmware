@@ -75,7 +75,6 @@ const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
     static const rgb_t black = { 0, 0, 0 };
     static const rgb_t green = { 0, 0xff, 0 };
     static const rgb_t red = { 0xff, 0, 0 };
-    static const rgb_t blue = { 0, 0, 0xff };
 
     if (
             action->type != KeyActionType_Keystroke
@@ -86,16 +85,18 @@ const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
     }
 
     switch (action->keystroke.scancode) {
-        case HID_KEYBOARD_SC_ESCAPE:
-            return &red;
-        case HID_KEYBOARD_SC_DELETE:
-        case HID_KEYBOARD_SC_BACKSPACE:
-            return &blue;
+        // Numbers are green
         case HID_KEYBOARD_SC_1_AND_EXCLAMATION ... HID_KEYBOARD_SC_9_AND_OPENING_PARENTHESIS:
         case HID_KEYBOARD_SC_0_AND_CLOSING_PARENTHESIS:
         case HID_KEYBOARD_SC_KEYPAD_1_AND_END ... HID_KEYBOARD_SC_KEYPAD_9_AND_PAGE_UP:
         case HID_KEYBOARD_SC_KEYPAD_0_AND_INSERT:
             return &green;
+        // Control keys (esc, backspace) are red
+        case HID_KEYBOARD_SC_ESCAPE:
+        case HID_KEYBOARD_SC_DELETE:
+        case HID_KEYBOARD_SC_BACKSPACE:
+            return &red;
+        // Everything else is black
         default:
             return &black;
     }
