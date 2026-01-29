@@ -59,7 +59,6 @@ void Keymap_ActivatePairingKeymap(void)
     // Set up control keys
     setPairingKey("backspace", HID_KEYBOARD_SC_BACKSPACE);
     setPairingKey("escape", HID_KEYBOARD_SC_ESCAPE);
-    setPairingKey("capsLock", HID_KEYBOARD_SC_ESCAPE);
 
 #ifdef __ZEPHYR__
     StateSync_UpdateLayer(LayerId_Base, true);
