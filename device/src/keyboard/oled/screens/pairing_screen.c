@@ -91,9 +91,8 @@ const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
         case HID_KEYBOARD_SC_KEYPAD_1_AND_END ... HID_KEYBOARD_SC_KEYPAD_9_AND_PAGE_UP:
         case HID_KEYBOARD_SC_KEYPAD_0_AND_INSERT:
             return &green;
-        // Control keys (esc, enter, backspace) are red
+        // Control keys (esc, backspace) are red
         case HID_KEYBOARD_SC_ESCAPE:
-        case HID_KEYBOARD_SC_ENTER:
         case HID_KEYBOARD_SC_DELETE:
         case HID_KEYBOARD_SC_BACKSPACE:
             return &red;

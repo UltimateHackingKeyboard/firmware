@@ -54,7 +54,6 @@ void Keymap_ActivatePairingKeymap(void)
 
     // Set up control keys
     setPairingKey("backspace", HID_KEYBOARD_SC_BACKSPACE);
-    setPairingKey("enter", HID_KEYBOARD_SC_ENTER);
     setPairingKey("escape", HID_KEYBOARD_SC_ESCAPE);
     setPairingKey("capsLock", HID_KEYBOARD_SC_ESCAPE);
 
