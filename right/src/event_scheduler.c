@@ -26,24 +26,105 @@
 #include "segment_display.h"
 #endif
 
-static uint32_t times[EventSchedulerEvent_Count] = {};
-static const char* labels[EventSchedulerEvent_Count] = {};
-static event_scheduler_event_t nextEvent;
-static uint32_t nextEventAt;
+// Binary min-heap implementation for efficient event scheduling
+// The heap stores scheduled events ordered by timestamp (minimum at root)
+
+typedef struct {
+    event_scheduler_event_t event;
+    uint32_t time;
+    const char* label;
+} heap_entry_t;
+
+#define HEAP_INDEX_NONE 0xFF
+
+static heap_entry_t heap[EventSchedulerEvent_Count];
+static uint8_t heapIndex[EventSchedulerEvent_Count] = { [0 ... EventSchedulerEvent_Count-1] = HEAP_INDEX_NONE };
+static uint8_t heapSize = 0;
 
 volatile uint32_t EventScheduler_Vector = 0;
 
-static void scheduleNext()
-{
-    bool gotAny = false;
-    for (uint8_t i = 0; i < EventSchedulerEvent_Count; i++) {
-        if (times[i] != 0 && (!gotAny || times[i] < nextEventAt)) {
-            gotAny = true;
-            nextEvent = i;
-            nextEventAt = times[i];
+// Heap helper functions
+static inline uint8_t parent(uint8_t i) { return (i - 1) / 2; }
+static inline uint8_t leftChild(uint8_t i) { return 2 * i + 1; }
+static inline uint8_t rightChild(uint8_t i) { return 2 * i + 2; }
+
+static inline void heapSwap(uint8_t i, uint8_t j) {
+    heap_entry_t tmp = heap[i];
+    heap[i] = heap[j];
+    heap[j] = tmp;
+    heapIndex[heap[i].event] = i;
+    heapIndex[heap[j].event] = j;
+}
+
+static void siftUp(uint8_t i) {
+    while (i > 0 && heap[parent(i)].time > heap[i].time) {
+        heapSwap(i, parent(i));
+        i = parent(i);
+    }
+}
+
+static void siftDown(uint8_t i) {
+    uint8_t minIdx = i;
+    uint8_t left = leftChild(i);
+    uint8_t right = rightChild(i);
+
+    if (left < heapSize && heap[left].time < heap[minIdx].time) {
+        minIdx = left;
+    }
+    if (right < heapSize && heap[right].time < heap[minIdx].time) {
+        minIdx = right;
+    }
+    if (minIdx != i) {
+        heapSwap(i, minIdx);
+        siftDown(minIdx);
+    }
+}
+
+static void heapInsert(event_scheduler_event_t evt, uint32_t time, const char* label) {
+    heap[heapSize].event = evt;
+    heap[heapSize].time = time;
+    heap[heapSize].label = label;
+    heapIndex[evt] = heapSize;
+    heapSize++;
+    siftUp(heapSize - 1);
+}
+
+static void heapRemove(uint8_t i) {
+    heapIndex[heap[i].event] = HEAP_INDEX_NONE;
+    heapSize--;
+    if (i < heapSize) {
+        heap[i] = heap[heapSize];
+        heapIndex[heap[i].event] = i;
+        // May need to sift up or down depending on the replacement value
+        if (i > 0 && heap[parent(i)].time > heap[i].time) {
+            siftUp(i);
+        } else {
+            siftDown(i);
         }
     }
-    EventVector_SetValue(EventVector_EventScheduler, gotAny);
+}
+
+static void heapUpdate(uint8_t i, uint32_t newTime, const char* label) {
+    uint32_t oldTime = heap[i].time;
+    heap[i].time = newTime;
+    heap[i].label = label;
+    if (newTime < oldTime) {
+        siftUp(i);
+    } else {
+        siftDown(i);
+    }
+}
+
+static inline bool heapIsEmpty(void) {
+    return heapSize == 0;
+}
+
+static inline heap_entry_t* heapPeek(void) {
+    return heapSize > 0 ? &heap[0] : NULL;
+}
+
+static void updateEventVector(void) {
+    EventVector_SetValue(EventVector_EventScheduler, heapSize > 0);
 }
 
 #define RETURN_IF_SPAM(EVT) if (isSpam(EVT)) { return; }
@@ -172,19 +253,18 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
         printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
         printk("    !!! Replan: %s\n", label);
     )
-    times[evt] = at;
-    labels[evt] = label;
-    if (nextEvent == evt) {
-        scheduleNext();
+
+    uint8_t idx = heapIndex[evt];
+    if (idx != HEAP_INDEX_NONE) {
+        heapUpdate(idx, at, label);
+    } else {
+        heapInsert(evt, at, label);
     }
-    if (at < nextEventAt || !EventVector_IsSet(EventVector_EventScheduler) || nextEvent == evt) {
-        nextEventAt = at;
-        nextEvent = evt;
-        EventVector_Set(EventVector_EventScheduler);
+    updateEventVector();
+
 #ifdef __ZEPHYR__
-        Main_Wake();
+    Main_Wake();
 #endif
-    }
 }
 
 void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const char* label)
@@ -194,47 +274,49 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
         printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
         printk("    !!! Plan: %s\n", label);
     );
-    if (times[evt] == 0 || at < times[evt]) {
-        times[evt] = at;
-        labels[evt] = label;
+
+    uint8_t idx = heapIndex[evt];
+    if (idx != HEAP_INDEX_NONE) {
+        // Only update if the new time is earlier
+        if (at < heap[idx].time) {
+            heapUpdate(idx, at, label);
+        }
+    } else {
+        heapInsert(evt, at, label);
     }
-    if (at < nextEventAt || !EventVector_IsSet(EventVector_EventScheduler)) {
-        nextEventAt = at;
-        nextEvent = evt;
-        EventVector_Set(EventVector_EventScheduler);
+    updateEventVector();
+
 #ifdef __ZEPHYR__
-        Main_Wake();
+    Main_Wake();
 #endif
-    }
 }
 
 void EventScheduler_Unschedule(event_scheduler_event_t evt)
 {
     RETURN_IF_SPAM(evt);
-    times[evt] = 0;
-    labels[evt] = NULL;
 
-    if (nextEvent == evt) {
-        scheduleNext();
+    uint8_t idx = heapIndex[evt];
+    if (idx != HEAP_INDEX_NONE) {
+        heapRemove(idx);
     }
+    updateEventVector();
 }
 
 uint32_t EventScheduler_Process()
 {
-    while (EventVector_IsSet(EventVector_EventScheduler) && nextEventAt <= Timer_GetCurrentTime()) {
-        event_scheduler_event_t evt = nextEvent;
+    while (!heapIsEmpty() && heap[0].time <= Timer_GetCurrentTime()) {
+        heap_entry_t entry = heap[0];
         LOG_SCHEDULE(
-            if (labels[evt] != NULL) {
+            if (entry.label != NULL) {
                 printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
-                printk("!!! Scheduled event: %s\n", labels[evt]);
+                printk("!!! Scheduled event: %s\n", entry.label);
             }
         );
-        times[nextEvent] = 0;
-        labels[nextEvent] = NULL;
-        scheduleNext();
-        processEvt(evt);
+        heapRemove(0);
+        updateEventVector();
+        processEvt(entry.event);
     }
-    return nextEventAt;
+    return heapIsEmpty() ? UINT32_MAX : heap[0].time;
 }
 
 void EventVector_ReportMask(const char* prefix, uint32_t mask) {
@@ -285,6 +367,12 @@ void EventVector_ReportMask(const char* prefix, uint32_t mask) {
 }
 
 void EventVector_Init() {
+    // heapIndex is statically initialized to 0, but we use 0xFF as "not scheduled"
+    // Since static initialization is 0, we must initialize here before any scheduling
+    for (uint8_t i = 0; i < EventSchedulerEvent_Count; i++) {
+        heapIndex[i] = HEAP_INDEX_NONE;
+    }
+
     if (DEVICE_IS_UHK60) {
         EventScheduler_Schedule(1000, EventSchedulerEvent_AgentLed, "Agent led");
     }

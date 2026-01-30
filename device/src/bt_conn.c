@@ -402,25 +402,25 @@ void bt_foreach_list_current_connections(struct bt_conn *conn, void *data)
 {
     int8_t peerId = GetPeerIdByConn(conn);
     if (peerId == PeerIdUnknown) {
-        LogU("  - %s", GetPeerStringByConn(conn));
+        LogU("  - %s\n", GetPeerStringByConn(conn));
     } else {
-        LogU("  - peer %d(%s), connection %d", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
+        LogU("  - peer %d(%s), connection %d\n", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
     }
 }
 
 void BtConn_ListCurrentConnections() {
-    LogU("Current connections:");
+    LogU("Current connections:\n");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_list_current_connections, NULL);
 }
 
 
 static void bt_foreach_print_bond(const struct bt_bond_info *info, void *user_data)
 {
-    LogU(" - %s", GetAddrString(&info->addr));
+    LogU(" - %s\n", GetAddrString(&info->addr));
 }
 
 void BtConn_ListAllBonds() {
-    LogU("All bonds:");
+    LogU("All bonds:\n");
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
