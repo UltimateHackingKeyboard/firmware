@@ -13,7 +13,6 @@
 #endif
 
 #ifdef __ZEPHYR__
-#include "proxy_log_backend.h"
 #include "state_sync.h"
 #endif
 
@@ -52,9 +51,7 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
 #endif
             break;
         case UsbVariable_ShellEnabled:
-            #ifdef __ZEPHYR__
-                ProxyLog_SetAttached(GetUsbRxBufferUint8(2));
-            #endif
+            WormCfg->UsbLogEnabled = GetUsbRxBufferUint8(2);
             break;
         case UsbVariable_FirmwareVersionCheckEnabled:
             #ifdef __ZEPHYR__

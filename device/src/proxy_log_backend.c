@@ -17,6 +17,8 @@
 #include "wormhole.h"
 #include "zephyr/logging/log_core.h"
 #include "config_manager.h"
+#include "usb_log_buffer.h"
+#include "config_manager.h"
 
 typedef struct {
     bool outputToStatusBuffer;
@@ -27,81 +29,6 @@ typedef struct {
 #define PROXY_BACKEND_BUFFER_SIZE 2048
 
 bool ProxyLog_IsInPanicMode = false;
-
-static char buffer[PROXY_BACKEND_BUFFER_SIZE];
-uint16_t bufferPosition = 0;
-uint16_t bufferLength = 0;
-
-bool ProxyLog_HasLog = false;
-bool ProxyLog_IsAttached = false;
-
-#define POS(x) ((bufferPosition + (x) + PROXY_BACKEND_BUFFER_SIZE) % PROXY_BACKEND_BUFFER_SIZE)
-
-static void updateNonemptyFlag() {
-    ProxyLog_HasLog = (bufferLength > 0);
-}
-
-uint16_t ProxyLog_ConsumeLog(uint8_t* outBuf, uint16_t outBufSize) {
-    uint16_t copied = 0;
-    uint16_t remaining = MIN(bufferLength, outBufSize);
-    while (remaining > 0) {
-        char a = buffer[bufferPosition++];
-        outBuf[copied++] = a;
-        if (bufferPosition >= PROXY_BACKEND_BUFFER_SIZE) {
-            bufferPosition = 0;
-        }
-        remaining--;
-        bufferLength--;
-    }
-    if (copied < outBufSize) {
-        outBuf[copied] = 0;
-    }
-    updateNonemptyFlag();
-    return copied;
-}
-
-void ProxyLog_SetAttached(bool attached) {
-    ProxyLog_IsAttached = attached;
-}
-
-static void addChar(char c) {
-    if (CHAR_IS_VALID(c)) {
-        if (bufferLength < PROXY_BACKEND_BUFFER_SIZE) {
-            buffer[POS(bufferLength)] = c;
-            bufferLength++;
-        } else {
-            buffer[bufferPosition++] = c;
-            bufferPosition %= PROXY_BACKEND_BUFFER_SIZE;
-        }
-
-    }
-}
-
-void printToOurBuffer(uint8_t *data, size_t length) {
-    for (uint16_t i = 0; i < length; i++) {
-        addChar(data[i]);
-    }
-    updateNonemptyFlag();
-}
-
-void ProxyLog_GetFill(uint16_t* occupied, uint16_t* length) {
-    *occupied = bufferLength;
-    *length = PROXY_BACKEND_BUFFER_SIZE;
-}
-
-void ProxyLog_SnapToStatusBuffer(void) {
-    StateWormhole_Open();
-    StateWormhole.persistStatusBuffer = true;
-
-    uint16_t pos = bufferPosition;
-    uint16_t len = bufferLength;
-
-    for (uint16_t i = 0; i < len; i++) {
-        char c = buffer[pos];
-        Macros_SanitizedPut(&c, &c + 1);
-        pos = (pos + 1) % PROXY_BACKEND_BUFFER_SIZE;
-    }
-}
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
@@ -127,7 +54,7 @@ static int outputFunc(uint8_t *data, size_t length, void *ctx)
         Macros_SanitizedPut(data, data + length);
     }
     if (outputs->outputToUsbBuffer) {
-        printToOurBuffer(data, length);
+        UsbLogBuffer_Print(data, length);
     }
     if (outputs->outputToOled) {
         LogO("%.*s", length, data);
@@ -164,7 +91,7 @@ static void processLog(const struct log_backend *const backend, union log_msg_ge
             .outputToOled = false,
     };
 
-    if (ProxyLog_IsAttached) {
+    if (WormCfg->UsbLogEnabled) {
         outputs.outputToUsbBuffer = true;
         outputs.outputToOled = true;
     }
@@ -184,7 +111,6 @@ static void processLog(const struct log_backend *const backend, union log_msg_ge
 
     if (outputs.outputToStatusBuffer || outputs.outputToUsbBuffer || outputs.outputToOled) {
         log_output_ctx_set(&logOutput, &outputs);
-
         uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
         log_output_msg_process(&logOutput, &msg->log, flags);
     }
