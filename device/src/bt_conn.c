@@ -270,6 +270,30 @@ static void enableDataLengthExtension(struct bt_conn *conn) {
     }
 }
 
+#if DEVICE_IS_UHK80_RIGHT
+static void mtuExchangeCallback(struct bt_conn *conn, uint8_t err, struct bt_gatt_exchange_params *params) {
+    if (err) {
+        LOG_WRN("MTU exchange failed for %s (err %u)", GetPeerStringByConn(conn), err);
+    } else {
+        LOG_INF("MTU exchange done for %s", GetPeerStringByConn(conn));
+    }
+}
+#endif
+
+static void requestMtuExchange(struct bt_conn *conn) {
+#if DEVICE_IS_UHK80_RIGHT
+    static struct bt_gatt_exchange_params exchange_params;
+    exchange_params.func = mtuExchangeCallback;
+
+    LOG_INF("MTU exchanging %s", GetPeerStringByConn(conn));
+
+    int err = bt_gatt_exchange_mtu(conn, &exchange_params);
+    if (err && err != -EALREADY) {
+        LOG_WRN("MTU exchange request failed for %s (err %d)", GetPeerStringByConn(conn), err);
+    }
+#endif
+}
+
 static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* params) {
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
@@ -595,6 +619,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     // Without this, linux pairing fails, because tiny 27 byte packets
     // exhaust acl buffers easily
     enableDataLengthExtension(conn);
+    requestMtuExchange(conn);
 
     if (err) {
         LOG_WRN("Failed to connect to %s, err %u", GetPeerStringByConn(conn), err);
