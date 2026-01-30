@@ -39,6 +39,7 @@
         bool SecondaryRoles_AdvancedStrategyTriggerByMouse;
         bool SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
         secondary_role_state_t SecondaryRoles_AdvancedStrategyTimeoutAction;
+        secondary_role_timeout_type_t SecondaryRoles_AdvancedStrategyTimeoutType;
         uint8_t SecondaryRoles_AdvancedStrategyMinimumHoldTime;
 
         // mouse keys

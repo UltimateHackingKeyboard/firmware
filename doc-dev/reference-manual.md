@@ -154,8 +154,9 @@ COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
 COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
 COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
 COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary | none }
+COMMAND = set secondaryRole.advanced.timeoutType { active | passive } <sets whether timeout action is triggered on timeout or on release after timeout>
 COMMAND = set secondaryRole.advanced.safetyMargin <ms, higher value adjusts sensitivity towards primary role -50-50 (INT)>
-COMMAND = set secondaryRole.advanced.triggeringEvent { press | release | none } <determines whether secondary role is triggered when another key is pressed or when another key is pressed and released while the secondary role key is being held, or not at all from other keys being pressed>
+COMMAND = set secondaryRole.advanced.triggeringEvent { press | release | none } <sets whether to trigger secondary on another key's press or release, or neither>
 COMMAND = set secondaryRole.advanced.triggerByMouse <trigger secondary role immediately on mouse move (BOOL)
 COMMAND = set secondaryRole.advanced.minimumHoldTime <ms, minimum time a key must be held before it can trigger secondary role 0-255 (INT)>
 COMMAND = set secondaryRole.advanced.doubletapToPrimary <hold primary on doubletap (BOOL)>
@@ -716,6 +717,9 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
     - advanced strategy may trigger secondary role depending on timeout, or depending on key release order.
       - `set secondaryRole.advanced.timeout <timeout in ms, 350 (INT)>` if this timeout is reached, `timeoutAction` (secondary by default) role is activated.
       - `set secondaryRole.advanced.timeoutAction { primary | secondary | none}` defines whether the primary action or the secondary role, or no action at all, should be activated when timeout is reached
+      - `set secondaryRole.advanced.timeoutType { active | passive }` 
+        - active - the timeout action is activated immediately upon timeout.
+        - passive - the timeout action is delayed until release. This way, after the timeout, the action cannot become primary anymore, but can still become secondary.
       - `set secondaryRole.advanced.triggeringEvent { press | release | none }` determines whether a secondary role key is triggered as secondary if another key is pressed while it's held, if another key is pressed and released while it's held, or not at all from other keys being held.  The third option allows usage of the timeout feature without inter-key triggers.
       - `set secondaryRole.advanced.triggerByMouse BOOL` if enabled, any mouse (module) activity triggers secondary role immediately.
       - `set secondaryRole.advanced.minimumHoldTime <ms, 0-255 (INT)>` sets the minimum time that a key must be held before it is allowed to trigger as secondary role.

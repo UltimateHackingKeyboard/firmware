@@ -74,6 +74,10 @@
         SecondaryRoleTriggeringEvent_Release,
     } secondary_role_triggering_event_t;
 
+    typedef enum {
+        SecondaryRoleTimeoutType_Active,
+        SecondaryRoleTimeoutType_Passive,
+    } secondary_role_timeout_type_t;
 // Variables:
 
 // Functions:
