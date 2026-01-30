@@ -5,3 +5,6 @@ build
 .vscode/settings.json
 .jj
 mcux_include.json
+tags
+compile_commands.json
+specs
