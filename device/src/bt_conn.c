@@ -37,6 +37,7 @@
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
 #include "macros/status_buffer.h"
+#include <zephyr/logging/log_ctrl.h>
 
 LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
@@ -983,6 +984,9 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 void BtConn_Init(void) {
     BT_TRACE_AND_ASSERT("bc6");
     int err = 0;
+
+    int sourceId = log_source_id_get("hogp");
+    log_filter_set(NULL, 0, sourceId, LOG_LEVEL_INF);
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         Peers[peerId].id = peerId;
