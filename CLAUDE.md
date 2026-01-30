@@ -89,7 +89,7 @@ In `key_action.h`:
 - Extern functions: `UpperCamelCase` with `GroupName_FunctionName` pattern
 - Static functions: `lowerCamelCase`
 - Types: `snake_case_t`
-- Format with: `clang-format -i <file>`
+- Do not use autoformatting tools - manually format code to match surrounding codebase style
 
 ## Code Review Philosophy
 
