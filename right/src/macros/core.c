@@ -510,9 +510,16 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t m
     bool macroHasNotEnded = AllMacros[macroIndex].macroActionsCount;
     while (macroHasNotEnded) {
         if (S->ms.currentMacroAction.type == MacroActionType_Command) {
-            processCurrentMacroAction();
-            wasValid &= !Macros_ParserError;
-            Macros_ParserError = false;
+            // Skip validation of commands containing macroArg when no argument context is available
+            const char* cmdText = S->ms.currentMacroAction.cmd.text;
+            const char* cmdEnd = cmdText + S->ms.currentMacroAction.cmd.textLen;
+            bool skipCommand = argumentOffset == 0 && StrContains(cmdText, cmdEnd, "macroArg");
+
+            if (!skipCommand) {
+                processCurrentMacroAction();
+                wasValid &= !Macros_ParserError;
+                Macros_ParserError = false;
+            }
         }
 
         macroHasNotEnded = loadNextCommand() || loadNextAction();
@@ -535,7 +542,6 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t m
 
 /**
  * Current known limitations:
- * - We check only actions that have arguments, therefore we don't catch missing arguments.
  * - The validation takes hundreds of milliseconds, causing a short freeze when config is saved.
  */
 void Macros_ValidateAllMacros()
@@ -543,13 +549,23 @@ void Macros_ValidateAllMacros()
     macro_state_t* oldS = S;
     scheduler_state_t schedulerState = Macros_SchedulerState;
     memset(&Macros_SchedulerState, 0, sizeof Macros_SchedulerState);
-    LogU("Validating macros with arguments...\n");
     Macros_DryRun = true;
     Macros_ValidationInProgress = true;
     uint32_t t1 = Timer_GetCurrentTime();
+
+    // Validate macros in binding site contexts (with arguments)
+    LogU("Validating macros with arguments...\n");
     for (uint8_t keymapIndex = 0; keymapIndex < AllKeymapsCount; keymapIndex++) {
         DryParseKeymap(keymapIndex);
     }
+
+    // Validate all macros in general context (without arguments)
+    // Commands containing macroArg are skipped when argumentOffset == 0
+    LogU("Validating macros in general context...\n");
+    for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
+        Macros_ValidateMacro(macroIndex, 0, 255, 255, 255, 255);
+    }
+
     uint32_t t2 = Timer_GetCurrentTime();
     LogU("Validation completed in %d ms!\n", t2 - t1);
     Macros_ValidationInProgress = false;
