@@ -61,6 +61,7 @@
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);
+    bool StrContains(const char* str, const char* strEnd, const char* needle);
     bool ConsumeToken(parser_context_t* ctx, const char *b);
     void ConsumeAnyToken(parser_context_t* ctx);
     void ConsumeCommentsAsWhite(bool consume);

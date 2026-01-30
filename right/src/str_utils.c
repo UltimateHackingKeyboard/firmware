@@ -94,6 +94,30 @@ const char* FindChar(char c, const char* str, const char* strEnd)
     return strEnd;
 }
 
+bool StrContains(const char* str, const char* strEnd, const char* needle)
+{
+    uint8_t needleLen = strlen(needle);
+    uint16_t strLen = strEnd - str;
+
+    if (strLen < needleLen) {
+        return false;
+    }
+
+    for (uint16_t i = 0; i <= strLen - needleLen; i++) {
+        bool match = true;
+        for (uint8_t j = 0; j < needleLen; j++) {
+            if (str[i + j] != needle[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static bool isEnd(parser_context_t* ctx) {
     if (ctx->at < ctx->end) {
         return false;
