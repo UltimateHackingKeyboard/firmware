@@ -945,6 +945,19 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
     return res ? MacroResult_Blocking : MacroResult_Finished;
 }
 
+static macro_result_t processMacroArgCommand(uint32_t time)
+{
+    // ignore macroArg command for now, eat rest of line
+
+    uint16_t stringOffset = 0;
+    uint16_t textIndex = 0;
+    uint16_t textSubIndex = 0;
+
+    while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
+
+    return MacroResult_Finished;
+}
+
 static macro_result_t processWriteCommand(parser_context_t* ctx)
 {
     if (Macros_DryRun) {
@@ -2229,6 +2242,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
             return MacroResult_Finished;
 
         // 'm' commands
+        case CommandId_macroArg:
+            return processMacroArgCommand(ctx);
         case CommandId_mulReg:
             Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName*2)`.");
             return MacroResult_Finished;
