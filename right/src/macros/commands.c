@@ -1,5 +1,6 @@
 #include <string.h>
 #include "attributes.h"
+#include "command_ids.h"
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
 #include "host_connection.h"
@@ -53,6 +54,9 @@
 #if !defined(MAX)
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
+
+// Include the gperf-generated hash table
+#include "command_hash.c"
 
 static uint8_t lastLayerIdx;
 static uint8_t lastLayerKeymapIdx;
@@ -1997,6 +2001,15 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
 #endif
 }
 
+// Helper macro for condition commands that follow the pattern:
+// if (!processXCommand(...) && !S->ls->as.currentConditionPassed) return MacroResult_Finished | MacroResult_ConditionFailedFlag;
+#define CONDITION_FAILED_RESULT (MacroResult_Finished | MacroResult_ConditionFailedFlag)
+#define PROCESS_CONDITION(expr) \
+    if (!(expr) && !S->ls->as.currentConditionPassed) { \
+        return CONDITION_FAILED_RESULT; \
+    } \
+    break;
+
 static macro_result_t processCommand(parser_context_t* ctx)
 {
     const char* cmdTokEnd = TokEnd(ctx->at, ctx->end);
@@ -2009,720 +2022,410 @@ static macro_result_t processCommand(parser_context_t* ctx)
     }
 
     while(ctx->at < ctx->end || !IsEnd(ctx)) {
-        switch(*ctx->at) {
-        case 'a':
-            if (ConsumeToken(ctx, "activateKeyPostponed")) {
-                return processActivateKeyPostponedCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "autoRepeat")) {
-                return processAutoRepeatCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "addReg")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
-                return MacroResult_Finished;
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'b':
-            if (ConsumeToken(ctx, "break")) {
-                return processBreakCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "bluetooth")) {
-                return processBluetoothCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'c':
-            if (ConsumeToken(ctx, "consumePending")) {
-                return processConsumePendingCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "clearStatus")) {
-                return Macros_ProcessClearStatusCommand(true);
-            }
-            else if (ConsumeToken(ctx, "call")) {
-                return processCallCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'd':
-            if (ConsumeToken(ctx, "delayUntilRelease")) {
-                return processDelayUntilReleaseCommand();
-            }
-            else if (ConsumeToken(ctx, "delayUntilReleaseMax")) {
-                return processDelayUntilReleaseMaxCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "delayUntil")) {
-                return processDelayUntilCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "diagnose")) {
-                return Macros_ProcessDiagnoseCommand();
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'e':
-            if (ConsumeToken(ctx, "exec")) {
-                return processExecCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "else")) {
-                if (!Macros_DryRun && S->ls->ms.lastIfSucceeded) {
-                    return MacroResult_Finished;
-                }
-            }
-            else if (ConsumeToken(ctx, "exit")) {
-                return processExitCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'f':
-            if (ConsumeToken(ctx, "final")) {
-                return processFinalCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "fork")) {
-                return processForkCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "freeze")) {
-                return processFreezeCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'g':
-            if (ConsumeToken(ctx, "goTo")) {
-                return processGoToCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'h':
-            if (ConsumeToken(ctx, "holdLayer")) {
-                return processHoldLayerCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "holdLayerMax")) {
-                return processHoldLayerMaxCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "holdKeymapLayer")) {
-                return processHoldKeymapLayerCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "holdKeymapLayerMax")) {
-                return processHoldKeymapLayerMaxCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "holdKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Hold, &S->ms.reports);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'i':
-            if (ConsumeToken(ctx, "if")) {
-                if (!processIfCommand(ctx) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifDoubletap")) {
-                if (!processIfDoubletapCommand(false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotDoubletap")) {
-                if (!processIfDoubletapCommand(true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifInterrupted")) {
-                if (!processIfInterruptedCommand(false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotInterrupted")) {
-                if (!processIfInterruptedCommand(true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifReleased")) {
-                if (!processIfReleasedCommand(false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotReleased")) {
-                if (!processIfReleasedCommand(true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifKeymap")) {
-                if (!processIfKeymapCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotKeymap")) {
-                if (!processIfKeymapCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifLayer")) {
-                if (!processIfLayerCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotLayer")) {
-                if (!processIfLayerCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifLayerToggled")) {
-                if (!processIfLayerToggledCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotLayerToggled")) {
-                if (!processIfLayerToggledCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifPlaytime")) {
-                if (!processIfPlaytimeCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotPlaytime")) {
-                if (!processIfPlaytimeCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifAnyMod")) {
-                if (!processIfModifierCommand(false, 0xFF)  && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotAnyMod")) {
-                if (!processIfModifierCommand(true, 0xFF)  && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifShift")) {
-                if (!processIfModifierCommand(false, SHIFTMASK)  && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotShift")) {
-                if (!processIfModifierCommand(true, SHIFTMASK) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifCtrl")) {
-                if (!processIfModifierCommand(false, CTRLMASK) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotCtrl")) {
-                if (!processIfModifierCommand(true, CTRLMASK) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifAlt")) {
-                if (!processIfModifierCommand(false, ALTMASK) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotAlt")) {
-                if (!processIfModifierCommand(true, ALTMASK) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifGui")) {
-                if (!processIfModifierCommand(false, GUIMASK)  && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotGui")) {
-                if (!processIfModifierCommand(true, GUIMASK) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifCapsLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotCapsLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNumLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotNumLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifScrollLockOn")) {
-                if (!processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotScrollLockOn")) {
-                if (!processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifRecording")) {
-                if (!processIfRecordingCommand(false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotRecording")) {
-                if (!processIfRecordingCommand(true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifRecordingId")) {
-                if (!processIfRecordingIdCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotRecordingId")) {
-                if (!processIfRecordingIdCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotPending")) {
-                if (!processIfPendingCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifPending")) {
-                if (!processIfPendingCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifKeyPendingAt")) {
-                if (!processIfKeyPendingAtCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotKeyPendingAt")) {
-                if (!processIfKeyPendingAtCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifKeyActive")) {
-                if (!processIfKeyActiveCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotKeyActive")) {
-                if (!processIfKeyActiveCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifPendingKeyReleased")) {
-                if (!processIfPendingKeyReleasedCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotPendingKeyReleased")) {
-                if (!processIfPendingKeyReleasedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifKeyDefined")) {
-                if (!processIfKeyDefinedCommand(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotKeyDefined")) {
-                if (!processIfKeyDefinedCommand(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifModuleConnected")) {
-                if (!processIfModuleConnected(ctx, false) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifNotModuleConnected")) {
-                if (!processIfModuleConnected(ctx, true) && !S->ls->as.currentConditionPassed) {
-                    return MacroResult_Finished | MacroResult_ConditionFailedFlag;
-                }
-            }
-            else if (ConsumeToken(ctx, "ifHold")) {
-                return processIfHoldCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "ifTap")) {
-                return processIfHoldCommand(ctx, true);
-            }
-            else if (ConsumeToken(ctx, "ifSecondary")) {
-                return processIfSecondaryCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "ifPrimary")) {
-                return processIfSecondaryCommand(ctx, true);
-            }
-            else if (ConsumeToken(ctx, "ifShortcut")) {
-                return processIfShortcutCommand(ctx, false, true);
-            }
-            else if (ConsumeToken(ctx, "ifNotShortcut")) {
-                return processIfShortcutCommand(ctx, true, true);
-            }
-            else if (ConsumeToken(ctx, "ifGesture")) {
-                return processIfShortcutCommand(ctx, false, false);
-            }
-            else if (ConsumeToken(ctx, "ifNotGesture")) {
-                return processIfShortcutCommand(ctx, true, false);
-            }
-            else if (ConsumeToken(ctx, "ifRegEq")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName == 1)`.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "ifNotRegEq")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName == 1)`.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "ifRegGt")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName >= 1)`.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "ifRegLt")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName >= 1)`.");
-                return MacroResult_Finished;
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'm':
-            if (ConsumeToken(ctx, "mulReg")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName*2)`.");
-                return MacroResult_Finished;
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'n':
-            if (ConsumeToken(ctx, "noOp")) {
-                return processNoOpCommand();
-            }
-            else if (ConsumeToken(ctx, "notify")) {
-                return Macros_ProcessNotifyCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'o':
-            if (ConsumeToken(ctx, "oneShot")) {
-                return processOneShotCommand(ctx);
-            }
-            if (ConsumeToken(ctx, "overlayLayer")) {
-                return processOverlayLayerCommand(ctx);
-            }
-            if (ConsumeToken(ctx, "overlayKeymap")) {
-                return processOverlayKeymapCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'p':
-            if (ConsumeToken(ctx, "printStatus")) {
-                return Macros_ProcessPrintStatusCommand();
-            }
-            else if (ConsumeToken(ctx, "playMacro")) {
-                return processPlayMacroCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "pressKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Press, &S->ms.reports);
-            }
-            else if (ConsumeToken(ctx, "postponeKeys")) {
-                processPostponeKeysCommand();
-            }
-            else if (ConsumeToken(ctx, "postponeNext")) {
-                return processPostponeNextNCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "progressHue")) {
-                return processProgressHueCommand();
-            }
-            else if (ConsumeToken(ctx, "powerMode")) {
-                return processPowerModeCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "panic")) {
-                return processPanicCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'r':
-            if (ConsumeToken(ctx, "recordMacro")) {
-                return processRecordMacroCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "recordMacroBlind")) {
-                return processRecordMacroCommand(ctx, true);
-            }
-            else if (ConsumeToken(ctx, "recordMacroDelay")) {
-                return processRecordMacroDelayCommand();
-            }
-            else if (ConsumeToken(ctx, "resolveNextKeyId")) {
-                return processResolveNextKeyIdCommand();
-            }
-            else if (ConsumeToken(ctx, "releaseKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release, &S->ms.reports);
-            }
-            else if (ConsumeToken(ctx, "repeatFor")) {
-                return processRepeatForCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "resetTrackpoint")) {
-                return processResetTrackpointCommand();
-            }
-            else if (ConsumeToken(ctx, "replaceLayer")) {
-                return processReplaceLayerCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "replaceKeymap")) {
-                return processReplaceKeymapCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "resolveNextKeyEq")) {
-                Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "resolveSecondary")) {
-                Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "resetConfiguration")) {
-                return processResetConfigurationCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "reboot")) {
-                return processRebootCommand();
-            }
-            else if (ConsumeToken(ctx, "reconnect")) {
-                return processReconnectCommand();
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 's':
-            if (ConsumeToken(ctx, "set")) {
-                return Macro_ProcessSetCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "setVar")) {
-                return Macros_ProcessSetVarCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "setStatus")) {
-                return Macros_ProcessSetStatusCommand(ctx, true);
-            }
-            else if (ConsumeToken(ctx, "startRecording")) {
-                return processStartRecordingCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "startRecordingBlind")) {
-                return processStartRecordingCommand(ctx, true);
-            }
-            else if (ConsumeToken(ctx, "setLedTxt")) {
-                return Macros_ProcessSetLedTxtCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "statsRuntime")) {
-                return Macros_ProcessStatsRuntimeCommand();
-            }
-            else if (ConsumeToken(ctx, "statsRecordKeyTiming")) {
-                return Macros_ProcessStatsRecordKeyTimingCommand();
-            }
-            else if (ConsumeToken(ctx, "statsLayerStack")) {
-                return Macros_ProcessStatsLayerStackCommand();
-            }
-            else if (ConsumeToken(ctx, "statsActiveKeys")) {
-                return Macros_ProcessStatsActiveKeysCommand();
-            }
-            else if (ConsumeToken(ctx, "statsActiveMacros")) {
-                return Macros_ProcessStatsActiveMacrosCommand();
-            }
-            else if (ConsumeToken(ctx, "statsPostponerStack")) {
-                return Macros_ProcessStatsPostponerStackCommand();
-            }
-            else if (ConsumeToken(ctx, "statsVariables")) {
-                return Macros_ProcessStatsVariablesCommand();
-            }
-            else if (ConsumeToken(ctx, "statsBattery")) {
-                return Macros_ProcessStatsBatteryCommand();
-            }
+        // Get the current token for hash lookup
+        const char* tokStart = ctx->at;
+        const char* tokEnd = TokEnd(tokStart, ctx->end);
+        size_t tokLen = tokEnd - tokStart;
 
-            else if (ConsumeToken(ctx, "switchKeymap")) {
-                return processSwitchKeymapCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "startMouse")) {
-                return processMouseCommand(ctx, true);
-            }
-            else if (ConsumeToken(ctx, "stopMouse")) {
-                return processMouseCommand(ctx, false);
-            }
-            else if (ConsumeToken(ctx, "stopRecording")) {
-                return processStopRecordingCommand();
-            }
-            else if (ConsumeToken(ctx, "stopAllMacros")) {
-                return processStopAllMacrosCommand();
-            }
-            else if (ConsumeToken(ctx, "stopRecordingBlind")) {
-                return processStopRecordingCommand();
-            }
-            else if (ConsumeToken(ctx, "suppressMods")) {
-                processSuppressModsCommand();
-            }
-            else if (ConsumeToken(ctx, "setReg")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "subReg")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "setStatusPart")) {
-                Macros_ReportErrorPos(ctx, "Command was removed, please use string interpolated setStatus.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "switchKeymapLayer")) {
-    Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "switchLayer")) {
-    Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.");
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "switchHost")) {
-                return processSwitchHostCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 't':
-            if (ConsumeToken(ctx, "toggleKeymapLayer")) {
-                return processToggleKeymapLayerCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "toggleLayer")) {
-                return processToggleLayerCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "tapKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap, &S->ms.reports);
-            }
-            else if (ConsumeToken(ctx, "tapKeySeq")) {
-                return Macros_ProcessTapKeySeqCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "toggleKey")) {
-                return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Toggle, &S->ms.reports);
-            }
-            else if (ConsumeToken(ctx, "trackpoint")) {
-                return processTrackpointCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "trace")) {
-                if (!Macros_DryRun) {
-                    Trace_Print(LogTarget_ErrorBuffer, "Triggered by macro command");
-                }
-                return MacroResult_Finished;
-            }
-            else if (ConsumeToken(ctx, "testLeakage")) {
-                return processTestLeakageCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "testSuite")) {
-                return processTestSuiteCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'u':
-            if (ConsumeToken(ctx, "unToggleLayer")) {
-                return processUnToggleLayerCommand();
-            }
-            else if (ConsumeToken(ctx, "untoggleLayer")) {
-                return processUnToggleLayerCommand();
-            }
-            else if (ConsumeToken(ctx, "unpairHost")) {
-                return Macros_ProcessUnpairHostCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'v':
-            if (ConsumeToken(ctx, "validateUserConfig") || ConsumeToken(ctx, "validateMacros")) {
-                return processValidateMacrosCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'w':
-            if (ConsumeToken(ctx, "write")) {
-                return processWriteCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "while")) {
-                return processWhileCommand(ctx);
-            }
-            else if (ConsumeToken(ctx, "writeExpr")) {
-                Macros_ReportErrorPos(ctx, "writeExpr is now deprecated, please migrate to interpolated strings");
-                return MacroResult_Finished;
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'y':
-            if (ConsumeToken(ctx, "yield")) {
-                return processYieldCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case 'z':
-            if (ConsumeToken(ctx, "zephyr")) {
-                return processZephyrCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case '{':
-            if (ConsumeToken(ctx, "{")) {
-                return processOpeningBraceCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        case '}':
-            if (ConsumeToken(ctx, "}")) {
-                return processClosingBraceCommand(ctx);
-            }
-            else {
-                goto failed;
-            }
-            break;
-        default:
-        failed:
+        // Look up the command in the hash table
+        const struct command_entry* entry = command_lookup(tokStart, tokLen);
+
+        if (entry == NULL) {
             Macros_ReportErrorTok(ctx, "Unrecognized command:");
             return MacroResult_Finished;
+        }
+
+        // Consume the token
+        ctx->at = NextTok(tokStart, ctx->end);
+
+        // Dispatch based on command ID
+        switch (entry->id) {
+        // 'a' commands
+        case CommandId_activateKeyPostponed:
+            return processActivateKeyPostponedCommand(ctx);
+        case CommandId_autoRepeat:
+            return processAutoRepeatCommand(ctx);
+        case CommandId_addReg:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
+            return MacroResult_Finished;
+
+        // 'b' commands
+        case CommandId_break:
+            return processBreakCommand(ctx);
+        case CommandId_bluetooth:
+            return processBluetoothCommand(ctx);
+
+        // 'c' commands
+        case CommandId_consumePending:
+            return processConsumePendingCommand(ctx);
+        case CommandId_clearStatus:
+            return Macros_ProcessClearStatusCommand(true);
+        case CommandId_call:
+            return processCallCommand(ctx);
+
+        // 'd' commands
+        case CommandId_delayUntilRelease:
+            return processDelayUntilReleaseCommand();
+        case CommandId_delayUntilReleaseMax:
+            return processDelayUntilReleaseMaxCommand(ctx);
+        case CommandId_delayUntil:
+            return processDelayUntilCommand(ctx);
+        case CommandId_diagnose:
+            return Macros_ProcessDiagnoseCommand();
+
+        // 'e' commands
+        case CommandId_exec:
+            return processExecCommand(ctx);
+        case CommandId_else:
+            if (!Macros_DryRun && S->ls->ms.lastIfSucceeded) {
+                return MacroResult_Finished;
+            }
             break;
+        case CommandId_exit:
+            return processExitCommand(ctx);
+
+        // 'f' commands
+        case CommandId_final:
+            return processFinalCommand(ctx);
+        case CommandId_fork:
+            return processForkCommand(ctx);
+        case CommandId_freeze:
+            return processFreezeCommand(ctx);
+
+        // 'g' commands
+        case CommandId_goTo:
+            return processGoToCommand(ctx);
+
+        // 'h' commands
+        case CommandId_holdLayer:
+            return processHoldLayerCommand(ctx);
+        case CommandId_holdLayerMax:
+            return processHoldLayerMaxCommand(ctx);
+        case CommandId_holdKeymapLayer:
+            return processHoldKeymapLayerCommand(ctx);
+        case CommandId_holdKeymapLayerMax:
+            return processHoldKeymapLayerMaxCommand(ctx);
+        case CommandId_holdKey:
+            return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Hold, &S->ms.reports);
+
+        // 'i' commands - conditionals
+        case CommandId_if:
+            PROCESS_CONDITION(processIfCommand(ctx))
+        case CommandId_ifDoubletap:
+            PROCESS_CONDITION(processIfDoubletapCommand(false))
+        case CommandId_ifNotDoubletap:
+            PROCESS_CONDITION(processIfDoubletapCommand(true))
+        case CommandId_ifInterrupted:
+            PROCESS_CONDITION(processIfInterruptedCommand(false))
+        case CommandId_ifNotInterrupted:
+            PROCESS_CONDITION(processIfInterruptedCommand(true))
+        case CommandId_ifReleased:
+            PROCESS_CONDITION(processIfReleasedCommand(false))
+        case CommandId_ifNotReleased:
+            PROCESS_CONDITION(processIfReleasedCommand(true))
+        case CommandId_ifKeymap:
+            PROCESS_CONDITION(processIfKeymapCommand(ctx, false))
+        case CommandId_ifNotKeymap:
+            PROCESS_CONDITION(processIfKeymapCommand(ctx, true))
+        case CommandId_ifLayer:
+            PROCESS_CONDITION(processIfLayerCommand(ctx, false))
+        case CommandId_ifNotLayer:
+            PROCESS_CONDITION(processIfLayerCommand(ctx, true))
+        case CommandId_ifLayerToggled:
+            PROCESS_CONDITION(processIfLayerToggledCommand(ctx, false))
+        case CommandId_ifNotLayerToggled:
+            PROCESS_CONDITION(processIfLayerToggledCommand(ctx, true))
+        case CommandId_ifPlaytime:
+            PROCESS_CONDITION(processIfPlaytimeCommand(ctx, false))
+        case CommandId_ifNotPlaytime:
+            PROCESS_CONDITION(processIfPlaytimeCommand(ctx, true))
+        case CommandId_ifAnyMod:
+            PROCESS_CONDITION(processIfModifierCommand(false, 0xFF))
+        case CommandId_ifNotAnyMod:
+            PROCESS_CONDITION(processIfModifierCommand(true, 0xFF))
+        case CommandId_ifShift:
+            PROCESS_CONDITION(processIfModifierCommand(false, SHIFTMASK))
+        case CommandId_ifNotShift:
+            PROCESS_CONDITION(processIfModifierCommand(true, SHIFTMASK))
+        case CommandId_ifCtrl:
+            PROCESS_CONDITION(processIfModifierCommand(false, CTRLMASK))
+        case CommandId_ifNotCtrl:
+            PROCESS_CONDITION(processIfModifierCommand(true, CTRLMASK))
+        case CommandId_ifAlt:
+            PROCESS_CONDITION(processIfModifierCommand(false, ALTMASK))
+        case CommandId_ifNotAlt:
+            PROCESS_CONDITION(processIfModifierCommand(true, ALTMASK))
+        case CommandId_ifGui:
+            PROCESS_CONDITION(processIfModifierCommand(false, GUIMASK))
+        case CommandId_ifNotGui:
+            PROCESS_CONDITION(processIfModifierCommand(true, GUIMASK))
+        case CommandId_ifCapsLockOn:
+            PROCESS_CONDITION(processIfStateKeyCommand(false, &UsbBasicKeyboard_CapsLockOn))
+        case CommandId_ifNotCapsLockOn:
+            PROCESS_CONDITION(processIfStateKeyCommand(true, &UsbBasicKeyboard_CapsLockOn))
+        case CommandId_ifNumLockOn:
+            PROCESS_CONDITION(processIfStateKeyCommand(false, &UsbBasicKeyboard_NumLockOn))
+        case CommandId_ifNotNumLockOn:
+            PROCESS_CONDITION(processIfStateKeyCommand(true, &UsbBasicKeyboard_NumLockOn))
+        case CommandId_ifScrollLockOn:
+            PROCESS_CONDITION(processIfStateKeyCommand(false, &UsbBasicKeyboard_ScrollLockOn))
+        case CommandId_ifNotScrollLockOn:
+            PROCESS_CONDITION(processIfStateKeyCommand(true, &UsbBasicKeyboard_ScrollLockOn))
+        case CommandId_ifRecording:
+            PROCESS_CONDITION(processIfRecordingCommand(false))
+        case CommandId_ifNotRecording:
+            PROCESS_CONDITION(processIfRecordingCommand(true))
+        case CommandId_ifRecordingId:
+            PROCESS_CONDITION(processIfRecordingIdCommand(ctx, false))
+        case CommandId_ifNotRecordingId:
+            PROCESS_CONDITION(processIfRecordingIdCommand(ctx, true))
+        case CommandId_ifNotPending:
+            PROCESS_CONDITION(processIfPendingCommand(ctx, true))
+        case CommandId_ifPending:
+            PROCESS_CONDITION(processIfPendingCommand(ctx, false))
+        case CommandId_ifKeyPendingAt:
+            PROCESS_CONDITION(processIfKeyPendingAtCommand(ctx, false))
+        case CommandId_ifNotKeyPendingAt:
+            PROCESS_CONDITION(processIfKeyPendingAtCommand(ctx, true))
+        case CommandId_ifKeyActive:
+            PROCESS_CONDITION(processIfKeyActiveCommand(ctx, false))
+        case CommandId_ifNotKeyActive:
+            PROCESS_CONDITION(processIfKeyActiveCommand(ctx, true))
+        case CommandId_ifPendingKeyReleased:
+            PROCESS_CONDITION(processIfPendingKeyReleasedCommand(ctx, false))
+        case CommandId_ifNotPendingKeyReleased:
+            PROCESS_CONDITION(processIfPendingKeyReleasedCommand(ctx, true))
+        case CommandId_ifKeyDefined:
+            PROCESS_CONDITION(processIfKeyDefinedCommand(ctx, false))
+        case CommandId_ifNotKeyDefined:
+            PROCESS_CONDITION(processIfKeyDefinedCommand(ctx, true))
+        case CommandId_ifModuleConnected:
+            PROCESS_CONDITION(processIfModuleConnected(ctx, false))
+        case CommandId_ifNotModuleConnected:
+            PROCESS_CONDITION(processIfModuleConnected(ctx, true))
+        case CommandId_ifHold:
+            return processIfHoldCommand(ctx, false);
+        case CommandId_ifTap:
+            return processIfHoldCommand(ctx, true);
+        case CommandId_ifSecondary:
+            return processIfSecondaryCommand(ctx, false);
+        case CommandId_ifPrimary:
+            return processIfSecondaryCommand(ctx, true);
+        case CommandId_ifShortcut:
+            return processIfShortcutCommand(ctx, false, true);
+        case CommandId_ifNotShortcut:
+            return processIfShortcutCommand(ctx, true, true);
+        case CommandId_ifGesture:
+            return processIfShortcutCommand(ctx, false, false);
+        case CommandId_ifNotGesture:
+            return processIfShortcutCommand(ctx, true, false);
+        case CommandId_ifRegEq:
+        case CommandId_ifNotRegEq:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName == 1)`.");
+            return MacroResult_Finished;
+        case CommandId_ifRegGt:
+        case CommandId_ifRegLt:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `if ($varName >= 1)`.");
+            return MacroResult_Finished;
+
+        // 'm' commands
+        case CommandId_mulReg:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName*2)`.");
+            return MacroResult_Finished;
+
+        // 'n' commands
+        case CommandId_noOp:
+            return processNoOpCommand();
+        case CommandId_notify:
+            return Macros_ProcessNotifyCommand(ctx);
+
+        // 'o' commands
+        case CommandId_oneShot:
+            return processOneShotCommand(ctx);
+        case CommandId_overlayLayer:
+            return processOverlayLayerCommand(ctx);
+        case CommandId_overlayKeymap:
+            return processOverlayKeymapCommand(ctx);
+
+        // 'p' commands
+        case CommandId_printStatus:
+            return Macros_ProcessPrintStatusCommand();
+        case CommandId_playMacro:
+            return processPlayMacroCommand(ctx);
+        case CommandId_pressKey:
+            return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Press, &S->ms.reports);
+        case CommandId_postponeKeys:
+            processPostponeKeysCommand();
+            break;
+        case CommandId_postponeNext:
+            return processPostponeNextNCommand(ctx);
+        case CommandId_progressHue:
+            return processProgressHueCommand();
+        case CommandId_powerMode:
+            return processPowerModeCommand(ctx);
+        case CommandId_panic:
+            return processPanicCommand(ctx);
+
+        // 'r' commands
+        case CommandId_recordMacro:
+            return processRecordMacroCommand(ctx, false);
+        case CommandId_recordMacroBlind:
+            return processRecordMacroCommand(ctx, true);
+        case CommandId_recordMacroDelay:
+            return processRecordMacroDelayCommand();
+        case CommandId_resolveNextKeyId:
+            return processResolveNextKeyIdCommand();
+        case CommandId_releaseKey:
+            return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Release, &S->ms.reports);
+        case CommandId_repeatFor:
+            return processRepeatForCommand(ctx);
+        case CommandId_resetTrackpoint:
+            return processResetTrackpointCommand();
+        case CommandId_replaceLayer:
+            return processReplaceLayerCommand(ctx);
+        case CommandId_replaceKeymap:
+            return processReplaceKeymapCommand(ctx);
+        case CommandId_resolveNextKeyEq:
+            Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace resolveNextKeyEq by ifShortcut or ifGesture, or complain at github that you actually need this.");
+            return MacroResult_Finished;
+        case CommandId_resolveSecondary:
+            Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace resolveSecondary by `ifPrimary advancedStrategy goTo ...` or `ifSecondary advancedStrategy goTo ...`.");
+            return MacroResult_Finished;
+        case CommandId_resetConfiguration:
+            return processResetConfigurationCommand(ctx);
+        case CommandId_reboot:
+            return processRebootCommand();
+        case CommandId_reconnect:
+            return processReconnectCommand();
+
+        // 's' commands
+        case CommandId_set:
+            return Macro_ProcessSetCommand(ctx);
+        case CommandId_setVar:
+            return Macros_ProcessSetVarCommand(ctx);
+        case CommandId_setStatus:
+            return Macros_ProcessSetStatusCommand(ctx, true);
+        case CommandId_startRecording:
+            return processStartRecordingCommand(ctx, false);
+        case CommandId_startRecordingBlind:
+            return processStartRecordingCommand(ctx, true);
+        case CommandId_setLedTxt:
+            return Macros_ProcessSetLedTxtCommand(ctx);
+        case CommandId_statsRuntime:
+            return Macros_ProcessStatsRuntimeCommand();
+        case CommandId_statsRecordKeyTiming:
+            return Macros_ProcessStatsRecordKeyTimingCommand();
+        case CommandId_statsLayerStack:
+            return Macros_ProcessStatsLayerStackCommand();
+        case CommandId_statsActiveKeys:
+            return Macros_ProcessStatsActiveKeysCommand();
+        case CommandId_statsActiveMacros:
+            return Macros_ProcessStatsActiveMacrosCommand();
+        case CommandId_statsPostponerStack:
+            return Macros_ProcessStatsPostponerStackCommand();
+        case CommandId_statsVariables:
+            return Macros_ProcessStatsVariablesCommand();
+        case CommandId_statsBattery:
+            return Macros_ProcessStatsBatteryCommand();
+        case CommandId_switchKeymap:
+            return processSwitchKeymapCommand(ctx);
+        case CommandId_startMouse:
+            return processMouseCommand(ctx, true);
+        case CommandId_stopMouse:
+            return processMouseCommand(ctx, false);
+        case CommandId_stopRecording:
+        case CommandId_stopRecordingBlind:
+            return processStopRecordingCommand();
+        case CommandId_stopAllMacros:
+            return processStopAllMacrosCommand();
+        case CommandId_suppressMods:
+            processSuppressModsCommand();
+            break;
+        case CommandId_setReg:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use named variables. E.g., `setVar myVar 1` and `write \"$myVar\"`");
+            return MacroResult_Finished;
+        case CommandId_subReg:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
+            return MacroResult_Finished;
+        case CommandId_setStatusPart:
+            Macros_ReportErrorPos(ctx, "Command was removed, please use string interpolated setStatus.");
+            return MacroResult_Finished;
+        case CommandId_switchKeymapLayer:
+        case CommandId_switchLayer:
+            Macros_ReportErrorPos(ctx, "Command deprecated. Please, replace switchKeymapLayer by toggleKeymapLayer or holdKeymapLayer. Or complain on github that you actually need this command.");
+            return MacroResult_Finished;
+        case CommandId_switchHost:
+            return processSwitchHostCommand(ctx);
+
+        // 't' commands
+        case CommandId_toggleKeymapLayer:
+            return processToggleKeymapLayerCommand(ctx);
+        case CommandId_toggleLayer:
+            return processToggleLayerCommand(ctx);
+        case CommandId_tapKey:
+            return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Tap, &S->ms.reports);
+        case CommandId_tapKeySeq:
+            return Macros_ProcessTapKeySeqCommand(ctx);
+        case CommandId_toggleKey:
+            return Macros_ProcessKeyCommandAndConsume(ctx, MacroSubAction_Toggle, &S->ms.reports);
+        case CommandId_trackpoint:
+            return processTrackpointCommand(ctx);
+        case CommandId_trace:
+            if (!Macros_DryRun) {
+                Trace_Print(LogTarget_ErrorBuffer, "Triggered by macro command");
+            }
+            return MacroResult_Finished;
+        case CommandId_testLeakage:
+            return processTestLeakageCommand(ctx);
+        case CommandId_testSuite:
+            return processTestSuiteCommand(ctx);
+
+        // 'u' commands
+        case CommandId_unToggleLayer:
+        case CommandId_untoggleLayer:
+            return processUnToggleLayerCommand();
+        case CommandId_unpairHost:
+            return Macros_ProcessUnpairHostCommand(ctx);
+
+        // 'v' commands
+        case CommandId_validateUserConfig:
+        case CommandId_validateMacros:
+            return processValidateMacrosCommand(ctx);
+
+        // 'w' commands
+        case CommandId_write:
+            return processWriteCommand(ctx);
+        case CommandId_while:
+            return processWhileCommand(ctx);
+        case CommandId_writeExpr:
+            Macros_ReportErrorPos(ctx, "writeExpr is now deprecated, please migrate to interpolated strings");
+            return MacroResult_Finished;
+
+        // 'y' commands
+        case CommandId_yield:
+            return processYieldCommand(ctx);
+
+        // 'z' commands
+        case CommandId_zephyr:
+            return processZephyrCommand(ctx);
+
+        // brace commands
+        case CommandId_openBrace:
+            return processOpeningBraceCommand(ctx);
+        case CommandId_closeBrace:
+            return processClosingBraceCommand(ctx);
+
+        default:
+            Macros_ReportErrorTok(ctx, "Unrecognized command:");
+            return MacroResult_Finished;
         }
     }
     //this is reachable if there is a train of conditions/modifiers/labels without any command
     return MacroResult_Finished;
 }
+
+#undef CONDITION_FAILED_RESULT
+#undef PROCESS_CONDITION
 
 static bool isOpeningBrace(parser_context_t* ctx)
 {

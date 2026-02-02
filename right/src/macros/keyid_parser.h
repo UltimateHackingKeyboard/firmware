@@ -15,6 +15,7 @@
 
     void KeyIdParser_initialize();
     uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx);
+    uint8_t KeyIdParser_KeyIdFromString(const char* str);
     const char* MacroKeyIdParser_KeyIdToAbbreviation(uint8_t keyId) ;
 
 

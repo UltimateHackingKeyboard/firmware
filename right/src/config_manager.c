@@ -221,6 +221,7 @@ const config_t DefaultCfg = (config_t){
         .SecondaryRoles_AdvancedStrategyMinimumHoldTime = 0,
         .SecondaryRoles_AdvancedStrategyDoubletapToPrimary = true,
         .SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary,
+        .SecondaryRoles_AdvancedStrategyTimeoutType = SecondaryRoleTimeoutType_Active,
         .SecondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf = true,
         .SecondaryRoles_Strategy = SecondaryRoleStrategy_Simple,
         .StickyModifierStrategy = Stick_Smart,
@@ -304,6 +305,7 @@ worm_config_t* WormCfg = &StateWormhole.WormCfg;
 
 const worm_config_t DefaultWormCfg = {
     .devMode = false,
+    .UsbLogEnabled = false,
 };
 
 void ConfigManager_ResetWormConfiguration(void) {

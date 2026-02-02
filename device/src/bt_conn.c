@@ -37,6 +37,7 @@
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
 #include "macros/status_buffer.h"
+#include <zephyr/logging/log_ctrl.h>
 
 LOG_MODULE_REGISTER(Bt, LOG_LEVEL_INF);
 
@@ -270,6 +271,30 @@ static void enableDataLengthExtension(struct bt_conn *conn) {
     }
 }
 
+#if DEVICE_IS_UHK80_RIGHT
+static void mtuExchangeCallback(struct bt_conn *conn, uint8_t err, struct bt_gatt_exchange_params *params) {
+    if (err) {
+        LOG_WRN("MTU exchange failed for %s (err %u)", GetPeerStringByConn(conn), err);
+    } else {
+        LOG_INF("MTU exchange done for %s", GetPeerStringByConn(conn));
+    }
+}
+#endif
+
+static void requestMtuExchange(struct bt_conn *conn) {
+#if DEVICE_IS_UHK80_RIGHT
+    static struct bt_gatt_exchange_params exchange_params;
+    exchange_params.func = mtuExchangeCallback;
+
+    LOG_INF("MTU exchanging %s", GetPeerStringByConn(conn));
+
+    int err = bt_gatt_exchange_mtu(conn, &exchange_params);
+    if (err && err != -EALREADY) {
+        LOG_WRN("MTU exchange request failed for %s (err %d)", GetPeerStringByConn(conn), err);
+    }
+#endif
+}
+
 static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* params) {
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
@@ -402,25 +427,25 @@ void bt_foreach_list_current_connections(struct bt_conn *conn, void *data)
 {
     int8_t peerId = GetPeerIdByConn(conn);
     if (peerId == PeerIdUnknown) {
-        LogU("  - %s", GetPeerStringByConn(conn));
+        LogU("  - %s\n", GetPeerStringByConn(conn));
     } else {
-        LogU("  - peer %d(%s), connection %d", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
+        LogU("  - peer %d(%s), connection %d\n", peerId, GetPeerStringByConn(conn), Peers[peerId].connectionId);
     }
 }
 
 void BtConn_ListCurrentConnections() {
-    LogU("Current connections:");
+    LogU("Current connections:\n");
     bt_conn_foreach(BT_CONN_TYPE_LE, bt_foreach_list_current_connections, NULL);
 }
 
 
 static void bt_foreach_print_bond(const struct bt_bond_info *info, void *user_data)
 {
-    LogU(" - %s", GetAddrString(&info->addr));
+    LogU(" - %s\n", GetAddrString(&info->addr));
 }
 
 void BtConn_ListAllBonds() {
-    LogU("All bonds:");
+    LogU("All bonds:\n");
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
@@ -595,6 +620,7 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     // Without this, linux pairing fails, because tiny 27 byte packets
     // exhaust acl buffers easily
     enableDataLengthExtension(conn);
+    requestMtuExchange(conn);
 
     if (err) {
         LOG_WRN("Failed to connect to %s, err %u", GetPeerStringByConn(conn), err);
@@ -959,6 +985,9 @@ void BtConn_Init(void) {
     BT_TRACE_AND_ASSERT("bc6");
     int err = 0;
 
+    int sourceId = log_source_id_get("hogp");
+    log_filter_set(NULL, 0, sourceId, LOG_LEVEL_INF);
+
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         Peers[peerId].id = peerId;
         Peers[peerId].conn = NULL;
@@ -981,9 +1010,6 @@ void BtConn_Init(void) {
 void num_comp_reply(int passkey) {
     struct bt_conn *conn;
 
-#if DEVICE_HAS_OLED
-    NotificationScreen_NotifyFor("Pairing...", 10000);
-#endif
 
     if (!auth_conn) {
         return;
@@ -994,8 +1020,14 @@ void num_comp_reply(int passkey) {
     if (passkey >= 0) {
         bt_conn_auth_passkey_entry(conn, passkey);
         LOG_INF("Sending passkey to conn %s", GetPeerStringByConn(conn));
+#if DEVICE_HAS_OLED
+        NotificationScreen_NotifyFor("Pairing...", 10000);
+#endif
     } else {
         conn = unsetAuthConn(true);
+#if DEVICE_HAS_OLED
+        PairingScreen_Feedback(false);
+#endif
     }
 }
 

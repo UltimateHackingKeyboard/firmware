@@ -37,6 +37,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_peripherals.c>
     key_states.c
     keymap.c
+    keymap_pairing.c
     layer.c
     layer_stack.c
     layer_switcher.c
@@ -67,6 +68,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     trace.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/trace_reasons.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_composite_device.c>
+    usb_log_buffer.c
     usb_protocol_handler.c
     usb_report_updater.c
     user_logic.c

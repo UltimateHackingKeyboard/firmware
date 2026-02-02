@@ -5,3 +5,7 @@ build
 .vscode/settings.json
 .jj
 mcux_include.json
+right/src/macros/command_hash.c
+tags
+compile_commands.json
+specs

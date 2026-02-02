@@ -61,6 +61,7 @@
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     const char* FindChar(char c, const char* str, const char* strEnd);
+    bool StrContains(const char* str, const char* strEnd, const char* needle);
     bool ConsumeToken(parser_context_t* ctx, const char *b);
     void ConsumeAnyToken(parser_context_t* ctx);
     void ConsumeCommentsAsWhite(bool consume);
@@ -87,6 +88,7 @@
     const char* TokEnd(const char* cmd, const char *cmdEnd);
     module_id_t ConsumeModuleId(parser_context_t* ctx);
     secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx);
+    secondary_role_timeout_type_t ConsumeSecondaryRoleTimeoutType(parser_context_t* ctx);
     secondary_role_triggering_event_t ConsumeSecondaryRoleTriggeringEvent(parser_context_t* ctx);
     secondary_role_triggering_event_t ConsumeSecondaryRoleTriggerByPress(parser_context_t* ctx, secondary_role_triggering_event_t current);
     secondary_role_triggering_event_t ConsumeSecondaryRoleTriggerByRelease(parser_context_t* ctx, secondary_role_triggering_event_t current);

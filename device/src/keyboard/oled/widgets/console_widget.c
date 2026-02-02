@@ -63,8 +63,7 @@ widget_t ConsoleWidget_Build()
 static void logConstant(const char* text)
 {
     consoleBufferStart = (consoleBufferStart+1) % CONSOLE_BUFFER_LINE_COUNT;
-    strncpy(&consoleBuffer[consoleBufferStart][0], text, CONSOLE_BUFFER_LINE_LENGTH);
-    consoleBuffer[consoleBufferStart][CONSOLE_BUFFER_LINE_LENGTH-1] = '\0';
+    snprintf(&consoleBuffer[consoleBufferStart][0], CONSOLE_BUFFER_LINE_LENGTH, "%s", text);
 
     consoleBufferIsDirty = true;
 

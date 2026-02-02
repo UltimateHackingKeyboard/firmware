@@ -196,7 +196,7 @@ uint8_t TestSuite_RunAll(void) {
     LogU("[TEST] Running custom unit tests...\n");
 
     MacroVariables_RunTests();
-#if DEVICE_IS_KEYBOARD
+#if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
     BatteryCalculator_RunTests();
     BatteryCalculator_RunPercentTests();
 #endif

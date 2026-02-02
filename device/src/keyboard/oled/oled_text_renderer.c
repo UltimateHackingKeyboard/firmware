@@ -103,7 +103,7 @@ static uint8_t getUtf8Length(uint8_t firstByte) {
 // TODO: return resulting bounds rectangle?
 void Framebuffer_DrawText(widget_t* canvas, framebuffer_t* buffer, int16_t x, int16_t y, const lv_font_t* font, const char* text, const char* textEnd)
 {
-    bool truncated;
+    bool truncated = false;
     if (x < 0 || y < 0) {
         int16_t canvasWidth = canvas == NULL ? DISPLAY_WIDTH : canvas->w;
         int16_t canvasHeight = canvas == NULL ? DISPLAY_HEIGHT : canvas->h;

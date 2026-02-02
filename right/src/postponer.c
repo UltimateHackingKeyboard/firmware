@@ -407,33 +407,22 @@ void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_typ
     }
 }
 
-void PostponerQuery_FindFirstPressed(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
-                                     key_state_t *opposingKey)
+void PostponerQuery_FindFirstPressed(const postponer_buffer_record_type_t** press, const key_state_t *opposingKey)
 {
     bool opposingIsRight = KeyState_IsRightSide(opposingKey);
     for ( int i = 0; i < bufferSize; i++ ) {
         *press = &buffer[POS(i)];
         if ((*press)->event.type == PostponerEventType_PressKey) {
             if (opposingKey == NULL || opposingIsRight != KeyState_IsRightSide((*press)->event.key.keyState)) {
-                for ( int j = i + 1; j < bufferSize; j++ ) {
-                    *release = &buffer[POS(j)];
-                    if ((*release)->event.type == PostponerEventType_ReleaseKey
-                        && (*press)->event.key.keyState == (*release)->event.key.keyState ) {
-                        return;
-                    }
-                }
-                *release = NULL;
                 return;
             }
         }
     }
-    *release = NULL;
     *press = NULL;
     return;
 }
 
-void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release,
-                                      key_state_t *opposingKey)
+void PostponerQuery_FindFirstReleased(const postponer_buffer_record_type_t** release, const key_state_t *opposingKey)
 {
     bool opposingIsRight = KeyState_IsRightSide(opposingKey);
     if (bufferSize > 1) {
@@ -442,9 +431,9 @@ void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, po
             if ((*release)->event.type == PostponerEventType_ReleaseKey) {
                 if (opposingKey == NULL || opposingIsRight != KeyState_IsRightSide((*release)->event.key.keyState)) {
                     for ( int j = 0; j < i; j++ ) {
-                        *press = &buffer[POS(j)];
-                        if ((*press)->event.type == PostponerEventType_PressKey
-                            && (*press)->event.key.keyState == (*release)->event.key.keyState ) {
+                        const postponer_buffer_record_type_t * const press = &buffer[POS(j)];
+                        if (press->event.type == PostponerEventType_PressKey
+                            && press->event.key.keyState == (*release)->event.key.keyState ) {
                             return;
                         }
                     }
@@ -452,7 +441,6 @@ void PostponerQuery_FindFirstReleased(postponer_buffer_record_type_t** press, po
             }
         }
     }
-    *press = NULL;
     *release = NULL;
     return;
 }

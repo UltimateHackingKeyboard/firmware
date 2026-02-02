@@ -94,6 +94,30 @@ const char* FindChar(char c, const char* str, const char* strEnd)
     return strEnd;
 }
 
+bool StrContains(const char* str, const char* strEnd, const char* needle)
+{
+    uint8_t needleLen = strlen(needle);
+    uint16_t strLen = strEnd - str;
+
+    if (strLen < needleLen) {
+        return false;
+    }
+
+    for (uint16_t i = 0; i <= strLen - needleLen; i++) {
+        bool match = true;
+        for (uint8_t j = 0; j < needleLen; j++) {
+            if (str[i + j] != needle[j]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static bool isEnd(parser_context_t* ctx) {
     if (ctx->at < ctx->end) {
         return false;
@@ -111,12 +135,11 @@ bool IsEnd(parser_context_t* ctx) {
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
-        Trace_Printc("e3");
         while (*ctx->at <= 32 && !isEnd(ctx)) {
             ctx->at++;
         }
         if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
-            while (*ctx->at != '\n' && *ctx->at != '\r' && !isEnd(ctx)) {
+            while (*ctx->at != '\n' && !isEnd(ctx)) {
                 ctx->at++;
             }
         }
@@ -375,12 +398,12 @@ void ConsumeAnyToken(parser_context_t* ctx)
 
 const char* NextCmd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+    while(*cmd != '\n' && cmd < cmdEnd)    {
         cmd++;
     }
     const char* lastNewline = cmd;
     while(*cmd <= 32 && cmd < cmdEnd) {
-        if (*cmd == '\n' || *cmd == '\r') {
+        if (*cmd == '\n') {
             lastNewline = cmd;
         }
         cmd++;
@@ -395,7 +418,7 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
 
 const char* CmdEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && *cmd != '\r' && cmd < cmdEnd)    {
+    while(*cmd != '\n' && cmd < cmdEnd)    {
         cmd++;
     }
     return cmd;
@@ -472,6 +495,20 @@ secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
     else {
         Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
         return SecondaryRoleState_DontKnowYet;
+    }
+}
+
+secondary_role_timeout_type_t ConsumeSecondaryRoleTimeoutType(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "active")) {
+        return SecondaryRoleTimeoutType_Active;
+    }
+    else if (ConsumeToken(ctx, "passive")) {
+        return SecondaryRoleTimeoutType_Passive;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return SecondaryRoleTimeoutType_Active;
     }
 }
 

@@ -120,6 +120,13 @@ parser_error_t parseCommandMacroAction(config_buffer_t *buffer, macro_action_t *
     macroAction->cmd.textLen = textLen;
     macroAction->cmd.cmdCount = CountCommands(macroAction->cmd.text, macroAction->cmd.textLen);
 
+    // Sanitize line endings so that we can compare faster
+    for (char* ptr = (char*)text; ptr < text + textLen; ptr++) {
+        if (*ptr == '\r') {
+            *ptr = '\n';
+        }
+    }
+
     return ParserError_Success;
 }
 
