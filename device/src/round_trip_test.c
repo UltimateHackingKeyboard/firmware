@@ -37,6 +37,7 @@ void RoundTripTest_Receive(const uint8_t* data, uint16_t len) {
     if (DEVICE_IS_UHK80_RIGHT) {
         rtt_ping_t* p = (rtt_ping_t*)data;
         RoundTripTime = Timer_GetCurrentTime() - p->timestamp;
+        LogU("Round trip time: %d ms, latency: %d\n", RoundTripTime, RoundTripTime / 2);
     }
 }
 
