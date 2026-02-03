@@ -994,7 +994,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
             argType = MacroArgType_Any;
         }
         else {
-            Macros_ReportErrorTok(ctx, "Unrecognized macroArg argument type: ");
+            Macros_ReportErrorTok(ctx, "Unrecognized macroArg argument type:");
             return MacroResult_Finished;
         }
     }
