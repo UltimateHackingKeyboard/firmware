@@ -169,7 +169,7 @@ static macro_result_t processKey(macro_action_t macro_action, macro_usb_keyboard
                 case 1:
                     addModifiers(inputModMask, outputModMask, reports);
                     if (stickyModMask) {
-                        ActivateStickyMods(S->ms.currentMacroKey, stickyModMask);
+                        ActivateStickyMods(S->ms.keyPress.keyState, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -210,7 +210,7 @@ static macro_result_t processKey(macro_action_t macro_action, macro_usb_keyboard
                 case 1:
                     addModifiers(inputModMask, outputModMask, reports);
                     if (stickyModMask) {
-                        ActivateStickyMods(S->ms.currentMacroKey, stickyModMask);
+                        ActivateStickyMods(S->ms.keyPress.keyState, stickyModMask);
                     }
                     return MacroResult_Blocking;
                 case 2:
@@ -231,7 +231,7 @@ static macro_result_t processKey(macro_action_t macro_action, macro_usb_keyboard
                     if (S->as.keySeqData.toggleShouldActivate) {
                         addModifiers(inputModMask, outputModMask, reports);
                         if (stickyModMask) {
-                            ActivateStickyMods(S->ms.currentMacroKey, stickyModMask);
+                            ActivateStickyMods(S->ms.keyPress.keyState, stickyModMask);
                         }
                     } else {
                         deleteScancode(scancode, type, reports);

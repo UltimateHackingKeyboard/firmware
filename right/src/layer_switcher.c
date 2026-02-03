@@ -111,25 +111,25 @@ void updateActiveLayer() {
 
 key_state_t *doubleTapSwitchLayerKey;
 
-void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
+void LayerSwitcher_DoubleTapToggle(layer_id_t layer, const key_press_info_t* keyPress) {
     static uint32_t doubleTapSwitchLayerStartTime = 0;
     static uint32_t doubleTapSwitchLayerTriggerTime = 0;
 
-    if(KeyState_ActivatedNow(keyState)) {
+    if(KeyState_ActivatedNow(keyPress->keyState)) {
         LayerStack_LegacyPop(layer);
-        if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < Cfg.DoubletapTimeout) {
+        if (doubleTapSwitchLayerKey == keyPress->keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < Cfg.DoubletapTimeout) {
             LayerStack_LegacyPush(layer);
             doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
             doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
         } else {
-            doubleTapSwitchLayerKey = keyState;
+            doubleTapSwitchLayerKey = keyPress->keyState;
             doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
         }
     }
 
-    if(KeyState_DeactivatedNow(keyState)) {
+    if(KeyState_DeactivatedNow(keyPress->keyState)) {
         //If current press is too long, cancel current toggle
-        if ( doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > Cfg.DoubletapSwitchLayerReleaseTimeout)
+        if ( doubleTapSwitchLayerKey == keyPress->keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > Cfg.DoubletapSwitchLayerReleaseTimeout)
         {
             LayerStack_LegacyPop(layer);
         }

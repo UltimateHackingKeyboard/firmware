@@ -44,6 +44,7 @@ module_kinetic_state_t leftModuleKineticState = {
 
     .caretAxis = CaretAxis_None,
     .caretFakeKeystate = {},
+    .caretFakeKeyPress = {.keyState = &leftModuleKineticState.caretFakeKeystate},
     .caretAction.action = { .type = KeyActionType_None },
     .xFractionRemainder = 0.0f,
     .yFractionRemainder = 0.0f,
@@ -56,6 +57,7 @@ module_kinetic_state_t rightModuleKineticState = {
 
     .caretAxis = CaretAxis_None,
     .caretFakeKeystate = {},
+    .caretFakeKeyPress = {.keyState = &rightModuleKineticState.caretFakeKeystate},
     .caretAction.action = { .type = KeyActionType_None },
     .xFractionRemainder = 0.0f,
     .yFractionRemainder = 0.0f,
@@ -247,17 +249,17 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
-        PostponerCore_TrackKeyEvent(singleTap, false, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
     }
     if (action & Action_Press) {
-        PostponerCore_TrackKeyEvent(singleTap, true, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_Doubletap) {
         // some systems do debouncing because mouse switches are unreliable
         uint16_t delay = 20;
-        PostponerCore_TrackKeyEvent(singleTap, false, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
         PostponerCore_TrackDelay(delay);
-        PostponerCore_TrackKeyEvent(singleTap, true, 0xff, Timer_GetCurrentTime()+delay);
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_ResetHoldContinuationTimeout) {
         continuationDelayStart = Timer_GetCurrentTime();
@@ -338,7 +340,7 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
-            ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+            ApplyKeyAction(&ks->caretFakeKeyPress, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
             Macros_WakeBecauseOfKeystateChange();
             EventVector_Set(EventVector_MouseController);
             break;
@@ -361,7 +363,7 @@ static void handleSimpleRunningAction(module_kinetic_state_t* ks) {
     bool tmp = ks->caretFakeKeystate.current;
     ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
     ks->caretFakeKeystate.previous = tmp;
-    ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+    ApplyKeyAction(&ks->caretFakeKeyPress, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
     Macros_WakeBecauseOfKeystateChange();
     EventVector_Set(EventVector_MouseController);
 }

@@ -115,16 +115,16 @@ static void postponeCurrentCycle()
  */
 bool Macros_CurrentMacroKeyIsActive()
 {
-    if (S->ms.currentMacroKey == NULL) {
+    if (S->ms.keyPress.keyState == NULL) {
         return S->ms.oneShot == 1;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
-        bool isSameActivation = (S->ms.currentMacroKey->activationTimestamp == S->ms.currentMacroKeyStamp);
-        bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
+        bool isSameActivation = (S->ms.keyPress.keyState->activationSeq == S->ms.keyActivationSeq);
+        bool keyIsActive = (KeyState_Active(S->ms.keyPress.keyState) && !PostponerQuery_IsKeyReleased(S->ms.keyPress.keyState));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     } else {
-        bool isSameActivation = (S->ms.currentMacroKey->activationTimestamp == S->ms.currentMacroKeyStamp);
-        bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
+        bool isSameActivation = (S->ms.keyPress.keyState->activationSeq == S->ms.keyActivationSeq);
+        bool keyIsActive = KeyState_Active(S->ms.keyPress.keyState);
         return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     }
 }
@@ -179,7 +179,7 @@ static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
         return lastMacroId;
     }
     else if (ctx->at == ctx->end) {
-        lastMacroId = Utils_KeyStateToKeyId(S->ms.currentMacroKey);
+        lastMacroId = Utils_KeyStateToKeyId(S->ms.keyPress.keyState);
     }
     else if (end == ctx->at+1) {
         lastMacroId = (uint8_t)(*ctx->at);
@@ -539,27 +539,7 @@ static bool processIfDoubletapCommand(bool negate)
     if (Macros_DryRun) {
         return true;
     }
-    bool doubletapFound = false;
-
-    for (uint8_t i = 0; i < MACRO_HISTORY_POOL_SIZE; i++) {
-        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= Cfg.DoubletapTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
-            doubletapFound = true;
-        }
-    }
-
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (
-            MacroState[i].ms.macroPlaying &&
-            MacroState[i].ms.currentMacroStartTime < S->ms.currentMacroStartTime &&
-            S->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= Cfg.DoubletapTimeout &&
-            S->ms.currentMacroIndex == MacroState[i].ms.currentMacroIndex &&
-            &MacroState[i] != S
-        ) {
-            doubletapFound = true;
-        }
-    }
-
-    return doubletapFound != negate;
+    return S->ms.keyPress.isDoubletap != negate;
 }
 
 static bool processIfModifierCommand(bool negate, uint8_t modmask)
@@ -1036,7 +1016,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_state_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
+    secondary_role_state_t res = SecondaryRoles_ResolveState(&S->ms.keyPress, strategy, true, fromSameHalf);
 
     S->as.actionActive = res == SecondaryRoleState_DontKnowYet;
     switch(res) {
@@ -1101,7 +1081,7 @@ static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
 
     postponer_buffer_record_type_t *dummy;
     postponer_buffer_record_type_t *keyReleased;
-    PostponerQuery_InfoByKeystate(S->ms.currentMacroKey, &dummy, &keyReleased);
+    PostponerQuery_InfoByKeystate(S->ms.keyPress.keyState, &dummy, &keyReleased);
 
     if (keyReleased != NULL) {
         bool releasedAfterTimeout = keyReleased->time - S->ms.currentMacroStartTime >= Cfg.HoldTimeout;
@@ -1308,7 +1288,7 @@ static macro_result_t processAutoRepeatCommand(parser_context_t* ctx) {
 
 process_delay:;
     uint16_t delay = S->ms.autoRepeatInitialDelayPassed ? Cfg.AutoRepeatDelayRate : Cfg.AutoRepeatInitialDelay;
-    bool pendingReleased = PostponerQuery_IsKeyReleased(S->ms.currentMacroKey);
+    bool pendingReleased = PostponerQuery_IsKeyReleased(S->ms.keyPress.keyState);
     bool currentKeyIsActive = Macros_CurrentMacroKeyIsActive();
 
     if (!currentKeyIsActive || pendingReleased) {
@@ -1600,20 +1580,20 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 
     if (append) {
         if (PostponerQuery_IsActiveEventually(key)) {
-            PostponerCore_TrackKeyEvent(key, false, layer, Timer_GetCurrentTime());
-            PostponerCore_TrackKeyEvent(key, true, layer, Timer_GetCurrentTime());
+            PostponerCore_TrackKeyEvent(key, false, layer);
+            PostponerCore_TrackKeyEvent(key, true, layer);
         } else {
-            PostponerCore_TrackKeyEvent(key, true, layer, Timer_GetCurrentTime());
-            PostponerCore_TrackKeyEvent(key, false, layer, Timer_GetCurrentTime());
+            PostponerCore_TrackKeyEvent(key, true, layer);
+            PostponerCore_TrackKeyEvent(key, false, layer);
         }
     } else {
         if (KeyState_Active(key)) {
             //reverse order when prepending
-            PostponerCore_PrependKeyEvent(key, true, layer, Timer_GetCurrentTime());
-            PostponerCore_PrependKeyEvent(key, false, layer, Timer_GetCurrentTime());
+            PostponerCore_PrependKeyEvent(key, true, layer);
+            PostponerCore_PrependKeyEvent(key, false, layer);
         } else {
-            PostponerCore_PrependKeyEvent(key, false, layer, Timer_GetCurrentTime());
-            PostponerCore_PrependKeyEvent(key, true, layer, Timer_GetCurrentTime());
+            PostponerCore_PrependKeyEvent(key, false, layer);
+            PostponerCore_PrependKeyEvent(key, true, layer);
         }
     }
     return MacroResult_Finished;

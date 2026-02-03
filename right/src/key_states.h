@@ -31,21 +31,28 @@
 
     typedef struct {
         uint8_t debounceTimestamp;
-        uint8_t activationTimestamp;
+        // Remember to update KeyState_NoActivity if adding or removing stuff before the bitfield
         volatile bool hardwareSwitchState : 1;
         bool debouncedSwitchState : 1;
         bool current : 1;
         bool previous : 1;
         bool debouncing : 1;
         secondary_role_state_t secondaryState : 2;
+        bool padding : 1; // This allows the KeyState_NoActivity() function to not trigger false because of sequence
+        uint8_t activationSeq: 3;
     } key_state_t;
+
+    typedef struct {
+        key_state_t *keyState;
+        bool isDoubletap: 1;
+    } key_press_info_t;
 
 // Variables:
 
     extern key_state_t KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 // Inline functions
-
+    static inline bool KeyState_NoActivity(const key_state_t* s) { return (*((uint8_t*)s) + sizeof(s->debounceTimestamp)) == 0;}
     static inline bool KeyState_Active(const key_state_t* s) { return s->current; };
     static inline bool KeyState_Inactive(const key_state_t* s) { return !s->current; };
     static inline bool KeyState_ActivatedNow(const key_state_t* s) { return !s->previous && s->current; };

@@ -241,18 +241,15 @@ static secondary_role_state_t resolveCurrentKey(secondary_role_strategy_t strate
 
 
 static void startResolution(
-    key_state_t *keyState,
+    const key_press_info_t *keyPress,
     secondary_role_strategy_t strategy,
     bool isMacroResolution,
     secondary_role_same_half_t actionFromSameHalf)
 {
-    // stored state is last resolution.  detect doubletap here
-    isDoubletap = keyState == resolutionKey 
-        && CurrentPostponedTime - resolutionStartTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
-
     // store current state
     currentlyResolving = true;
-    resolutionKey = keyState;
+    isDoubletap = keyPress->isDoubletap;
+    resolutionKey = keyPress->keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;
     activateSecondaryImmediately = false;
@@ -309,15 +306,15 @@ void SecondaryRoles_ActivateSecondaryImmediately() {
     }
 }
 
-secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf)
+secondary_role_state_t SecondaryRoles_ResolveState(const key_press_info_t *keyPress, secondary_role_strategy_t strategy, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf)
 {
     // Since postponer is active during resolutions, KeyState_ActivatedNow can happen only after previous
     // resolution has finished - i.e., if primary action has been activated, carried out and
     // released, or if previous resolution has been resolved as secondary. Therefore,
     // it suffices to deal with the `resolutionKey` only. Any other queried key is a finished resoluton.
 
-    if (!currentlyResolving && keyState->secondaryState == SecondaryRoleState_DontKnowYet) {
-        startResolution(keyState, strategy, isMacroResolution, actionFromSameHalf);
+    if (!currentlyResolving && keyPress->keyState->secondaryState == SecondaryRoleState_DontKnowYet) {
+        startResolution(keyPress, strategy, isMacroResolution, actionFromSameHalf);
         secondary_role_state_t res = resolveCurrentKey(strategy);
         if (res != SecondaryRoleState_DontKnowYet) {
             finishResolution(res);
@@ -325,14 +322,14 @@ secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, second
         return res;
     }
     else {
-        if (currentlyResolving && keyState == resolutionKey) {
+        if (currentlyResolving && keyPress->keyState == resolutionKey) {
             secondary_role_state_t res = resolveCurrentKey(strategy);
             if (res != SecondaryRoleState_DontKnowYet) {
                 finishResolution(res);
             }
             return res;
         } else {
-            return keyState->secondaryState;
+            return keyPress->keyState->secondaryState;
         }
     }
 }
