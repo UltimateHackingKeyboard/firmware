@@ -963,7 +963,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     const char *idEnd = IdentifierEnd(ctx);
 
     if (idEnd == idStart) {
-        Macros_ReportErrorTok(ctx, "Expected identifier");
+        Macros_ReportErrorPos(ctx, "Expected identifier");
         return MacroResult_Finished;
     }
     ctx->at = idEnd;
@@ -994,7 +994,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
             argType = MacroArgType_Any;
         }
         else {
-            Macros_ReportErrorPos(ctx, "Unrecognized macroArg argument type:");
+            Macros_ReportErrorTok(ctx, "Unrecognized macroArg argument type: ");
             return MacroResult_Finished;
         }
     }
