@@ -64,6 +64,7 @@
     bool StrContains(const char* str, const char* strEnd, const char* needle);
     bool ConsumeToken(parser_context_t* ctx, const char *b);
     void ConsumeAnyToken(parser_context_t* ctx);
+    struct command_entry* ConsumeGperfToken(parser_context_t* ctx);
     void ConsumeCommentsAsWhite(bool consume);
     bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref);
     bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref);
