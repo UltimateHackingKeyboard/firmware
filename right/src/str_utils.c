@@ -319,6 +319,11 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
     consumeWhite(ctx);
 }
 
+void ConsumeIdentifier(parser_context_t* ctx)
+{
+    ctx->at = IdentifierEnd(ctx);
+}
+
 void ConsumeUntilDot(parser_context_t* ctx)
 {
     while(*ctx->at > 32 && *ctx->at != '.' && !isEnd(ctx))    {

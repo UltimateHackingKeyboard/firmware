@@ -947,15 +947,68 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
 
 static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 {
-    // ignore macroArg command for now, eat rest of line
-
     uint16_t stringOffset = 0;
     uint16_t textIndex = 0;
     uint16_t textSubIndex = 0;
 
+    if (Macros_DryRun) {
+        // parse macroArg command but ignore it for now
+
+        while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
+
+        return MacroResult_Finished;
+    }
+
+    // parse the argument name (identifier)
+    const char *idStart = ctx->at;
+    const char *idEnd = IdentifierEnd(ctx->at);
+
+    if (idEnd == idStart) {
+        Macros_ReportErrorTok(ctx, "Expected identifier");
+        return MacroResult_Finished;
+    }
+    ctx->at = idEnd;
+
+    // see if the argument has a type
+    macro_arg_type_t argType;
+
+    if (*ctx->at == ':') {
+        ctx->at++;
+        const char *typeStart = ctx->at;
+
+        if (ConsumeToken(ctx, "int")) {
+            argType = MacroArgType_Int;
+        }
+        else if (ConsumeToken(ctx, "float")) {
+            argType = MacroArgType_Float;
+        }
+        else if (ConsumeToken(ctx, "string")) {
+            argType = MacroArgType_String;
+        }
+        else if (ConsumeToken(ctx, "keyid")) {
+            argType = MacroArgType_KeyId;
+        }
+        else if (ConsumeToken(ctx, "scancode")) {
+            argType = MacroArgType_ScanCode;
+        }
+        else if (ConsumeToken(ctx, "any")) {
+            argType = MacroArgType_Any;
+        }
+        else {
+            Macros_ReportErrorPos(ctx, "Unrecognized macroArg argument type:");
+        }
+    }
+    else {
+        argType = MacroArgType_Any;
+        ConsumeWhite(ctx);
+    }
+
+    // rest of command is descriptive label, ignored by firmware
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
     return MacroResult_Finished;
+
+//    Macros_ReportErrorPrintf(ctx->at, "Parsing failed at '%s'?", OneWord(ctx));
 }
 
 static macro_result_t processWriteCommand(parser_context_t* ctx)
