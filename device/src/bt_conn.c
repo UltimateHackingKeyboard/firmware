@@ -986,7 +986,9 @@ void BtConn_Init(void) {
     int err = 0;
 
     int sourceId = log_source_id_get("hogp");
-    log_filter_set(NULL, 0, sourceId, LOG_LEVEL_INF);
+    if (sourceId >= 0) {
+        log_filter_set(NULL, 0, sourceId, LOG_LEVEL_INF);
+    }
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         Peers[peerId].id = peerId;
