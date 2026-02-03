@@ -39,7 +39,7 @@
         const char* at;
         const char* end;
         uint8_t nestingLevel;
-        uint8_t nestingBound; // This context can't be popped bellow this bound, because it is a copy.
+        uint8_t nestingBound; // This context can't be popped below this bound, because it is a copy.
     } parser_context_t;
 
     typedef struct {
