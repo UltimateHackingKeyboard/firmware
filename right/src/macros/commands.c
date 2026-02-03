@@ -945,7 +945,7 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
     return res ? MacroResult_Blocking : MacroResult_Finished;
 }
 
-static macro_result_t processMacroArgCommand(uint32_t time)
+static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 {
     // ignore macroArg command for now, eat rest of line
 
