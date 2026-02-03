@@ -951,7 +951,6 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     uint16_t textIndex = 0;
     uint16_t textSubIndex = 0;
 
-/* 
     if (Macros_DryRun) {
         // parse macroArg command but ignore it for now
 
@@ -959,10 +958,9 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 
         return MacroResult_Finished;
     }
- */
     // parse the argument name (identifier)
     const char *idStart = ctx->at;
-    const char *idEnd = IdentifierEnd(ctx->at);
+    const char *idEnd = IdentifierEnd(ctx);
 
     if (idEnd == idStart) {
         Macros_ReportErrorTok(ctx, "Expected identifier");
@@ -970,7 +968,6 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
     ctx->at = idEnd;
 
-/* 
     // see if the argument has a type
     macro_arg_type_t argType;
 
@@ -1005,7 +1002,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         argType = MacroArgType_Any;
         ConsumeWhite(ctx);
     }
- */
+
     // rest of command is descriptive label, ignored by firmware
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
