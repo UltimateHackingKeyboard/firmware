@@ -2015,28 +2015,21 @@ static macro_result_t processCommand(parser_context_t* ctx)
     const char* cmdTokEnd = TokEnd(ctx->at, ctx->end);
     if (cmdTokEnd > ctx->at && cmdTokEnd[-1] == ':') {
         //skip labels
-        ctx->at = NextTok(ctx->at, ctx->end);
-        if (ctx->at == ctx->end) {
+        ConsumeAnyToken(ctx);
+        if (ctx->at == ctx->end && IsEnd(ctx)) {
             return MacroResult_Finished;
         }
     }
 
     while(ctx->at < ctx->end || !IsEnd(ctx)) {
-        // Get the current token for hash lookup
-        const char* tokStart = ctx->at;
-        const char* tokEnd = TokEnd(tokStart, ctx->end);
-        size_t tokLen = tokEnd - tokStart;
-
         // Look up the command in the hash table
-        const struct command_entry* entry = command_lookup(tokStart, tokLen);
+        const char* cmdAt = ctx->at;
+        const struct command_entry* entry = ConsumeGperfToken(ctx);
 
         if (entry == NULL) {
-            Macros_ReportErrorTok(ctx, "Unrecognized command:");
+            Macros_ReportError("Unrecognized command:", cmdAt, TokEnd(cmdAt, ctx->end));
             return MacroResult_Finished;
         }
-
-        // Consume the token
-        ctx->at = NextTok(tokStart, ctx->end);
 
         // Dispatch based on command ID
         switch (entry->id) {
