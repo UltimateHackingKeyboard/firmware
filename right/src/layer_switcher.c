@@ -109,21 +109,17 @@ void updateActiveLayer() {
  *   such action was bound on a key whose base layer action hapenned to be a layer switch.)
  */
 
-key_state_t *doubleTapSwitchLayerKey;
 
 void LayerSwitcher_DoubleTapToggle(layer_id_t layer, const key_press_info_t* keyPress) {
-    static uint32_t doubleTapSwitchLayerStartTime = 0;
     static uint32_t doubleTapSwitchLayerTriggerTime = 0;
+    static key_state_t *doubleTapSwitchLayerKey;
 
     if(KeyState_ActivatedNow(keyPress->keyState)) {
         LayerStack_LegacyPop(layer);
-        if (doubleTapSwitchLayerKey == keyPress->keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < Cfg.DoubletapTimeout) {
+        if (keyPress->isDoubletap) {
             LayerStack_LegacyPush(layer);
-            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
-            doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
-        } else {
             doubleTapSwitchLayerKey = keyPress->keyState;
-            doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
+            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
         }
     }
 
@@ -133,15 +129,6 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, const key_press_info_t* key
         {
             LayerStack_LegacyPop(layer);
         }
-    }
-}
-
-// If some other key is pressed between taps of a possible doubletap, discard the doubletap
-// Also, doubleTapSwitchKey is used to cancel long hold toggle, so reset it only if no layer is locked
-void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState) {
-    bool noLayerIsToggled = LayerStack_Size == 1;
-    if (doubleTapSwitchLayerKey != keyState && noLayerIsToggled) {
-        doubleTapSwitchLayerKey = NULL;
     }
 }
 

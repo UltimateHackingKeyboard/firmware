@@ -169,7 +169,6 @@ static void applyToggleLayerAction(const key_press_info_t *keyPress, key_action_
 
 static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
-        LayerSwitcher_DoubleTapInterrupt(keyState);
         Macros_SignalInterrupt();
         OneShot_SignalInterrupt();
         UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
