@@ -204,7 +204,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // see if we should set a timer to wake up to actively time out
     if (isActiveTimeout || isDoubletap) {
-        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
+        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
     }
 
     // otherwise, keep postponing until key action
