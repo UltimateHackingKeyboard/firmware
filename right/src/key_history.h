@@ -15,6 +15,6 @@
 
 void KeyHistory_RecordPress(const key_state_t *keyState);
 void KeyHistory_RecordRelease(const key_state_t *keyState);
-bool KeyHistory_IsDoubletap(const key_state_t *keyState, const uint16_t doubletapInterval);
+bool KeyHistory_WasLastDoubletap();
 
 #endif

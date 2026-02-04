@@ -695,8 +695,8 @@ static void updateActionStates() {
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
                     ++keyState->activationSeq;
-                    pressInfo.isDoubletap = KeyHistory_IsDoubletap(keyState, Cfg.DoubletapTimeout);
                     KeyHistory_RecordPress(keyState);
+                    pressInfo.isDoubletap = KeyHistory_WasLastDoubletap();
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
