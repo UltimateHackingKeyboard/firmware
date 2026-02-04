@@ -6,6 +6,7 @@
 #include "module.h"
 #include "slave_protocol.h"
 #include "macros/vars.h"
+#include "macros/command_hash.h"
 #include "trace.h"
 
 #if !defined(MIN)
@@ -379,6 +380,7 @@ const char* TokEnd(const char* cmd, const char *cmdEnd)
     return cmd;
 }
 
+// This doesn't handle expansions. Don't use it in actual macro context.
 const char* NextTok(const char* cmd, const char *cmdEnd)
 {
     while(*cmd > 32 && cmd < cmdEnd)    {
@@ -399,6 +401,17 @@ void ConsumeAnyToken(parser_context_t* ctx)
         ctx->at++;
     }
     consumeWhite(ctx);
+}
+
+struct command_entry* ConsumeGperfToken(parser_context_t* ctx)
+{
+    const char* start = ctx->at;
+    while (*ctx->at > 32 && ctx->at < ctx->end) {
+        ctx->at++;
+    }
+    struct command_entry* result = command_lookup(start, ctx->at - start);
+    consumeWhite(ctx);
+    return result;
 }
 
 const char* NextCmd(const char* cmd, const char *cmdEnd)
