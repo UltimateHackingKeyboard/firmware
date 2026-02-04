@@ -38,7 +38,7 @@ static void SwitchActiveUsbMouseReport(void)
 
 #ifndef __ZEPHYR__
 
-static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH];
+static uint8_t usbMouseFeatBuffer[USB_MOUSE_FEAT_REPORT_LENGTH] = {0};
 
 usb_hid_protocol_t UsbMouseGetProtocol(void)
 {
@@ -82,7 +82,6 @@ usb_status_t UsbMouseCallback(class_handle_t handle, uint32_t event, void *param
 
     switch (event) {
         case ((uint32_t)-kUSB_DeviceEventSetConfiguration):
-            usbMouseFeatBuffer[0] = 0;
             error = kStatus_USB_Success;
             break;
         case ((uint32_t)-kUSB_DeviceEventSetInterface):
