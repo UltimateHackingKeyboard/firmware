@@ -2467,7 +2467,7 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         return MacroResult_Finished;
     }
 }
-    
+
 static macro_result_t processCommand(parser_context_t* ctx)
 {
     const char* cmdTokEnd = TokEnd(ctx->at, ctx->end);
@@ -2498,6 +2498,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
         if (headersProcessed) {
             S->ms.macroHeadersProcessed = true;
         }
+        return res;
     }
 
     //this is reachable if there is a train of conditions/modifiers/labels without any command
