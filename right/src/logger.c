@@ -18,6 +18,7 @@
     #include <zephyr/kernel.h>
     #include <zephyr/drivers/gpio.h>
     #include <zephyr/arch/arch_interface.h>
+    #include <zephyr/logging/log_ctrl.h>
     #if DEVICE_IS_KEYBOARD
         #include "keyboard/uart_bridge.h"
         #ifdef DEVICE_HAS_OLED
@@ -146,3 +147,20 @@ void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...) {
     LogConstantTo(deviceId, logMask, buffer);
 }
 
+#ifdef __ZEPHYR__
+
+static void setLevel(const char* sourceName, uint32_t level) {
+    int sourceId = log_source_id_get(sourceName);
+    if (sourceId >= 0) {
+        log_filter_set(NULL, 0, sourceId, level);
+    }
+}
+
+void InitLogLevels() {
+    setLevel("hogp", LOG_LEVEL_INF);
+    setLevel("udc", LOG_LEVEL_WRN);
+    setLevel("udc_nrf", LOG_LEVEL_WRN);
+    setLevel("c2usb", LOG_LEVEL_WRN);
+}
+
+#endif
