@@ -176,6 +176,8 @@
             macro_arg_t arguments[MAX_MACRO_ARGUMENT_SIZE];
 
             macro_usb_keyboard_reports_t reports;
+
+            bool macroHeadersProcessed : 1;
         } ms;
 
         // action scope data
