@@ -10,7 +10,7 @@
 #include <zephyr/bluetooth/addr.h>
 #include "connections.h"
 #include "stubs.h"
-#include "hid/usb_compatibility.h"
+#include "hid/transport.h"
 #include "logger.h"
 #include <stdio.h>
 #include "config_manager.h"
@@ -412,7 +412,7 @@ static void switchOver(connection_id_t connectionId) {
         HostConnection_SetSelectedConnection(ConnectionId_Invalid);
     }
 
-    UsbCompatibility_UpdateKeyboardLedsState();
+    Hid_UpdateKeyboardLedsState();
 }
 
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {

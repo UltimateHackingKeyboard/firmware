@@ -13,7 +13,6 @@
 #include "lufa/HIDClassCommon.h"
 #include "segment_display.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
-#include "usb_composite_device.h"
 #include "slave_scheduler.h"
 #include "bus_pal_hardware.h"
 #include "command.h"
@@ -22,7 +21,6 @@
 #include "usb_commands/usb_command_apply_config.h"
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "usb_report_updater.h"
 #include "macro_events.h"
 #include "macros/shortcut_parser.h"
@@ -32,7 +30,6 @@
 #include "event_scheduler.h"
 #include "config_parser/config_globals.h"
 #include "user_logic.h"
-#include "usb_descriptors/usb_descriptor_strings.h"
 #include "layouts/key_layout_60_to_universal.h"
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
@@ -41,6 +38,7 @@
 #include "trace.h"
 #include "trace_reasons.h"
 #include "config_manager.h"
+#include "hid/transport.h"
 
 static volatile bool IsEepromInitialized = false;
 static volatile bool IsConfigInitialized = false;
@@ -83,16 +81,15 @@ static void initConfig()
 
 static void sendFirstReport()
 {
-    bool success = false;
+    hid_keyboard_report_t emptyReport = {0};
+    int ret = -1;
     // Wait until sending a report is successful, but don't block longer than 5 seconds.
-    while (!success && Timer_GetCurrentTime() < 5000) {
-        UsbReportUpdateSemaphore |= 1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX;
-        usb_status_t status = UsbBasicKeyboardAction();
-        if (status != kStatus_USB_Success) {
-            UsbReportUpdateSemaphore &= ~(1 << USB_BASIC_KEYBOARD_INTERFACE_INDEX);
+    while (ret && Timer_GetCurrentTime() < 5000) {
+        UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
+        ret = Hid_SendKeyboardReport(&emptyReport);
+        if (ret) {
+            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
             __WFI();
-        } else {
-            success = true;
         }
     }
     while (UsbReportUpdateSemaphore) {
@@ -140,8 +137,9 @@ static void initUsb() {
     while (!IsHardwareConfigInitialized) {
         __WFI();
     }
-    USB_SetSerialNo(HardwareConfig->uniqueId);
-    InitUsb();
+    CLOCK_EnableUsbfs0Clock(kCLOCK_UsbSrcIrc48M, 48000000);
+    USB_SetSerialNumber(HardwareConfig->uniqueId);
+    USB_Enable();
 }
 
 static void blinkSfjl() {

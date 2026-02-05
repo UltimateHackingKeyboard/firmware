@@ -6,7 +6,9 @@
 
     #include <stdbool.h>
     #include <stdint.h>
-    #include "usb_device_config.h"
+    #include "hid/keyboard_report.h"
+    #include "hid/controls_report.h"
+    #include "hid/mouse_report.h"
 
 // Macros:
 
@@ -41,10 +43,9 @@
     } macro_result_t;
 
     typedef struct {
-        usb_mouse_report_t macroMouseReport;
-        usb_basic_keyboard_report_t macroBasicKeyboardReport;
-        usb_media_keyboard_report_t macroMediaKeyboardReport;
-        usb_system_keyboard_report_t macroSystemKeyboardReport;
+        hid_mouse_report_t macroMouseReport;
+        hid_keyboard_report_t macroBasicKeyboardReport;
+        hid_controls_report_t macroControlsReport;
         uint8_t inputModifierMask;
     } macro_usb_keyboard_reports_t;
 
