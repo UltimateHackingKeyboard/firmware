@@ -9,6 +9,9 @@
 #include "screen_manager.h"
 #include "key_action.h"
 #include "macros/status_buffer.h"
+#include "ledmap.h"
+#include "keymap_pairing.h"
+#include "event_scheduler.h"
 
 static widget_t splitterWidget;
 static widget_t questionLine;
@@ -16,9 +19,24 @@ static widget_t answerLine;
 
 widget_t* PairingScreen;
 
+bool InteractivePairingInProgress = false;
+
 static uint8_t passwordCharCount = 0;
 static uint8_t password[PASSWORD_LENGTH];
 static char passwordTextBuffer[2*PASSWORD_LENGTH] = { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', '\0'};
+
+static void deactivateKeymap() {
+    Keymap_DeactivatePairingKeymap();
+    Ledmap_ResetTemporaryLedBacklightingMode();
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+}
+
+static void activateKeymap() {
+    Keymap_ActivatePairingKeymap();
+    Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_Numpad);
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    Ledmap_UpdateBacklightLeds();
+}
 
 static void updatePasswordText(void)
 {
@@ -56,19 +74,11 @@ static void registerPasswordDigit(uint8_t digit)
     }
 }
 
-void PairingScreen_Feedback(bool success)
+void PairingScreen_Feedback(const char* message)
 {
-    if (success) {
-        NotifyPrintf("Pairing succeeded!");
-    } else {
-        NotifyPrintf("Pairing failed!");
-    }
-}
-
-void PairingScreen_Cancel(void)
-{
-    passwordCharCount = 0;
-    ScreenManager_SwitchScreenEvent();
+    InteractivePairingInProgress = false;
+    NotifyPrintf("%s", message);
+    deactivateKeymap();
 }
 
 const rgb_t* PairingScreen_ActionColor(key_action_t* action) {
@@ -131,9 +141,11 @@ void PairingScreen_RegisterScancode(uint8_t scancode)
 
 void PairingScreen_AskForPassword(void)
 {
+    InteractivePairingInProgress = true;
     passwordCharCount = 0;
     updatePasswordText();
     ScreenManager_ActivateScreen(ScreenId_Pairing);
+    activateKeymap();
 }
 
 void PairingScreen_Init(void)
