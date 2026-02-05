@@ -125,9 +125,13 @@ static void setStatusChar(char n)
     }
 
     if (n && Buf.len == STATUS_BUFFER_MAX_LENGTH && DEBUG_ROLL_STATUS_BUFFER) {
-        memcpy(Buf.data, &Buf.data[STATUS_BUFFER_MAX_LENGTH/2], STATUS_BUFFER_MAX_LENGTH/2);
-        int16_t shiftBy = STATUS_BUFFER_MAX_LENGTH - STATUS_BUFFER_MAX_LENGTH/2;
-        Buf.len = STATUS_BUFFER_MAX_LENGTH/2;
+        uint16_t shiftBy = 256;
+        while (shiftBy < Buf.len && Buf.data[shiftBy - 1] != '\n') {
+            shiftBy++;
+        }
+        uint16_t remaining = Buf.len - shiftBy;
+        memmove(Buf.data, &Buf.data[shiftBy], remaining);
+        Buf.len = remaining;
         consumeStatusCharReadingPos = consumeStatusCharReadingPos > shiftBy ? consumeStatusCharReadingPos - shiftBy : 0;
     }
 
