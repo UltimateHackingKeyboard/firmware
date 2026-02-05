@@ -5,7 +5,6 @@
 #include "usb_report_updater.h"
 #include "macros/core.h"
 #include "config_manager.h"
-#include "usb_interfaces/usb_interface_generic_hid.h"
 
 #include "usb_log_buffer.h"
 #ifdef __ZEPHYR__
@@ -33,7 +32,7 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             SetUsbTxBufferUint8(1, UsbReportUpdateSemaphore);
             break;
         case UsbVariable_StatusBuffer:
-            for (uint8_t i = 1; i < USB_GENERIC_HID_IN_BUFFER_LENGTH; i++) {
+            for (uint8_t i = 1; i < USB_COMMAND_BUFFER_LENGTH; i++) {
                 char c = Macros_ConsumeStatusChar();
                 SetUsbTxBufferUint8(i, c);
                 if (c == '\0') {
@@ -45,7 +44,7 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             SetUsbTxBufferUint8(1, WormCfg->UsbLogEnabled);
             break;
         case UsbVariable_ShellBuffer:
-            UsbLogBuffer_Consume(GenericHidInBuffer + 1, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
+            UsbLogBuffer_Consume(GenericHidInBuffer + 1, USB_COMMAND_BUFFER_LENGTH - 1);
             break;
         case UsbVariable_LedAudioRegisters:
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD

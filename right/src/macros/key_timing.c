@@ -18,10 +18,10 @@ void KeyTiming_RecordKeystroke(key_state_t *keyState, bool active, uint32_t pres
     Macros_SetStatusChar('\n');
 }
 
-void KeyTiming_RecordReport(usb_basic_keyboard_report_t* report)
+void KeyTiming_RecordReport(hid_keyboard_report_t* report)
 {
     Macros_SetStatusNumSpaced(Timer_GetCurrentTime(), false);
-    Utils_PrintReport(" OUT", ActiveUsbBasicKeyboardReport);
+    Utils_PrintReport(" OUT", report);
 }
 
 void KeyTiming_RecordComment(key_state_t* keyState, secondary_role_state_t state, int32_t resolutionLine)

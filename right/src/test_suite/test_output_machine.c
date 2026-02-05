@@ -1,6 +1,5 @@
 #include "test_output_machine.h"
 #include "test_suite.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "macros/shortcut_parser.h"
 #include "key_action.h"
 #include "logger.h"
