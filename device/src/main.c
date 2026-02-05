@@ -215,6 +215,9 @@ void mainRuntime(void) {
     InitShellCommands();
     InitProxyLogBackend();
 
+    Shell_WaitUntilInitialized();
+    Logger_SetPriority(true);
+
     // read configurations
     {
         InitFlash();
@@ -289,6 +292,8 @@ void mainRuntime(void) {
     ThreadStats_Init();
 
     InitLogLevels();
+    Logger_SetPriority(false);
+
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {

@@ -159,13 +159,7 @@ static void setLevel(const char* sourceName, uint32_t level) {
 }
 
 void InitLogLevels() {
-    const struct shell *sh = shell_backend_uart_get_ptr();
-    if (sh) {
-        // if we set levels before shell is ready, the shell will mercilessly overwrite them
-        while (!shell_ready(sh)) {
-            k_msleep(10);
-        }
-    }
+    Shell_WaitUntilInitialized();
 
     setLevel("hogp", LOG_LEVEL_INF);
     setLevel("udc", LOG_LEVEL_WRN);

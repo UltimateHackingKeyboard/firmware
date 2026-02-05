@@ -389,6 +389,15 @@ static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+void Shell_WaitUntilInitialized(void) {
+    const struct shell *sh = shell_backend_uart_get_ptr();
+    if (sh) {
+        // if we set levels before shell is ready, the shell will mercilessly overwrite them
+        while (!shell_ready(sh)) {
+            k_msleep(10);
+        }
+    }
+}
 
 static int reinitShell(const struct device *const dev)
 {
@@ -425,6 +434,8 @@ static int reinitShell(const struct device *const dev)
         LogS("Shell start failed: %d\n", ret);
         return ret;
     }
+
+    Shell_WaitUntilInitialized();
 
     return 0;
 }
