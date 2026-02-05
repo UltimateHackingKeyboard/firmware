@@ -160,7 +160,6 @@ static usb_status_t USB_DeviceCh9GetStatus(usb_device_common_class_struct_t *cla
     {
         /* Get the device status */
         classHandle->standardTranscationBuffer = 0;
-        error = USB_DeviceClassCallback(classHandle->handle, kUSB_DeviceEventGetDeviceStatus, &classHandle->standardTranscationBuffer);
         classHandle->standardTranscationBuffer = classHandle->standardTranscationBuffer & USB_GET_STATUS_DEVICE_MASK;
         classHandle->standardTranscationBuffer = USB_SHORT_TO_LITTLE_ENDIAN(classHandle->standardTranscationBuffer);
         /* The device status length must be USB_DEVICE_STATUS_SIZE. */
@@ -401,10 +400,6 @@ static usb_status_t USB_DeviceCh9GetDescriptor(usb_device_common_class_struct_t 
         commonDescriptor.stringDescriptor.languageId = setup->wIndex;
         error = USB_DeviceClassCallback(classHandle->handle, kUSB_DeviceEventGetStringDescriptor,
                                         &commonDescriptor.stringDescriptor);
-    }
-    else if (USB_DESCRIPTOR_TYPE_BINARY_OBJECT_STORE == descriptorType)
-    {
-        error = USB_DeviceGetBosDescriptor(classHandle->handle, &commonDescriptor.commonDescriptor);
     }
 #if (defined(USB_DEVICE_CONFIG_HID) && (USB_DEVICE_CONFIG_HID > 0U))
     else if (USB_DESCRIPTOR_TYPE_HID == descriptorType)

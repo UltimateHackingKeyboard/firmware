@@ -7,26 +7,27 @@
       "cwd": "${workspaceFolder}",
       "svdPath": "${workspaceFolder}/../svd/MK22F51212.xml",
     
-      "executable": "",
+      "executable": {
+        "elf": "${workspaceFolder}/build/v2-debug/uhk-60-right.elf"
+      },
       "stopAtSymbol": "main",
       "probeSerialNumber": "",
       "isAttach": false,
-      "probeType": "",
       "skipBuildBeforeDebug": false,
-      "skipPreFlashActions": true,
-    
       "gdbInitCommands": [
         "set remotetimeout 600",
         "set debug-file-directory",
         "set non-stop off"
       ],
-    
+      "gdbClientPath": "${env:ARM_GCC_DIR}/bin/arm-none-eabi-gdb",
       "gdbServerConfigs": {
         "linkserver": {},
-    		"segger": {},
-    		"pemicro": {}
+        "segger": {
+          "interface": "SWD",
+          "device": "MK22FN512xxx12",
+        },
+        "pemicro": {}
       },
-    
       "showDevDebugOutput": "none"
     }
   ]

@@ -340,7 +340,6 @@ void EventVector_ReportMask(const char* prefix, uint32_t mask) {
 
     REPORT_MASK(KeyboardLedState);
     REPORT_MASK(UsbMacroCommandWaitingForExecution);
-    REPORT_MASK(ProtocolChanged);
     REPORT_MASK(LedManagerFullUpdateNeeded);
     REPORT_MASK(KeymapReloadNeeded);
     REPORT_MASK(SegmentDisplayNeedsUpdate);

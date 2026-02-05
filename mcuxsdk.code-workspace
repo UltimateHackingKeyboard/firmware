@@ -30,6 +30,10 @@
 		{
 			"name": "c2usb",
 			"path": "../c2usb"
+		},
+		{
+			"name": "lib",
+			"path": "../modules/lib"
 		}
 	],
 	"settings": {

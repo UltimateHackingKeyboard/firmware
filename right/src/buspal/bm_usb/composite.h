@@ -2,7 +2,6 @@
 #define __USB_DEVICE_COMPOSITE_H__
 
 #include "hid_bootloader.h"
-#include "usb_device_config.h"
 #include "bm_usb/usb_descriptor.h"
 
 #define CONTROLLER_ID kUSB_ControllerKhci0

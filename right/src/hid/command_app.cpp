@@ -1,7 +1,9 @@
 #include "command_app.hpp"
-#include "hid/rdf/descriptor.hpp"
-#include "hid/report_protocol.hpp"
-#include "zephyr/sys/printk.h"
+#include <hid/rdf/descriptor.hpp>
+#include <hid/report_protocol.hpp>
+#if __has_include(<zephyr/sys/printk.h>)
+    #include <zephyr/sys/printk.h>
+#endif
 
 extern "C" void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
@@ -40,9 +42,11 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
     UsbProtocolHandler(out.payload.data(), in.payload.data());
     auto err = send_report(&in);
     if (err == hid::result::ok) {
-        in_buffer_.compare_swap(buf_idx);
+        in_buffer_.swap_sides();
     } else {
+#if __has_include(<zephyr/sys/printk.h>)
         printk("Command app failed to send report with: %d\n", std::bit_cast<int>(err));
+#endif
     }
 }
 

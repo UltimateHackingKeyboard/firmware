@@ -1,14 +1,13 @@
 #include "power_mode.h"
 #include "timer.h"
-#include "usb_composite_device.h"
 #include "event_scheduler.h"
 #include "led_manager.h"
 #include "wormhole.h"
 #include "stubs.h"
+#include "hid/transport.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
-    #include "hid/config.h"
     #include "connections.h"
     #include "keyboard/key_scanner.h"
     #include "keyboard/charger.h"
@@ -17,7 +16,6 @@
     #include "proxy_log_backend.h"
 #else
     #include "slave_drivers/is31fl3xxx_driver.h"
-    #include "usb_composite_device.h"
 #endif
 
 power_mode_config_t PowerModeConfig[PowerMode_Count] = {
@@ -195,11 +193,7 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 }
 
 void PowerMode_WakeHost() {
-#ifdef __ZEPHYR__
     USB_RemoteWakeup();
-#else
-    WakeUpHost();
-#endif
 }
 
 void PowerMode_Restart() {

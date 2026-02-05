@@ -6,7 +6,6 @@
     #include <stdint.h>
     #include <stdbool.h>
     #include "key_action.h"
-    #include "usb_device_config.h"
     #include "key_states.h"
     #include "macros/typedefs.h"
     #include "macros/vars.h"

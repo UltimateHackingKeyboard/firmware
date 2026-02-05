@@ -27,6 +27,7 @@
 #include "pin_wiring.h"
 #include "device.h"
 #include "logger.h"
+#include "hid/transport.h"
 #include "shell_backend_usb.h"
 #include "stubs.h"
 #include "test_suite/test_suite.h"
@@ -160,19 +161,9 @@ static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[]
 {
     if (argc == 1) {
         shell_fprintf(
-            shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == Rollover_NKey) ? 'n' : '6');
+            shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == ROLLOVER_N_KEY) ? 'n' : '6');
     } else {
-        HID_SetKeyboardRollover((argv[1][0] == '6') ? Rollover_6Key : Rollover_NKey);
-    }
-    return 0;
-}
-
-static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
-{
-    if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "%c\n", HID_GetGamepadActive() ? 'y' : 'n');
-    } else {
-        HID_SetGamepadActive(argv[1][0] != '0');
+        HID_SetKeyboardRollover((argv[1][0] == '6') ? ROLLOVER_6_KEY : ROLLOVER_N_KEY);
     }
     return 0;
 }
@@ -513,7 +504,6 @@ void InitShellCommands(void)
 #endif
         SHELL_CMD_ARG(
             rollover, NULL, "get/set keyboard rollover mode (n/6)", cmd_uhk_rollover, 1, 1),
-        SHELL_CMD_ARG(gamepad, NULL, "switch gamepad on/off", cmd_uhk_gamepad, 1, 1),
         SHELL_CMD_ARG(passkey, NULL, "send passkey for bluetooth pairing", cmd_uhk_passkey, 2, 0),
         SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),

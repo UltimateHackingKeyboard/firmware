@@ -4,7 +4,7 @@
 #include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
-#include "hid/config.h"
+#include "hid/transport.h"
 #include "bt_advertise.h"
 #include "nus_client.h"
 #include "nus_server.h"

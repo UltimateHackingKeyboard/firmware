@@ -1,14 +1,14 @@
 #ifndef __DEVICE_H__
 #define __DEVICE_H__
 
+#ifdef __ZEPHYR__
+    #include "autoconf.h"
+#else
+    #include "mcux_config.h"
+#endif
 
-// Includes:
-
-    #ifdef __ZEPHYR__
-        #include "autoconf.h"
-    #endif
-
-// Typedefs:
+#ifdef CONFIG_DEVICE_ID
+    #define DEVICE_ID CONFIG_DEVICE_ID
 
 /**
  * Device vid / pid / comment:
@@ -41,20 +41,6 @@
     #define DEVICE_ID_UHK80_RIGHT 4
     #define DEVICE_ID_UHK_DONGLE 5
     #define DEVICE_COUNT 5
-
-    #ifdef __ZEPHYR__
-        #ifndef CONFIG_DEVICE_ID
-            #error "CONFIG_DEVICE_ID is undefined!"
-        #else
-            #define DEVICE_ID CONFIG_DEVICE_ID
-        #endif
-    #else
-        #ifndef DEVICE_ID
-            #error "DEVICE_ID is undefined!"
-        #else
-            #define CONFIG_DEVICE_ID DEVICE_ID
-        #endif
-    #endif
 
     #define DEVICE_IS_UHK60V1_RIGHT (CONFIG_DEVICE_ID == DEVICE_ID_UHK60V1_RIGHT)
     #define DEVICE_IS_UHK60V2_RIGHT (CONFIG_DEVICE_ID == DEVICE_ID_UHK60V2_RIGHT)
@@ -130,4 +116,5 @@
         DeviceId_Count = DEVICE_ID_UHK_DONGLE + 1,
     } device_id_t;
 
+#endif // CONFIG_DEVICE_ID
 #endif

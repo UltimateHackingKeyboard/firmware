@@ -13,7 +13,6 @@
 #include "eeprom.h"
 #include "slave_protocol.h"
 #include "timer.h"
-#include "usb_api.h"
 #include "slave_scheduler.h"
 #include "bootloader/wormhole.h"
 #include "module/uart.h"
@@ -68,7 +67,7 @@ static void initInterruptPriorities(void)
     NVIC_SetPriority(I2C_EEPROM_BUS_IRQ_ID,    0);
     NVIC_SetPriority(PIT_TIMER_IRQ_ID,         3);
     NVIC_SetPriority(I2C_MAIN_BUS_IRQ_ID,      4);
-    NVIC_SetPriority(USB_IRQ_ID,               4);
+    NVIC_SetPriority(USB0_IRQn,                4);
 }
 
 static void delay(void)

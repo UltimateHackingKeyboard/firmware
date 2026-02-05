@@ -46,15 +46,16 @@
 #include "power_mode.h"
 #include "oneshot.h"
 #include "trace.h"
+#include "hid/transport.h"
 
 #ifdef __ZEPHYR__
 #include "debug_eventloop_timing.h"
 #include "shell.h"
-#include "hid/usb_compatibility.h"
-#include "keyboard/input_interceptor.h"
 #include "keyboard/charger.h"
 #include "logger.h"
 #include "bt_pair.h"
+#include "connections.h"
+#include "keyboard/oled/screens/pairing_screen.h"
 #else
 #include "stubs.h"
 #endif
@@ -94,17 +95,42 @@ usb_keyboard_reports_t NativeKeyboardReports = {
     .postponeMask = EventVector_NativeActionsPostponing,
 };
 
+static hid_keyboard_report_t keyboardReports[2];
+hid_keyboard_report_t * ActiveKeyboardReport = &keyboardReports[0];
+static hid_controls_report_t controlsReports[2], * ActiveControlsReport = &controlsReports[0];
+static hid_mouse_report_t mouseReports[2], * ActiveMouseReport = &mouseReports[0];
+
 static void resetActiveReports() {
-    memset(ActiveUsbMouseReport, 0, sizeof *ActiveUsbMouseReport);
-    memset(ActiveUsbBasicKeyboardReport, 0, sizeof *ActiveUsbBasicKeyboardReport);
-    memset(ActiveUsbMediaKeyboardReport, 0, sizeof *ActiveUsbMediaKeyboardReport);
-    memset(ActiveUsbSystemKeyboardReport, 0, sizeof *ActiveUsbSystemKeyboardReport);
+    memset(ActiveMouseReport, 0, sizeof *ActiveMouseReport);
+    memset(ActiveKeyboardReport, 0, sizeof *ActiveKeyboardReport);
+    memset(ActiveControlsReport, 0, sizeof *ActiveControlsReport);
+}
+
+static void switchActiveKeyboardReport() {
+    if (ActiveKeyboardReport == &keyboardReports[0]) {
+        ActiveKeyboardReport = &keyboardReports[1];
+    } else {
+        ActiveKeyboardReport = &keyboardReports[0];
+    }
+}
+static void switchActiveMouseReport() {
+    if (ActiveMouseReport == &mouseReports[0]) {
+        ActiveMouseReport = &mouseReports[1];
+    } else {
+        ActiveMouseReport = &mouseReports[0];
+    }
+}
+static void switchActiveControlsReport() {
+    if (ActiveControlsReport == &controlsReports[0]) {
+        ActiveControlsReport = &controlsReports[1];
+    } else {
+        ActiveControlsReport = &controlsReports[0];
+    }
 }
 
 void UsbReportUpdater_ResetKeyboardReports(usb_keyboard_reports_t* reports) {
     memset(&reports->basic, 0, sizeof reports->basic);
-    memset(&reports->media, 0, sizeof reports->media);
-    memset(&reports->system, 0, sizeof reports->system);
+    memset(&reports->controls, 0, sizeof reports->controls);
     reports->inputModifiers = 0;
 }
 
@@ -273,13 +299,13 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
         if (!stickyModifiersChanged || KeyState_ActivatedEarlier(keyState)) {
             switch (action->keystroke.keystrokeType) {
                 case KeystrokeType_Basic:
-                    UsbBasicKeyboard_AddScancode(&reports->basic, action->keystroke.scancode);
+                    KeyboardReport_AddScancode(&reports->basic, action->keystroke.scancode);
                     break;
                 case KeystrokeType_Media:
-                    UsbMediaKeyboard_AddScancode(&reports->media, action->keystroke.scancode);
+                    ControlsReport_AddConsumerUsage(&reports->controls, action->keystroke.scancode);
                     break;
                 case KeystrokeType_System:
-                    UsbSystemKeyboard_AddScancode(&reports->system, action->keystroke.scancode);
+                    ControlsReport_AddSystemUsage(&reports->controls, action->keystroke.scancode);
                     break;
             }
         }
@@ -496,10 +522,9 @@ static void mergeReports(void)
     InputModifiers = 0;
 
     {
-        UsbBasicKeyboard_MergeReports(&Macros_PersistentReports.macroBasicKeyboardReport, ActiveUsbBasicKeyboardReport);
-        UsbMediaKeyboard_MergeReports(&Macros_PersistentReports.macroMediaKeyboardReport, ActiveUsbMediaKeyboardReport);
-        UsbSystemKeyboard_MergeReports(&Macros_PersistentReports.macroSystemKeyboardReport, ActiveUsbSystemKeyboardReport);
-        UsbMouse_MergeReports(&Macros_PersistentReports.macroMouseReport, ActiveUsbMouseReport);
+        KeyboardReport_MergeReports(&Macros_PersistentReports.macroBasicKeyboardReport, ActiveKeyboardReport);
+        ControlsReport_MergeReports(&Macros_PersistentReports.macroControlsReport, ActiveControlsReport);
+        MouseReport_MergeReports(&Macros_PersistentReports.macroMouseReport, ActiveMouseReport);
         InputModifiers |= Macros_PersistentReports.inputModifierMask;
     }
 
@@ -510,10 +535,9 @@ static void mergeReports(void)
                 MacroState[j].ms.reportsUsed &= MacroState[j].ms.macroPlaying;
                 macro_state_t *macroState = &MacroState[j];
 
-                UsbBasicKeyboard_MergeReports(&(macroState->ms.reports.macroBasicKeyboardReport), ActiveUsbBasicKeyboardReport);
-                UsbMediaKeyboard_MergeReports(&(macroState->ms.reports.macroMediaKeyboardReport), ActiveUsbMediaKeyboardReport);
-                UsbSystemKeyboard_MergeReports(&(macroState->ms.reports.macroSystemKeyboardReport), ActiveUsbSystemKeyboardReport);
-                UsbMouse_MergeReports(&(macroState->ms.reports.macroMouseReport), ActiveUsbMouseReport);
+                KeyboardReport_MergeReports(&(macroState->ms.reports.macroBasicKeyboardReport), ActiveKeyboardReport);
+                ControlsReport_MergeReports(&(macroState->ms.reports.macroControlsReport), ActiveControlsReport);
+                MouseReport_MergeReports(&(macroState->ms.reports.macroMouseReport), ActiveMouseReport);
 
                 InputModifiers |= macroState->ms.reports.inputModifierMask;
             }
@@ -521,24 +545,22 @@ static void mergeReports(void)
     }
 
     if (EventVector_IsSet(EventVector_NativeActionReportsUsed)) {
-        UsbBasicKeyboard_MergeReports(&NativeKeyboardReports.basic, ActiveUsbBasicKeyboardReport);
-        UsbMediaKeyboard_MergeReports(&NativeKeyboardReports.media, ActiveUsbMediaKeyboardReport);
-        UsbSystemKeyboard_MergeReports(&NativeKeyboardReports.system, ActiveUsbSystemKeyboardReport);
+        KeyboardReport_MergeReports(&NativeKeyboardReports.basic, ActiveKeyboardReport);
+        ControlsReport_MergeReports(&NativeKeyboardReports.controls, ActiveControlsReport);
         InputModifiers |= NativeKeyboardReports.inputModifiers;
     }
 
     if (EventVector_IsSet(EventVector_MouseKeysReportsUsed)) {
-        UsbMouse_MergeReports(&MouseKeysMouseReport, ActiveUsbMouseReport);
+        MouseReport_MergeReports(&MouseKeysMouseReport, ActiveMouseReport);
     }
 
     if (EventVector_IsSet(EventVector_MouseControllerMouseReportsUsed)) {
-        UsbMouse_MergeReports(&MouseControllerMouseReport, ActiveUsbMouseReport);
+        MouseReport_MergeReports(&MouseControllerMouseReport, ActiveMouseReport);
     }
 
     if (EventVector_IsSet(EventVector_MouseControllerKeyboardReportsUsed)) {
-        UsbBasicKeyboard_MergeReports(&MouseControllerKeyboardReports.basic, ActiveUsbBasicKeyboardReport);
-        UsbMediaKeyboard_MergeReports(&MouseControllerKeyboardReports.media, ActiveUsbMediaKeyboardReport);
-        UsbSystemKeyboard_MergeReports(&MouseControllerKeyboardReports.system, ActiveUsbSystemKeyboardReport);
+        KeyboardReport_MergeReports(&MouseControllerKeyboardReports.basic, ActiveKeyboardReport);
+        ControlsReport_MergeReports(&MouseControllerKeyboardReports.controls, ActiveControlsReport);
     }
 
     // When a layer switcher key gets pressed along with another key that produces some modifiers
@@ -546,8 +568,8 @@ static void mergeReports(void)
     // layer switcher key stays pressed.  Useful for Alt+Tab keymappings and the like.
 
     uint8_t maskedInputMods = (~StickyModifiersNegative) & InputModifiers;
-    ActiveUsbBasicKeyboardReport->modifiers |= SuppressMods ? 0 : maskedInputMods;
-    ActiveUsbBasicKeyboardReport->modifiers |= OutputModifiers | StickyModifiers;
+    ActiveKeyboardReport->modifiers |= SuppressMods ? 0 : maskedInputMods;
+    ActiveKeyboardReport->modifiers |= OutputModifiers | StickyModifiers;
 
     if (InputModifiers != InputModifiersPrevious) {
         EventVector_Set(EventVector_LayerHolds);
@@ -626,11 +648,11 @@ static void handleUsbStackTestMode() {
         }
         if (simulateKeypresses) {
             isEven = !isEven;
-            UsbBasicKeyboard_AddScancode(ActiveUsbBasicKeyboardReport,
+            KeyboardReport_AddScancode(ActiveKeyboardReport,
                     isEven ? HID_KEYBOARD_SC_A : HID_KEYBOARD_SC_BACKSPACE);
             if (++mediaCounter % 200 == 0) {
                 isEvenMedia = !isEvenMedia;
-                UsbMediaKeyboard_AddScancode(ActiveUsbMediaKeyboardReport,
+                ControlsReport_AddConsumerUsage(ActiveControlsReport,
                         isEvenMedia ? MEDIA_VOLUME_DOWN : MEDIA_VOLUME_UP);
             }
             Cfg.MouseMoveState.xOut = isEven ? -5 : 5;
@@ -816,32 +838,79 @@ uint32_t UsbReportUpdateCounter;
 
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
+static uint8_t keyboardRetries = 0;
+static bool keyboardNeedsResending = false;
+static uint8_t controlsRetries = 0;
+static bool controlsNeedsResending = false;
+static uint8_t mouseRetries = 0;
+static bool mouseNeedsResending = false;
+
+// Try resending a report for 512ms. Give up if it doesn't succeed by then.
+static bool shouldResendReport(bool statusOk, uint8_t* counter) {
+
+    if (statusOk) {
+        *counter = 0;
+        return false;
+    }
+
+    // keep this low, since the actual delay this causes with a full queue is
+    // queueLength * maxDelay
+    const uint16_t maxDelay = 128; //ms
+    const uint8_t granularity = 16; //ms
+    uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
+
+    if (*counter == 0) {
+        *counter = minimizedTime;
+        return true;
+    } else if ((uint8_t)(minimizedTime - *counter) < (maxDelay / granularity)) {
+        return true;
+    } else {
+        *counter = 0;
+        return false;
+    }
+}
 
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
+    int ret;
 
     // in case of usb error, this gets set back again
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
-    if (UsbBasicKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
+    if (KeyboardReport_HasChange(keyboardReports) && (!resending || keyboardNeedsResending)) {
 #ifdef __ZEPHYR__
-        if (InputInterceptor_RegisterReport(ActiveUsbBasicKeyboardReport)) {
-            SwitchActiveUsbBasicKeyboardReport();
+        uint8_t newScancode = 0;
+        if (InteractivePairingInProgress && KeyboardReport_FindFirstDifference(ActiveKeyboardReport,
+            ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0], &newScancode)) {
+            PairingScreen_RegisterScancode(newScancode);
+            switchActiveKeyboardReport();
         } else
 
 #endif
         {
-            MacroRecorder_RecordBasicReport(ActiveUsbBasicKeyboardReport);
+            MacroRecorder_RecordBasicReport(ActiveKeyboardReport);
 
-            KEY_TIMING(KeyTiming_RecordReport(ActiveUsbBasicKeyboardReport));
+            KEY_TIMING(KeyTiming_RecordReport(ActiveKeyboardReport));
 
             if (TestHooks_Active || RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
                 //just switch reports without sending the report
-                TestHooks_CaptureReport(ActiveUsbBasicKeyboardReport);
-                SwitchActiveUsbBasicKeyboardReport();
+                TestHooks_CaptureReport(ActiveKeyboardReport);
+                switchActiveKeyboardReport();
             } else {
-                UsbBasicKeyboardSendActiveReport();
+                //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
+                UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
+                ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
+                if (shouldResendReport(ret == 0, &keyboardRetries)) {
+                    //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
+                    //TODO: consider making it atomic, or lowering semaphore reset delay
+                    keyboardNeedsResending = true;
+                    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+                    EventVector_Set(EventVector_ResendUsbReports);
+                } else {
+                    keyboardNeedsResending = false;
+                    switchActiveKeyboardReport();
+                }
             }
             usbReportsChangedByAction = true;
             usbReportsChangedByAnything = true;
@@ -850,36 +919,37 @@ static void sendActiveReports(bool resending) {
         }
     }
 
-#ifdef __ZEPHYR__
-    if (UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success || UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) {
-        UsbCompatibility_SendConsumerReport(ActiveUsbMediaKeyboardReport, ActiveUsbSystemKeyboardReport);
-        SwitchActiveUsbMediaKeyboardReport();
-        SwitchActiveUsbSystemKeyboardReport();
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
-        usbReportsChangedByAction = true;
-        usbReportsChangedByAnything = true;
-    }
-#else
-    if ((UsbMediaKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
-        UsbMediaKeyboardSendActiveReport();
+    if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsNeedsResending)) {
+        UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
+        ret = Hid_SendControlsReport(ActiveControlsReport);
+        if (shouldResendReport(ret == 0, &controlsRetries)) {
+            controlsNeedsResending = true;
+            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+            EventVector_Set(EventVector_ResendUsbReports);
+        } else {
+            controlsNeedsResending = false;
+            switchActiveControlsReport();
+        }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if ((UsbSystemKeyboardCheckReportReady(resending) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
-        UsbSystemKeyboardSendActiveReport();
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
-        usbReportsChangedByAction = true;
-        usbReportsChangedByAnything = true;
-    }
-#endif
-
-    bool usbMouseButtonsChanged = false;
-    if ((UsbMouseCheckReportReady(resending, &usbMouseButtonsChanged) == kStatus_USB_Success) && (CurrentPowerMode == PowerMode_Awake)) {
+    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || mouseNeedsResending) &&
+        (CurrentPowerMode == PowerMode_Awake)) {
+        bool usbMouseButtonsChanged = mouseReports[0].buttons != mouseReports[1].buttons;
         // Macros_Printf("sm\n");
 
-        UsbMouseSendActiveReport();
+        UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
+        ret = Hid_SendMouseReport(ActiveMouseReport);
+        if (shouldResendReport(ret == 0, &mouseRetries)) {
+            mouseNeedsResending = true;
+            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+            EventVector_Set(EventVector_ResendUsbReports);
+        } else {
+            mouseNeedsResending = false;
+            switchActiveMouseReport();
+        }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;

@@ -1,11 +1,13 @@
 #include "bus_pal_hardware.h"
 #include "usb_descriptor.h"
-#include "usb_device_config.h"
 #include "composite.h"
 #include "microseconds/microseconds.h"
 #include "i2c.h"
 #include "peripherals/test_led.h"
-#include "usb_composite_device.h"
+#include "usb_device_hid.h"
+
+#define CONTROLLER_ID kUSB_ControllerKhci0
+#define USB_DEVICE_INTERRUPT_PRIORITY 3
 
 bool is_usb_active();
 static status_t usb_device_full_init(const peripheral_descriptor_t *self, serial_byte_receive_func_t function);

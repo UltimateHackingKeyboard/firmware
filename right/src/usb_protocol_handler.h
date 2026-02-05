@@ -6,7 +6,6 @@
     #include <stdbool.h>
     #include <stddef.h>
     #include <stdint.h>
-    #include "usb_interfaces/usb_interface_generic_hid.h"
     #include "buffer.h"
 #ifdef __ZEPHYR__
     #include <zephyr/bluetooth/bluetooth.h>
@@ -15,6 +14,7 @@
 #endif
 
 // Macros:
+    #define USB_COMMAND_BUFFER_LENGTH 63
 
     #define USB_STATUS_CODE_SIZE 1
 

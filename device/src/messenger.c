@@ -11,7 +11,7 @@
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
 #include "thread_stats.h"
-#include "hid/usb_compatibility.h"
+#include "hid/transport.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "module.h"
@@ -206,13 +206,13 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
     const uint8_t* message = data;
     switch (propertyId) {
         case SyncablePropertyId_KeyboardReport:
-            UsbCompatibility_SendKeyboardReport((usb_basic_keyboard_report_t*)message);
+            Hid_SendKeyboardReport((const hid_keyboard_report_t*)message);
             break;
         case SyncablePropertyId_MouseReport:
-            UsbCompatibility_SendMouseReport((usb_mouse_report_t*)message);
+            Hid_SendMouseReport((const hid_mouse_report_t*)message);
             break;
         case SyncablePropertyId_ControlsReport:
-            UsbCompatibility_SendConsumerReport2(message);
+            Hid_SendControlsReport((const hid_controls_report_t*)message);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);

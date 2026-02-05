@@ -16,7 +16,9 @@
         "POSTPROCESS_UTILITY": "",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
-      "cacheVariables": {}
+      "cacheVariables": {
+        "CPM_SOURCE_CACHE": "${fileDir}/../../cpm"
+      }
     },
     {
       "name": "release-env",
@@ -30,7 +32,9 @@
         "POSTPROCESS_UTILITY": "",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
-      "cacheVariables": {}
+      "cacheVariables": {
+        "CPM_SOURCE_CACHE": "${fileDir}/../../cpm"
+      }
     }
   ],
   "buildPresets": []
