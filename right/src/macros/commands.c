@@ -2081,7 +2081,7 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
     } \
     break;
 
-static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t commandId, bool *headersDone) {
+static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t commandId, bool *headersFinished) {
     // Dispatch based on command ID
     switch (commandId) {
     // 'a' commands
