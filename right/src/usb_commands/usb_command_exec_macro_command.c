@@ -4,20 +4,20 @@
 #include "macros/core.h"
 #include "macros/status_buffer.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
-#include "usb_interfaces/usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "utils.h"
 #include <string.h>
 #include "debug.h"
 
-char UsbMacroCommand[USB_GENERIC_HID_OUT_BUFFER_LENGTH+1];
+static char usbMacroCommand[USB_COMMAND_BUFFER_LENGTH+1];
+char* const UsbMacroCommand = usbMacroCommand;
 uint8_t UsbMacroCommandLength = 0;
 key_state_t dummyState;
 
 static void requestExecution(const uint8_t *GenericHidOutBuffer)
 {
-    uint8_t len = Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, USB_GENERIC_HID_OUT_BUFFER_LENGTH - 1);
+    uint8_t len = Utils_SafeStrCopy(UsbMacroCommand, ((char*)GenericHidOutBuffer) + 1, USB_COMMAND_BUFFER_LENGTH - 1);
     UsbMacroCommandLength = len;
 
     EventVector_Set(EventVector_UsbMacroCommandWaitingForExecution);

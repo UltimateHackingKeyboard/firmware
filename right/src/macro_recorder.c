@@ -353,13 +353,13 @@ static void writeDelay(uint16_t delay)
 }
 
 
-void MacroRecorder_RecordBasicReport(usb_basic_keyboard_report_t *report)
+void MacroRecorder_RecordBasicReport(hid_keyboard_report_t *report)
 {
     if (!RuntimeMacroRecording) {
         return;
     }
 
-    usb_basic_keyboard_report_t emptyReport = {0};
+    hid_keyboard_report_t emptyReport = {0};
 
     // Check if this is the first report (recording header length is 0)
     if (recordingHeader->length == 0) {
@@ -370,9 +370,9 @@ void MacroRecorder_RecordBasicReport(usb_basic_keyboard_report_t *report)
     }
 
     // Check if report is empty
-    if (memcmp(report, &emptyReport, sizeof(usb_basic_keyboard_report_t)) == 0) {
+    if (memcmp(report, &emptyReport, sizeof(hid_keyboard_report_t)) == 0) {
         // Report is empty - check if we need to write empty control byte
-        if (memcmp(&MacroRecorder_RecordingState, &emptyReport, sizeof(usb_basic_keyboard_report_t)) != 0) {
+        if (memcmp(&MacroRecorder_RecordingState, &emptyReport, sizeof(hid_keyboard_report_t)) != 0) {
             // Recording state is not empty - write empty control byte
             RETURN_IF_FULL(1);
             writeEmptyReport();
@@ -423,7 +423,7 @@ void MacroRecorder_RecordDelay(uint16_t delay)
     writeDelay(delay);
 }
 
-bool MacroRecorder_PlayRuntimeMacroSmart(uint16_t id, usb_basic_keyboard_report_t* report)
+bool MacroRecorder_PlayRuntimeMacroSmart(uint16_t id, hid_keyboard_report_t* report)
 {
     if (!RuntimeMacroPlaying) {
         if (!playRuntimeMacroBegin(id)) {

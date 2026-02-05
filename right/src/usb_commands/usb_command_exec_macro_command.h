@@ -4,13 +4,12 @@
 // Includes:
 
     #include "config_parser/config_globals.h"
-    #include "usb_interfaces/usb_interface_generic_hid.h"
 
 // Typedefs:
 
 // Variables:
 
-    extern char UsbMacroCommand[USB_GENERIC_HID_OUT_BUFFER_LENGTH+1];
+    extern char* const UsbMacroCommand;
     extern uint8_t UsbMacroCommandLength;
 
 // Functions:

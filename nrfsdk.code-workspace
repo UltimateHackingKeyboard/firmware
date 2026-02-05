@@ -1,11 +1,12 @@
 {
 	"folders": [
 		{
-			"path": "."
+			"name": "uhk-80",
+			"path": "./device"
 		},
 		{
-			"name": "uhk-80",
-			"path": "device"
+			"name": "firmware",
+			"path": "."
 		},
 		{
 			"name": "workspace",
@@ -14,17 +15,17 @@
 	],
 	"settings": {
 		"nrf-connect.applications": [
-			"${workspaceFolder}/device"
+			"${workspaceFolder:uhk-80}"
 		],
 		"nrf-connect.applicationOptions": {
-			"${workspaceFolder}/device": {
+			"${workspaceFolder:uhk-80}": {
 				"flash": {
 					"softreset": true
 				}
 			}
 		},
 		"nrf-connect.boardRoots": [
-			"${workspaceFolder}/"
+			"${workspaceFolder:firmware}/"
 		],
 		"files.associations": {
 			"*.h": "c",
