@@ -1,7 +1,6 @@
 #include <string.h>
 
 #ifdef __ZEPHYR__
-    #include "device.h"
     #include "flash.h"
     #include <zephyr/bluetooth/bluetooth.h>
     #include "bt_conn.h"
@@ -15,6 +14,7 @@
     #include "slave_drivers/kboot_driver.h"
 #endif
 
+#include "device.h"
 #include <stdbool.h>
 #include <stdint.h>
 #include "slave_protocol.h"
@@ -67,11 +67,11 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
         SetUsbTxBufferUint32(1, Timer_GetCurrentTime());
         break;
     case DevicePropertyId_GitTag:
-        Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, gitTag, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
+        Utils_SafeStrCopy(((char *)GenericHidInBuffer) + 1, gitTag, USB_COMMAND_BUFFER_LENGTH - 1);
         break;
     case DevicePropertyId_GitRepo:
         Utils_SafeStrCopy(
-            ((char *)GenericHidInBuffer) + 1, gitRepo, USB_GENERIC_HID_IN_BUFFER_LENGTH - 1);
+            ((char *)GenericHidInBuffer) + 1, gitRepo, USB_COMMAND_BUFFER_LENGTH - 1);
         break;
     case DevicePropertyId_BuiltFirmwareChecksumByModuleId: {
         uint8_t moduleId = GetUsbRxBufferUint8(2);

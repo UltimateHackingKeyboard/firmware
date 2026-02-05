@@ -24,7 +24,7 @@
 #include "shell/shell_transport_uhk.h"
 #include "shell/shell_uhk.h"
 #include "device.h"
-#include "hid/config.h"
+#include "hid/transport.h"
 #include "bt_conn.h"
 #include "settings.h"
 #include "flash.h"

@@ -15,11 +15,7 @@ if(IS_NRF_SDK)
     target_link_libraries(uhk_versions_checksums PUBLIC zephyr_interface)
 else()
     target_link_libraries(${PROJECT_NAME} PUBLIC uhk_versions_checksums)
-    if(DEFINED DEVICE_ID)
-        target_compile_definitions(uhk_versions_checksums PUBLIC
-            DEVICE_ID=${DEVICE_ID}
-        )
-    endif()
+    target_include_directories(uhk_versions_checksums PUBLIC ${CMAKE_BINARY_DIR})
 endif()
 
 set(UHK_USE_CHECKSUMS FALSE CACHE BOOL "Use calculated FW checksums in the built image")

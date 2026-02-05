@@ -7,8 +7,8 @@
     #include <stdint.h>
     #include <stdbool.h>
     #include "key_action.h"
-    #include "usb_device_config.h"
     #include "key_states.h"
+    #include "hid/keyboard_report.h"
 
 // Macros:
 
@@ -41,11 +41,11 @@
 
 // Functions:
 
-    void MacroRecorder_RecordBasicReport(usb_basic_keyboard_report_t *report);
+    void MacroRecorder_RecordBasicReport(hid_keyboard_report_t *report);
     void MacroRecorder_RecordDelay(uint16_t delay);
 
     void MacroRecorder_UpdateRecordingLed();
-    bool MacroRecorder_PlayRuntimeMacroSmart(uint16_t id, usb_basic_keyboard_report_t *report);
+    bool MacroRecorder_PlayRuntimeMacroSmart(uint16_t id, hid_keyboard_report_t *report);
     void MacroRecorder_RecordRuntimeMacroSmart(uint16_t id, bool blind);
     void MacroRecorder_StartRecording(uint16_t id, bool blind);
     void MacroRecorder_StopRecording();

@@ -1,7 +1,11 @@
 #ifndef SRC_UTILS_H_
 #define SRC_UTILS_H_
 
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
+// Includes:
+
+#include <stdint.h>
+#include "key_states.h"
+#include "hid/keyboard_report.h"
 
 // Macros:
 
@@ -19,11 +23,6 @@ if (reentrancyGuard_active) {                    \
 #define UTILS_ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 #endif
 
-// Includes:
-
-#include "key_states.h"
-#include <stdint.h>
-
 // Typedefs:
 
     typedef struct {
@@ -38,12 +37,26 @@ if (reentrancyGuard_active) {                    \
     uint16_t Utils_KeyStateToKeyId(key_state_t* key);
     const char* Utils_KeyStateToKeyAbbreviation(key_state_t* key);
     void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx);
-    const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report);
-    void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report);
+    const char* Utils_GetUsbReportString(const hid_keyboard_report_t* report);
+    void Utils_PrintReport(const char* prefix, hid_keyboard_report_t* report);
     key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId);
     uint16_t Utils_KeyCoordinatesToKeyId(uint8_t slotId, uint8_t keyIdx);
     const char* Utils_KeyAbbreviation(key_state_t* keyState);
-    bool ShouldResendReport(bool statusOk, uint8_t* counter);
 
+    static inline bool test_bit(unsigned nr, const uint8_t *addr)
+    {
+        const uint8_t *p = addr;
+        return ((1UL << (nr & 7)) & (p[nr >> 3])) != 0;
+    }
+    static inline void set_bit(unsigned nr, uint8_t *addr)
+    {
+        uint8_t *p = (uint8_t *)addr;
+        p[nr >> 3] |= (1UL << (nr & 7));
+    }
+    static inline void clear_bit(unsigned nr, uint8_t *addr)
+    {
+        uint8_t *p = (uint8_t *)addr;
+        p[nr >> 3] &= ~(1UL << (nr & 7));
+    }
 
 #endif /* SRC_UTILS_H_ */

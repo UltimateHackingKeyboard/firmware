@@ -4,25 +4,19 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 add_subdirectory(config_parser)
+add_subdirectory(hid)
 add_subdirectory(layouts)
 add_subdirectory(macros)
 add_subdirectory(peripherals)
 add_subdirectory(slave_drivers)
-add_subdirectory(usb_commands)
-add_subdirectory(usb_interfaces)
 add_subdirectory(test_suite)
+add_subdirectory(usb_commands)
 if(IS_MCUX_SDK)
     add_subdirectory(buspal)
     add_subdirectory(ksdk_usb)
-    add_subdirectory(usb_descriptors)
     target_sources(${PROJECT_NAME} PRIVATE
         startup/startup_MK22F51212.S
     )
-    # need to add header explicitly to avoid pulling in wrong SDK header
-    # https://github.com/nxp-mcuxpresso/mcuxsdk-middleware-usb/issues/12
-    mcux_add_source(SOURCES usb_device_config.h)
-else()
-    add_subdirectory(hid)
 endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
@@ -70,7 +64,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     timer.c
     trace.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/trace_reasons.c>
-    $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_composite_device.c>
     usb_log_buffer.c
     usb_protocol_handler.c
     usb_report_updater.c

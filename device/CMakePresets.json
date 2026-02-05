@@ -6,15 +6,23 @@
     },
     "configurePresets": [
         {
+            "name": "defaults",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${fileDir}/build/${presetName}",
+            "cacheVariables": {
+                "CPM_SOURCE_CACHE": "${fileDir}/../../cpm",
+                "NCS_TOOLCHAIN_VERSION": "NONE",
+                "BOARD_ROOT": "${fileDir}/../",
+                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf"
+            }
+        },
+        {
             "name": "uhk-80-right",
             "displayName": "Build for UHK 80 right",
-            "generator": "Ninja",
-            "binaryDir": "${fileDir}/build/uhk-80-right",
+            "inherits": "defaults",
             "cacheVariables": {
-                "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-right",
-                "BOARD_ROOT": "${sourceParentDir}/",
-                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${fileDir}/prj_release.conf",
                 "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/uhk-80.conf;${fileDir}/prj.conf.overlays/ble_nus.conf;${fileDir}/prj.conf.overlays/ble_nus_client.conf;${fileDir}/prj.conf.overlays/ble_hid.conf;${fileDir}/prj.conf.overlays/uhk-80-right.conf"
             }
@@ -22,27 +30,17 @@
         {
             "name": "uhk-80-right-debug",
             "displayName": "Debug build for UHK 80 right",
-            "generator": "Ninja",
-            "binaryDir": "${fileDir}/build/uhk-80-right-debug",
+            "inherits": "uhk-80-right",
             "cacheVariables": {
-                "NCS_TOOLCHAIN_VERSION": "NONE",
-                "BOARD": "uhk-80-right",
-                "BOARD_ROOT": "${fileDir}/../",
-                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf",
-                "CONF_FILE": "${fileDir}/prj.conf",
-                "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/uhk-80.conf;${fileDir}/prj.conf.overlays/ble_nus.conf;${fileDir}/prj.conf.overlays/ble_nus_client.conf;${fileDir}/prj.conf.overlays/ble_hid.conf;${fileDir}/prj.conf.overlays/uhk-80-right.conf"
+                "CONF_FILE": "${fileDir}/prj.conf"
             }
         },
         {
             "name": "uhk-80-left",
             "displayName": "Build for UHK 80 left",
-            "generator": "Ninja",
-            "binaryDir": "${fileDir}/build/uhk-80-left",
+            "inherits": "defaults",
             "cacheVariables": {
-                "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-80-left",
-                "BOARD_ROOT": "${fileDir}/../",
-                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${fileDir}/prj_release.conf",
                 "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/uhk-80.conf;${fileDir}/prj.conf.overlays/ble_nus.conf"
             }
@@ -50,27 +48,17 @@
         {
             "name": "uhk-80-left-debug",
             "displayName": "Debug build for UHK 80 left",
-            "generator": "Ninja",
-            "binaryDir": "${fileDir}/build/uhk-80-left-debug",
+            "inherits": "uhk-80-left",
             "cacheVariables": {
-                "NCS_TOOLCHAIN_VERSION": "NONE",
-                "BOARD": "uhk-80-left",
-                "BOARD_ROOT": "${fileDir}/../",
-                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf",
-                "CONF_FILE": "${fileDir}/prj.conf",
-                "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/uhk-80.conf;${fileDir}/prj.conf.overlays/ble_nus.conf"
+                "CONF_FILE": "${fileDir}/prj.conf"
             }
         },
         {
             "name": "uhk-dongle",
             "displayName": "Build for UHK dongle",
-            "generator": "Ninja",
-            "binaryDir": "${fileDir}/build/uhk-dongle",
+            "inherits": "defaults",
             "cacheVariables": {
-                "NCS_TOOLCHAIN_VERSION": "NONE",
                 "BOARD": "uhk-dongle",
-                "BOARD_ROOT": "${fileDir}/../",
-                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf",
                 "CONF_FILE": "${fileDir}/prj_release.conf",
                 "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/ble_nus_client.conf"
             }
@@ -78,15 +66,9 @@
         {
             "name": "uhk-dongle-debug",
             "displayName": "Debug build for UHK dongle",
-            "generator": "Ninja",
-            "binaryDir": "${fileDir}/build/uhk-dongle-debug",
+            "inherits": "uhk-dongle",
             "cacheVariables": {
-                "NCS_TOOLCHAIN_VERSION": "NONE",
-                "BOARD": "uhk-dongle",
-                "BOARD_ROOT": "${fileDir}/../",
-                "mcuboot_OVERLAY_CONFIG": "${fileDir}/sysbuild/mcuboot.conf",
-                "CONF_FILE": "${fileDir}/prj.conf",
-                "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/ble_nus_client.conf"
+                "CONF_FILE": "${fileDir}/prj.conf"
             }
         }
     ]
