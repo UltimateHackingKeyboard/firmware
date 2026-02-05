@@ -19,6 +19,8 @@
     #include <zephyr/drivers/gpio.h>
     #include <zephyr/arch/arch_interface.h>
     #include <zephyr/logging/log_ctrl.h>
+    #include <zephyr/shell/shell.h>
+    #include <zephyr/shell/shell_uart.h>
     #if DEVICE_IS_KEYBOARD
         #include "keyboard/uart_bridge.h"
         #ifdef DEVICE_HAS_OLED
@@ -157,6 +159,14 @@ static void setLevel(const char* sourceName, uint32_t level) {
 }
 
 void InitLogLevels() {
+    const struct shell *sh = shell_backend_uart_get_ptr();
+    if (sh) {
+        // if we set levels before shell is ready, the shell will mercilessly overwrite them
+        while (!shell_ready(sh)) {
+            k_msleep(10);
+        }
+    }
+
     setLevel("hogp", LOG_LEVEL_INF);
     setLevel("udc", LOG_LEVEL_WRN);
     setLevel("udc_nrf", LOG_LEVEL_WRN);

@@ -213,7 +213,6 @@ void mainRuntime(void) {
 
     // Needs to be after ReinitShell, probably
     InitShellCommands();
-    InitLogLevels();
     InitProxyLogBackend();
 
     // read configurations
@@ -289,6 +288,7 @@ void mainRuntime(void) {
     // Call after all threads have been created
     ThreadStats_Init();
 
+    InitLogLevels();
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
