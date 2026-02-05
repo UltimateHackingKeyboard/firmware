@@ -247,12 +247,12 @@ void InputMachine_Tick(void) {
                     .type = KeyActionType_SwitchLayer,
                     .switchLayer = {
                         .layer = action->layerId,
-                        .mode = SwitchLayerMode_Hold
+                        .mode = action->switchLayerMode
                     }
                 };
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                LOG_VERBOSE("[TEST] > SetLayerHold [%s] = layer %d\n", action->keyId, action->layerId);
+                LOG_VERBOSE("[TEST] > SetLayerHold [%s] = layer %d, mode %d\n", action->keyId, action->layerId, action->switchLayerMode);
                 InputMachine_ActionIndex++;
                 break;
             }
