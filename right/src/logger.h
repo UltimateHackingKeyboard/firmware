@@ -24,6 +24,7 @@ typedef enum {
 #ifdef __ZEPHYR__
     void Uart_LogConstant(const char* buffer);
     void Uart_Log(const char *fmt, ...);
+    void InitLogLevels();
 #endif
 
     void Log(const char *fmt, ...);

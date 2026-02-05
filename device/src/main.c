@@ -1,5 +1,6 @@
 #include "main.h"
 #include "bt_advertise.h"
+#include "logger.h"
 #include "messenger_queue.h"
 #include "nus_client.h"
 #include "nus_server.h"
@@ -212,6 +213,7 @@ void mainRuntime(void) {
 
     // Needs to be after ReinitShell, probably
     InitShellCommands();
+    InitLogLevels();
     InitProxyLogBackend();
 
     // read configurations

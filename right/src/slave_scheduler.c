@@ -111,12 +111,8 @@ static void finalizePreviousTransfer(uhk_slave_t *previousSlave, status_t previo
     }
 }
 
-static void tryInitiateTransfer(uhk_slave_t* currentSlave, bool isFirst, bool *transferIsScheduled, bool *shouldHold)
+static void tryInitiateTransfer(uhk_slave_t* currentSlave, bool *transferIsScheduled, bool *shouldHold)
 {
-    if (!currentSlave->isConnected && isFirst) {
-        currentSlave->init(currentSlave->perDriverId);
-    }
-
     slave_result_t res = currentSlave->update(currentSlave->perDriverId);
     status_t currentStatus = res.status;
     if (IS_STATUS_I2C_ERROR(currentStatus)) {
@@ -131,7 +127,6 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
 {
     bool isTransferScheduled = false;
     bool shouldHold = false;
-    bool isFirst = true;
     I2cSlaveScheduler_Counter++;
 
     // Trace_Printc("<7");
@@ -142,7 +137,11 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
     do {
         uhk_slave_t *currentSlave = Slaves + currentSlaveId;
 
-        tryInitiateTransfer(currentSlave, isFirst, &isTransferScheduled, &shouldHold);
+        if (!currentSlave->isConnected) {
+            currentSlave->init(currentSlave->perDriverId);
+        }
+
+        tryInitiateTransfer(currentSlave, &isTransferScheduled, &shouldHold);
 
         if (!shouldHold || !currentSlave->isConnected) {
             previousSlaveId = currentSlaveId;
@@ -150,8 +149,6 @@ static void slaveSchedulerCallback(I2C_Type *base, i2c_master_handle_t *handle, 
         } else {
             previousSlaveId = currentSlaveId;
         }
-
-        isFirst = false;
     } while (!isTransferScheduled);
 
     // Trace_Printc(">");
@@ -161,12 +158,15 @@ void SlaveScheduler_ScheduleSingleTransfer(uint8_t slaveId)
 {
     bool initiated = false;
     bool shouldHold = false;
-    bool isFirst = true;
+
+    uhk_slave_t *currentSlave = Slaves + slaveId;
+
+    if (!currentSlave->isConnected) {
+        currentSlave->init(currentSlave->perDriverId);
+    }
 
     while (!initiated) {
-        uhk_slave_t *currentSlave = Slaves + slaveId;
-        tryInitiateTransfer(currentSlave, isFirst, &initiated, &shouldHold);
-        isFirst = false;
+        tryInitiateTransfer(currentSlave, &initiated, &shouldHold);
     }
 }
 
