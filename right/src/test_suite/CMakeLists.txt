@@ -13,4 +13,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_chording.c
     tests/test_autoshift.c
     tests/test_ifshortcut_gesture.c
+    tests/test_doubletap.c
 )

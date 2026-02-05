@@ -37,8 +37,14 @@
     { .type = TestAction_SetMacro, .keyId = (key_id), .macroText = (macro_text) }
 
 // SetLayerHold: assign a layer hold action to a key
+// SwitchLayerMode_Hold = 2
 #define TEST_SET_LAYER_HOLD(key_id, layer_id) \
-    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id) }
+    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id), .switchLayerMode = 2 }
+
+// SetLayerDoubleTapToggle: assign a hold-and-doubletap-toggle layer action to a key
+// SwitchLayerMode_HoldAndDoubleTapToggle = 0
+#define TEST_SET_LAYER_DOUBLETAP_TOGGLE(key_id, layer_id) \
+    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id), .switchLayerMode = 0 }
 
 // SetLayerAction: assign a key action on a specific layer
 #define TEST_SET_LAYER_ACTION(layer_id, key_id, shortcut) \
@@ -78,6 +84,7 @@ typedef struct {
     test_action_type_t type;
     const char *keyId;
     uint8_t layerId;              // For SetLayerHold, SetLayerAction
+    uint8_t switchLayerMode;      // For SetLayerHold (0 = Hold, see SwitchLayerMode enum)
     uint8_t primaryScancode;      // For SetSecondaryRole
     uint8_t secondaryRoleId;      // For SetSecondaryRole
     union {
