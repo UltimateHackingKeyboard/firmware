@@ -20,6 +20,7 @@
 
 #if DEVICE_IS_UHK80_RIGHT
 #include "keyboard/oled/screens/screen_manager.h"
+#include "keyboard/oled/screens/pairing_screen.h"
 #else
 #define InteractivePairingInProgress false
 #define StateSync_BatteryBacklightPowersavingMode false

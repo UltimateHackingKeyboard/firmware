@@ -7,41 +7,20 @@
 #include "timer.h"
 #include "event_scheduler.h"
 #include "timer.h"
-#include "event_scheduler.h"
-#include "ledmap.h"
-#include "keymap_pairing.h"
 
 screen_id_t ActiveScreen = ScreenId_Main;
-
-bool InteractivePairingInProgress = false;
-
-static void onExit(screen_id_t screen) {
-    switch(screen) {
-        case ScreenId_Pairing:
-            InteractivePairingInProgress = false;
-            Keymap_DeactivatePairingKeymap();
-            Ledmap_ResetTemporaryLedBacklightingMode();
-            EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
-            break;
-        default:
-            break;
-    }
-}
 
 void ScreenManager_ActivateScreen(screen_id_t screen)
 {
     widget_t* screenPtr = NULL;
 
-    onExit(ActiveScreen);
+    if (screen != ScreenId_Pairing && InteractivePairingInProgress) {
+        return;
+    }
 
     switch(screen) {
         case ScreenId_Pairing:
-            InteractivePairingInProgress = true;
             screenPtr = PairingScreen;
-            Keymap_ActivatePairingKeymap();
-            Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_Numpad);
-            EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
-            Ledmap_UpdateBacklightLeds();
             break;
         case ScreenId_Debug:
             screenPtr = DebugScreen;

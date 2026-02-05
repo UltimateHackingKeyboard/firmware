@@ -26,8 +26,6 @@
     extern bool ScreenManager_AwaitsInput;
     extern screen_id_t ActiveScreen;
 
-    extern bool InteractivePairingInProgress;
-
 // Functions:
 
     void ScreenManager_ActivateScreen(screen_id_t screen);
