@@ -23,6 +23,7 @@
     } macro_sub_action_t;
 
     typedef enum {
+        MacroResult_None = 0,
         MacroResult_InProgressFlag = 1,
         MacroResult_ActionFinishedFlag = 2,
         MacroResult_DoneFlag = 4,
