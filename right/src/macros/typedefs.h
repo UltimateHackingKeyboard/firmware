@@ -36,7 +36,7 @@
         MacroResult_Waiting = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Sleeping = MacroResult_InProgressFlag | MacroResult_YieldFlag,
         MacroResult_Finished = MacroResult_ActionFinishedFlag,
-        MacroResult_Header = MacroResult ActionFinishedFlag | MacroResult_InProgressFlag,
+        MacroResult_Header = MacroResult_ActionFinishedFlag | MacroResult_InProgressFlag,
         MacroResult_JumpedForward = MacroResult_DoneFlag,
         MacroResult_JumpedBackward = MacroResult_DoneFlag | MacroResult_YieldFlag,
     } macro_result_t;
