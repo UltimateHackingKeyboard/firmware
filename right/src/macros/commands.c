@@ -961,7 +961,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 
         while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
-        return MacroResult_Finished;
+        return MacroResult_Header;
     }
     // parse the argument name (identifier)
     const char *idStart = ctx->at;
@@ -969,7 +969,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 
     if (idEnd == idStart) {
         Macros_ReportErrorPos(ctx, "Expected identifier");
-        return MacroResult_Finished;
+        return MacroResult_Header;
     }
     ctx->at = idEnd;
 
@@ -1000,7 +1000,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         }
         else {
             Macros_ReportErrorTok(ctx, "Unrecognized macroArg argument type:");
-            return MacroResult_Finished;
+            return MacroResult_Header;
         }
     }
     else {
@@ -1011,7 +1011,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     // rest of command is descriptive label, ignored by firmware
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
-    return MacroResult_Finished;
+    return MacroResult_Header;
 
 //    Macros_ReportErrorPrintf(ctx->at, "Parsing failed at '%s'?", OneWord(ctx));
 }
@@ -2081,7 +2081,7 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
     } \
     break;
 
-static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t commandId, bool *headersFinished) {
+static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t commandId) {
     // Dispatch based on command ID
     switch (commandId) {
     // 'a' commands
@@ -2274,7 +2274,6 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
 
     // 'm' commands
     case CommandId_macroArg:
-        *headersFinished = false;   // this is a valid header command, stay in header mode
         return processMacroArgCommand(ctx);
     case CommandId_mulReg:
         Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName*2)`.");
@@ -2492,14 +2491,12 @@ static macro_result_t processCommand(parser_context_t* ctx)
             return MacroResult_Finished;
         }
 
-        // We assume the next command is a non-header command and will therefore
-        // finish the header block.
-        bool headersProcessed = true;
+        macro_result_t res = dispatchCommand(ctx, entry->id);
 
-        macro_result_t res = dispatchCommand(ctx, entry->id, &headersProcessed);
-
-        if (headersProcessed) {
-            S->ms.macroHeadersProcessed = true;
+        if (res == MacroResult_Header) {
+            return MacroResult_Finished;
+        } else {
+            S->ms.macroHeadersProcessed = true; // non-header commands mark the header as finished
         }
         if (res != MacroResult_None) {
             return res;
