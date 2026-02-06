@@ -2467,7 +2467,7 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         return MacroResult_Finished;
     }
 
-    Macros_ReportErrorTok(ctx, "Fell through the dispatch at:");
+    //this is reachable in some cases
     return MacroResult_Finished;
 }
 
