@@ -247,17 +247,17 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
-        PostponerCore_TrackKeyEvent(singleTap, false, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
     }
     if (action & Action_Press) {
-        PostponerCore_TrackKeyEvent(singleTap, true, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_Doubletap) {
         // some systems do debouncing because mouse switches are unreliable
-        uint16_t delay = 20;
-        PostponerCore_TrackKeyEvent(singleTap, false, 0xff, Timer_GetCurrentTime());
+        const int16_t delay = 20;
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
         PostponerCore_TrackDelay(delay);
-        PostponerCore_TrackKeyEvent(singleTap, true, 0xff, Timer_GetCurrentTime()+delay);
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_ResetHoldContinuationTimeout) {
         continuationDelayStart = Timer_GetCurrentTime();
