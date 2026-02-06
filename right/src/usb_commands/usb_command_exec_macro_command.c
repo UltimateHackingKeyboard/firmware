@@ -14,7 +14,6 @@
 char UsbMacroCommand[USB_GENERIC_HID_OUT_BUFFER_LENGTH+1];
 uint8_t UsbMacroCommandLength = 0;
 key_state_t dummyState;
-key_press_info_t dummyPress = {.keyState = &dummyState};
 
 static void requestExecution(const uint8_t *GenericHidOutBuffer)
 {
@@ -43,7 +42,7 @@ static bool canExecute()
 
 void UsbMacroCommand_ExecuteSynchronously()
 {
-    Macros_StartMacro(MacroIndex_InlineMacro, &dummyPress, 0, 255, MacroIndex_None, false, UsbMacroCommand);
+    Macros_StartMacro(MacroIndex_InlineMacro, &dummyState, 0, 255, MacroIndex_None, false, UsbMacroCommand);
     EventVector_Unset(EventVector_UsbMacroCommandWaitingForExecution);
 }
 

@@ -143,7 +143,7 @@
         // these can be destroyed at the end of macro runtime, and probably should be re-initialized with each macro start
         struct {
             macro_action_t currentMacroAction;
-            key_press_info_t keyPress;
+            key_state_t *currentMacroKey;
             uint32_t currentMacroStartTime;
             uint16_t currentMacroActionIndex;
             uint16_t currentMacroArgumentOffset;
@@ -166,6 +166,7 @@
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
+            bool isDoubletap: 1;
             // ---- 4-aligned ----
 
             macro_usb_keyboard_reports_t reports;
@@ -274,9 +275,9 @@
     macro_result_t Macros_SleepTillKeystateChange();
     macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
-    uint8_t Macros_QueueMacro(uint8_t index, const key_press_info_t *keyPress, uint8_t keyActivationsSeq, uint8_t queueAfterSlot);
-    uint8_t Macros_StartMacro(uint8_t index, const key_press_info_t *keyPress, uint16_t argumentOffset, uint8_t keyActivationsSeq, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
-    uint8_t Macros_StartInlineMacro(const char *text, const key_press_info_t *keyPress, uint8_t keyActivationsSeq);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationsSeq, uint8_t queueAfterSlot);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationsSeq, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
+    uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationsSeq);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     void Macros_ContinueMacro(void);
     void Macros_Initialize();

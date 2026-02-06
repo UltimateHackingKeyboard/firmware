@@ -155,7 +155,7 @@ macro_result_t Macros_ProcessDiagnoseCommand()
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
-            if (keyState != S->ms.keyPress.keyState) {
+            if (keyState != S->ms.currentMacroKey) {
                 keyState->current = 0;
                 keyState->previous = 0;
             }

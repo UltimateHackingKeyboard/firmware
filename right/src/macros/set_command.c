@@ -323,9 +323,8 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
     }
     else if (ConsumeToken(ctx, "doubletapTime")) {
-        Macros_ReportErrorPos(ctx, "Configuration variable has been merged with general doubletapTimeout, please switch to using that variable");
         DEFINE_INT_LIMITS(0, 65535);
-        ASSIGN_INT(Cfg.DoubletapTimeout);
+        ASSIGN_INT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
     }
     else if (ConsumeToken(ctx, "minimumHoldTime")) {
         DEFINE_INT_LIMITS(0, 255);

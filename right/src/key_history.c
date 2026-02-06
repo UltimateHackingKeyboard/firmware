@@ -4,40 +4,42 @@
 
 typedef enum {
     DoubletapState_PossibleFirst,
-    DoubletapState_Doubletap,
-    DoubletapState_Blocked,
+    DoubletapState_PossibleSecond,
+    DoubletapState_IneligibleForFirst,
 } doubletap_state_t;
 
 typedef struct {
     const key_state_t *keyState;
     uint32_t timestamp;
-    doubletap_state_t doubletapState: 2;
+    uint32_t previousPressTime;
+    doubletap_state_t doubletapState;
 } previous_key_event_type_t;
 
 static previous_key_event_type_t lastPress;
 
 void KeyHistory_RecordPress(const key_state_t *keyState)
 {
-    bool isDoublePress = 
-        keyState == lastPress.keyState
-        && lastPress.doubletapState == DoubletapState_PossibleFirst
-        && CurrentPostponedTime < lastPress.timestamp + Cfg.DoubletapTimeout;
-
     lastPress = (previous_key_event_type_t){
         .keyState = keyState,
         .timestamp = CurrentPostponedTime,
-        .doubletapState = isDoublePress ? DoubletapState_Doubletap : DoubletapState_PossibleFirst,
+        .previousPressTime = lastPress.timestamp,
+        .doubletapState = lastPress.doubletapState == DoubletapState_PossibleFirst ? DoubletapState_PossibleSecond : DoubletapState_PossibleFirst,
     };
 }
 
 void KeyHistory_RecordRelease(const key_state_t *keyState)
 {
     if (keyState != lastPress.keyState) {
-        lastPress.doubletapState = DoubletapState_Blocked;
+        lastPress.doubletapState = DoubletapState_IneligibleForFirst;
     }
 }
 
-bool KeyHistory_WasLastDoubletap()
+bool KeyHistory_WasLastDoubletap(const uint32_t maxInterval)
 {
-    return lastPress.doubletapState == DoubletapState_Doubletap;
+    bool wasDoubletap = lastPress.doubletapState == DoubletapState_PossibleSecond
+                        && lastPress.timestamp - lastPress.previousPressTime < maxInterval;
+    if (wasDoubletap) {
+        lastPress.doubletapState = DoubletapState_IneligibleForFirst;
+    }
+    return wasDoubletap;
 }

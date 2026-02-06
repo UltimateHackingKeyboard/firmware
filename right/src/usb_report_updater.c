@@ -147,20 +147,20 @@ static void applyLayerHolds(key_state_t *keyState, key_action_t *action) {
 }
 
 // Toggle actions are applied on active/cached layer.
-static void applyToggleLayerAction(const key_press_info_t *keyPress, key_action_t *action) {
+static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) {
     switch(action->switchLayer.mode) {
         case SwitchLayerMode_HoldAndDoubleTapToggle:
-            if( keyPress->keyState->current != keyPress->keyState->previous ) {
-                LayerSwitcher_DoubleTapToggle(action->switchLayer.layer, keyPress);
+            if( keyState->current != keyState->previous ) {
+                LayerSwitcher_DoubleTapToggle(action->switchLayer.layer, keyState);
             }
             break;
         case SwitchLayerMode_Toggle:
-            if (KeyState_ActivatedNow(keyPress->keyState)) {
+            if (KeyState_ActivatedNow(keyState)) {
                 LayerSwitcher_ToggleLayer(action->switchLayer.layer);
             }
             break;
         case SwitchLayerMode_Hold:
-            if (KeyState_ActivatedNow(keyPress->keyState)) {
+            if (KeyState_ActivatedNow(keyState)) {
                 LayerSwitcher_UnToggleLayerOnly(action->switchLayer.layer);
             }
             break;
@@ -322,12 +322,11 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
     }
 }
 
-static void applyKeystroke(const key_press_info_t *keyPress, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
+static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
 {
-    key_state_t *keyState = keyPress->keyState;
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
-        secondary_role_state_t res = SecondaryRoles_ResolveState(keyPress, Cfg.SecondaryRoles_Strategy, false, SecondaryRole_DefaultFromSameHalf);
+        secondary_role_state_t res = SecondaryRoles_ResolveState(keyState, Cfg.SecondaryRoles_Strategy, false, SecondaryRole_DefaultFromSameHalf);
         switch (res) {
             case SecondaryRoleState_Primary:
                 applyKeystrokePrimary(keyState, cachedAction, reports);
@@ -431,16 +430,15 @@ static void applyOtherAction(other_action_t actionSubtype)
     }
 }
 
-void ApplyKeyAction(const key_press_info_t *keyPress, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
+void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
 {
     key_action_t* action = &cachedAction->action;
-    key_state_t *keyState = keyPress->keyState;
 
     switch (action->type) {
         case KeyActionType_Keystroke:
             if (KeyState_NonZero(keyState)) {
                 EventVector_Set(EventVector_NativeActionReportsUsed);
-                applyKeystroke(keyPress, cachedAction, actionBase, reports);
+                applyKeystroke(keyState, cachedAction, actionBase, reports);
             }
             break;
         case KeyActionType_Mouse:
@@ -457,7 +455,7 @@ void ApplyKeyAction(const key_press_info_t *keyPress, key_action_cached_t *cache
             break;
         case KeyActionType_SwitchLayer:
             if (keyState->current != keyState->previous) {
-                applyToggleLayerAction(keyPress, action);
+                applyToggleLayerAction(keyState, action);
             }
             // also apply holds in order to process the cached action
             applyLayerHolds(keyState, action);
@@ -471,13 +469,13 @@ void ApplyKeyAction(const key_press_info_t *keyPress, key_action_cached_t *cache
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyPress, action->playMacro.offset, keyState->activationSeq, 255, true, NULL);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationSeq, 255, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartInlineMacro(action->inlineMacro.text, keyPress, keyState->activationSeq);
+                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationSeq);
             }
             break;
         case KeyActionType_Connections:
@@ -686,17 +684,12 @@ static void updateActionStates() {
 
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
-                key_press_info_t pressInfo = {
-                    .keyState = keyState,
-                    .isDoubletap = false,
-                };
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
                     ++keyState->activationSeq;
                     KeyHistory_RecordPress(keyState);
-                    pressInfo.isDoubletap = KeyHistory_WasLastDoubletap();
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
@@ -734,7 +727,7 @@ static void updateActionStates() {
                 Trace_Printc("w4");
 
                 //apply active-layer action
-                ApplyKeyAction(&pressInfo, cachedAction, actionBase, &NativeKeyboardReports);
+                ApplyKeyAction(keyState, cachedAction, actionBase, &NativeKeyboardReports);
 
                 if(KeyState_DeactivatedNow(keyState)) {
                     KeyHistory_RecordRelease(keyState);

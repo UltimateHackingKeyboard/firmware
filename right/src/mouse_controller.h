@@ -17,7 +17,6 @@
     typedef struct {
         key_action_cached_t caretAction;
         key_state_t caretFakeKeystate;
-        key_press_info_t caretFakeKeyPress;
         float xFractionRemainder;
         float yFractionRemainder;
         uint32_t lastUpdate;

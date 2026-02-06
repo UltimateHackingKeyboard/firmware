@@ -15,6 +15,6 @@
 
 void KeyHistory_RecordPress(const key_state_t *keyState);
 void KeyHistory_RecordRelease(const key_state_t *keyState);
-bool KeyHistory_WasLastDoubletap();
+bool KeyHistory_WasLastDoubletap(uint32_t maxInterval);
 
 #endif

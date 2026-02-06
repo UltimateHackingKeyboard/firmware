@@ -340,7 +340,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return consumeParenthessExpression(ctx);
     }
     else if (ConsumeToken(ctx, "thisKeyId")) {
-        return intVar(Utils_KeyStateToKeyId(ctx->macroState->ms.keyPress.keyState));
+        return intVar(Utils_KeyStateToKeyId(ctx->macroState->ms.currentMacroKey));
     }
     else if (ConsumeToken(ctx, "currentAddress")) {
         return intVar(ctx->macroState->ls->ms.commandAddress);

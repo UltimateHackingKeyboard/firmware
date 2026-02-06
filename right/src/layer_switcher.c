@@ -1,4 +1,5 @@
 #include "layer_switcher.h"
+#include "key_history.h"
 #include "keymap.h"
 #include "layer.h"
 #include "layer_stack.h"
@@ -110,22 +111,22 @@ void updateActiveLayer() {
  */
 
 
-void LayerSwitcher_DoubleTapToggle(layer_id_t layer, const key_press_info_t* keyPress) {
+void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t *keyState) {
     static uint32_t doubleTapSwitchLayerTriggerTime = 0;
     static key_state_t *doubleTapSwitchLayerKey;
 
-    if(KeyState_ActivatedNow(keyPress->keyState)) {
+    if(KeyState_ActivatedNow(keyState)) {
         LayerStack_LegacyPop(layer);
-        if (keyPress->isDoubletap) {
+        if (KeyHistory_WasLastDoubletap(Cfg.DoubletapTimeout)) {
             LayerStack_LegacyPush(layer);
-            doubleTapSwitchLayerKey = keyPress->keyState;
+            doubleTapSwitchLayerKey = keyState;
             doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
         }
     }
 
-    if(KeyState_DeactivatedNow(keyPress->keyState)) {
+    if(KeyState_DeactivatedNow(keyState)) {
         //If current press is too long, cancel current toggle
-        if ( doubleTapSwitchLayerKey == keyPress->keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > Cfg.DoubletapSwitchLayerReleaseTimeout)
+        if ( doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTime(&doubleTapSwitchLayerTriggerTime) > Cfg.DoubletapSwitchLayerReleaseTimeout)
         {
             LayerStack_LegacyPop(layer);
         }

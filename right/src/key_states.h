@@ -42,11 +42,6 @@
         uint8_t activationSeq: 3;
     } key_state_t;
 
-    typedef struct {
-        key_state_t *keyState;
-        bool isDoubletap: 1;
-    } key_press_info_t;
-
 // Variables:
 
     extern key_state_t KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];

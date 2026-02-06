@@ -84,7 +84,7 @@
 
     void SecondaryRoles_ActivateSecondaryImmediately();
 
-    secondary_role_state_t SecondaryRoles_ResolveState(const key_press_info_t* keyPress, secondary_role_strategy_t strategy, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf);
+    secondary_role_state_t SecondaryRoles_ResolveState(key_state_t* keyState, secondary_role_strategy_t strategy, bool isMacroResolution, secondary_role_same_half_t actionFromSameHalf);
 
 
 #endif /* SRC_SECONDARY_ROLE_DRIVER_H_ */

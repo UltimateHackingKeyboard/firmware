@@ -115,16 +115,16 @@ static void postponeCurrentCycle()
  */
 bool Macros_CurrentMacroKeyIsActive()
 {
-    if (S->ms.keyPress.keyState == NULL) {
+    if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShot == 1;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
-        bool isSameActivation = (S->ms.keyPress.keyState->activationSeq == S->ms.keyActivationSeq);
-        bool keyIsActive = (KeyState_Active(S->ms.keyPress.keyState) && !PostponerQuery_IsKeyReleased(S->ms.keyPress.keyState));
+        bool isSameActivation = (S->ms.currentMacroKey->activationSeq == S->ms.keyActivationSeq);
+        bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     } else {
-        bool isSameActivation = (S->ms.keyPress.keyState->activationSeq == S->ms.keyActivationSeq);
-        bool keyIsActive = KeyState_Active(S->ms.keyPress.keyState);
+        bool isSameActivation = (S->ms.currentMacroKey->activationSeq == S->ms.keyActivationSeq);
+        bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
         return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     }
 }
@@ -179,7 +179,7 @@ static int32_t consumeRuntimeMacroSlotId(parser_context_t* ctx)
         return lastMacroId;
     }
     else if (ctx->at == ctx->end) {
-        lastMacroId = Utils_KeyStateToKeyId(S->ms.keyPress.keyState);
+        lastMacroId = Utils_KeyStateToKeyId(S->ms.currentMacroKey);
     }
     else if (end == ctx->at+1) {
         lastMacroId = (uint8_t)(*ctx->at);
@@ -539,7 +539,7 @@ static bool processIfDoubletapCommand(bool negate)
     if (Macros_DryRun) {
         return true;
     }
-    return S->ms.keyPress.isDoubletap != negate;
+    return S->ms.isDoubletap != negate;
 }
 
 static bool processIfModifierCommand(bool negate, uint8_t modmask)
@@ -1016,7 +1016,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_state_t res = SecondaryRoles_ResolveState(&S->ms.keyPress, strategy, true, fromSameHalf);
+    secondary_role_state_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
 
     S->as.actionActive = res == SecondaryRoleState_DontKnowYet;
     switch(res) {
@@ -1081,7 +1081,7 @@ static macro_result_t processIfHoldCommand(parser_context_t* ctx, bool negate)
 
     postponer_buffer_record_type_t *dummy;
     postponer_buffer_record_type_t *keyReleased;
-    PostponerQuery_InfoByKeystate(S->ms.keyPress.keyState, &dummy, &keyReleased);
+    PostponerQuery_InfoByKeystate(S->ms.currentMacroKey, &dummy, &keyReleased);
 
     if (keyReleased != NULL) {
         bool releasedAfterTimeout = keyReleased->time - S->ms.currentMacroStartTime >= Cfg.HoldTimeout;
@@ -1288,7 +1288,7 @@ static macro_result_t processAutoRepeatCommand(parser_context_t* ctx) {
 
 process_delay:;
     uint16_t delay = S->ms.autoRepeatInitialDelayPassed ? Cfg.AutoRepeatDelayRate : Cfg.AutoRepeatInitialDelay;
-    bool pendingReleased = PostponerQuery_IsKeyReleased(S->ms.keyPress.keyState);
+    bool pendingReleased = PostponerQuery_IsKeyReleased(S->ms.currentMacroKey);
     bool currentKeyIsActive = Macros_CurrentMacroKeyIsActive();
 
     if (!currentKeyIsActive || pendingReleased) {

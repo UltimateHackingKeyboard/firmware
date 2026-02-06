@@ -2,6 +2,7 @@
 #include "config_parser/parse_macro.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "key_history.h"
 #include "keymap.h"
 #include "layer_stack.h"
 #include "macros/commands.h"
@@ -403,7 +404,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, &S->ms.keyPress, 0, S->ms.keyActivationSeq, parentSlotIndex, true, NULL);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationSeq, parentSlotIndex, true, NULL);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -417,12 +418,12 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, &S->ms.keyPress, 0, S->ms.keyActivationSeq, 255, true, NULL);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationSeq, 255, true, NULL);
     return MacroResult_Finished;
 }
 
 uint8_t initMacro(uint8_t index,
-                  const key_press_info_t *keyPress,
+                  key_state_t *keyState,
                   uint16_t argumentOffset,
                   uint8_t keyActivationSeq,
                   uint8_t parentMacroSlot,
@@ -439,11 +440,12 @@ uint8_t initMacro(uint8_t index,
 
     S->ms.macroPlaying = true;
     S->ms.currentMacroIndex = index;
-    S->ms.keyPress = keyPress != NULL ? *keyPress : (key_press_info_t){.keyState = NULL};
+    S->ms.currentMacroKey = keyState;
     S->ms.keyActivationSeq = keyActivationSeq;
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
+    S->ms.isDoubletap = KeyHistory_WasLastDoubletap(Cfg.DoubletapTimeout);
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {
@@ -469,7 +471,7 @@ uint8_t initMacro(uint8_t index,
 
 //partentMacroSlot == 255 means no parent
 uint8_t Macros_StartMacro(uint8_t index,
-                          const key_press_info_t *keyPress,
+                          key_state_t *keyState,
                           uint16_t argumentOffset,
                           uint8_t keyActivationsSeq,
                           uint8_t parentMacroSlot,
@@ -478,7 +480,7 @@ uint8_t Macros_StartMacro(uint8_t index,
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyPress, argumentOffset, keyActivationsSeq, parentMacroSlot, inlineText);
+    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, keyActivationsSeq, parentMacroSlot, inlineText);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -502,9 +504,9 @@ uint8_t Macros_StartMacro(uint8_t index,
     return slotIndex;
 }
 
-uint8_t Macros_StartInlineMacro(const char *text, const key_press_info_t *keyPress, uint8_t keyActivationsSeq)
+uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationsSeq)
 {
-    return Macros_StartMacro(MacroIndex_InlineMacro, keyPress, 0, keyActivationsSeq, 255, true, text);
+    return Macros_StartMacro(MacroIndex_InlineMacro, keyState, 0, keyActivationsSeq, 255, true, text);
 }
 
 void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
@@ -586,11 +588,11 @@ void Macros_ValidateAllMacros()
     S = oldS;
 }
 
-uint8_t Macros_QueueMacro(uint8_t index, const key_press_info_t *keyPress, uint8_t keyActivationsSeq, uint8_t queueAfterSlot)
+uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationsSeq, uint8_t queueAfterSlot)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyPress, 0, keyActivationsSeq, 255, NULL);
+    uint8_t slotIndex = initMacro(index, keyState, 0, keyActivationsSeq, 255, NULL);
 
     if (slotIndex == 255) {
         return slotIndex;
