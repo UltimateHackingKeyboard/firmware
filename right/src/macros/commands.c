@@ -2466,6 +2466,9 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         Macros_ReportErrorTok(ctx, "Unrecognized command:");
         return MacroResult_Finished;
     }
+
+    Macros_ReportErrorTok(ctx, "Fell through the dispatch at:");
+    return MacroResult_Finished;
 }
 
 static macro_result_t processCommand(parser_context_t* ctx)
