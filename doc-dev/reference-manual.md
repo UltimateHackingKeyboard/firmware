@@ -160,6 +160,7 @@ COMMAND = set secondaryRole.advanced.triggeringEvent { press | release | none } 
 COMMAND = set secondaryRole.advanced.triggerByMouse <trigger secondary role immediately on mouse move (BOOL)
 COMMAND = set secondaryRole.advanced.minimumHoldTime <ms, minimum time a key must be held before it can trigger secondary role 0-255 (INT)>
 COMMAND = set secondaryRole.advanced.doubletapToPrimary <hold primary on doubletap (BOOL)>
+COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0-500 (INT)>
 COMMAND = set secondaryRole.advanced.acceptTriggersFromSameHalf <prevents secondary role keys from triggering as secondary from triggers from the same half of the keyboard (BOOL)>
 COMMAND = set mouseKeys.{move|scroll}.initialSpeed <px/s, ~100/20 (INT)>
 COMMAND = set mouseKeys.{move|scroll}.baseSpeed <px/s, ~800/20 (INT)>
@@ -329,7 +330,6 @@ ZEPHYR_COMMAND = uhk { connections | mouseMultipliers | rollover BOOL | charger 
 ##############
 COMMAND = set macroEngine.scheduler {blocking|preemptive}
 COMMAND = set doubletapDelay <time in ms, at most 65535, alias to doubletapTimeout (INT)>
-COMMAND = set secondaryRole.advanced.doubletapTime <ms, 0-500 (INT)>
 COMMAND = set modifierLayerTriggers.{control} {left|right|both}
 COMMAND = set secondaryRole.advanced.triggerByPress <trigger immediately on action key press (BOOL)>
 COMMAND = set secondaryRole.advanced.triggerByRelease <trigger secondary role if action key is released before dual role (BOOL)>
@@ -725,6 +725,7 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
       - `set secondaryRole.advanced.minimumHoldTime <ms, 0-255 (INT)>` sets the minimum time that a key must be held before it is allowed to trigger as secondary role.
       - `set secondaryRole.advanced.safetyMargin <ms, -50 - 50 (INT)>` finetunes sensitivity of the trigger-by-release and trigger-by-press behaviours, so that positive values favor primary role, while negative values favor secondary role. This works by adding the value to the action key (or subtracting from the dual role key). E.g., suppose trigger by release is active, and safetyMargin equal 50. Furthermore assume that dual-role key is released 30ms after the action key. Due to safety margin 50 being greater than 30, the dual-role key is still considered to be released first, and so primary role is activated.
       - `set secondaryRole.advanced.doubletapToPrimary BOOL` allows switching timeout action to primary by doubletap to allow holding the primary action (Useful if you want a dual key on space.)
+      - `set secondaryRole.advanced.doubletapTime <ms, 200 (INT)>` configures the above timeout (measured press-to-press).
       - `set secondaryRole.advanced.acceptTriggersFromSameHalf <(BOOL)>` enables or disables whether secondary role keys can trigger their secondary role from key events from the same keyboard half.  `ifPrimary/ifSecondary` can specify explicitly whether to allow secondary triggers from same half using the argument `ignoreTriggersFromSameHalf/acceptTriggersFromSameHalf`.
 
 - `macroEngine`
