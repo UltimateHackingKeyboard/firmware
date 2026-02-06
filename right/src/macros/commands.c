@@ -2467,8 +2467,8 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         return MacroResult_Finished;
     }
 
-    //this is reachable in some cases
-    return MacroResult_Finished;
+    // this is reachable when 'ifXxx' conditions pass; processCommand() should continue with further commands.
+    return MacroResult_None;
 }
 
 static macro_result_t processCommand(parser_context_t* ctx)
@@ -2501,7 +2501,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
         if (headersProcessed) {
             S->ms.macroHeadersProcessed = true;
         }
-        return res;
+        if (res != MacroResult_None) {
+            return res;
+        }        
     }
 
     //this is reachable if there is a train of conditions/modifiers/labels without any command
