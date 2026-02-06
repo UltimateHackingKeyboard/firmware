@@ -175,8 +175,8 @@ static void safeDisconnect(struct bt_conn *conn, int reason) {
         unsetAuthConn(true);
 
         #if DEVICE_HAS_OLED
-        if (ActiveScreen == ScreenId_Pairing) {
-            PairingScreen_Cancel();
+        if (InteractivePairingInProgress) {
+            PairingScreen_Feedback("Pairing cancelled!");
         }
         #endif
     } else {
@@ -839,7 +839,7 @@ static void auth_cancel(struct bt_conn *conn) {
         unsetAuthConn(false);
     }
 
-    PairingScreen_Feedback(false);
+    PairingScreen_Feedback("Pairing canceled!");
 }
 
 static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info *oob_info) {
@@ -914,7 +914,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     if (auth_conn) {
         Trace_Printc("bu6");
         unsetAuthConn(false);
-        PairingScreen_Feedback(true);
+        PairingScreen_Feedback("Pairing succeeded!");
     }
 
     BtManager_StartScanningAndAdvertisingAsync(false, "pairing_complete");
@@ -965,7 +965,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         Trace_Printc("bu7");
         LOG_WRN("Pairing of auth conn failed because of %d", reason);
         unsetAuthConn(true);
-        PairingScreen_Feedback(false);
+        PairingScreen_Feedback("Pairing failed!");
     }
 
     // TODO: should we here?
@@ -1017,12 +1017,12 @@ void num_comp_reply(int passkey) {
         bt_conn_auth_passkey_entry(conn, passkey);
         LOG_INF("Sending passkey to conn %s", GetPeerStringByConn(conn));
 #if DEVICE_HAS_OLED
-        NotificationScreen_NotifyFor("Pairing...", 10000);
+        PairingScreen_Feedback("Pairing...");
 #endif
     } else {
         conn = unsetAuthConn(true);
 #if DEVICE_HAS_OLED
-        PairingScreen_Feedback(false);
+        PairingScreen_Feedback("Pairing failed!");
 #endif
     }
 }

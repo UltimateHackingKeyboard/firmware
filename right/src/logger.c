@@ -19,6 +19,8 @@
     #include <zephyr/drivers/gpio.h>
     #include <zephyr/arch/arch_interface.h>
     #include <zephyr/logging/log_ctrl.h>
+    #include <zephyr/shell/shell.h>
+    #include <zephyr/shell/shell_uart.h>
     #if DEVICE_IS_KEYBOARD
         #include "keyboard/uart_bridge.h"
         #ifdef DEVICE_HAS_OLED
@@ -157,6 +159,8 @@ static void setLevel(const char* sourceName, uint32_t level) {
 }
 
 void InitLogLevels() {
+    Shell_WaitUntilInitialized();
+
     setLevel("hogp", LOG_LEVEL_INF);
     setLevel("udc", LOG_LEVEL_WRN);
     setLevel("udc_nrf", LOG_LEVEL_WRN);
