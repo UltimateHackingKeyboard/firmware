@@ -271,12 +271,10 @@ static bool isIdentifierChar(char c)
     }
 }
 
-
 bool IsIdentifierChar(char c)
 {
     return isIdentifierChar(c);
 }
-
 
 bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
 {
@@ -320,6 +318,9 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
     consumeWhite(ctx);
 }
 
+#if 0
+/* old ConsumeUntilDot (replaced below) */
+
 void ConsumeUntilDot(parser_context_t* ctx)
 {
     while(*ctx->at > 32 && *ctx->at != '.' && !isEnd(ctx))    {
@@ -329,6 +330,40 @@ void ConsumeUntilDot(parser_context_t* ctx)
         Macros_ReportError("'.' expected", ctx->at, ctx->at);
     }
     ctx->at++;
+}
+#endif
+
+// Consume characters until a specific character is found or whitespace is hit.
+// If end of context is reached, report an error.
+// If the character is found, consume it.
+// If whitespace is found, and failOnWhite is true, report an error.
+void ConsumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
+{
+    while(*ctx->at > 32 && *ctx->at != c && !isEnd(ctx)) {
+        ctx->at++;
+    }
+    if (IsEnd(ctx)) {
+        Macros_ReportError("unexpected end of statement", ctx->at, ctx->at);
+        return;
+    }
+    if (*ctx->at == c) {
+        ctx->at++;
+        return;
+    }
+    if (failOnWhite) {
+        Macros_ReportErrorPrintf(ctx->at, "'%c' expected", c);
+        return;
+    }
+}
+
+void ConsumeUntilDot(parser_context_t* ctx)
+{
+    ConsumeUntilCharOrWhite(ctx, '.', true);
+}
+
+void ConsumeUntilColon(parser_context_t* ctx)
+{
+    ConsumeUntilCharOrWhite(ctx, ':', false);
 }
 
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
