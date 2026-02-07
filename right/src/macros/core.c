@@ -474,14 +474,14 @@ uint8_t Macros_StartMacro(
     uint8_t index,
     key_state_t *keyState,
     uint16_t argumentOffset,
-    uint8_t keyActivationsSeq,
+    uint8_t keyActivationId,
     uint8_t parentMacroSlot,
     bool runFirstAction,
     const char *inlineText
 ) {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, keyActivationsSeq, parentMacroSlot, inlineText);
+    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, keyActivationId, parentMacroSlot, inlineText);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -505,9 +505,9 @@ uint8_t Macros_StartMacro(
     return slotIndex;
 }
 
-uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationsSeq)
+uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId)
 {
-    return Macros_StartMacro(MacroIndex_InlineMacro, keyState, 0, keyActivationsSeq, 255, true, text);
+    return Macros_StartMacro(MacroIndex_InlineMacro, keyState, 0, keyActivationId, 255, true, text);
 }
 
 void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
@@ -589,11 +589,11 @@ void Macros_ValidateAllMacros()
     S = oldS;
 }
 
-uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationsSeq, uint8_t queueAfterSlot)
+uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationId, uint8_t queueAfterSlot)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, 0, keyActivationsSeq, 255, NULL);
+    uint8_t slotIndex = initMacro(index, keyState, 0, keyActivationId, 255, NULL);
 
     if (slotIndex == 255) {
         return slotIndex;
