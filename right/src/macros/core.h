@@ -144,7 +144,7 @@
     } ATTR_PACKED macro_arg_t;
 
     typedef struct {
-        uint8 id;
+        uint8_t id;
         macro_arg_type_t type;
     } ATTR_PACKED macro_argref_t;
 
