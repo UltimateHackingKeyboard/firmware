@@ -11,7 +11,7 @@
 
 // Macros:
 
-    #define KEY_INACTIVE(keyState) (*((uint8_t*)keyState) + 1) == 0
+    #define KEYSTATE_KEYINACTIVE(keyState) ((uint8_t*)keyState)[1] == 0
     
 // Typedefs:
 

@@ -676,7 +676,7 @@ static void updateActionStates() {
             key_action_cached_t *cachedAction;
             key_action_t *actionBase;
 
-            if (KEY_INACTIVE(keyState)) {
+            if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
             }
 
