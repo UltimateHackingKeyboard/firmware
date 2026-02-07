@@ -198,7 +198,8 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
         }
     }
 
-    CTX_COPY(bakCtx, *ctx);
+    // TODO: Is this needed at all? Looks like something left over
+    // CTX_COPY(bakCtx, *ctx);
     macro_variable_t configVal = Macro_TryReadConfigVal(ctx);
 
     if (configVal.type != MacroVariableType_None) {

@@ -21,7 +21,9 @@
     #define MACRO_HISTORY_POOL_SIZE 16
     #define MACRO_SCOPE_STATE_POOL_SIZE (MACRO_STATE_POOL_SIZE*2)
     #define MAX_REG_COUNT 32
-    #define MAX_MACRO_ARGUMENT_SIZE 8
+
+    #define MAX_MACRO_ARGUMENT_COUNT 8
+    #define MAX_MACRO_ARGUMENT_POOL_SIZE 32
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
     #define CTRLMASK (HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL)
@@ -139,7 +141,12 @@
     typedef struct {
         string_ref_t id;
         macro_arg_type_t type;
-    } ATTR_PACKED macro_arg_t;
+    } ATTR_PACKED macro_argument_t;
+
+    typedef struct {
+        uint8_t id;
+        macro_arg_type_t type;
+    } ATTR_PACKED macro_argref_t;
 
     struct macro_state_t {
         // local scope data
@@ -173,7 +180,7 @@
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
             // ---- 4-aligned ----
-            macro_arg_t arguments[MAX_MACRO_ARGUMENT_SIZE];
+            macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];
 
             macro_usb_keyboard_reports_t reports;
 
