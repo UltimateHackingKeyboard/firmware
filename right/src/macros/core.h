@@ -141,7 +141,7 @@
     typedef struct {
         string_ref_t id;
         macro_arg_type_t type;
-    } ATTR_PACKED macro_arg_t;
+    } ATTR_PACKED macro_argument_t;
 
     typedef struct {
         uint8_t id;
