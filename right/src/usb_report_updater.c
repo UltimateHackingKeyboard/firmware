@@ -676,7 +676,7 @@ static void updateActionStates() {
             key_action_cached_t *cachedAction;
             key_action_t *actionBase;
 
-            if(KEY_INACTIVE(keyState)) {
+            if (KEY_INACTIVE(keyState)) {
                 continue;
             }
 
@@ -729,7 +729,7 @@ static void updateActionStates() {
                 //apply active-layer action
                 ApplyKeyAction(keyState, cachedAction, actionBase, &NativeKeyboardReports);
 
-                if(KeyState_DeactivatedNow(keyState)) {
+                if (KeyState_DeactivatedNow(keyState)) {
                     KeyHistory_RecordRelease(keyState);
                     keyState->secondaryState = SecondaryRoleState_DontKnowYet;
                 }

@@ -422,14 +422,14 @@ macro_result_t Macros_ForkMacro(uint8_t macroIndex)
     return MacroResult_Finished;
 }
 
-uint8_t initMacro(uint8_t index,
-                  key_state_t *keyState,
-                  uint16_t argumentOffset,
-                  uint8_t keyActivationId,
-                  uint8_t parentMacroSlot,
-                  const char *inlineText
-                )
-{
+uint8_t initMacro(
+    uint8_t index,
+    key_state_t *keyState,
+    uint16_t argumentOffset,
+    uint8_t keyActivationId,
+    uint8_t parentMacroSlot,
+    const char *inlineText
+) {
     if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
     }
@@ -470,14 +470,15 @@ uint8_t initMacro(uint8_t index,
 
 
 //partentMacroSlot == 255 means no parent
-uint8_t Macros_StartMacro(uint8_t index,
-                          key_state_t *keyState,
-                          uint16_t argumentOffset,
-                          uint8_t keyActivationsSeq,
-                          uint8_t parentMacroSlot,
-                          bool runFirstAction,
-                          const char *inlineText)
-{
+uint8_t Macros_StartMacro(
+    uint8_t index,
+    key_state_t *keyState,
+    uint16_t argumentOffset,
+    uint8_t keyActivationsSeq,
+    uint8_t parentMacroSlot,
+    bool runFirstAction,
+    const char *inlineText
+) {
     macro_state_t* oldState = S;
 
     uint8_t slotIndex = initMacro(index, keyState, argumentOffset, keyActivationsSeq, parentMacroSlot, inlineText);

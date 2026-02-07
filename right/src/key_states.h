@@ -51,6 +51,7 @@
     extern key_state_t KeyStates[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 // Inline functions
+
     static inline bool KeyState_Active(const key_state_t* s) { return s->current; };
     static inline bool KeyState_Inactive(const key_state_t* s) { return !s->current; };
     static inline bool KeyState_ActivatedNow(const key_state_t* s) { return !s->previous && s->current; };
