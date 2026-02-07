@@ -1,11 +1,13 @@
-#include "key_history.h"
 #include "config_manager.h"
+#include "key_history.h"
+#include "macros/status_buffer.h"
 #include "postponer.h"
 
 typedef enum {
     DoubletapState_PossibleFirst,
     DoubletapState_PossibleSecond,
     DoubletapState_IneligibleForFirst,
+    DoubletapState_UsedSecond,
 } doubletap_state_t;
 
 typedef struct {
@@ -23,7 +25,10 @@ void KeyHistory_RecordPress(const key_state_t *keyState)
         .keyState = keyState,
         .timestamp = CurrentPostponedTime,
         .previousPressTime = lastPress.timestamp,
-        .doubletapState = lastPress.doubletapState == DoubletapState_PossibleFirst ? DoubletapState_PossibleSecond : DoubletapState_PossibleFirst,
+        .doubletapState = keyState == lastPress.keyState &&
+            (lastPress.doubletapState == DoubletapState_PossibleFirst
+            || lastPress.doubletapState == DoubletapState_PossibleSecond)
+             ? DoubletapState_PossibleSecond : DoubletapState_PossibleFirst,
     };
 }
 
@@ -36,10 +41,11 @@ void KeyHistory_RecordRelease(const key_state_t *keyState)
 
 bool KeyHistory_WasLastDoubletap(const uint32_t maxInterval)
 {
-    bool wasDoubletap = lastPress.doubletapState == DoubletapState_PossibleSecond
+    bool wasDoubletap = (lastPress.doubletapState == DoubletapState_PossibleSecond
+                        || lastPress.doubletapState == DoubletapState_UsedSecond)
                         && lastPress.timestamp - lastPress.previousPressTime < maxInterval;
     if (wasDoubletap) {
-        lastPress.doubletapState = DoubletapState_IneligibleForFirst;
+        lastPress.doubletapState = DoubletapState_UsedSecond;
     }
     return wasDoubletap;
 }

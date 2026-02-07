@@ -404,7 +404,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationSeq, parentSlotIndex, true, NULL);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, parentSlotIndex, true, NULL);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -418,14 +418,14 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationSeq, 255, true, NULL);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, 255, true, NULL);
     return MacroResult_Finished;
 }
 
 uint8_t initMacro(uint8_t index,
                   key_state_t *keyState,
                   uint16_t argumentOffset,
-                  uint8_t keyActivationSeq,
+                  uint8_t keyActivationId,
                   uint8_t parentMacroSlot,
                   const char *inlineText
                 )
@@ -441,7 +441,7 @@ uint8_t initMacro(uint8_t index,
     S->ms.macroPlaying = true;
     S->ms.currentMacroIndex = index;
     S->ms.currentMacroKey = keyState;
-    S->ms.keyActivationSeq = keyActivationSeq;
+    S->ms.keyActivationId = keyActivationId;
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;

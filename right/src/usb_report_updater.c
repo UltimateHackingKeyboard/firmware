@@ -469,13 +469,13 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationSeq, 255, true, NULL);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationId, 255, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationSeq);
+                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationId);
             }
             break;
         case KeyActionType_Connections:
@@ -676,7 +676,7 @@ static void updateActionStates() {
             key_action_cached_t *cachedAction;
             key_action_t *actionBase;
 
-            if(KeyState_NoActivity(keyState)) {
+            if(KEY_INACTIVE(keyState)) {
                 continue;
             }
 
@@ -688,7 +688,7 @@ static void updateActionStates() {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
-                    ++keyState->activationSeq;
+                    ++keyState->activationId;
                     KeyHistory_RecordPress(keyState);
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {

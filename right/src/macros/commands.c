@@ -119,11 +119,11 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShot == 1;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
-        bool isSameActivation = (S->ms.currentMacroKey->activationSeq == S->ms.keyActivationSeq);
+        bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     } else {
-        bool isSameActivation = (S->ms.currentMacroKey->activationSeq == S->ms.keyActivationSeq);
+        bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
         return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     }
@@ -1016,7 +1016,12 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_state_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
+    
+    secondary_role_state_t res = S->ms.secondaryRoleState;
+    if (res == SecondaryRoleState_DontKnowYet) {
+        res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
+    }
+    S->ms.secondaryRoleState = res;
 
     S->as.actionActive = res == SecondaryRoleState_DontKnowYet;
     switch(res) {

@@ -155,7 +155,7 @@
             uint8_t nextSlot;
             uint8_t oneShot : 2;
             bool macroInterrupted : 1;
-            uint8_t keyActivationSeq: 3;
+            uint8_t keyActivationId: 3;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -167,6 +167,7 @@
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
             bool isDoubletap: 1;
+            secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
 
             macro_usb_keyboard_reports_t reports;
