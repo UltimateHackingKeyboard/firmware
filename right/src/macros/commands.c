@@ -1001,8 +1001,16 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         }
     }
     else {
+        if (!IsWhite(ctx)) {
+            Macros_ReportErrorTok(ctx, "Superfluous non-identifier characters:");
+            return MacroResult_Header;
+        }
+        ConsumeWhite(ctx);
         argType = MacroArgType_Any;
     }
+
+    // now allocate argument slot and store the argument info
+    // TODO: ...
 
     // rest of command is descriptive label, ignore
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};

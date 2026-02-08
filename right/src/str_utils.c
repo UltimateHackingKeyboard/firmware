@@ -13,7 +13,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-ATTR_UNUSED static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
+static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
 
 static bool consumeCommentsAsWhite = true;
 
@@ -133,13 +133,31 @@ bool IsEnd(parser_context_t* ctx) {
     return isEnd(ctx);
 }
 
+static bool isCommentLeader(parser_context_t* ctx) {
+    return ctx->at + 1 < ctx->end && ctx->at[0] == '/' && ctx->at[1] == '/';
+}
+
+static bool isWhite(parser_context_t* ctx) {
+    if (*ctx->at <= 32) {
+        return true;
+    }
+    if (isCommentLeader(ctx)) {
+         return true;
+    }
+    return false;
+}
+
+bool IsWhite(parser_context_t* ctx) {
+    return isWhite(ctx);
+}
+
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
         while (*ctx->at <= 32 && !isEnd(ctx)) {
             ctx->at++;
         }
-        if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
+        if (isCommentLeader(ctx) && consumeCommentsAsWhite) {
             while (*ctx->at != '\n' && !isEnd(ctx)) {
                 ctx->at++;
             }
@@ -176,6 +194,7 @@ void UnconsumeWhite(parser_context_t* ctx)
     }
 }
 
+// dangerous due to static return buffer; only use for error messages!
 const char* OneWord(parser_context_t* ctx)
 {
     static char buffer[20];
