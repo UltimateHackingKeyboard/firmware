@@ -976,11 +976,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     // see if the argument has a type
     macro_arg_type_t argType;
 
-    // TODO: use ConsumeToken(ctx, ":") instead
-    if (*ctx->at == ':') {
-        ctx->at++;
-        const char *typeStart = ctx->at;
-
+    if (ConsumeToken(ctx, ":")) {
         if (ConsumeToken(ctx, "int")) {
             argType = MacroArgType_Int;
         }
@@ -1005,9 +1001,16 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         }
     }
     else {
-        argType = MacroArgType_Any;
+        if (!IsWhite(ctx)) {
+            Macros_ReportErrorTok(ctx, "Superfluous non-identifier characters:");
+            return MacroResult_Header;
+        }
         ConsumeWhite(ctx);
+        argType = MacroArgType_Any;
     }
+
+    // now allocate argument slot and store the argument info
+    // TODO: ...
 
     // rest of command is descriptive label, ignore
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
