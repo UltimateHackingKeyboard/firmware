@@ -976,11 +976,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     // see if the argument has a type
     macro_arg_type_t argType;
 
-    // TODO: use ConsumeToken(ctx, ":") instead
-    if (*ctx->at == ':') {
-        ctx->at++;
-        const char *typeStart = ctx->at;
-
+    if (ConsumeToken(ctx, ":")) {
         if (ConsumeToken(ctx, "int")) {
             argType = MacroArgType_Int;
         }
@@ -1006,7 +1002,6 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
     else {
         argType = MacroArgType_Any;
-        ConsumeWhite(ctx);
     }
 
     // rest of command is descriptive label, ignore
