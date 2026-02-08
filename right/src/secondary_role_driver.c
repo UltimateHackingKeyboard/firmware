@@ -249,7 +249,7 @@ static void startResolution(
 {
     // store current state
     currentlyResolving = true;
-    isDoubletap = KeyHistory_WasLastDoubletap(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
+    isDoubletap = KeyHistory_WasLastDoubletap();
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;

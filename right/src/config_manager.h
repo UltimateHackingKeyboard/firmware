@@ -32,7 +32,6 @@
         // secondary roles
         secondary_role_strategy_t SecondaryRoles_Strategy;
         bool SecondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf;
-        uint16_t SecondaryRoles_AdvancedStrategyDoubletapTimeout;
         uint16_t SecondaryRoles_AdvancedStrategyTimeout;
         int16_t SecondaryRoles_AdvancedStrategySafetyMargin;
         secondary_role_triggering_event_t SecondaryRoles_AdvancedStrategyTriggeringEvent;

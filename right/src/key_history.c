@@ -1,13 +1,11 @@
 #include "config_manager.h"
 #include "key_history.h"
-#include "macros/status_buffer.h"
 #include "postponer.h"
 
 typedef enum {
     DoubletapState_PossibleFirst,
-    DoubletapState_PossibleSecond,
-    DoubletapState_IneligibleForFirst,
-    DoubletapState_UsedSecond,
+    DoubletapState_Doubletap,
+    DoubletapState_Blocked,
 } doubletap_state_t;
 
 typedef struct {
@@ -21,31 +19,26 @@ static previous_key_event_type_t lastPress;
 
 void KeyHistory_RecordPress(const key_state_t *keyState)
 {
+    bool isDoublePress = 
+        keyState == lastPress.keyState
+        && lastPress.doubletapState == DoubletapState_PossibleFirst
+        && CurrentPostponedTime < lastPress.timestamp + Cfg.DoubletapTimeout;
+
     lastPress = (previous_key_event_type_t){
         .keyState = keyState,
         .timestamp = CurrentPostponedTime,
-        .previousPressTime = lastPress.timestamp,
-        .doubletapState = keyState == lastPress.keyState &&
-            (lastPress.doubletapState == DoubletapState_PossibleFirst
-            || lastPress.doubletapState == DoubletapState_PossibleSecond)
-             ? DoubletapState_PossibleSecond : DoubletapState_PossibleFirst,
+        .doubletapState = isDoublePress ? DoubletapState_Doubletap : DoubletapState_PossibleFirst,
     };
 }
 
 void KeyHistory_RecordRelease(const key_state_t *keyState)
 {
     if (keyState != lastPress.keyState) {
-        lastPress.doubletapState = DoubletapState_IneligibleForFirst;
+        lastPress.doubletapState = DoubletapState_Blocked;
     }
 }
 
-bool KeyHistory_WasLastDoubletap(const uint32_t maxInterval)
+bool KeyHistory_WasLastDoubletap()
 {
-    bool wasDoubletap = (lastPress.doubletapState == DoubletapState_PossibleSecond
-                        || lastPress.doubletapState == DoubletapState_UsedSecond)
-                        && lastPress.timestamp - lastPress.previousPressTime < maxInterval;
-    if (wasDoubletap) {
-        lastPress.doubletapState = DoubletapState_UsedSecond;
-    }
-    return wasDoubletap;
+    return lastPress.doubletapState == DoubletapState_Doubletap;
 }
