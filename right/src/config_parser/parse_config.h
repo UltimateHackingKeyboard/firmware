@@ -46,6 +46,7 @@
     typedef enum {
         SerializedSecondaryRoleActionType_Primary,
         SerializedSecondaryRoleActionType_Secondary,
+        SerializedSecondaryRoleActionType_NoOp,
     } serialized_secondary_role_action_type_t;
 
     typedef enum {
