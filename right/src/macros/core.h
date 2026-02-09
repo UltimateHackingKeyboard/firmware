@@ -161,7 +161,6 @@
             uint16_t currentMacroActionIndex;
             uint16_t currentMacroArgumentOffset;
             uint16_t bufferOffset;
-            uint8_t currentMacroKeyStamp;
             uint8_t parentMacroSlot;
             uint8_t currentMacroIndex;
             uint8_t postponeNextNCommands;
@@ -169,6 +168,7 @@
             uint8_t nextSlot;
             uint8_t oneShot : 2;
             bool macroInterrupted : 1;
+            uint8_t keyActivationId: 3;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -179,6 +179,8 @@
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
+            bool isDoubletap: 1;
+            secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
             macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];
 
@@ -290,9 +292,9 @@
     macro_result_t Macros_SleepTillKeystateChange();
     macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
-    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t queueAfterSlot);
-    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
-    uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t timestamp);
+    uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationId, uint8_t queueAfterSlot);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationId, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
+    uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     void Macros_ContinueMacro(void);
     void Macros_Initialize();

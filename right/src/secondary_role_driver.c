@@ -1,3 +1,4 @@
+#include "key_history.h"
 #include "secondary_role_driver.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
@@ -204,7 +205,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // see if we should set a timer to wake up to actively time out
     if (isActiveTimeout || isDoubletap) {
-        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
+        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
     }
 
     // otherwise, keep postponing until key action
@@ -246,12 +247,9 @@ static void startResolution(
     bool isMacroResolution,
     secondary_role_same_half_t actionFromSameHalf)
 {
-    // stored state is last resolution.  detect doubletap here
-    isDoubletap = keyState == resolutionKey 
-        && CurrentPostponedTime - resolutionStartTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
-
     // store current state
     currentlyResolving = true;
+    isDoubletap = KeyHistory_WasLastDoubletap();
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;

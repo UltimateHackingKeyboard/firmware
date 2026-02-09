@@ -213,7 +213,6 @@ const config_t DefaultCfg = (config_t){
         .SimulateLowResScrolling = false,
         .TouchpadPinchZoomMode = NavigationMode_Zoom,
         .HoldContinuationTimeout = 0,
-        .SecondaryRoles_AdvancedStrategyDoubletapTimeout = 200,
         .SecondaryRoles_AdvancedStrategyTimeout = 350,
         .SecondaryRoles_AdvancedStrategySafetyMargin = 50,
         .SecondaryRoles_AdvancedStrategyTriggeringEvent = SecondaryRoleTriggeringEvent_Release,
