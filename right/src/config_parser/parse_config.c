@@ -181,16 +181,21 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     secondary_role_strategy_t secondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
     uint16_t secondaryRoles_AdvancedStrategyTimeout = Cfg.SecondaryRoles_AdvancedStrategyTimeout;
     int16_t secondaryRoles_AdvancedStrategySafetyMargin = Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-    secondary_role_triggering_event_t secondaryRoles_AdvancedStrategyTriggeringEvent = Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent;
+    serialized_secondary_role_triggering_event_t secondaryRoles_AdvancedStrategyTriggeringEvent = SerializedSecondaryRoleTriggeringEvent_Release;
     bool secondaryRoles_AdvancedStrategyDoubletapToPrimary = Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary;
     serialized_secondary_role_action_type_t secondaryRoles_AdvancedStrategyTimeoutAction = SerializedSecondaryRoleActionType_Secondary;
+
+    bool secondaryRoles_AdvancedStrategyTriggerByMouse = Cfg.SecondaryRoles_AdvancedStrategyTriggerByMouse;
+    bool secondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf = Cfg.SecondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf;
+    uint8_t secondaryRoles_AdvancedStrategyMinimumHoldTime = Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime;
+    serialized_secondary_role_timeout_type_t secondaryRoles_AdvancedStrategyTimeoutType = SerializedSecondaryRoleTimeoutType_Active;
 
     if (DataModelVersion.major >= 7) {
         secondaryRoles_Strategy = ReadUInt8(buffer);
         ATTR_UNUSED uint16_t secondaryRoles_AdvancedStrategyDoubletapTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategyTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategySafetyMargin = ReadInt16(buffer);
-        secondaryRoles_AdvancedStrategyTriggeringEvent = ReadBool(buffer) ? SecondaryRoleTriggeringEvent_Release : SecondaryRoleTriggeringEvent_Press;
+        secondaryRoles_AdvancedStrategyTriggeringEvent = ReadUInt8(buffer);
         secondaryRoles_AdvancedStrategyDoubletapToPrimary = ReadBool(buffer);
         secondaryRoles_AdvancedStrategyTimeoutAction = ReadUInt8(buffer);
 
@@ -241,6 +246,15 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     if (VERSION_AT_LEAST(DataModelVersion, 9, 99, 0)) {
         keyBacklightBrightnessChargingPercent = ReadUInt8(buffer);
         batteryChargingMode = ReadUInt8(buffer);
+    }
+
+    // Version 14:
+
+    if (DataModelVersion.major >= 14) {
+        secondaryRoles_AdvancedStrategyTriggerByMouse = ReadBool(buffer);
+        secondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf = ReadBool(buffer);
+        secondaryRoles_AdvancedStrategyMinimumHoldTime = ReadUInt8(buffer);
+        secondaryRoles_AdvancedStrategyTimeoutType = ReadUInt8(buffer);
     }
 
     // HostConnection configuration
@@ -347,7 +361,20 @@ parser_error_t parseConfig(config_buffer_t *buffer)
             Cfg.SecondaryRoles_Strategy = secondaryRoles_Strategy;
             Cfg.SecondaryRoles_AdvancedStrategyTimeout = secondaryRoles_AdvancedStrategyTimeout;
             Cfg.SecondaryRoles_AdvancedStrategySafetyMargin = secondaryRoles_AdvancedStrategySafetyMargin;
-            Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent = secondaryRoles_AdvancedStrategyTriggeringEvent;
+            switch (secondaryRoles_AdvancedStrategyTriggeringEvent) {
+                case SerializedSecondaryRoleTriggeringEvent_Press:
+                    Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent = SecondaryRoleTriggeringEvent_Press;
+                    break;
+                case SerializedSecondaryRoleTriggeringEvent_Release:
+                    Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent = SecondaryRoleTriggeringEvent_Release;
+                    break;
+                case SerializedSecondaryRoleTriggeringEvent_None:
+                    Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent = SecondaryRoleTriggeringEvent_None;
+                    break;
+                default:
+                    ConfigParser_Error(buffer, "Invalid secondary role triggering event: %u", secondaryRoles_AdvancedStrategyTriggeringEvent);
+                    return ParserError_InvalidSecondaryRoleTriggeringEvent;
+            }
             Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary = secondaryRoles_AdvancedStrategyDoubletapToPrimary;
             switch (secondaryRoles_AdvancedStrategyTimeoutAction) {
                 case SerializedSecondaryRoleActionType_Primary:
@@ -355,6 +382,9 @@ parser_error_t parseConfig(config_buffer_t *buffer)
                     break;
                 case SerializedSecondaryRoleActionType_Secondary:
                     Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_Secondary;
+                    break;
+                case SerializedSecondaryRoleActionType_NoOp:
+                    Cfg.SecondaryRoles_AdvancedStrategyTimeoutAction = SecondaryRoleState_NoOp;
                     break;
                 default:
                     ConfigParser_Error(buffer, "Invalid secondary role action type: %u", secondaryRoles_AdvancedStrategyTimeoutAction);
@@ -367,6 +397,25 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
             Cfg.DoubletapTimeout = doubletapTimeout;
             Cfg.KeystrokeDelay = keystrokeDelay;
+        }
+
+        // Version 14
+
+        if (DataModelVersion.major >= 14) {
+            Cfg.SecondaryRoles_AdvancedStrategyTriggerByMouse = secondaryRoles_AdvancedStrategyTriggerByMouse;
+            Cfg.SecondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf = secondaryRoles_AdvancedStrategyAcceptTriggersFromSameHalf;
+            Cfg.SecondaryRoles_AdvancedStrategyMinimumHoldTime = secondaryRoles_AdvancedStrategyMinimumHoldTime;
+            switch (secondaryRoles_AdvancedStrategyTimeoutType) {
+                case SerializedSecondaryRoleTimeoutType_Active:
+                    Cfg.SecondaryRoles_AdvancedStrategyTimeoutType = SecondaryRoleTimeoutType_Active;
+                    break;
+                case SerializedSecondaryRoleTimeoutType_Passive:
+                    Cfg.SecondaryRoles_AdvancedStrategyTimeoutType = SecondaryRoleTimeoutType_Passive;
+                    break;
+                default:
+                    ConfigParser_Error(buffer, "Invalid secondary role timeout type: %u", secondaryRoles_AdvancedStrategyTimeoutType);
+                    return ParserError_InvalidSecondaryRoleTimeoutType;
+            }
         }
 
         // Version 8

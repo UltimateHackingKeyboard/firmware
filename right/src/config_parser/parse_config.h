@@ -41,12 +41,26 @@
         ParserError_InvalidHostConnectionId             = 21,
         ParserError_InvalidSerializedOtherAction        = 22,
         ParserError_ConfigVersionTooNew                = 23,
+        ParserError_InvalidSecondaryRoleTriggeringEvent = 24,
+        ParserError_InvalidSecondaryRoleTimeoutType     = 25,
     } parser_error_t;
 
     typedef enum {
         SerializedSecondaryRoleActionType_Primary,
         SerializedSecondaryRoleActionType_Secondary,
+        SerializedSecondaryRoleActionType_NoOp,
     } serialized_secondary_role_action_type_t;
+
+    typedef enum {
+        SerializedSecondaryRoleTriggeringEvent_Press,
+        SerializedSecondaryRoleTriggeringEvent_Release,
+        SerializedSecondaryRoleTriggeringEvent_None,
+    } serialized_secondary_role_triggering_event_t;
+
+    typedef enum {
+        SerializedSecondaryRoleTimeoutType_Active,
+        SerializedSecondaryRoleTimeoutType_Passive,
+    } serialized_secondary_role_timeout_type_t;
 
     typedef enum {
         SerializedChargingMode_Full = 0,
