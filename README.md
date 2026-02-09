@@ -194,7 +194,7 @@ BUILD_DIR=device/build/uhk-80-right; west flash --build-dir $BUILD_DIR
 
 It is recommended to start development in the IDE once a successful build is available, as the build parameters
 aren't trivial to pass to the IDE, but it does pick up existing build configurations.
-To get started, choose *Open Workspace from File...*, then select the `firmware.code-workspace` file.
+To get started, choose *Open Workspace from File...*, then select either the `mcuxsdk.code-workspace` (for UHK60 and modules) or the `nrfsdk.code-workspace` (for UHK80 and dongle) file.
 Install the recommended extensions or pick the one for your single device depending on the SDK.
 
 > Note that using *MCUXpresso for VS Code* extension currently overwrites the `mcux_includes.json` file,
