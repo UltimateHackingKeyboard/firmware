@@ -119,11 +119,11 @@ bool Macros_CurrentMacroKeyIsActive()
         return S->ms.oneShot == 1;
     }
     if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
-        bool isSameActivation = (S->ms.currentMacroKey->activationTimestamp == S->ms.currentMacroKeyStamp);
+        bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     } else {
-        bool isSameActivation = (S->ms.currentMacroKey->activationTimestamp == S->ms.currentMacroKeyStamp);
+        bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
         return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
     }
@@ -539,27 +539,7 @@ static bool processIfDoubletapCommand(bool negate)
     if (Macros_DryRun) {
         return true;
     }
-    bool doubletapFound = false;
-
-    for (uint8_t i = 0; i < MACRO_HISTORY_POOL_SIZE; i++) {
-        if (S->ms.currentMacroStartTime - MacroHistory[i].macroStartTime <= Cfg.DoubletapTimeout && S->ms.currentMacroIndex == MacroHistory[i].macroIndex) {
-            doubletapFound = true;
-        }
-    }
-
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (
-            MacroState[i].ms.macroPlaying &&
-            MacroState[i].ms.currentMacroStartTime < S->ms.currentMacroStartTime &&
-            S->ms.currentMacroStartTime - MacroState[i].ms.currentMacroStartTime <= Cfg.DoubletapTimeout &&
-            S->ms.currentMacroIndex == MacroState[i].ms.currentMacroIndex &&
-            &MacroState[i] != S
-        ) {
-            doubletapFound = true;
-        }
-    }
-
-    return doubletapFound != negate;
+    return S->ms.isDoubletap != negate;
 }
 
 static bool processIfModifierCommand(bool negate, uint8_t modmask)
@@ -1036,7 +1016,12 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    secondary_role_state_t res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
+    
+    secondary_role_state_t res = S->ms.secondaryRoleState;
+    if (res == SecondaryRoleState_DontKnowYet) {
+        res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
+    }
+    S->ms.secondaryRoleState = res;
 
     S->as.actionActive = res == SecondaryRoleState_DontKnowYet;
     switch(res) {
@@ -1600,20 +1585,20 @@ static macro_result_t processActivateKeyPostponedCommand(parser_context_t* ctx)
 
     if (append) {
         if (PostponerQuery_IsActiveEventually(key)) {
-            PostponerCore_TrackKeyEvent(key, false, layer, Timer_GetCurrentTime());
-            PostponerCore_TrackKeyEvent(key, true, layer, Timer_GetCurrentTime());
+            PostponerCore_TrackKeyEvent(key, false, layer);
+            PostponerCore_TrackKeyEvent(key, true, layer);
         } else {
-            PostponerCore_TrackKeyEvent(key, true, layer, Timer_GetCurrentTime());
-            PostponerCore_TrackKeyEvent(key, false, layer, Timer_GetCurrentTime());
+            PostponerCore_TrackKeyEvent(key, true, layer);
+            PostponerCore_TrackKeyEvent(key, false, layer);
         }
     } else {
         if (KeyState_Active(key)) {
             //reverse order when prepending
-            PostponerCore_PrependKeyEvent(key, true, layer, Timer_GetCurrentTime());
-            PostponerCore_PrependKeyEvent(key, false, layer, Timer_GetCurrentTime());
+            PostponerCore_PrependKeyEvent(key, true, layer);
+            PostponerCore_PrependKeyEvent(key, false, layer);
         } else {
-            PostponerCore_PrependKeyEvent(key, false, layer, Timer_GetCurrentTime());
-            PostponerCore_PrependKeyEvent(key, true, layer, Timer_GetCurrentTime());
+            PostponerCore_PrependKeyEvent(key, false, layer);
+            PostponerCore_PrependKeyEvent(key, true, layer);
         }
     }
     return MacroResult_Finished;

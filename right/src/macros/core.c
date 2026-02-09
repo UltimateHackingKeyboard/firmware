@@ -2,6 +2,7 @@
 #include "config_parser/parse_macro.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "key_history.h"
 #include "keymap.h"
 #include "layer_stack.h"
 #include "macros/commands.h"
@@ -403,7 +404,7 @@ macro_result_t Macros_ExecMacro(uint8_t macroIndex)
 macro_result_t Macros_CallMacro(uint8_t macroIndex)
 {
     uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, parentSlotIndex, true, NULL);
+    uint8_t childSlotIndex = Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, parentSlotIndex, true, NULL);
 
     if (childSlotIndex != 255) {
         unscheduleCurrentSlot();
@@ -417,12 +418,18 @@ macro_result_t Macros_CallMacro(uint8_t macroIndex)
 
 macro_result_t Macros_ForkMacro(uint8_t macroIndex)
 {
-    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.currentMacroKeyStamp, 255, true, NULL);
+    Macros_StartMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, 255, true, NULL);
     return MacroResult_Finished;
 }
 
-uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, const char *inlineText)
-{
+uint8_t initMacro(
+    uint8_t index,
+    key_state_t *keyState,
+    uint16_t argumentOffset,
+    uint8_t keyActivationId,
+    uint8_t parentMacroSlot,
+    const char *inlineText
+) {
     if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
     }
@@ -434,10 +441,11 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset,
     S->ms.macroPlaying = true;
     S->ms.currentMacroIndex = index;
     S->ms.currentMacroKey = keyState;
-    S->ms.currentMacroKeyStamp = timestamp;
+    S->ms.keyActivationId = keyActivationId;
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
+    S->ms.isDoubletap = KeyHistory_WasLastDoubletap();
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {
@@ -462,11 +470,18 @@ uint8_t initMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset,
 
 
 //partentMacroSlot == 255 means no parent
-uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t timestamp, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText)
-{
+uint8_t Macros_StartMacro(
+    uint8_t index,
+    key_state_t *keyState,
+    uint16_t argumentOffset,
+    uint8_t keyActivationId,
+    uint8_t parentMacroSlot,
+    bool runFirstAction,
+    const char *inlineText
+) {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, timestamp, parentMacroSlot, inlineText);
+    uint8_t slotIndex = initMacro(index, keyState, argumentOffset, keyActivationId, parentMacroSlot, inlineText);
 
     if (slotIndex == 255) {
         S = oldState;
@@ -490,9 +505,9 @@ uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumen
     return slotIndex;
 }
 
-uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t timestamp)
+uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId)
 {
-    return Macros_StartMacro(MacroIndex_InlineMacro, keyState, 0, timestamp, 255, true, text);
+    return Macros_StartMacro(MacroIndex_InlineMacro, keyState, 0, keyActivationId, 255, true, text);
 }
 
 void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
@@ -574,11 +589,11 @@ void Macros_ValidateAllMacros()
     S = oldS;
 }
 
-uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t timestamp, uint8_t queueAfterSlot)
+uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationId, uint8_t queueAfterSlot)
 {
     macro_state_t* oldState = S;
 
-    uint8_t slotIndex = initMacro(index, keyState, 0, timestamp, 255, NULL);
+    uint8_t slotIndex = initMacro(index, keyState, 0, keyActivationId, 255, NULL);
 
     if (slotIndex == 255) {
         return slotIndex;

@@ -22,6 +22,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
+#include "key_history.h"
 #include "key_states.h"
 #include "usb_report_updater.h"
 #include "timer.h"
@@ -168,7 +169,6 @@ static void applyToggleLayerAction(key_state_t *keyState, key_action_t *action) 
 
 static void handleEventInterrupts(key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
-        LayerSwitcher_DoubleTapInterrupt(keyState);
         Macros_SignalInterrupt();
         OneShot_SignalInterrupt();
         UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
@@ -469,13 +469,13 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationTimestamp, 255, true, NULL);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationId, 255, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 resetStickyMods(cachedAction);
-                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationTimestamp);
+                Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationId);
             }
             break;
         case KeyActionType_Connections:
@@ -571,10 +571,9 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
     }
 
     if (PostponerCore_EventsShouldBeQueued()) {
-        PostponerCore_TrackKeyEvent(keyState, active, 255, pressTimestamp);
+        PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
-        keyState->activationTimestamp = pressTimestamp;
         keyState->current = active;
     }
     Macros_WakeBecauseOfKeystateChange();
@@ -677,7 +676,7 @@ static void updateActionStates() {
             key_action_cached_t *cachedAction;
             key_action_t *actionBase;
 
-            if(((uint8_t*)keyState)[2] == 0) {
+            if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
             }
 
@@ -689,7 +688,8 @@ static void updateActionStates() {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
-                    keyState->secondaryState = SecondaryRoleState_DontKnowYet;
+                    ++keyState->activationId;
+                    KeyHistory_RecordPress(keyState);
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
                         Trace_Printf("y1.%d", CurrentPowerMode);
@@ -729,6 +729,10 @@ static void updateActionStates() {
                 //apply active-layer action
                 ApplyKeyAction(keyState, cachedAction, actionBase, &NativeKeyboardReports);
 
+                if (KeyState_DeactivatedNow(keyState)) {
+                    KeyHistory_RecordRelease(keyState);
+                    keyState->secondaryState = SecondaryRoleState_DontKnowYet;
+                }
                 keyState->previous = keyState->current;
                 Trace_Printc("w5");
             }

@@ -9,6 +9,10 @@
     #include "slot.h"
     #include "module.h"
 
+// Macros:
+
+    #define KEYSTATE_KEYINACTIVE(keyState) ((uint8_t*)keyState)[1] == 0
+    
 // Typedefs:
 
     typedef enum {
@@ -31,13 +35,15 @@
 
     typedef struct {
         uint8_t debounceTimestamp;
-        uint8_t activationTimestamp;
+        // Remember to update KEY_INACTIVE() if adding or removing stuff before the bitfield
         volatile bool hardwareSwitchState : 1;
         bool debouncedSwitchState : 1;
         bool current : 1;
         bool previous : 1;
         bool debouncing : 1;
         secondary_role_state_t secondaryState : 2;
+        bool padding : 1; // This allows the KEY_INACTIVE() macro to not trigger false because of sequence
+        uint8_t activationId: 3;
     } key_state_t;
 
 // Variables:

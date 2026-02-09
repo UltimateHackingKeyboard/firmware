@@ -35,6 +35,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/i2c_watchdog.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_clock.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_peripherals.c>
+    key_history.c
     key_states.c
     keymap.c
     keymap_pairing.c
