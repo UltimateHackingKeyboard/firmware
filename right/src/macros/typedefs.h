@@ -49,16 +49,6 @@
         uint8_t inputModifierMask;
     } macro_usb_keyboard_reports_t;
 
-    typedef enum {
-        MacroArgType_Any,
-        MacroArgType_Int,
-        MacroArgType_Float,
-        MacroArgType_Bool,
-        MacroArgType_String,
-        MacroArgType_KeyId,
-        MacroArgType_ScanCode
-    } macro_arg_type_t;
-
 // Variables:
 
 // Functions:

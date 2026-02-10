@@ -50,6 +50,9 @@ typedef enum {
 macro_variable_t macroVariables[MACRO_VARIABLE_COUNT_MAX];
 uint8_t macroVariableCount = 0;
 
+macro_argument_t macroArguments[MAX_MACRO_ARGUMENT_POOL_SIZE];
+// uint8_t macroArgumentCount = 0;
+
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx);
 static macro_variable_t consumeParenthessExpression(parser_context_t* ctx);
 static macro_variable_t consumeValue(parser_context_t* ctx);
@@ -1083,4 +1086,71 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
 
     ctx->at--;
     return false;
+}
+
+// ----------------------------------------
+// macroArguments allocation and processing
+// ----------------------------------------
+
+string_ref_t createStringRef(const char *start, const char *end) {
+    return (string_ref_t) {
+        .offset = start - (const char*)ValidatedUserConfigBuffer.buffer,
+        .len = (uint8_t)(end - start),
+    };
+}
+
+string_segment_t stringRefToSegment(string_ref_t ref) {
+    return (string_segment_t) {
+        .start = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset),
+        .end = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len),
+    };
+}
+
+const char *stringRefStart(string_ref_t ref) {
+    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
+}
+
+const char *stringRefEnd(string_ref_t ref) {
+    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
+}
+
+macro_argument_alloc_result_t Macros_AllocateMacroArgument(
+    macro_state_t *owner,
+    const char *idStart, 
+    const char *idEnd, 
+    macro_argument_type_t type,
+    uint8_t argNumber,
+    macro_argref_t* outArgRef
+) {
+    // search for existing argument of same owner with the same identifier, error if found
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
+            SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = idStart, .end = idEnd }) {
+            return MacroArgAllocResult_DuplicateArgumentName;
+        }
+    }
+
+    // search for an unused slot in the pool
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type == MacroArgType_Unused) {
+            macroArguments[i].owner = owner;
+            macroArguments[i].type = type;
+            macroArguments[i].id = argNumber;
+            macroArguments[i].name = createStringRef(idStart, idEnd);
+            *outArgRef = i;
+            return MacroArgAllocResult_Success;
+        }
+    }
+
+    return MacroArgAllocResult_PoolLimitExceeded;
+}
+
+macro_argument_t *Macros_FindMacroArgumentByName(macro_state_t *owner, const char *nameStart, const char *nameEnd) {
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
+            SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = nameStart, .end = nameEnd })) {
+            return &macroArguments[i];
+        }
+    }
+    return NULL;
 }
