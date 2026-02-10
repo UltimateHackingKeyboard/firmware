@@ -142,7 +142,7 @@ sequenceDiagram
     loop for each 59-byte chunk
         A->>R: WriteModuleFirmware
     end
-    A->>R: ValidateBuffer(moduleFirmware, size, crc)
+    A->>R: ValidateBufferCrc(moduleFirmware, size, crc)
     A->>R: FlashModule(slotId)
     R->>M: K-boot: jump to bootloader
     R->>M: K-boot: flashEraseAllUnsecure
@@ -192,7 +192,7 @@ Response:
 | 1    | flash state (0=idle, 1=erasing, 2=writing, 3=done, 4=error) |
 | 2    | error code (if state=error) |
 
-### ValidateBuffer (new, 0x23)
+### ValidateBufferCrc (new, 0x23)
 
 | Byte | Field |
 |------|-------|
