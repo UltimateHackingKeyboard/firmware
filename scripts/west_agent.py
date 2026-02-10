@@ -60,16 +60,14 @@ class WestAgent(WestCommand):
                 log.die(f'Firmware file not found: {fw_file}')
 
         elif app_name == 'right':
-            cmake_cache = build_dir / 'CMakeCache.txt'
-            with cmake_cache.open() as f:
+            dotconfig = build_dir / '.config'
+            with dotconfig.open() as f:
                 for line in f:
-                    if line.startswith('DEVICE_PID:'):
-                        parts = line.strip().split('=')
-                        if len(parts) == 2 and parts[1].isdigit():
-                            pid = parts[1]
-                            break
+                    if line.startswith('CONFIG_USB_DEVICE_PID='):
+                        pid = line[len('CONFIG_USB_DEVICE_PID='):].strip()
+                        break
             if pid is None:
-                log.die('DEVICE_PID not found or invalid in CMakeCache.txt')
+                log.die('CONFIG_USB_DEVICE_PID not found or invalid in .config')
 
             fw_file = self.find_single_file(build_dir, '.hex')
         else:
