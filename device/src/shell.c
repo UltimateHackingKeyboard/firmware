@@ -22,6 +22,7 @@
 #include <zephyr/shell/shell_backend.h>
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/shell/shell.h>
+#include "bt_health.h"
 #include "connections.h"
 #include "logger_priority.h"
 #include "pin_wiring.h"
@@ -325,6 +326,12 @@ static int cmd_uhk_irqs(const struct shell *shell, size_t argc, char *argv[]) {
     return 0;
 }
 
+static int cmd_uhk_healthcheck(const struct shell *shell, size_t argc, char *argv[])
+{
+    Bt_HealthCheck(LogTarget_Uart, false);
+    return 0;
+}
+
 static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char *argv[]) {
     int16_t horizontalScrollMultiplier = HorizontalScrollMultiplier();
     int16_t verticalScrollMultiplier = VerticalScrollMultiplier();
@@ -507,6 +514,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(passkey, NULL, "send passkey for bluetooth pairing", cmd_uhk_passkey, 2, 0),
         SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
+        SHELL_CMD_ARG(healthcheck, NULL, "run BT and HOGP health check", cmd_uhk_healthcheck, 1, 0),
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 0),

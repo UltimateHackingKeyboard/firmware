@@ -48,6 +48,7 @@
         EventSchedulerEvent_BlinkStatusIcons,
         EventSchedulerEvent_UnselectHostConnection,
         EventSchedulerEvent_OneShotTimeout,
+        EventSchedulerEvent_KickHid,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

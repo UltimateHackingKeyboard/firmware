@@ -9,6 +9,7 @@
 #include <zephyr/bluetooth/gap.h>
 #include "bt_advertise.h"
 #include "connections.h"
+#include "hid/transport.h"
 
 LOG_MODULE_DECLARE(Bt);
 
@@ -34,6 +35,11 @@ void Bt_HealthCheck(log_target_t targetOnError, bool isError) {
                 LogTo(DEVICE_ID, target, "HealthCheck: Peer %d has invalid conn pointer!", i);
             }
         }
+    }
+
+    // 2. HOGP health check
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HOGP_HealthCheck();
     }
 
     // 3. Check bond count

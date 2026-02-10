@@ -4,6 +4,8 @@
 #include "mouse_app.hpp"
 #include "port/zephyr/bluetooth/hid.hpp"
 #include <magic_enum.hpp>
+#include <zephyr/bluetooth/conn.h>
+#include <zephyr/kernel.h>
 
 using namespace magic_enum::bitwise_operators;
 
@@ -59,4 +61,32 @@ extern "C" void HOGP_Enable()
 extern "C" void HOGP_Disable()
 {
     hogp_manager::instance().main_service().stop();
+}
+
+extern "C" int HOGP_HealthCheck()
+{
+    auto &hm = hogp_manager::instance();
+    auto &svc = hm.main_service();
+
+    if (!hm.active()) {
+        printk("HOGP HealthCheck: GATT service NOT registered\n");
+        return -1;
+    }
+
+    struct bt_conn *peer = svc.peer();
+    if (!peer) {
+        printk("HOGP HealthCheck: service registered, no active peer\n");
+        return -2;
+    }
+
+    struct bt_conn_info info;
+    int err = bt_conn_get_info(peer, &info);
+    if (err) {
+        printk("HOGP HealthCheck: active peer has INVALID conn pointer (err %d)\n", err);
+        return -3;
+    }
+
+    printk("HOGP HealthCheck: OK (registered, peer connected, interval %u)\n",
+           info.le.interval);
+    return 0;
 }
