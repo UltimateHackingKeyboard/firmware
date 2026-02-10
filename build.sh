@@ -158,17 +158,23 @@ function dealiasDeviceZephyr() {
 }
 
 function dealiasDeviceMcux() {
+    if [ "$DEBUG" == "1" ]; then
+        BUILD_TYPE="debug"
+    else
+        BUILD_TYPE="release"
+    fi
+
     case $DEVICE in
         uhk-60v1-right|rightv1|right)
             DEVICE="uhk-60v1-right"
-            VARIANT="v1-release"
+            VARIANT="v1-$BUILD_TYPE"
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             ;;
         uhk-60v2-right|rightv2|right)
             DEVICE="uhk-60v2-right"
-            VARIANT="v2-release"
+            VARIANT="v2-$BUILD_TYPE"
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
             USBDEVICEARG="--vid=0x37a8 --pid=3"
