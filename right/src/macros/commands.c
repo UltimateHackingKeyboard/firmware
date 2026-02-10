@@ -1013,7 +1013,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
 
     // allocate an argument slot if there is room
-    if (S->ms.argumentCount >= MACRO_MAX_ARGUMENTS) {
+    if (S->ms.argumentCount >= MAX_MACRO_ARGUMENT_COUNT) {
         Macros_ReportErrorPos(ctx, "Maximum number of macro arguments exceeded");
         return MacroResult_Header;
     }
@@ -1022,15 +1022,15 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     // TODO: ...
 
     // allocate a pool slot for the argument and store its metadata (name and type) there
-    macro_argument_alloc_result_t res = Macros_AllocateMacroArg(S, idStart, idEnd, argType, S->ms.argumentCount+1, &(S->ms.arguments[S->ms.argumentCount]));
+    macro_argument_alloc_result_t res = Macros_AllocateMacroArgument(S, idStart, idEnd, argType, S->ms.argumentCount+1, &(S->ms.arguments[S->ms.argumentCount]));
     switch (res) {
-    case MacroArgumentAllocResult_Success:
+    case MacroArgAllocResult_Success:
         S->ms.argumentCount++;
         break;
-    case MacroArgumentAllocResult_PoolLimitExceeded:
+    case MacroArgAllocResult_PoolLimitExceeded:
         Macros_ReportErrorPos(ctx, "Too many arguments across simultaneously active macros (argument pool exhausted)");
         return MacroResult_Header;
-    case MacroArgumentAllocResult_DuplicateArgumentName:
+    case MacroArgAllocResult_DuplicateArgumentName:
         Macros_ReportErrorPos(ctx, "Duplicate argument name");
         return MacroResult_Header;
     }
