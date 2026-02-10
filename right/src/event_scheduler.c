@@ -22,6 +22,7 @@
 #include "keyboard/uart_bridge.h"
 #include "main.h"
 #include "bt_manager.h"
+#include "bt_conn.h"
 #else
 #include "segment_display.h"
 #endif
@@ -239,6 +240,9 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
+            break;
+        case EventSchedulerEvent_KickHid:
+            BtConn_KickHid();
             break;
         default:
             return;

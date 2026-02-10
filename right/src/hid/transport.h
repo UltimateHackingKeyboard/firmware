@@ -48,5 +48,6 @@ void USB_Reconfigure(void);
 // HOGP (BLE HID) management
 void HOGP_Enable(void);
 void HOGP_Disable(void);
+int HOGP_HealthCheck(void);
 
 #endif // __HID_TRANSPORT_H__
