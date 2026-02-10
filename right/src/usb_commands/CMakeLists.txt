@@ -25,4 +25,8 @@ target_sources(${PROJECT_NAME} PRIVATE
     usb_command_set_variable.c
     usb_command_switch_keymap.c
     usb_command_write_config.c
+    usb_command_write_module_firmware.c
+    usb_command_flash_module.c
+    usb_command_get_module_flash_state.c
+    usb_command_validate_buffer_crc.c
 )

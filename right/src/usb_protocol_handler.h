@@ -69,6 +69,11 @@
         UsbCommandId_EraseBleSettings         = 0x1d,
         UsbCommandId_ExecShellCommand         = 0x1e,
         UsbCommandId_ReadOled                 = 0x1f,
+
+        UsbCommandId_WriteModuleFirmware      = 0x20,
+        UsbCommandId_FlashModule              = 0x21,
+        UsbCommandId_GetModuleFlashState      = 0x22,
+        UsbCommandId_ValidateBufferCrc        = 0x23,
     } usb_command_id_t;
 
     typedef enum {
