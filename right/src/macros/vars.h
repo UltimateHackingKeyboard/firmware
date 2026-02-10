@@ -1,7 +1,6 @@
 #ifndef __MACROS_VARS_H__
 #define __MACROS_VARS_H__
 
-
 // Includes:
 
     #include <stdint.h>
@@ -87,4 +86,3 @@
     bool TryExpandMacroTemplateOnce(parser_context_t* ctx);
 
 #endif
-

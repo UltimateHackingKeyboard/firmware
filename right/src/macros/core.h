@@ -11,6 +11,7 @@
     #include "key_states.h"
     #include "str_utils.h"
     #include "macros/typedefs.h"
+    #include "macros/vars.h"
     #include "event_scheduler.h"
 
 // Macros:
