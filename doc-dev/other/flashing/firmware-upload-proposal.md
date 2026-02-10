@@ -1,156 +1,225 @@
 # Firmware Upload Proposal
 
-## Current UserConfig Flashing Flow
+## 1. USB Protocol
 
-```
-Agent                                    Firmware
-  |                                         |
-  |  1. WriteStagingUserConfig (0x06)       |
-  |     [cmd, len, offsetLo, offsetHi, data...]
-  |  ---------------------------------------->
-  |     (repeat for each 59-byte chunk)     |
-  |                                         |
-  |  2. ApplyConfig (0x07)                  |
-  |  ---------------------------------------->
-  |     Validates & swaps staging→validated |
-  |                                         |
-  |  3. LaunchEepromTransfer (0x08)         |
-  |     [cmd, operation=write, bufferId]    |
-  |  ---------------------------------------->
-  |     Writes validated buffer to EEPROM   |
-  |                                         |
-  |  4. GetDeviceState (0x09) - poll        |
-  |  ---------------------------------------->
-  |  <-- isEepromBusy until done            |
-```
+63-byte HID reports. All multi-byte integers are little-endian.
 
-### USB Packet Format (63 bytes max)
+Every response starts with a status byte (0 = success).
 
-```
-WriteConfig packet:
-  [0] = UsbCommand (0x05 or 0x06)
-  [1] = length (1-59)
-  [2] = offset low byte
-  [3] = offset high byte
-  [4-62] = data (up to 59 bytes)
+## 2. Current: UserConfig Flashing
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant R as Right Half
+
+    loop for each 59-byte chunk
+        A->>R: WriteStagingUserConfig
+    end
+    A->>R: ApplyConfig
+    A->>R: LaunchStorageTransfer
+    loop poll
+        A->>R: GetDeviceState
+        R-->>A: isEepromBusy
+    end
 ```
 
-### Agent Code Reference
+### WriteStagingUserConfig (0x06)
 
-```typescript
-// lib/agent/packages/uhk-usb/src/util.ts
-function getTransferBuffers(usbCommand, configBuffer) {
-    const MAX_SENDING_PAYLOAD_SIZE = 59;  // 63 - 4 byte header
-    for (let offset = 0; offset < configBuffer.length; offset += 59) {
-        const header = [usbCommand, length, offset & 0xFF, offset >> 8];
-        fragments.push(concat(header, configBuffer.slice(offset, offset + 59)));
-    }
-}
+| Byte | Field         |
+|------|---------------|
+| 0    | 0x06          |
+| 1    | payload length (max 59) |
+| 2-3  | offset into staging buffer |
+| 4+   | data          |
 
-// lib/agent/packages/uhk-usb/src/uhk-operations.ts
-async saveUserConfiguration(buffer) {
-    await sendConfigToKeyboard(buffer, true);      // WriteStagingUserConfig chunks
-    await applyConfiguration();                     // ApplyConfig
-    await writeConfigToEeprom(validatedUserConfig); // LaunchEepromTransfer
-    await waitUntilKeyboardBusy();                  // Poll GetDeviceState
-}
+Response: status byte only.
+
+### ApplyConfig (0x07)
+
+| Byte | Field |
+|------|-------|
+| 0    | 0x07  |
+
+Validates the staging buffer. On success, swaps staging ↔ validated buffers.
+
+Response:
+
+| Byte | Field |
+|------|-------|
+| 0    | status |
+| 1-2  | parser offset (where parsing stopped) |
+| 3    | parser stage (0=validate, 1=apply) |
+
+### LaunchStorageTransfer (0x08)
+
+| Byte | Field |
+|------|-------|
+| 0    | 0x08  |
+| 1    | operation (0=read, 1=write) |
+| 2    | buffer id (0=hardware, 1=stagingUser, 2=validatedUser) |
+
+Response: status byte only.
+
+### GetDeviceState (0x09)
+
+| Byte | Field |
+|------|-------|
+| 0    | 0x09  |
+
+Response:
+
+| Byte | Field |
+|------|-------|
+| 0    | status |
+| 1    | busy flags: bit 0 = isEepromBusy, bit 1 = isModuleFlashBusy (**new**) |
+| 2    | flags (halvesMerged, pairing, zephyrLog) |
+| 3-5  | connected module IDs (left half, left mod, right mod) |
+| 6    | active layer (bits 0-6) + toggled flag (bit 7) |
+| 7    | macro status dirty |
+| 8    | current keymap index |
+
+## 3. Current: Module Firmware Flashing
+
+Currently, module firmware flashing is Agent-driven. The right half acts as a USB-to-I2C bridge ("Buspal" mode) and the Agent speaks K-boot protocol directly over that bridge:
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant R as Right Half (Buspal)
+    participant M as Module (K-boot bootloader)
+
+    A->>R: SendKbootCommandToModule(ping)
+    R->>M: K-boot ping (I2C)
+    A->>R: JumpToModuleBootloader(slotId)
+    R->>M: jump command (I2C)
+    Note over R: reenumerate as Buspal USB device
+    A->>R: K-boot configureI2c(i2cAddr)
+    A->>R: K-boot flashEraseAllUnsecure
+    R->>M: forwarded via I2C
+    A->>R: K-boot writeMemory(0x0000, firmwareData)
+    R->>M: forwarded via I2C
+    A->>R: K-boot reset
+    R->>M: forwarded via I2C
+    Note over R: reenumerate back to normal keyboard
+    A->>R: SendKbootCommandToModule(reset)
+    A->>R: SendKbootCommandToModule(idle)
 ```
 
-## Proposed Firmware Upload API
+### SendKbootCommandToModule (0x03)
 
-Reuse the same chunked transfer pattern, but target module firmware instead of config buffers.
+| Byte | Field |
+|------|-------|
+| 0    | 0x03  |
+| 1    | command (0=idle, 1=ping, 2=reset) |
+| 2    | i2c address (omitted for idle) |
 
-### New USB Commands
+Triggers the kboot_driver state machine on the right half, which sends K-boot framed ping/reset packets over I2C.
 
-| ID | Command | Parameters |
-|----|---------|------------|
-| 0x20 | WriteModuleFirmware | [len, offsetLo, offsetHi, data...] |
-| 0x21 | FlashModule | [slotId] |
-| 0x22 | GetModuleFlashState | - |
+### JumpToModuleBootloader (0x02)
 
-### Proposed Flow
+| Byte | Field |
+|------|-------|
+| 0    | 0x02  |
+| 1    | slot id |
 
-```
-Agent                                    Firmware
-  |                                         |
-  |  1. WriteModuleFirmware (0x20)          |
-  |     [cmd, len, offsetLo, offsetHi, data...]
-  |  ---------------------------------------->
-  |     (repeat for each 59-byte chunk)     |
-  |     Streams directly to module via I2C  |
-  |                                         |
-  |  2. FlashModule (0x21)                  |
-  |     [cmd, slotId]                       |
-  |  ---------------------------------------->
-  |     Finalizes flash, resets module      |
-  |                                         |
-  |  3. GetModuleFlashState (0x22) - poll   |
-  |  ---------------------------------------->
-  |  <-- status: idle/erasing/writing/done  |
-```
+Sets the module phase to `JumpToBootloader`, causing the module driver to send a jump command via I2C.
 
-### Implementation Options
+### Buspal Mode
 
-**Option A: Streaming (preferred for UHK60)**
-- Each WriteModuleFirmware chunk is immediately forwarded to module via I2C
-- No RAM buffer needed on right half
-- Module bootloader receives K-boot WriteMemory commands directly
+After jumping the module to bootloader, the Agent reenumerates the right half into Buspal mode (EnumerationMode 1). In Buspal mode, the right half becomes a transparent USB↔I2C bridge. The Agent then uses a K-boot library (`KBoot` class) to speak the K-boot framing protocol directly, sending `flashEraseAllUnsecure`, `writeMemory`, and `reset` commands.
 
-**Option B: Buffered (if streaming not possible)**
-- Store firmware in staging buffer (limited to ~32KB)
-- FlashModule reads from buffer and sends to module
-- Requires multiple passes for larger firmware
+## 4. Proposed: Firmware-Driven Module Flashing
 
-### Agent Code Changes
+Move K-boot protocol handling from the Agent into the firmware. The Agent sends firmware data using the same chunked transfer pattern as config flashing. The firmware handles K-boot protocol internally.
 
-```typescript
-// Minimal changes - reuse existing pattern
-async flashModuleFirmware(slotId: number, firmwareBuffer: Buffer) {
-    // Same chunked transfer, different command
-    const fragments = getTransferBuffers(0x20, firmwareBuffer);
-    for (const fragment of fragments) {
-        await this.device.write(fragment);
-    }
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant R as Right Half
+    participant M as Module (K-boot bootloader)
 
-    // Trigger flash
-    await this.device.write(Buffer.from([0x21, slotId]));
-
-    // Wait for completion
-    while (true) {
-        const state = await this.device.write(Buffer.from([0x22]));
-        if (state[1] === FlashState.Done) break;
-        if (state[1] === FlashState.Error) throw new Error(state[2]);
-        await snooze(100);
-    }
-}
+    loop for each 59-byte chunk
+        A->>R: WriteModuleFirmware
+    end
+    A->>R: ValidateBuffer(moduleFirmware, size, crc)
+    A->>R: FlashModule(slotId)
+    R->>M: K-boot: jump to bootloader
+    R->>M: K-boot: flashEraseAllUnsecure
+    R->>M: K-boot: writeMemory (from buffer)
+    R->>M: K-boot: reset
+    loop poll
+        A->>R: GetDeviceState
+        R-->>A: isModuleFlashBusy
+        opt if detailed state needed
+            A->>R: GetModuleFlashState
+            R-->>A: state + error code
+        end
+    end
 ```
 
-### Firmware Side Implementation
+### WriteModuleFirmware (new, 0x20)
 
-```c
-// New command handlers in usb_commands/
+| Byte | Field |
+|------|-------|
+| 0    | 0x20  |
+| 1    | payload length (max 59) |
+| 2-3  | offset into firmware buffer |
+| 4+   | data |
 
-void UsbCommand_WriteModuleFirmware(const uint8_t *in, uint8_t *out) {
-    uint8_t length = GetUsbRxBufferUint8(1);
-    uint16_t offset = GetUsbRxBufferUint16(2);
-    const uint8_t *data = in + 4;
+Same chunked transfer pattern as WriteStagingUserConfig.
 
-    // Stream to module bootloader via I2C (K-boot WriteMemory)
-    KbootDriver_WriteMemory(offset, data, length);
-}
+### FlashModule (new, 0x21)
 
-void UsbCommand_FlashModule(const uint8_t *in, uint8_t *out) {
-    uint8_t slotId = GetUsbRxBufferUint8(1);
+| Byte | Field |
+|------|-------|
+| 0    | 0x21  |
+| 1    | slot id |
 
-    // Send K-boot Reset command to module
-    KbootDriver_Reset(slotId);
-}
-```
+Triggers the full K-boot flash sequence internally: jump to bootloader → erase → write → reset.
 
-## Summary
+### GetModuleFlashState (new, 0x22)
 
-The existing config transfer infrastructure (chunked USB, 59-byte payloads, 16-bit offset) can be reused directly for firmware upload. The main work is:
+| Byte | Field |
+|------|-------|
+| 0    | 0x22  |
 
-1. Add 3 new USB command handlers
-2. Implement K-boot I2C driver (WriteMemory, Reset commands)
-3. Handle the streaming/forwarding in firmware instead of Agent
+Response:
+
+| Byte | Field |
+|------|-------|
+| 0    | status |
+| 1    | flash state (0=idle, 1=erasing, 2=writing, 3=done, 4=error) |
+| 2    | error code (if state=error) |
+
+### ValidateBuffer (new, 0x23)
+
+| Byte | Field |
+|------|-------|
+| 0    | 0x23  |
+| 1    | buffer id (0=hardware, 1=stagingUser, 2=validatedUser, 3=moduleFirmware) |
+| 2-3  | expected size |
+| 4-5  | expected CRC16 |
+
+Firmware computes CRC over the first `size` bytes of the given buffer and compares it to the expected value.
+
+Response:
+
+| Byte | Field |
+|------|-------|
+| 0    | status (0=match, non-zero=mismatch) |
+
+### Advantages
+
+- No Buspal reenumeration needed (disruptive, platform-dependent)
+- Agent doesn't need K-boot library or I2C knowledge
+- Same pattern as config flashing — simple for Agent authors
+- Firmware can manage timing and retries internally
+
+### Open question: buffering
+
+Module firmware can be up to ~128KB. The 16-bit offset field supports up to 64KB. Options:
+
+- **A. Buffer in RAM**: Requires large allocation. Possible on UHK80 (nRF has more RAM), tight on UHK60.
+- **B. Stream to module**: Forward each chunk to the module bootloader immediately via K-boot writeMemory. No buffer needed, but the module must already be in bootloader mode during the upload. Requires the Agent to wait for each chunk's I2C completion.
+- **C. Use 24-bit offset**: Extend the offset field to 3 bytes (payload drops to 58 bytes) to support >64KB. Only needed if buffering.
