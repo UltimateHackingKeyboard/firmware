@@ -50,7 +50,7 @@ typedef enum {
 macro_variable_t macroVariables[MACRO_VARIABLE_COUNT_MAX];
 uint8_t macroVariableCount = 0;
 
-macro_argument_t macroArguments[MAX_MACRO_ARGUMENT_POOL_SIZE];
+macro_argument_t macroArguments[MACRO_ARGUMENT_POOL_SIZE];
 // uint8_t macroArgumentCount = 0;
 
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx);
@@ -1125,7 +1125,7 @@ macro_argument_alloc_result_t Macros_AllocateMacroArgument(
     // search for existing argument of same owner with the same identifier, error if found
     for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
         if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
-            SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = idStart, .end = idEnd }) {
+            SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = idStart, .end = idEnd })) {
             return MacroArgAllocResult_DuplicateArgumentName;
         }
     }
@@ -1137,7 +1137,7 @@ macro_argument_alloc_result_t Macros_AllocateMacroArgument(
             macroArguments[i].type = type;
             macroArguments[i].id = argNumber;
             macroArguments[i].name = createStringRef(idStart, idEnd);
-            *outArgRef = i;
+            *outArgRef = (macro_argref_t) { .poolId = i };
             return MacroArgAllocResult_Success;
         }
     }
