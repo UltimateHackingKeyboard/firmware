@@ -15,6 +15,7 @@
 
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
+#define DEBUG_STRESS_GATT false
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
