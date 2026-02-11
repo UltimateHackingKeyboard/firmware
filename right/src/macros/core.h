@@ -155,7 +155,7 @@
             uint8_t nextSlot;
             uint8_t oneShot : 2;
             bool macroInterrupted : 1;
-            uint8_t keyActivationId: 3;
+            uint8_t keyActivationId: 4;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
             bool macroBroken : 1;

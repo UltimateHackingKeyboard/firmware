@@ -254,7 +254,7 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
     }
     if (action & Action_Doubletap) {
         // some systems do debouncing because mouse switches are unreliable
-        const int16_t delay = 20;
+        const uint16_t delay = 20;
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
         PostponerCore_TrackDelay(delay);
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
