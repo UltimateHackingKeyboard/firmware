@@ -11,6 +11,7 @@
 #include "config_manager.h"
 #include "macros/vars.h"
 #include "mouse_controller.h"
+#include "layer_stack.h"
 
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
@@ -58,6 +59,7 @@ static bool advanceToNextTest(void) {
 
 static void startTest(const test_t *test, const test_module_t *module) {
     ConfigManager_ResetConfiguration(false);
+    LayerStack_Reset();
     if (TestSuite_Verbose) {
         LogU("[TEST] ----------------------\n");
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);

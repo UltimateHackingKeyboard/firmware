@@ -12,6 +12,7 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_Chording,
     &TestModule_AutoShift,
     &TestModule_IfShortcutGesture,
+    &TestModule_Doubletap,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);

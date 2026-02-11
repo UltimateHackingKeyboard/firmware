@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "key_action.h"
 
 // Helper macros for defining tests
 
@@ -37,8 +38,14 @@
     { .type = TestAction_SetMacro, .keyId = (key_id), .macroText = (macro_text) }
 
 // SetLayerHold: assign a layer hold action to a key
+// SwitchLayerMode_Hold = 2
 #define TEST_SET_LAYER_HOLD(key_id, layer_id) \
-    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id) }
+    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id), .switchLayerMode = 2 }
+
+// SetLayerDoubleTapToggle: assign a hold-and-doubletap-toggle layer action to a key
+// SwitchLayerMode_HoldAndDoubleTapToggle = 0
+#define TEST_SET_LAYER_DOUBLETAP_TOGGLE(key_id, layer_id) \
+    { .type = TestAction_SetLayerHold, .keyId = (key_id), .layerId = (layer_id), .switchLayerMode = 0 }
 
 // SetLayerAction: assign a key action on a specific layer
 #define TEST_SET_LAYER_ACTION(layer_id, key_id, shortcut) \
@@ -48,6 +55,14 @@
 // secondary_role is one of: SecondaryRole_LeftShift, SecondaryRole_LeftCtrl, etc.
 #define TEST_SET_SECONDARY_ROLE(key_id, primary_scancode, secondary_role) \
     { .type = TestAction_SetSecondaryRole, .keyId = (key_id), .primaryScancode = (primary_scancode), .secondaryRoleId = (secondary_role) }
+
+// SetGenericAction: assign an arbitrary key_action_t to a key
+#define TEST_SET_GENERIC_ACTION(key_id, action) \
+    { .type = TestAction_SetGenericAction, .keyId = (key_id), .keyAction = (action) }
+
+// SetEmpty: assign an empty (None) action to a key
+#define TEST_SET_EMPTY(key_id) \
+    TEST_SET_GENERIC_ACTION(key_id, ((key_action_t){ .type = KeyActionType_None }))
 
 // SetConfig: run a set command to configure settings
 #define TEST_SET_CONFIG(config_text) \
@@ -68,6 +83,7 @@ typedef enum {
     TestAction_SetLayerHold,
     TestAction_SetLayerAction,
     TestAction_SetSecondaryRole,
+    TestAction_SetGenericAction,
     TestAction_SetConfig,
     TestAction_Expect,       // OutputMachine only
     TestAction_ExpectMaybe,  // OutputMachine only, optional
@@ -78,6 +94,7 @@ typedef struct {
     test_action_type_t type;
     const char *keyId;
     uint8_t layerId;              // For SetLayerHold, SetLayerAction
+    uint8_t switchLayerMode;      // For SetLayerHold (0 = Hold, see SwitchLayerMode enum)
     uint8_t primaryScancode;      // For SetSecondaryRole
     uint8_t secondaryRoleId;      // For SetSecondaryRole
     union {
@@ -86,6 +103,7 @@ typedef struct {
         const char *shortcutStr;      // For SetAction, SetLayerAction
         const char *macroText;        // For SetMacro
         const char *configText;       // For SetConfig
+        key_action_t keyAction;       // For SetGenericAction
     };
 } test_action_t;
 
