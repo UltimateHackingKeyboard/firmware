@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "key_action.h"
 
 // Helper macros for defining tests
 
@@ -55,6 +56,14 @@
 #define TEST_SET_SECONDARY_ROLE(key_id, primary_scancode, secondary_role) \
     { .type = TestAction_SetSecondaryRole, .keyId = (key_id), .primaryScancode = (primary_scancode), .secondaryRoleId = (secondary_role) }
 
+// SetGenericAction: assign an arbitrary key_action_t to a key
+#define TEST_SET_GENERIC_ACTION(key_id, action) \
+    { .type = TestAction_SetGenericAction, .keyId = (key_id), .keyAction = (action) }
+
+// SetEmpty: assign an empty (None) action to a key
+#define TEST_SET_EMPTY(key_id) \
+    TEST_SET_GENERIC_ACTION(key_id, ((key_action_t){ .type = KeyActionType_None }))
+
 // SetConfig: run a set command to configure settings
 #define TEST_SET_CONFIG(config_text) \
     { .type = TestAction_SetConfig, .configText = (config_text) }
@@ -74,6 +83,7 @@ typedef enum {
     TestAction_SetLayerHold,
     TestAction_SetLayerAction,
     TestAction_SetSecondaryRole,
+    TestAction_SetGenericAction,
     TestAction_SetConfig,
     TestAction_Expect,       // OutputMachine only
     TestAction_ExpectMaybe,  // OutputMachine only, optional
@@ -93,6 +103,7 @@ typedef struct {
         const char *shortcutStr;      // For SetAction, SetLayerAction
         const char *macroText;        // For SetMacro
         const char *configText;       // For SetConfig
+        key_action_t keyAction;       // For SetGenericAction
     };
 } test_action_t;
 

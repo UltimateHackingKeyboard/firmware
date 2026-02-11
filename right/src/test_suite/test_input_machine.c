@@ -252,6 +252,7 @@ void InputMachine_Tick(void) {
                 };
 
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
                 LOG_VERBOSE("[TEST] > SetLayerHold [%s] = layer %d, mode %d\n", action->keyId, action->layerId, action->switchLayerMode);
                 InputMachine_ActionIndex++;
                 break;
@@ -303,6 +304,20 @@ void InputMachine_Tick(void) {
                 CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
                 LOG_VERBOSE("[TEST] > SetSecondaryRole [%s] = scancode %d, secondary %d\n",
                     action->keyId, action->primaryScancode, action->secondaryRoleId);
+                InputMachine_ActionIndex++;
+                break;
+            }
+
+            case TestAction_SetGenericAction: {
+                uint8_t slotId, keyId;
+                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                    LogU("[TEST] FAIL: SetGenericAction [%s] - invalid key\n", action->keyId);
+                    InputMachine_Failed = true;
+                    return;
+                }
+
+                CurrentKeymap[LayerId_Base][slotId][keyId] = action->keyAction;
+                LOG_VERBOSE("[TEST] > SetGenericAction [%s] = type %d\n", action->keyId, action->keyAction.type);
                 InputMachine_ActionIndex++;
                 break;
             }
