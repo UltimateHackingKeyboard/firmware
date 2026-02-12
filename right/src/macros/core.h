@@ -11,6 +11,7 @@
     #include "key_states.h"
     #include "str_utils.h"
     #include "macros/typedefs.h"
+    #include "macros/vars.h"
     #include "event_scheduler.h"
 
 // Macros:
@@ -21,6 +22,8 @@
     #define MACRO_HISTORY_POOL_SIZE 16
     #define MACRO_SCOPE_STATE_POOL_SIZE (MACRO_STATE_POOL_SIZE*2)
     #define MAX_REG_COUNT 32
+
+    #define MAX_MACRO_ARGUMENT_COUNT 8
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
     #define CTRLMASK (HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL)
@@ -169,8 +172,12 @@
             bool isDoubletap: 1;
             secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
+            macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];
 
             macro_usb_keyboard_reports_t reports;
+
+            uint8_t argumentCount : 4;
+            bool macroHeadersProcessed : 1;
         } ms;
 
         // action scope data

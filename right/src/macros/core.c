@@ -32,7 +32,6 @@ macro_reference_t AllMacros[MacroIndex_MaxCount] = {
 };
 uint8_t AllMacrosCount;
 
-
 bool Macros_WakedBecauseOfOneShot = false;
 bool Macros_WakedBecauseOfTime = false;
 bool Macros_WakedBecauseOfKeystateChange = false;

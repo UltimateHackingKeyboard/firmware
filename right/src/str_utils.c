@@ -13,7 +13,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-ATTR_UNUSED static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
+static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
 
 static bool consumeCommentsAsWhite = true;
 
@@ -133,13 +133,31 @@ bool IsEnd(parser_context_t* ctx) {
     return isEnd(ctx);
 }
 
+static bool isCommentLeader(parser_context_t* ctx) {
+    return ctx->at + 1 < ctx->end && ctx->at[0] == '/' && ctx->at[1] == '/';
+}
+
+static bool isWhite(parser_context_t* ctx) {
+    if (*ctx->at <= 32) {
+        return true;
+    }
+    if (isCommentLeader(ctx)) {
+         return true;
+    }
+    return false;
+}
+
+bool IsWhite(parser_context_t* ctx) {
+    return isWhite(ctx);
+}
+
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
         while (*ctx->at <= 32 && !isEnd(ctx)) {
             ctx->at++;
         }
-        if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
+        if (isCommentLeader(ctx) && consumeCommentsAsWhite) {
             while (*ctx->at != '\n' && !isEnd(ctx)) {
                 ctx->at++;
             }
@@ -151,7 +169,6 @@ static void consumeWhite(parser_context_t* ctx)
         }
     }
 }
-
 
 void ConsumeCommentsAsWhite(bool consume)
 {
@@ -176,6 +193,7 @@ void UnconsumeWhite(parser_context_t* ctx)
     }
 }
 
+// dangerous due to static return buffer; only use for error messages!
 const char* OneWord(parser_context_t* ctx)
 {
     static char buffer[20];
@@ -271,12 +289,10 @@ static bool isIdentifierChar(char c)
     }
 }
 
-
 bool IsIdentifierChar(char c)
 {
     return isIdentifierChar(c);
 }
-
 
 bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
 {
@@ -320,6 +336,9 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
     consumeWhite(ctx);
 }
 
+#if 0
+/* old ConsumeUntilDot (replaced below) */
+
 void ConsumeUntilDot(parser_context_t* ctx)
 {
     while(*ctx->at > 32 && *ctx->at != '.' && !isEnd(ctx))    {
@@ -330,6 +349,40 @@ void ConsumeUntilDot(parser_context_t* ctx)
     }
     ctx->at++;
 }
+#endif
+
+// Consume characters until a specific character is found or whitespace is hit.
+// If end of context is reached, report an error.
+// If the character is found, consume it.
+// If whitespace is found, and failOnWhite is true, report an error.
+void ConsumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
+{
+    while(*ctx->at > 32 && *ctx->at != c && !isEnd(ctx)) {
+        ctx->at++;
+    }
+    if (IsEnd(ctx)) {
+        Macros_ReportError("unexpected end of statement", ctx->at, ctx->at);
+        return;
+    }
+    if (*ctx->at == c) {
+        ctx->at++;
+        return;
+    }
+    if (failOnWhite) {
+        Macros_ReportErrorPrintf(ctx->at, "'%c' expected", c);
+        return;
+    }
+}
+
+void ConsumeUntilDot(parser_context_t* ctx)
+{
+    ConsumeUntilCharOrWhite(ctx, '.', true);
+}
+
+//void ConsumeUntilColon(parser_context_t* ctx)
+//{
+//    ConsumeUntilCharOrWhite(ctx, ':', false);
+//}
 
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
 {
