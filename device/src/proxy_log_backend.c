@@ -13,50 +13,28 @@
 #include "attributes.h"
 #include "logger.h"
 #include "macros/status_buffer.h"
-#include "trace.h"
-#include "wormhole.h"
+#include "shell/sinks.h"
 #include "zephyr/logging/log_core.h"
 #include "config_manager.h"
 #include "usb_log_buffer.h"
-#include "config_manager.h"
-
-typedef struct {
-    bool outputToStatusBuffer;
-    bool outputToUsbBuffer;
-    bool outputToOled;
-} proxy_log_context_t;
-
-#define PROXY_BACKEND_BUFFER_SIZE 2048
-
-bool ProxyLog_IsInPanicMode = false;
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg);
 
 void panic(const struct log_backend *const backend) {
-    StateWormhole_Open();
-    StateWormhole.persistStatusBuffer = true;
-
-    if (!ProxyLog_IsInPanicMode) {
-        ProxyLog_IsInPanicMode = true;
-
-        MacroStatusBuffer_Validate();
-        printk("===== PANIC =====\n");
-        Trace_Print(LogTarget_ErrorBuffer, "crash/panic");
-    }
-
+    ShellConfig_ActivatePanicMode();
 };
 
 static int outputFunc(uint8_t *data, size_t length, void *ctx)
 {
-    proxy_log_context_t* outputs = (proxy_log_context_t*)ctx;
+    shell_sinks_t* sinks = (shell_sinks_t*)ctx;
 
-    if (outputs->outputToStatusBuffer) {
+    if (sinks->toStatusBuffer) {
         Macros_SanitizedPut(data, data + length);
     }
-    if (outputs->outputToUsbBuffer) {
+    if (sinks->toUsbBuffer) {
         UsbLogBuffer_Print(data, length);
     }
-    if (outputs->outputToOled) {
+    if (sinks->toOled) {
         LogO("%.*s", length, data);
     }
     return length;
@@ -85,32 +63,19 @@ ATTR_UNUSED static const char *getLogSourceName(struct log_msg *msg) {
 }
 
 static void processLog(const struct log_backend *const backend, union log_msg_generic *msg) {
-    proxy_log_context_t outputs = (proxy_log_context_t){
-        .outputToStatusBuffer = false,
-            .outputToUsbBuffer = false,
-            .outputToOled = false,
-    };
-
-    if (WormCfg->UsbLogEnabled) {
-        outputs.outputToUsbBuffer = true;
-        outputs.outputToOled = true;
-    }
-
-    if (ProxyLog_IsInPanicMode) {
-        outputs.outputToStatusBuffer = true;
-    }
+    shell_sinks_t sinks = ShellConfig_GetLogSinks();
 
     if (WormCfg->devMode) {
         // PoC: Extract log source and level information
         uint8_t level = log_msg_get_level(&msg->log);
         const char *sourceName = getLogSourceName(&msg->log);
         if ( level >= LOG_LEVEL_WRN && strcmp(sourceName, "c2usb") == 0) {
-            outputs.outputToStatusBuffer = true;
+            sinks.toStatusBuffer = true;
         }
     }
 
-    if (outputs.outputToStatusBuffer || outputs.outputToUsbBuffer || outputs.outputToOled) {
-        log_output_ctx_set(&logOutput, &outputs);
+    if (sinks.toStatusBuffer || sinks.toUsbBuffer || sinks.toOled) {
+        log_output_ctx_set(&logOutput, &sinks);
         uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
         log_output_msg_process(&logOutput, &msg->log, flags);
     }
@@ -133,13 +98,13 @@ static struct log_backend_api proxyApi = (struct log_backend_api) {
 
 #define PROXY_LOG_BACKEND_AUTOSTART true
 
-LOG_BACKEND_DEFINE(logProxy, proxyApi, PROXY_LOG_BACKEND_AUTOSTART);
+LOG_BACKEND_DEFINE(UhkLog, proxyApi, PROXY_LOG_BACKEND_AUTOSTART);
 
 void InitProxyLogBackend(void) {
 #if !PROXY_LOG_BACKEND_AUTOSTART
     log_init();
 
-    const struct log_backend *backend = log_backend_get_by_name("logProxy");
+    const struct log_backend *backend = log_backend_get_by_name("UhkLog");
 
     log_output_ctx_set(&logOutput, backend->cb->ctx);
 

@@ -52,7 +52,7 @@ int set_thread_priority_by_name(const char *thread_name, int new_priority) {
 void Logger_SetPriority(bool high) {
     int8_t priority = high ? -1 : 14;
     set_thread_priority_by_name("logging", K_PRIO_PREEMPT(priority));
-    set_thread_priority_by_name("shell_uart", K_PRIO_PREEMPT(priority));
+    set_thread_priority_by_name("UhkShell", K_PRIO_PREEMPT(priority));
     set_thread_priority_by_name("shell_rtt", K_PRIO_PREEMPT(priority));
 }
 
