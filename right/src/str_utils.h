@@ -57,6 +57,7 @@
 
     uint8_t SegmentLen(string_segment_t str);
     bool IsEnd(parser_context_t* ctx);
+    bool IsWhite(parser_context_t* ctx);
     bool SegmentEqual(string_segment_t str1, string_segment_t str2);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);

@@ -1,7 +1,6 @@
 #ifndef __MACROS_VARS_H__
 #define __MACROS_VARS_H__
 
-
 // Includes:
 
     #include <stdint.h>
@@ -17,6 +16,8 @@
 
     #define MACRO_VARIABLE_COUNT_MAX 32
     #define TRY_EXPAND_TEMPLATE(CTX) (*ctx->at == '&' && TryExpandMacroTemplateOnce(CTX))
+
+    #define MACRO_ARGUMENT_POOL_SIZE 32
 
 // Typedefs:
 
@@ -39,6 +40,34 @@
         macro_variable_type_t type;
     } ATTR_PACKED macro_variable_t;
 
+    typedef enum {
+        MacroArgType_Unused = 0,
+        MacroArgType_Any,
+        MacroArgType_Int,
+        MacroArgType_Float,
+        MacroArgType_Bool,
+        MacroArgType_String,
+        MacroArgType_KeyId,
+        MacroArgType_ScanCode
+    } macro_argument_type_t;
+
+    typedef struct {
+        macro_state_t *owner;
+        macro_argument_type_t type;
+        uint8_t id;
+        string_ref_t name;
+    } macro_argument_t;
+
+    typedef enum {
+        MacroArgAllocResult_Success,
+        MacroArgAllocResult_PoolLimitExceeded,
+        MacroArgAllocResult_DuplicateArgumentName,
+    } macro_argument_alloc_result_t;
+
+    typedef struct {
+        uint8_t poolId;
+    } macro_argref_t;
+
 
 // Variables:
 
@@ -57,4 +86,3 @@
     bool TryExpandMacroTemplateOnce(parser_context_t* ctx);
 
 #endif
-

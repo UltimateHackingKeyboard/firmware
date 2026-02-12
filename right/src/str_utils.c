@@ -170,7 +170,6 @@ static void consumeWhite(parser_context_t* ctx)
     }
 }
 
-
 void ConsumeCommentsAsWhite(bool consume)
 {
     consumeCommentsAsWhite = consume;
@@ -380,10 +379,10 @@ void ConsumeUntilDot(parser_context_t* ctx)
     ConsumeUntilCharOrWhite(ctx, '.', true);
 }
 
-void ConsumeUntilColon(parser_context_t* ctx)
-{
-    ConsumeUntilCharOrWhite(ctx, ':', false);
-}
+//void ConsumeUntilColon(parser_context_t* ctx)
+//{
+//    ConsumeUntilCharOrWhite(ctx, ':', false);
+//}
 
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
 {

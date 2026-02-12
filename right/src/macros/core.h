@@ -11,6 +11,7 @@
     #include "key_states.h"
     #include "str_utils.h"
     #include "macros/typedefs.h"
+    #include "macros/vars.h"
     #include "event_scheduler.h"
 
 // Macros:
@@ -23,7 +24,6 @@
     #define MAX_REG_COUNT 32
 
     #define MAX_MACRO_ARGUMENT_COUNT 8
-    #define MAX_MACRO_ARGUMENT_POOL_SIZE 32
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
     #define CTRLMASK (HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL)
@@ -138,16 +138,6 @@
         uint8_t macroIndex;
     } macro_history_t;
 
-    typedef struct {
-        string_ref_t id;
-        macro_arg_type_t type;
-    } ATTR_PACKED macro_argument_t;
-
-    typedef struct {
-        uint8_t id;
-        macro_arg_type_t type;
-    } ATTR_PACKED macro_argref_t;
-
     struct macro_state_t {
         // local scope data
         macro_scope_state_t *ls;
@@ -186,6 +176,7 @@
 
             macro_usb_keyboard_reports_t reports;
 
+            uint8_t argumentCount : 4;
             bool macroHeadersProcessed : 1;
         } ms;
 

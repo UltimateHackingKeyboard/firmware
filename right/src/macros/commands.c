@@ -954,7 +954,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     ctx->at = idEnd;
 
     // see if the argument has a type
-    macro_arg_type_t argType;
+    macro_argument_type_t argType;
 
     if (ConsumeToken(ctx, ":")) {
         if (ConsumeToken(ctx, "int")) {
@@ -962,6 +962,9 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         }
         else if (ConsumeToken(ctx, "float")) {
             argType = MacroArgType_Float;
+        }
+        else if (ConsumeToken(ctx, "bool")) {
+            argType = MacroArgType_Bool;
         }
         else if (ConsumeToken(ctx, "string")) {
             argType = MacroArgType_String;
@@ -989,13 +992,35 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         argType = MacroArgType_Any;
     }
 
-    // now allocate argument slot and store the argument info
-    // TODO: ...
+    // allocate an argument slot if there is room
+    if (S->ms.argumentCount >= MAX_MACRO_ARGUMENT_COUNT) {
+        Macros_ReportErrorPos(ctx, "Maximum number of macro arguments exceeded");
+        return MacroResult_Header;
+    }
 
-    // rest of command is descriptive label, ignore
+    // check whether the argument name has already been used in this macro
+    // TODO: ... check "locally"
+
+    // allocate a pool slot for the argument and store its metadata (name and type) there
+    macro_argument_alloc_result_t res = Macros_AllocateMacroArgument(S, idStart, idEnd, argType, S->ms.argumentCount+1, &(S->ms.arguments[S->ms.argumentCount]));
+    switch (res) {
+    case MacroArgAllocResult_Success:
+        S->ms.argumentCount++;
+        break;
+    case MacroArgAllocResult_PoolLimitExceeded:
+        Macros_ReportErrorPos(ctx, "Too many arguments across simultaneously active macros (argument pool exhausted)");
+        return MacroResult_Header;
+    case MacroArgAllocResult_DuplicateArgumentName:
+        Macros_ReportErrorPos(ctx, "Duplicate argument name");
+        return MacroResult_Header;
+    }
+
+    // rest of command is descriptive label, ignore. TODO: Should be parsed as string literal.
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
     return MacroResult_Header;
+
+// TODO: when macro ends, free the macroArgs that have been allocated for this owner in vars.c
 
 //    Macros_ReportErrorPrintf(ctx->at, "Parsing failed at '%s'?", OneWord(ctx));
 }

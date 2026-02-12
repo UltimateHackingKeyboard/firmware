@@ -61,8 +61,6 @@ macro_state_t *S = NULL;
 macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
 uint8_t MacroHistoryPosition = 0;
 
-macro_argument_t MacroArguments[MAX_MACRO_ARGUMENT_POOL_SIZE];
-
 static void checkSchedulerHealth(const char* tag);
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
