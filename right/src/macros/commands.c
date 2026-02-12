@@ -984,7 +984,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
             argType = MacroArgType_Float;
         }
         else if (ConsumeToken(ctx, "bool")) {
-            argType = MacroArgType_Float;
+            argType = MacroArgType_Bool;
         }
         else if (ConsumeToken(ctx, "string")) {
             argType = MacroArgType_String;
@@ -1019,7 +1019,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
 
     // check whether the argument name has already been used in this macro
-    // TODO: ...
+    // TODO: ... check "locally"
 
     // allocate a pool slot for the argument and store its metadata (name and type) there
     macro_argument_alloc_result_t res = Macros_AllocateMacroArgument(S, idStart, idEnd, argType, S->ms.argumentCount+1, &(S->ms.arguments[S->ms.argumentCount]));
@@ -1039,6 +1039,8 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
     return MacroResult_Header;
+
+// TODO: when macro ends, free the macroArgs that have been allocated for this owner in vars.c
 
 //    Macros_ReportErrorPrintf(ctx->at, "Parsing failed at '%s'?", OneWord(ctx));
 }
