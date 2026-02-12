@@ -16,8 +16,8 @@
     #include "fsl_common.h"
     #include "fsl_i2c.h"
     #include "fsl_clock.h"
-#include "slave_drivers/kboot_driver.h"
 #endif
+#include "slave_drivers/kboot_driver.h"
 
 uint32_t I2cSlaveScheduler_Counter;
 
@@ -65,13 +65,11 @@ uhk_slave_t Slaves[SLAVE_COUNT] = {
         .update = LedSlaveDriver_Update,
         .perDriverId = LedDriverId_ModuleLeft,
     },
-#ifndef __ZEPHYR__
     {
         .init = KbootSlaveDriver_Init,
         .update = KbootSlaveDriver_Update,
         .perDriverId = KbootDriverId_Singleton,
     },
-#endif
 };
 
 static uint8_t getNextSlaveId(uint8_t slaveId)
@@ -85,8 +83,11 @@ static uint8_t getNextSlaveId(uint8_t slaveId)
 #elif DEVICE_IS_UHK80_LEFT
     return slaveId == SlaveId_LeftModule ? SlaveId_ModuleLeftLedDriver : SlaveId_LeftModule;
 #elif DEVICE_IS_UHK80_RIGHT
-    return slaveId == SlaveId_RightModule ? SlaveId_RightTouchpad : SlaveId_RightModule;
-    // return SlaveId_RightTouchpad;
+    switch (slaveId) {
+        case SlaveId_RightModule:   return SlaveId_RightTouchpad;
+        case SlaveId_RightTouchpad: return SlaveId_KbootDriver;
+        default:                    return SlaveId_RightModule;
+    }
 #else
     return slaveId;
 #endif
