@@ -445,7 +445,7 @@ uint8_t initMacro(
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
-    S->ms.isDoubletap = KeyHistory_WasLastDoubletap();
+    S->ms.isDoubletap = keyState != NULL && KeyHistory_WasLastDoubletap();
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {
