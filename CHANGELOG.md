@@ -19,12 +19,16 @@ Macro behaviors:
 - Validate all macros in general context. In 16.1.x, unmapped macros weren't validated. `SMARTMACROS:PATCH`
 - Lower default ifGesture timeout to 500ms. `SMARTMACROS:MINOR`
 - Add `notify` command. `SMARTMACROS:MINOR`
-- Global doubletap detection: doubletaps are now detected globally at the beginning of keypress lifecycle. Separate `secondaryRole.advanced.doubletapTime` has been deprecated. `SMARTMACROS:MINOR`
+- Global doubletap detection:
+  - Doubletaps are now detected globally at the beginning of keypress lifecycle. Separate `secondaryRole.advanced.doubletapTime` has been deprecated. `SMARTMACROS:MINOR`
+  - Macros will now remember and reuse secondary role resolutions for the rest of their runtime, regardless of key events
+  - Fix: an issue where secondary role could incorrectly trigger doubletaps
+  - Fix: an issue where macros could incorrectly trigger doubletaps
 - Secondary Role keys (HRM):
-   - Added `secondaryRole.advanced.timeoutType { active | passive }` option to postpone timeout action until release. `SMARTMACROS:MINOR`
-   - Made Trigger by mouse subject to minimum hold time to prevent vibration on key press from triggering secondary role when using a trackball module. `SMARTMACROS:PATCH`
-   - Made Trigger by mouse reliably trigger secondary role immediately.`SMARTMACROS:PATCH`
-   - Fixed a number of edge cases related to safety margin where secondary role keys would not trigger in a timely manner.`SMARTMACROS:PATCH`
+  - Added `secondaryRole.advanced.timeoutType { active | passive }` option to postpone timeout action until release. `SMARTMACROS:MINOR`
+  - Made Trigger by mouse subject to minimum hold time to prevent vibration on key press from triggering secondary role when using a trackball module. `SMARTMACROS:PATCH`
+  - Made Trigger by mouse reliably trigger secondary role immediately.`SMARTMACROS:PATCH`
+  - Fixed a number of edge cases related to safety margin where secondary role keys would not trigger in a timely manner.`SMARTMACROS:PATCH`
 
 Minor changes and refactors:
 - Improve macro performance - use GNU perfect hashing for main macro switch.
