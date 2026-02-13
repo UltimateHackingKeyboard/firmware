@@ -3,10 +3,6 @@
 #include <zephyr/logging/log.h>
 #include <string.h>
 
-#ifdef CONFIG_SHELL_BACKEND_SERIAL
-#include <zephyr/shell/shell_uart.h>
-#endif
-
 static const struct shell *get_shell_backend_by_name(const char *name)
 {
     size_t backend_count = shell_backend_count_get();
@@ -21,7 +17,7 @@ static const struct shell *get_shell_backend_by_name(const char *name)
 
 void ShellBackend_Exec(const char *cmd, const char* source)
 {
-    const struct shell *sh = get_shell_backend_by_name("shell_uart");
+    const struct shell *sh = get_shell_backend_by_name("UhkShell");
 
     if (sh == NULL) {
         printk("Shell backend not available, cannot execute command: '%s'\n", cmd);

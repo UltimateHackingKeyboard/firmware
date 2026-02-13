@@ -3,7 +3,7 @@
 
 #define USB_SHELL_COMMAND_MAX_LEN (USB_GENERIC_HID_OUT_BUFFER_LENGTH - 1)
 
-#include "shell.h"
+#include "shell/shell_uhk.h"
 
 void UsbCommand_ExecShellCommand(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
