@@ -54,7 +54,6 @@
 #include "test_suite/test_suite.h"
 #include "wormhole.h"
 #include "power_mode.h"
-#include "proxy_log_backend.h"
 #include "logger_priority.h"
 #include "keyboard/uart_modules.h"
 
@@ -215,8 +214,6 @@ void mainRuntime(void) {
 
     // Needs to be after ShellUartTransport_Reinit, probably
     InitShellCommands();
-    InitProxyLogBackend();
-
     Shell_WaitUntilInitialized();
     Logger_SetPriority(true);
 

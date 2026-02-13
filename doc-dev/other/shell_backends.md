@@ -587,7 +587,6 @@ CONFIG_SHELL_BACKEND_RTT=y          # RTT shell
 device/src/
 ├── shell.h                      # shell_t struct (keyLog, statLog, etc.)
 ├── proxy_log_backend.c          # UhkLog log backend — routes to sinks
-├── proxy_log_backend.h
 └── shell/
     ├── shell_uhk.c              # UhkShell instance, Shell_WaitUntilInitialized, Shell_Execute
     ├── shell_uhk.h
