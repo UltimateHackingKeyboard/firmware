@@ -1154,3 +1154,5 @@ macro_argument_t *Macros_FindMacroArgumentByName(macro_state_t *owner, const cha
     }
     return NULL;
 }
+
+// add: Macros_FindMacroArgumentsByIndex() to find the nth argument for this owner in the pool

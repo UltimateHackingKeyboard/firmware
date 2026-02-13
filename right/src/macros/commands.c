@@ -965,7 +965,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
     // parse the argument name (identifier)
     const char *idStart = ctx->at;
-    const char *idEnd = IdentifierEnd(ctx);
+    const char *idEnd = IdentifierEnd(ctx); // possibly use ConslmeIdentifier here
 
     if (idEnd == idStart) {
         Macros_ReportErrorPos(ctx, "Expected identifier");

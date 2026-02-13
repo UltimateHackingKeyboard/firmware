@@ -170,7 +170,7 @@
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
             // ---- 4-aligned ----
-            macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];
+            macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];   // remove these since owner is indicated in the pool
 
             macro_usb_keyboard_reports_t reports;
 
