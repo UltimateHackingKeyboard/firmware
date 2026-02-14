@@ -217,12 +217,10 @@ On a first try, this error might manifest:
 > Could not start GDB. Check that the file exists, and it can be manually started.
 Error: Error: spawn $env{ARM_GCC_DIR}/bin/arm-none-eabi-gdb ENOENT
 
-There are two problems to solve:
-1. The arm-none-eabi package doesn't ship with gdb by default.
+This is due to the arm-none-eabi apt package not shipping with gdb by default.
 You can follow [this guide](https://interrupt.memfault.com/blog/installing-gdb#binaries-from-arm)
 to get a full toolchain installed.
-2. The extension doesn't expand the environment variable, so you'll need to modify the `.vscode/mcuxpresso-tools.json` file,
-to have a hardcoded `toolchainPath` variable. (Don't push this change into the repository, obviously.)
+
 
 ### Releasing
 
