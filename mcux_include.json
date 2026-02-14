@@ -8,6 +8,7 @@
       "name": "debug-env",
       "displayName": "debug-env",
       "hidden": true,
+      "binaryDir": "${fileDir}/build/${presetName}",
       "environment": {
         "ARMGCC_DIR": "$env{ARM_GCC_DIR}",
         "SdkRootDirPath": "${sourceDir}/../..",
@@ -17,6 +18,7 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
         "CPM_SOURCE_CACHE": "${fileDir}/../../cpm"
       }
     },
@@ -24,6 +26,7 @@
       "name": "release-env",
       "displayName": "release-env",
       "hidden": true,
+      "binaryDir": "${fileDir}/build/${presetName}",
       "environment": {
         "ARMGCC_DIR": "$env{ARM_GCC_DIR}",
         "SdkRootDirPath": "${sourceDir}/../..",
@@ -33,6 +36,7 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       },
       "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
         "CPM_SOURCE_CACHE": "${fileDir}/../../cpm"
       }
     }
