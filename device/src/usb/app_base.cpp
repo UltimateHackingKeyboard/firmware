@@ -17,6 +17,19 @@ void app_base::send(const std::span<const uint8_t> &buffer)
     auto result = send_report(in_buffer_);
     if (result != hid::result::ok) {
         sending_sem_.release();
+        const char* err = "unknown";
+        if (result == hid::result::INVALID) {
+            err = "invalid";
+        } else if (result == hid::result::NO_TRANSPORT) {
+            err = "no transport";
+        } else if (result == hid::result::BUSY) {
+            err = "busy";
+        } else if (result == hid::result::NO_CONNECTION) {
+            err = "no connection";
+        } else if (result == hid::result::NO_MEMORY) {
+            err = "no memory";
+        }
+        printk("Failed to send report (app_base.cpp): %s\n", err);
     }
 }
 
