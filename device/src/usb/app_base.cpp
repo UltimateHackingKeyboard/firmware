@@ -29,7 +29,7 @@ void app_base::send(const std::span<const uint8_t> &buffer)
         } else if (result == hid::result::NO_MEMORY) {
             err = "no memory";
         }
-        printk("Failed to send report (app_base.cpp): %s\n", err);
+        printk("Send fail: %s\n", err);
     }
 }
 
