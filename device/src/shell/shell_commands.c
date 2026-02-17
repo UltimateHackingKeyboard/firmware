@@ -375,7 +375,7 @@ void InitShellCommands(void)
 {
 
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_log_cmds,
-        SHELL_CMD_ARG(current, NULL, "Set/get proxy log enabled", cmd_uhk_logs, 1, 1),
+        SHELL_CMD_ARG(usbLog, NULL, "Set/get USB log enabled", cmd_uhk_logs, 1, 1),
         SHELL_CMD_ARG(priority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
         SHELL_CMD_ARG(useShellSinks, NULL, "get/set shell sinks mode", cmd_uhk_useShellSinks, 1, 1),
         SHELL_SUBCMD_SET_END);
