@@ -6,7 +6,7 @@
 
 bool ShellConfig_IsInPanicMode = false;
 
-const bool useShellSinks = false;
+bool ShellConfig_UseShellSinks = false;
 
 static shell_sinks_t emptyConfig() {
     return (shell_sinks_t){
@@ -42,10 +42,10 @@ void ShellConfig_ActivatePanicMode(void)
 
 shell_sinks_t ShellConfig_GetShellSinks(void)
 {
-    return useShellSinks ? activeConfig() : emptyConfig();
+    return ShellConfig_UseShellSinks ? activeConfig() : emptyConfig();
 }
 
 shell_sinks_t ShellConfig_GetLogSinks(void)
 {
-    return useShellSinks ? emptyConfig() : activeConfig();
+    return ShellConfig_UseShellSinks ? emptyConfig() : activeConfig();
 }

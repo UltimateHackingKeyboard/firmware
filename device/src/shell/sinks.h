@@ -16,6 +16,7 @@
 // Variables:
 
     extern bool ShellConfig_IsInPanicMode;
+    extern bool ShellConfig_UseShellSinks;
 
 // Functions:
 
