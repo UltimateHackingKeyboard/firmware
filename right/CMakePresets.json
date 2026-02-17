@@ -56,6 +56,7 @@
         },
         "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CMAKE_BUILD_TYPE": "release",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG -g",
         "CONFIG_TOOLCHAIN": "armgcc",
         "board": "$env{BOARD}",
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",

@@ -6,9 +6,8 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "svdPath": "${workspaceFolder}/../svd/MK22F51212.xml",
-    
       "executable": {
-        "elf": "${workspaceFolder}/build/v2-debug/uhk-60-right.elf"
+        "elf": "${workspaceFolder}/build/${input:buildVariant}/uhk-60-right.elf"
       },
       "stopAtSymbol": "main",
       "probeSerialNumber": "",
@@ -29,6 +28,20 @@
         "pemicro": {}
       },
       "showDevDebugOutput": "none"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "buildVariant",
+      "type": "pickString",
+      "description": "Select build variant",
+      "options": [
+        "v2-debug",
+        "v2-release",
+        "v1-release",
+        "v1-debug"
+      ],
+      "default": "v2-release"
     }
   ]
 }
