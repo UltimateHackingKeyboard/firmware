@@ -870,6 +870,15 @@ static bool shouldResendReport(bool statusOk, uint8_t* counter) {
     }
 }
 
+static void handleFail(int errorCode) {
+    if (ActiveHostConnectionId == ConnectionId_Invalid) {
+        LogUO("Send failed: no connection\n", errorCode);
+    } else {
+        LogUO("Send failed: %d\n", errorCode);
+        HostConnections_Reconnect();
+    }
+}
+
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
@@ -908,6 +917,9 @@ static void sendActiveReports(bool resending) {
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
                     EventVector_Set(EventVector_ResendUsbReports);
                 } else {
+                    if (ret != 0) {
+                        handleFail(ret);
+                    }
                     keyboardNeedsResending = false;
                     switchActiveKeyboardReport();
                 }
@@ -927,6 +939,9 @@ static void sendActiveReports(bool resending) {
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
+            if (ret != 0) {
+                handleFail(ret);
+            }
             controlsNeedsResending = false;
             switchActiveControlsReport();
         }
@@ -947,6 +962,9 @@ static void sendActiveReports(bool resending) {
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
+            if (ret != 0) {
+                handleFail(ret);
+            }
             mouseNeedsResending = false;
             switchActiveMouseReport();
         }
