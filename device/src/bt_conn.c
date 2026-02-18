@@ -947,12 +947,15 @@ void BtConn_DisconnectOne(connection_id_t connectionId) {
 }
 
 void BtConn_KickHid(void) {
+#if DEVICE_IS_UHK80_RIGHT
+     LOG_INF("Kicking HID connections to check if HOGP is healthy.");
     if (HOGP_HealthCheck()) {
         LOG_ERR("BtConn_KickHid: HOGP health check failed, disconnecting hids.\n");
         disconnectAllHids();
     } else {
         LOG_INF("BtConn_KickHid: the connection looks fine.\n");
     }
+#endif
 }
 
 static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
