@@ -39,7 +39,7 @@
         const char* at;
         const char* end;
         uint8_t nestingLevel;
-        uint8_t nestingBound; // This context can't be popped bellow this bound, because it is a copy.
+        uint8_t nestingBound; // This context can't be popped below this bound, because it is a copy.
     } parser_context_t;
 
     typedef struct {
@@ -57,6 +57,7 @@
 
     uint8_t SegmentLen(string_segment_t str);
     bool IsEnd(parser_context_t* ctx);
+    bool IsWhite(parser_context_t* ctx);
     bool SegmentEqual(string_segment_t str1, string_segment_t str2);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
