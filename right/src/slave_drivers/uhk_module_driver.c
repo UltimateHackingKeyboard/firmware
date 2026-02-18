@@ -32,6 +32,7 @@
 #include "layouts/key_layout_60_to_universal.h"
 #include "test_switches.h"
 #include "mouse_controller.h"
+#include "logger.h"
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -246,6 +247,7 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
         case UhkModulePhase_JumpToBootloader:
             txMessage.data[0] = SlaveCommand_JumpToBootloader;
             txMessage.length = 1;
+            LogU("Requesting module (0x%02x) to jump to bootloader\n", i2cAddress);
             res.status = tx(i2cAddress);
             break;
 

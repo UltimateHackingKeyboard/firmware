@@ -143,6 +143,14 @@ static int cmd_uhk_kboot_reset(const struct shell *shell, size_t argc, char *arg
                   I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER);
     return 0;
 }
+
+static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *argv[])
+{
+    KbootDriverState.phase = 0;
+    KbootDriverState.command = KbootCommand_Flash;
+    shell_fprintf(shell, SHELL_NORMAL, "Kboot flash sequence started for right module\n");
+    return 0;
+}
 #endif
 
 #if DEVICE_HAS_OLED
@@ -485,6 +493,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(charger, NULL, "get/set CHARGER_EN pin", cmd_uhk_charger, 1, 1),
 #endif // !DEVICE_IS_UHK_DONGLE
 #if DEVICE_IS_UHK80_RIGHT
+        SHELL_CMD_ARG(kboot_flash, NULL, "jump to bootloader, ping, reset back", cmd_uhk_kboot_flash, 1, 0),
         SHELL_CMD_ARG(kboot_reset, NULL, "send kboot reset to right module", cmd_uhk_kboot_reset, 1, 0),
         SHELL_CMD_ARG(testled, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
         SHELL_CMD_ARG(ledtest, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
