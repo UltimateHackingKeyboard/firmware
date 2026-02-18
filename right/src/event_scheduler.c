@@ -242,7 +242,9 @@ static void processEvt(event_scheduler_event_t evt)
             OneShot_OnTimeout();
             break;
         case EventSchedulerEvent_KickHid:
+#if DEVICE_IS_UHK80_RIGHT
             BtConn_KickHid();
+#endif
             break;
         default:
             return;

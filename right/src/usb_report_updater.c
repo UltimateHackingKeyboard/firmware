@@ -871,12 +871,14 @@ static bool shouldResendReport(bool statusOk, uint8_t* counter) {
 }
 
 static void handleFail(int errorCode) {
+#ifdef __ZEPHYR__
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
         LogUO("Send failed: no connection\n", errorCode);
     } else {
         LogUO("Send failed: %d\n", errorCode);
         HostConnections_Reconnect();
     }
+#endif
 }
 
 static void sendActiveReports(bool resending) {
