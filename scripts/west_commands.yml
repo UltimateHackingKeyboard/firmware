@@ -9,3 +9,8 @@ west-commands:
       - name: agent
         class: WestAgent
         help: Update UHK device through Agent's USB toolkit
+  - file: scripts/west_vscode.py
+    commands:
+      - name: vscode
+        class: WestVsCode
+        help: Generate VS Code configuration files for Zephyr projects
