@@ -303,18 +303,19 @@ void StateSync_CheckFirmwareVersions() {
         return;
     }
 
-    const char* universal = "Please flash both halves to the same version!";
+    const char* universal = "This may happen during firmware upgrade. Please make sure that both halves are flashed to the same version!";
 
     if (!versionsMatch) {
-        LogUOS("Error: Left and right keyboard halves have different firmware versions (Left: %d.%d.%d, Right: %d.%d.%d)!\n",
+        LogUOS("Warning: Left and right keyboard halves have different firmware versions (Left: %d.%d.%d, Right: %d.%d.%d)!\n",
             moduleState->firmwareVersion.major, moduleState->firmwareVersion.minor, moduleState->firmwareVersion.patch, firmwareVersion.major, firmwareVersion.minor, firmwareVersion.patch
         );
     }
     if (!gitTagsMatch) {
-        LogUOS("Error: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
+        LogUOS("Warning: Left and right keyboard halves have different git tags (Left: %s, Right: %s)!\n", moduleState->gitTag, gitTag);
     }
     if (!leftChecksumMatches) {
-        LogUOS("Error: Left checksum differs from the expected! Expected '%s', got '%s'!\n", DeviceMD5Checksums[DeviceId_Uhk80_Left], moduleState->firmwareChecksum);
+        LogUOS("Warning: Left checksum differs from the expected! Expected '%s', got '%s'!\n", DeviceMD5Checksums[DeviceId_Uhk80_Left], moduleState->firmwareChecksum);
+        LogUOS("Warning: Left checksum differs from the expected! Expected '%s', got '%s'!\n", DeviceMD5Checksums[DeviceId_Uhk80_Left], moduleState->firmwareChecksum);
     }
     if (!versionsMatch || !gitTagsMatch || !leftChecksumMatches) {
         LogUOS("    %s", universal);
