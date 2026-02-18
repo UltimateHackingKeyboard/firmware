@@ -364,6 +364,18 @@ static int cmd_uhk_useShellSinks(const struct shell *shell, size_t argc, char *a
     return 0;
 }
 
+static int cmd_uhk_logStatus(const struct shell *shell, size_t argc, char *argv[])
+{
+    uint16_t usbBufferFill, usbBufferSize;
+    UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
+
+    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
+    printk("Has log: %d\n", UsbLogBuffer_HasLog);
+    printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
+    printk("UseShellSinks: %d\n", ShellConfig_UseShellSinks ? 1 : 0);
+    return 0;
+}
+
 static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
 {
     UsbLogBuffer_SnapToStatusBuffer();
@@ -377,6 +389,7 @@ void InitShellCommands(void)
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_log_cmds,
         SHELL_CMD_ARG(usbLog, NULL, "Set/get USB log enabled", cmd_uhk_logs, 1, 1),
         SHELL_CMD_ARG(priority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
+        SHELL_CMD_ARG(status, NULL, "print log status overview", cmd_uhk_logStatus, 1, 0),
         SHELL_CMD_ARG(useShellSinks, NULL, "get/set shell sinks mode", cmd_uhk_useShellSinks, 1, 1),
         SHELL_SUBCMD_SET_END);
 
