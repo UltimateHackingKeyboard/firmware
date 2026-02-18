@@ -42,8 +42,11 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         resend.c
         round_trip_test.c
         settings.c
-        shell.c
-        shell_backend_usb.c
+        shell/shell_backend_usb.c
+        shell/shell_transport_uhk.c
+        shell/shell_uhk.c
+        shell/shell_commands.c
+        shell/sinks.c
         state_sync.c
         thread_stats.c
     )

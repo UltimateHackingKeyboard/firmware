@@ -21,6 +21,8 @@
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
 #include "shell.h"
+#include "shell/shell_transport_uhk.h"
+#include "shell/shell_uhk.h"
 #include "device.h"
 #include "usb/usb.h"
 #include "bt_conn.h"
@@ -52,7 +54,6 @@
 #include "test_suite/test_suite.h"
 #include "wormhole.h"
 #include "power_mode.h"
-#include "proxy_log_backend.h"
 #include "logger_priority.h"
 #include "keyboard/uart_modules.h"
 
@@ -208,13 +209,11 @@ void mainRuntime(void) {
 
         PinWiring_Resume();
 
-        ReinitShell();
+        ShellUartTransport_Reinit();
     }
 
-    // Needs to be after ReinitShell, probably
+    // Needs to be after ShellUartTransport_Reinit, probably
     InitShellCommands();
-    InitProxyLogBackend();
-
     Shell_WaitUntilInitialized();
     InitLogLevels();
     Logger_SetPriority(true);

@@ -24,12 +24,12 @@ You can see the logs in real time:
 Create this macro and bind it somewhere convenient:
 
 ```
-zephyr uhk snaplog
+zephyr uhk log snapshot
 ```
 
-Reproduce the issue. 
+Reproduce the issue.
 
-Run the `snaplog` macro. This will export the usb log buffer into the persistent status buffer.
+Run the `log snapshot` macro. This will export the usb log buffer into the persistent status buffer.
 
 Bring usb back to life. If need be, restart uhk using its reset button, but do not powercycle it.
 

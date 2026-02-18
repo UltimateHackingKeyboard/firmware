@@ -45,7 +45,7 @@
 #ifdef __ZEPHYR__
 #include "connections.h"
 #include "bt_pair.h"
-#include "shell.h"
+#include "shell/shell_uhk.h"
 #include "host_connection.h"
 #else
 #include "segment_display.h"
