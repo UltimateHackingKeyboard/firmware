@@ -389,6 +389,7 @@ void InitShellCommands(void)
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_log_cmds,
         SHELL_CMD_ARG(usbLog, NULL, "Set/get USB log enabled", cmd_uhk_logs, 1, 1),
         SHELL_CMD_ARG(priority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
+        SHELL_CMD_ARG(snapshot, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(status, NULL, "print log status overview", cmd_uhk_logStatus, 1, 0),
         SHELL_CMD_ARG(useShellSinks, NULL, "get/set shell sinks mode", cmd_uhk_useShellSinks, 1, 1),
         SHELL_SUBCMD_SET_END);
@@ -421,7 +422,6 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 0),
         SHELL_CMD(log, &uhk_log_cmds, "Log management", NULL),
-        SHELL_CMD_ARG(snaplog, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_SUBCMD_SET_END);
