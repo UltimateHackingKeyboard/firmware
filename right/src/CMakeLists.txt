@@ -51,6 +51,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     macro_recorder.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/main.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/module.c>
+    module_flash.c
     mouse_controller.c
     mouse_keys.c
     module.c

@@ -3,7 +3,9 @@
 
 // Includes:
 
+#ifndef __ZEPHYR__
     #include "fsl_common.h"
+#endif
 #include "slave_scheduler.h"
 
 // Macros:
@@ -23,6 +25,7 @@
         KbootCommand_Idle,
         KbootCommand_Ping,
         KbootCommand_Reset,
+        KbootCommand_Flash,
     } kboot_command_t;
 
     typedef enum {
@@ -39,11 +42,25 @@
         KbootPhase_CheckResetSendAck,
     } kboot_reset_phase_t;
 
+    typedef enum {
+        KbootFlashPhase_JumpToBootloader,
+        KbootFlashPhase_WaitForBootloader,
+        KbootFlashPhase_SendPing,
+        KbootFlashPhase_CheckPingStatus,
+        KbootFlashPhase_ReceivePingResponse,
+        KbootFlashPhase_CheckPingResponseStatus,
+        KbootFlashPhase_SendReset,
+        KbootFlashPhase_ReceiveResetAck,
+        KbootFlashPhase_ReceiveResetGenericResponse,
+        KbootFlashPhase_SendResetAck,
+    } kboot_flash_phase_t;
+
     typedef struct {
         kboot_command_t command;
         uint8_t i2cAddress;
         uint8_t phase;
         uint32_t status;
+        uint32_t startTime;
     } kboot_driver_state_t;
 
 // Variables:

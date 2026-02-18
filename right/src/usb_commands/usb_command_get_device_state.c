@@ -21,6 +21,7 @@
 #include "config_manager.h"
 
 #include "usb_log_buffer.h"
+#include "module_flash.h"
 
 #ifdef __ZEPHYR__
     #include "flash.h"
@@ -70,11 +71,14 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
 {
     detectFreezes();
 
+    uint8_t byte1 = 0;
 #ifdef __ZEPHYR__
-    SetUsbTxBufferUint8(1, Flash_IsBusy());
+    byte1 |= (Flash_IsBusy() ? GetDeviceStateByte1_EepromBusy : 0);
 #else
-    SetUsbTxBufferUint8(1, IsStorageBusy);
+    byte1 |= (IsStorageBusy ? GetDeviceStateByte1_EepromBusy : 0);
 #endif
+    byte1 |= (ModuleFlashBusy ? GetDeviceStateByte1_ModuleFlashBusy : 0);
+    SetUsbTxBufferUint8(1, byte1);
 
     uint8_t byte2 = 0
         | (MergeSensor_IsMerged() == MergeSensorState_Joined ? GetDeviceStateByte2_HalvesMerged : 0)
