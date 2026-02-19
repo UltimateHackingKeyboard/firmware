@@ -108,6 +108,27 @@ static void postponeCurrentCycle()
 }
 
 /**
+ * Check if any local scope in the current macro's scope chain has modifierPostpone set.
+ */
+static bool isCurrentMacroPostponing()
+{
+    if (S->ms.postponeNextNCommands > 0) {
+        return true;
+    }
+    macro_scope_state_t *ls = S->ls;
+    while (true) {
+        if (ls->as.modifierPostpone) {
+            return true;
+        }
+        if (ls->parentScopeIndex == 255) {
+            break;
+        }
+        ls = &MacroScopeState[ls->parentScopeIndex];
+    }
+    return false;
+}
+
+/**
  * Both key press and release are subject to postponing, therefore we need to ensure
  * that macros which actively initiate postponing and wait until release ignore
  * postponed key releases. The s->postponeNext indicates that the running macro
@@ -118,7 +139,7 @@ bool Macros_CurrentMacroKeyIsActive()
     if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShot == 1;
     }
-    if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
+    if (isCurrentMacroPostponing()) {
         bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
@@ -1698,36 +1719,27 @@ static macro_result_t processTestLeakageCommand(parser_context_t* ctx)
 
 static macro_result_t processTestSuiteCommand(parser_context_t* ctx)
 {
-    // Check for optional parameters
+    string_segment_t module = { .start = NULL, .end = NULL };
+    string_segment_t test = { .start = NULL, .end = NULL };
+
     if (!IsEnd(ctx)) {
-        // Check for "all" keyword
         if (ConsumeToken(ctx, "all")) {
-            if (!Macros_DryRun) {
-                TestSuite_RunAll();
-            }
+            // leave both NULL → run all
         } else {
-            // Parse module name
-            const char* moduleStart = ctx->at;
-            const char* moduleEnd = TokEnd(ctx->at, ctx->end);
+            module.start = ctx->at;
+            module.end = TokEnd(ctx->at, ctx->end);
             ConsumeAnyToken(ctx);
 
-            // Parse test name
             if (!IsEnd(ctx)) {
-                const char* testStart = ctx->at;
-                const char* testEnd = TokEnd(ctx->at, ctx->end);
+                test.start = ctx->at;
+                test.end = TokEnd(ctx->at, ctx->end);
                 ConsumeAnyToken(ctx);
-
-                if (!Macros_DryRun) {
-                    TestSuite_RunSingle(moduleStart, moduleEnd, testStart, testEnd);
-                }
-            } else {
-                Macros_ReportError("testSuite requires both module and test name", NULL, NULL);
             }
         }
-    } else {
-        if (!Macros_DryRun) {
-            TestSuite_RunAll();
-        }
+    }
+
+    if (!Macros_DryRun) {
+        TestSuite_Run(module, test);
     }
 
     return MacroResult_Finished;

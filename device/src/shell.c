@@ -31,8 +31,10 @@
 #include "logger.h"
 #include "shell_backend_usb.h"
 #include "stubs.h"
+#include "test_suite/test_suite.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
+#include <string.h>
 
 shell_t Shell = {
     .keyLog = 0,
@@ -472,6 +474,24 @@ void ReinitShell(void) {
     }
 }
 
+static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[])
+{
+    string_segment_t module = { .start = NULL, .end = NULL };
+    string_segment_t test = { .start = NULL, .end = NULL };
+
+    if (argc >= 2) {
+        module.start = argv[1];
+        module.end = argv[1] + strlen(argv[1]);
+    }
+    if (argc >= 3) {
+        test.start = argv[2];
+        test.end = argv[2] + strlen(argv[2]);
+    }
+
+    TestSuite_Run(module, test);
+    return 0;
+}
+
 void InitShellCommands(void)
 {
 
@@ -507,6 +527,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(snaplog, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
+        SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
