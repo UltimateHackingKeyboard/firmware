@@ -14,4 +14,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_autoshift.c
     tests/test_ifshortcut_gesture.c
     tests/test_doubletap.c
+    tests/test_current_macro_key_is_active.c
 )
