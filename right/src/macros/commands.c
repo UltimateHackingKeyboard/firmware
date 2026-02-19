@@ -108,6 +108,27 @@ static void postponeCurrentCycle()
 }
 
 /**
+ * Check if any local scope in the current macro's scope chain has modifierPostpone set.
+ */
+static bool isCurrentMacroPostponing()
+{
+    if (S->ms.postponeNextNCommands > 0) {
+        return true;
+    }
+    macro_scope_state_t *ls = S->ls;
+    while (true) {
+        if (ls->as.modifierPostpone) {
+            return true;
+        }
+        if (ls->parentScopeIndex == 255) {
+            break;
+        }
+        ls = &MacroScopeState[ls->parentScopeIndex];
+    }
+    return false;
+}
+
+/**
  * Both key press and release are subject to postponing, therefore we need to ensure
  * that macros which actively initiate postponing and wait until release ignore
  * postponed key releases. The s->postponeNext indicates that the running macro
@@ -118,7 +139,7 @@ bool Macros_CurrentMacroKeyIsActive()
     if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShot == 1;
     }
-    if (S->ms.postponeNextNCommands > 0 || S->ls->as.modifierPostpone) {
+    if (isCurrentMacroPostponing()) {
         bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
         return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
