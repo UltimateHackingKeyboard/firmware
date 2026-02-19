@@ -1698,36 +1698,27 @@ static macro_result_t processTestLeakageCommand(parser_context_t* ctx)
 
 static macro_result_t processTestSuiteCommand(parser_context_t* ctx)
 {
-    // Check for optional parameters
+    string_segment_t module = { .start = NULL, .end = NULL };
+    string_segment_t test = { .start = NULL, .end = NULL };
+
     if (!IsEnd(ctx)) {
-        // Check for "all" keyword
         if (ConsumeToken(ctx, "all")) {
-            if (!Macros_DryRun) {
-                TestSuite_RunAll();
-            }
+            // leave both NULL → run all
         } else {
-            // Parse module name
-            const char* moduleStart = ctx->at;
-            const char* moduleEnd = TokEnd(ctx->at, ctx->end);
+            module.start = ctx->at;
+            module.end = TokEnd(ctx->at, ctx->end);
             ConsumeAnyToken(ctx);
 
-            // Parse test name
             if (!IsEnd(ctx)) {
-                const char* testStart = ctx->at;
-                const char* testEnd = TokEnd(ctx->at, ctx->end);
+                test.start = ctx->at;
+                test.end = TokEnd(ctx->at, ctx->end);
                 ConsumeAnyToken(ctx);
-
-                if (!Macros_DryRun) {
-                    TestSuite_RunSingle(moduleStart, moduleEnd, testStart, testEnd);
-                }
-            } else {
-                Macros_ReportError("testSuite requires both module and test name", NULL, NULL);
             }
         }
-    } else {
-        if (!Macros_DryRun) {
-            TestSuite_RunAll();
-        }
+    }
+
+    if (!Macros_DryRun) {
+        TestSuite_Run(module, test);
     }
 
     return MacroResult_Finished;
