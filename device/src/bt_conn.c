@@ -622,8 +622,8 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     requestMtuExchange(conn);
 
     if (err) {
-        LOG_WRN("Failed to connect to %s, err %u", GetPeerStringByConn(conn), err);
-        BtManager_StartScanningAndAdvertising();
+        LOG_WRN("Failed to connect (in connected cb) to %s, err %u", GetPeerStringByConn(conn), err);
+        BtManager_StartScanningAndAdvertisingAsync(true, "connected with error");
         return;
     }
 
