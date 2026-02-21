@@ -14,8 +14,8 @@ enum report_ids {
 
     IN_CONTROLS = 0,
 
-    IN_COMMAND = 4, // shared with UHK80
-    OUT_COMMAND = 4,
+    IN_COMMAND = 0,
+    OUT_COMMAND = 0,
 
     IN_GAMEPAD = 0,
 #else
