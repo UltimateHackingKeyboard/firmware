@@ -5,8 +5,6 @@
     #include <zephyr/sys/printk.h>
 #endif
 
-extern "C" void UsbProtocolHandler(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
-
 command_app &command_app::usb_handle()
 {
     static command_app app{};
@@ -29,7 +27,10 @@ void command_app::start(hid::protocol prot)
 
 void command_app::set_report(hid::report::type type, const std::span<const uint8_t> &data)
 {
-    if (((type != hid::report::type::OUTPUT) || (data.front() != report_ids::OUT_COMMAND))) {
+    if (type != hid::report::type::OUTPUT) {
+        return;
+    }
+    if ((report_ids::OUT_COMMAND != 0) and (data.front() != report_ids::OUT_COMMAND)) {
         return;
     }
     // always keep receiving new reports
@@ -39,7 +40,7 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
     auto &out = *reinterpret_cast<const report_out *>(data.data());
     auto buf_idx = in_buffer_.active_side();
     auto &in = in_buffer_[buf_idx];
-    UsbProtocolHandler(out.payload.data(), in.payload.data());
+    UsbProtocolHandler(const_cast<uint8_t *>(out.payload.data()), in.payload.data());
     auto err = send_report(&in);
     if (err == hid::result::ok) {
         in_buffer_.swap_sides();
