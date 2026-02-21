@@ -1,60 +1,12 @@
 # custom Kconfig defaults are set per board here,
 # as the board-specific Kconfig files are used for mcuboot build as well
-config DEVICE_ID
-    int "UHK device id"
-    default 5 if BOARD_UHK_DONGLE
-    default 3 if BOARD_UHK_80_LEFT
-    default 4 if BOARD_UHK_80_RIGHT
-    help
-        The device id that identifies the specific UHK half or dongle.
+rsource "../right/Kconfig.device"
 
 config UHK_BATTERY_DEVICE
     bool
     default y if BOARD_UHK_80_LEFT || BOARD_UHK_80_RIGHT
     default n
     imply ADC
-
-config KEYBOARD_MAX_SCANCODE
-    hex "highest keyboard scancode"
-    default 0xDD
-    range 0x66 0xDD
-    help
-        The highest keyboard scancode value influences the overall length of the HID record sent to the host.
-        The value 0x86 is the maximum for Android devices (which don't exchange the MTU from the default 23)
-        to still receive the "NKRO" report layout. If a higher scancode is used, the report size will exceed this size,
-        causing a fallback to 6KRO report layout on Android.
-
-# by using the same Kconfig symbol names as mcuboot, the board Kconfig files can contain the values
-config USB_DEVICE_VID
-    hex "USB vendor ID"
-    range 0x0000 0xFFFF
-    default 0x37A8
-    help
-        The USB vendor ID is used to identify the specific UHK device.
-
-config USB_DEVICE_MANUFACTURER
-    string "USB vendor name"
-    default "Ultimate Gadget Laboratories"
-    help
-        The USB vendor name is used to describe the specific UHK device to the host OS user.
-
-config USB_DEVICE_PID
-    hex "USB product ID"
-    range 0x0000 0xFFFF
-    help
-        The USB product ID is used to identify the specific UHK device.
-
-config USB_DEVICE_PRODUCT
-    string "USB product name"
-    help
-        The USB product name is used to describe the specific UHK device to the host OS user.
-
-config USB_DEVICE_PRODUCT_VERSION
-    hex "USB product version"
-    range 0x0000 0xFFFF
-    default 0x0001
-    help
-        The USB product version is used to identify the UHK device operating mode.
 
 # copy over the USB properties to BT
 configdefault BT_DIS_MANUF

@@ -3,9 +3,18 @@
 
 #include "bootloader_common.h"
 #include "usb_device_config.h"
-#include "usb_api.h"
+#include "usb.h"
 #include "usb_device.h"
 #include "usb_device_class.h"
+#include "usb_device_config.h"
+
+#define USB_DEVICE_CLASS 0x00
+#define USB_DEVICE_SUBCLASS 0x00
+#define USB_DEVICE_PROTOCOL 0x00
+
+#ifndef USB_DEVICE_CONFIG_SELF_POWER
+    #define USB_DEVICE_CONFIG_SELF_POWER 0
+#endif
 
 #define USB_BCD_VERSION (0x0200)
 

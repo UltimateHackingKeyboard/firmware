@@ -3,10 +3,9 @@
 
 // Includes:
 
-    #include "usb_interfaces/usb_interface_basic_keyboard.h"
-    #include "usb_interfaces/usb_interface_media_keyboard.h"
-    #include "usb_interfaces/usb_interface_system_keyboard.h"
-    #include "usb_interfaces/usb_interface_mouse.h"
+    #include "hid/keyboard_report.h"
+    #include "hid/controls_report.h"
+    #include "hid/mouse_report.h"
     #include "layer.h"
     #include "config_parser/parse_keymap.h"
     #include "secondary_role_driver.h"
@@ -20,20 +19,22 @@
 // Typedefs:
 
     typedef struct {
-    } ATTR_PACKED usb_keyboard_reports_nullable_t;
-
-    typedef struct {
         // these are metadata that should never be zeroed!
         uint32_t recomputeStateVectorMask; // mask that should be set in order to recompute them in the next update
         uint32_t reportsUsedVectorMask; // mask that indicates that these reports were used and should be merged
         uint32_t postponeMask; // mask that indicates that these reports are initiating postponing
         // these are the working data
-        usb_basic_keyboard_report_t basic;
-        usb_media_keyboard_report_t media;
-        usb_system_keyboard_report_t system;
+        hid_keyboard_report_t basic;
+        hid_controls_report_t controls;
         uint8_t inputModifiers;
     } ATTR_PACKED usb_keyboard_reports_t;
 
+    typedef enum {
+        UsbReportUpdate_None = 0,
+        UsbReportUpdate_Keyboard = 1,
+        UsbReportUpdate_Controls = 2,
+        UsbReportUpdate_Mouse = 4,
+    } UsbReportUpdateFlags_t;
 // Variables:
 
     extern uint32_t UsbReportUpdateCounter;

@@ -6,28 +6,42 @@
       "request": "launch",
       "cwd": "${workspaceFolder}",
       "svdPath": "${workspaceFolder}/../svd/MK22F51212.xml",
-    
-      "executable": "",
+      "executable": {
+        "elf": "${workspaceFolder}/build/${input:buildVariant}/uhk-60-right.elf"
+      },
       "stopAtSymbol": "main",
       "probeSerialNumber": "",
       "isAttach": false,
-      "probeType": "",
       "skipBuildBeforeDebug": false,
-      "skipPreFlashActions": true,
-    
       "gdbInitCommands": [
         "set remotetimeout 600",
         "set debug-file-directory",
         "set non-stop off"
       ],
-    
+      "gdbClientPath": "${env:ARM_GCC_DIR}/bin/arm-none-eabi-gdb",
       "gdbServerConfigs": {
         "linkserver": {},
-    		"segger": {},
-    		"pemicro": {}
+        "segger": {
+          "interface": "SWD",
+          "device": "MK22FN512xxx12",
+        },
+        "pemicro": {}
       },
-    
       "showDevDebugOutput": "none"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "buildVariant",
+      "type": "pickString",
+      "description": "Select build variant",
+      "options": [
+        "v2-debug",
+        "v2-release",
+        "v1-release",
+        "v1-debug"
+      ],
+      "default": "v2-release"
     }
   ]
 }

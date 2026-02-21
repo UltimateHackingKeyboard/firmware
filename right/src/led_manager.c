@@ -1,7 +1,6 @@
 #include "led_manager.h"
 #include "event_scheduler.h"
 #include "ledmap.h"
-#include "usb_composite_device.h"
 #include "config_manager.h"
 #include "stubs.h"
 #include "led_display.h"

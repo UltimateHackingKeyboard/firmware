@@ -5,14 +5,17 @@
   },
   "configurePresets": [
     {
-      "name": "v1-debug",
-      "displayName": "v1-debug",
+      "name": "debug",
+      "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${fileDir}/build/${presetName}",
       "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
       "inherits": "debug-env",
       "cacheVariables": {
-        "APP_DIR": "${fileDir}",
+        "APP_DIR": {
+          "value": "${fileDir}",
+          "type": "PATH"
+        },
         "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CMAKE_BUILD_TYPE": "debug",
         "CONFIG_TOOLCHAIN": "armgcc",
@@ -20,76 +23,62 @@
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
         "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
         "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "PrjRootDirPath": "${fileDir}/",
-        "DEVICE_PROJECT_NAME": "uhk60v1",
-        "DEVICE_ID": "DEVICE_ID_UHK60V1",
-        "DEVICE_PID": "1"
+        "PrjRootDirPath": "${fileDir}/"
       }
     },
     {
-      "name": "v1-release",
-      "displayName": "v1-release",
-      "generator": "Ninja",
-      "binaryDir": "${fileDir}/build/${presetName}",
-      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
-      "inherits": "release-env",
+      "name": "v1-debug",
+      "displayName": "v1-debug",
+      "inherits": "debug",
       "cacheVariables": {
-        "APP_DIR": "${fileDir}",
-        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
-        "CMAKE_BUILD_TYPE": "release",
-        "CONFIG_TOOLCHAIN": "armgcc",
-        "board": "$env{BOARD}",
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "PrjRootDirPath": "${fileDir}/",
-        "DEVICE_PROJECT_NAME": "uhk60v1",
-        "DEVICE_ID": "DEVICE_ID_UHK60V1",
-        "DEVICE_PID": "1"
+        "CONFIG_BOARD_UHK_60_RIGHT_V1": "y"
       }
     },
     {
       "name": "v2-debug",
       "displayName": "v2-debug",
-      "generator": "Ninja",
-      "binaryDir": "${fileDir}/build/${presetName}",
-      "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
-      "inherits": "debug-env",
+      "inherits": "debug",
       "cacheVariables": {
-        "APP_DIR": "${fileDir}",
-        "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
-        "CMAKE_BUILD_TYPE": "debug",
-        "CONFIG_TOOLCHAIN": "armgcc",
-        "board": "$env{BOARD}",
-        "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "PrjRootDirPath": "${fileDir}/",
-        "DEVICE_PROJECT_NAME": "uhk60v2",
-        "DEVICE_ID": "DEVICE_ID_UHK60V2",
-        "DEVICE_PID": "3"
+        "CONFIG_BOARD_UHK_60_RIGHT_V2": "y"
       }
     },
     {
-      "name": "v2-release",
-      "displayName": "v2-release",
+      "name": "release",
+      "hidden": true,
       "generator": "Ninja",
       "binaryDir": "${fileDir}/build/${presetName}",
       "toolchainFile": "$env{SdkRootDirPath}/mcuxsdk/cmake/toolchain/armgcc.cmake",
       "inherits": "release-env",
       "cacheVariables": {
-        "APP_DIR": "${fileDir}",
+        "APP_DIR": {
+          "value": "${fileDir}",
+          "type": "PATH"
+        },
         "SdkRootDirPath": "$env{SdkRootDirPath}/mcuxsdk",
         "CMAKE_BUILD_TYPE": "release",
+        "CMAKE_C_FLAGS_RELEASE": "-O3 -DNDEBUG -g",
         "CONFIG_TOOLCHAIN": "armgcc",
         "board": "$env{BOARD}",
         "CMAKE_RUNTIME_OUTPUT_DIRECTORY": "$env{binaryDir}",
         "CMAKE_LIBRARY_OUTPUT_DIRECTORY": "$env{binaryDir}",
         "CMAKE_ARCHIVE_OUTPUT_DIRECTORY": "$env{binaryDir}",
-        "PrjRootDirPath": "${fileDir}/",
-        "DEVICE_PROJECT_NAME": "uhk60v2",
-        "DEVICE_ID": "DEVICE_ID_UHK60V2",
-        "DEVICE_PID": "3"
+        "PrjRootDirPath": "${fileDir}/"
+      }
+    },
+    {
+      "name": "v1-release",
+      "displayName": "v1-release",
+      "inherits": "release",
+      "cacheVariables": {
+        "CONFIG_BOARD_UHK_60_RIGHT_V1": "y"
+      }
+    },
+    {
+      "name": "v2-release",
+      "displayName": "v2-release",
+      "inherits": "release",
+      "cacheVariables": {
+        "CONFIG_BOARD_UHK_60_RIGHT_V2": "y"
       }
     }
   ],

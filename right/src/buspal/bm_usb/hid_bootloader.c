@@ -1,6 +1,7 @@
 #include "usb_descriptor.h"
 #include "composite.h"
 #include "peripherals/test_led.h"
+#include "usb_device_hid.h"
 
 extern usb_device_endpoint_struct_t g_hid_generic_endpoints[];
 static usb_device_composite_struct_t *g_device_composite;

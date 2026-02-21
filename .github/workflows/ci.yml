@@ -13,7 +13,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
       ARM_GCC_DIR: /usr
@@ -83,7 +83,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: firmware/scripts/uhk-firmware-*.tar.gz
+          path: |
+            firmware/scripts/uhk-firmware-*.tar.gz
+            firmware/right/build/v2-release/uhk-60-right.elf
           compression-level: 0
           retention-days: 90
 

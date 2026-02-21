@@ -25,28 +25,22 @@ endif # BT_DIS && BT_DIS_PNP
 if BOARD_UHK_80_LEFT
     config USB_DEVICE_PRODUCT
         default "UHK 80 left half bootloader" if MCUBOOT
-        default "UHK 80 Left USB"
     config USB_DEVICE_PID
-        default 0x0006 if !BT
-        default 0x0007
+        default 0x0006 if MCUBOOT
 endif # BOARD_UHK_80_LEFT
 
 if BOARD_UHK_80_RIGHT
     config USB_DEVICE_PRODUCT
         default "UHK 80 right half bootloader" if MCUBOOT
-        default "UHK 80 Right USB"
     config USB_DEVICE_PID
         default 0x0008 if MCUBOOT
-        default 0x0009
 endif # BOARD_UHK_80_RIGHT
 
 if BOARD_UHK_DONGLE
     config USB_DEVICE_PRODUCT
         default "UHK dongle bootloader" if MCUBOOT
-        default "UHK dongle"
     config USB_DEVICE_PID
         default 0x0004 if MCUBOOT
-        default 0x0005
 endif # BOARD_UHK_DONGLE
 
 if BT

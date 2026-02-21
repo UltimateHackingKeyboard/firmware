@@ -6,7 +6,6 @@
 #include "tests/tests.h"
 #include "logger.h"
 #include "timer.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "keymap.h"
 #include "config_manager.h"
 #include "macros/vars.h"
@@ -60,6 +59,8 @@ static bool advanceToNextTest(void) {
     return currentModuleIndex < lastModuleIndexExclusive;
 }
 
+extern hid_keyboard_report_t *ActiveKeyboardReport;
+
 static void startTest(const test_t *test, const test_module_t *module) {
     ConfigManager_ResetConfiguration(false);
     LayerStack_Reset();
@@ -69,10 +70,10 @@ static void startTest(const test_t *test, const test_module_t *module) {
     }
     InputMachine_Start(test);
     OutputMachine_Start(test);
-    OutputMachine_OnReportChange(ActiveUsbBasicKeyboardReport);
+    OutputMachine_OnReportChange(ActiveKeyboardReport);
 }
 
-void TestHooks_CaptureReport(const usb_basic_keyboard_report_t *report) {
+void TestHooks_CaptureReport(const hid_keyboard_report_t *report) {
     if (!TestHooks_Active) {
         return;
     }

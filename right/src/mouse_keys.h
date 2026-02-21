@@ -3,7 +3,7 @@
 
 // Includes:
 
-    #include "usb_interfaces/usb_interface_mouse.h"
+    #include "hid/mouse_report.h"
     #include "caret_config.h"
     #include "key_action.h"
     #include "key_states.h"
@@ -50,7 +50,7 @@
 
     extern uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
     extern uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
-    extern usb_mouse_report_t MouseKeysMouseReport;
+    extern hid_mouse_report_t MouseKeysMouseReport;
 
 
 // Functions:

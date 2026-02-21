@@ -15,6 +15,7 @@
 
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
+#define DEBUG_STRESS_GATT false
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
@@ -31,7 +32,6 @@
 
 #include <stdint.h>
 #include "key_states.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 
 #if WATCHES
 
@@ -111,7 +111,8 @@
     bool WatchCondition(uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
-    void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report);
+    struct hid_keyboard_report_t;
+    void AddReportToStatusBuffer(char* dbgTag, hid_keyboard_report_t *report);
 
     #ifdef __ZEPHYR__
         void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n);

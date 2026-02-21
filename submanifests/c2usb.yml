@@ -5,5 +5,5 @@ manifest:
   projects:
     - name: c2usb
       remote: IntergatedCircuits
-      revision: 4ab4ca1df2f363770a653d68683fd28c8e12b42a
-      submodules: true
+      revision: 3773d6df319243c145fb6f58bfdd8527610968c1
+      import: true

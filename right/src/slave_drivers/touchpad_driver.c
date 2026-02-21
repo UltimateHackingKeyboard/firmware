@@ -7,7 +7,6 @@
 #include "bool_array_converter.h"
 #include "crc16.h"
 #include "key_states.h"
-#include "usb_interfaces/usb_interface_mouse.h"
 #include "touchpad_driver.h"
 #include "debug.h"
 #include "timer.h"

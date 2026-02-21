@@ -22,6 +22,7 @@
 #include "keyboard/uart_bridge.h"
 #include "main.h"
 #include "bt_manager.h"
+#include "bt_conn.h"
 #else
 #include "segment_display.h"
 #endif
@@ -240,6 +241,11 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
             break;
+        case EventSchedulerEvent_KickHid:
+#if DEVICE_IS_UHK80_RIGHT
+            BtConn_KickHid();
+#endif
+            break;
         default:
             return;
     }
@@ -340,7 +346,6 @@ void EventVector_ReportMask(const char* prefix, uint32_t mask) {
 
     REPORT_MASK(KeyboardLedState);
     REPORT_MASK(UsbMacroCommandWaitingForExecution);
-    REPORT_MASK(ProtocolChanged);
     REPORT_MASK(LedManagerFullUpdateNeeded);
     REPORT_MASK(KeymapReloadNeeded);
     REPORT_MASK(SegmentDisplayNeedsUpdate);

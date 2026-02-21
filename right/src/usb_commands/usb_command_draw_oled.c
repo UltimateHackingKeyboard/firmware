@@ -3,7 +3,6 @@
 #include <zephyr/sys/printk.h>
 #include "macros/core.h"
 #include "usb_commands/usb_command_draw_oled.h"
-#include "usb_interfaces/usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "utils.h"

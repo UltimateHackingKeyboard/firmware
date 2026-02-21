@@ -1,0 +1,76 @@
+From c12b32684bbbd2bf33dbb0924b40769d02f97739 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 3 Feb 2026 23:57:45 +0100
+Subject: [PATCH] cmake: set _IS_TOP_LEVEL project variables
+
+---
+ cmake/extension/mcux.cmake | 53 ++++++++++++++++++++++++++------------
+ 1 file changed, 37 insertions(+), 16 deletions(-)
+
+diff --git a/cmake/extension/mcux.cmake b/cmake/extension/mcux.cmake
+index 96732ef..db62e4e 100644
+--- a/cmake/extension/mcux.cmake
++++ b/cmake/extension/mcux.cmake
+@@ -29,22 +29,43 @@ macro(project project_name)
+ 
+     __project(${${project_ARGV}})
+ 
+-    set(PROJECT_NAME
+-        "${PROJECT_NAME}"
+-        PARENT_SCOPE)
+-    set(PROJECT_BINARY_DIR
+-        "${PROJECT_BINARY_DIR}"
+-        PARENT_SCOPE)
+-    set(PROJECT_SOURCE_DIR
+-        "${PROJECT_SOURCE_DIR}"
+-        PARENT_SCOPE)
+-
+-    set(${PROJECT_NAME}_BINARY_DIR
+-        "${${PROJECT_NAME}_BINARY_DIR}"
+-        PARENT_SCOPE)
+-    set(${PROJECT_NAME}_SOURCE_DIR
+-        "${${PROJECT_NAME}_SOURCE_DIR}"
+-        PARENT_SCOPE)
++    # Set the variables that project() normally sets, documented in the
++    # command's docs.
++    #
++    # https://cmake.org/cmake/help/v3.16/command/project.html
++    #
++    # There is some nuance when it comes to setting version variables in terms of whether
++    # CMP0048 is set to OLD or NEW. However, the proper behavior should have bee already handled by the original
++    # project call, and we're just echoing the values those variables were set to.
++    set(PROJECT_NAME "${PROJECT_NAME}" PARENT_SCOPE)
++    set(PROJECT_BINARY_DIR "${PROJECT_BINARY_DIR}" PARENT_SCOPE)
++    set(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}" PARENT_SCOPE)
++    set(PROJECT_VERSION "${PROJECT_VERSION}" PARENT_SCOPE)
++    set(PROJECT_VERSION_MAJOR "${PROJECT_VERSION_MAJOR}" PARENT_SCOPE)
++    set(PROJECT_VERSION_MINOR "${PROJECT_VERSION_MINOR}" PARENT_SCOPE)
++    set(PROJECT_VERSION_PATCH "${PROJECT_VERSION_PATCH}" PARENT_SCOPE)
++    set(PROJECT_VERSION_TWEAK "${PROJECT_VERSION_TWEAK}" PARENT_SCOPE)
++    set(PROJECT_DESCRIPTION "${PROJECT_DESCRIPTION}" PARENT_SCOPE)
++    set(PROJECT_HOMEPAGE_URL "${PROJECT_HOMEPAGE_URL}" PARENT_SCOPE)
++
++    set(${PROJECT_NAME}_BINARY_DIR "${${PROJECT_NAME}_BINARY_DIR}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_SOURCE_DIR "${${PROJECT_NAME}_SOURCE_DIR}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_VERSION "${${PROJECT_NAME}_VERSION}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_VERSION_MAJOR "${${PROJECT_NAME}_VERSION_MAJOR}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_VERSION_MINOR "${${PROJECT_NAME}_VERSION_MINOR}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_VERSION_PATCH "${${PROJECT_NAME}_VERSION_PATCH}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_VERSION_TWEAK "${${PROJECT_NAME}_VERSION_TWEAK}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_DESCRIPTION "${${PROJECT_NAME}_DESCRIPTION}" PARENT_SCOPE)
++    set(${PROJECT_NAME}_HOMEPAGE_URL "${${PROJECT_NAME}_HOMEPAGE_URL}" PARENT_SCOPE)
++    if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.21")
++      if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
++        set(PROJECT_IS_TOP_LEVEL ON PARENT_SCOPE)
++        set(${PROJECT_NAME}_IS_TOP_LEVEL ON PARENT_SCOPE)
++      else()
++        set(PROJECT_IS_TOP_LEVEL OFF PARENT_SCOPE)
++        set(${PROJECT_NAME}_IS_TOP_LEVEL OFF PARENT_SCOPE)
++      endif()
++    endif()
+   endfunction()
+ 
+   # valiate compiler version
+-- 
+2.43.0
+

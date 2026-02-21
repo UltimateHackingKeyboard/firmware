@@ -4,7 +4,6 @@
 #include <zephyr/sys/printk.h>
 #include "macros/core.h"
 #include "usb_commands/usb_command_read_oled.h"
-#include "usb_interfaces/usb_interface_generic_hid.h"
 #include "usb_protocol_handler.h"
 #include "eeprom.h"
 #include "utils.h"
@@ -19,7 +18,7 @@ void UsbCommand_ReadOled(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHid
 
     // Calculate the maximum number of pixels we can return
     // USB buffer size minus status code and length field
-    const uint16_t maxPixels = USB_GENERIC_HID_IN_BUFFER_LENGTH - 3;
+    const uint16_t maxPixels = USB_COMMAND_BUFFER_LENGTH - 3;
 
     // Calculate how many pixels to read from the offset
     uint16_t pixelsToRead = DISPLAY_WIDTH * DISPLAY_HEIGHT - offset;

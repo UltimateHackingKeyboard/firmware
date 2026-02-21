@@ -106,20 +106,16 @@ uint8_t g_device_descriptor[USB_DEVICE_DESCRIPTOR_LENGTH] = {
     /* Max Packet size */
     USB_CONTROL_MAX_PACKET_SIZE,
     /* Vendor ID */
-    0xa8, 0x37, /* UHK bootloader proxy VID */
+    USB_SHORT_GET_LOW(CONFIG_USB_DEVICE_VID), USB_SHORT_GET_HIGH(CONFIG_USB_DEVICE_VID),
     /* Product ID */
-    #if DEVICE_ID == DEVICE_ID_UHK60V1
-    0x00, 0x00, /* UHK bootloader proxy PID */
-    #elif DEVICE_ID == DEVICE_ID_UHK60V2
-    0x02, 0x00, /* UHK bootloader proxy PID */
-    #endif
+    USB_SHORT_GET_LOW(CONFIG_USB_BUSPAL_DEVICE_PID), USB_SHORT_GET_HIGH(CONFIG_USB_BUSPAL_DEVICE_PID),
     /* BCD Device version */
-    0x02, 0x00,
+    USB_SHORT_GET_LOW(CONFIG_USB_DEVICE_PRODUCT_VERSION), USB_SHORT_GET_HIGH(CONFIG_USB_DEVICE_PRODUCT_VERSION),
     /* Manufacturer string index */
     0x01,
     /* Product string index */
     0x02,
-/*  Serial number string index */
+    /*  Serial number string index */
     0x00,
     /*  Number of configurations */
     USB_CONFIGURE_COUNT,
@@ -140,9 +136,7 @@ uint8_t g_config_descriptor[USB_CONFIGURE_DESCRIPTOR_LENGTH] = {
     /* Configuration Description String Index */
     0,
     /*  Attributes.support RemoteWakeup and self power */
-    (USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_D7_MASK) |
-        (USB_DEVICE_CONFIG_SELF_POWER << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_SELF_POWERED_SHIFT) |
-        (USB_DEVICE_CONFIG_REMOTE_WAKEUP << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_REMOTE_WAKEUP_SHIFT),
+    (USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_D7_MASK),
     /*  Current draw from bus */
     USB_CONFIGURE_DRAWN,
 

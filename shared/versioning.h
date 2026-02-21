@@ -4,11 +4,7 @@
 // Includes:
 
 #include "slave_protocol.h"
-#ifdef __ZEPHYR__
-    #include "device.h"
-#elif defined(DEVICE_ID)
-    #include "device.h"
-#endif
+#include "device.h"
 
 // Macros:
 

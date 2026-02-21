@@ -1,5 +1,6 @@
 #include <string.h>
 #include "debug.h"
+#include "hid/keyboard_report.h"
 
 #ifdef __ZEPHYR__
 #include "logger.h"
@@ -14,7 +15,6 @@
 #include "timer.h"
 #include "key_states.h"
 #include <limits.h>
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "macros/status_buffer.h"
 #include "segment_display.h"
 
@@ -53,7 +53,7 @@ static void writeScancode(uint8_t b)
     Macros_SetStatusNum(b);
 }
 
-void AddReportToStatusBuffer(char* dbgTag, usb_basic_keyboard_report_t *report)
+void AddReportToStatusBuffer(char* dbgTag, hid_keyboard_report_t *report)
 {
     if (dbgTag != NULL && *dbgTag != '\0') {
         Macros_SetStatusString(dbgTag, NULL);

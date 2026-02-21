@@ -11,10 +11,10 @@
 #include "layer.h"
 #include "timer.h"
 #include "event_scheduler.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "secondary_role_driver.h"
 #include "logger.h"
 #include "utils.h"
+#include "usb_report_updater.h"
 
 #define LOG_VERBOSE(fmt, ...) do { if (TestSuite_Verbose) LogU(fmt, ##__VA_ARGS__); } while(0)
 
@@ -59,11 +59,11 @@ static bool parseKeyId(const char *keyIdStr, uint8_t *slotId, uint8_t *keyId) {
     *keyId = combinedId % 64;
     return true;
 }
-
+extern hid_keyboard_report_t *ActiveKeyboardReport;
 // Build expected report from space-separated shortcut string and validate against actual
 // If logFailure is true, logs details on mismatch
 static bool validateReport(const char *expectShortcuts, bool logFailure) {
-    const usb_basic_keyboard_report_t *actual = ActiveUsbBasicKeyboardReport;
+    const hid_keyboard_report_t *actual = ActiveKeyboardReport;
 
     // Build expected: combine modifiers and scancodes from all shortcuts
     uint8_t expectedMods = 0;
@@ -102,9 +102,9 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
     bool match = true;
     if (actual->modifiers != expectedMods) match = false;
     for (int i = 0; i < scancodeCount && match; i++) {
-        if (!UsbBasicKeyboard_ContainsScancode(actual, expectedScancodes[i])) match = false;
+        if (!KeyboardReport_ContainsScancode(actual, expectedScancodes[i])) match = false;
     }
-    if (UsbBasicKeyboard_ScancodeCount(actual) != scancodeCount) match = false;
+    if (KeyboardReport_ScancodeCount(actual) != scancodeCount) match = false;
 
     if (!match && logFailure) {
         LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
