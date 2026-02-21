@@ -1,21 +1,22 @@
 #ifndef __COMMAND_APP_HEADER__
 #define __COMMAND_APP_HEADER__
 
+extern "C" {
+#include "device.h"
+#include "report_ids.h"
+#include "usb_protocol_handler.h"
+}
 #include "double_buffer.hpp"
 #include "hid/application.hpp"
 #include "hid/rdf/descriptor.hpp"
 #include "hid/report_protocol.hpp"
-#include "report_ids.h"
-#include "device.h"
 
-namespace hid::page
-{
+namespace hid::page {
 enum class ugl : uint8_t;
 template <>
 constexpr inline auto get_info<ugl>()
 {
-    return info(0xFF00, 0x0003, "UGL",
-                [](hid::usage_id_t id) { return id ? "UHK {}" : nullptr; });
+    return info(0xFF00, 0x0003, "UGL", [](hid::usage_id_t id) { return id ? "UHK {}" : nullptr; });
 }
 enum class ugl : uint8_t {
     COMMAND_APP = 0x0001,
@@ -29,7 +30,7 @@ class command_app : public hid::application {
     command_app() : application(report_protocol()) {}
 
   public:
-    static constexpr size_t MESSAGE_SIZE = 63;
+    static constexpr size_t MESSAGE_SIZE = USB_COMMAND_BUFFER_LENGTH;
 
     static constexpr auto report_desc()
     {
