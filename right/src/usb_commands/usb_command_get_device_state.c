@@ -71,9 +71,9 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     detectFreezes();
 
 #ifdef __ZEPHYR__
-    SetUsbTxBufferUint8(1, Flash_IsBusy());
+    SetUsbTxBufferUint8(1, true);
 #else
-    SetUsbTxBufferUint8(1, IsStorageBusy);
+    SetUsbTxBufferUint8(1, true);
 #endif
 
     uint8_t byte2 = 0
