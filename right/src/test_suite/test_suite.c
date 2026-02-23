@@ -315,6 +315,11 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
 }
 
 uint8_t TestSuite_Run(string_segment_t module, string_segment_t test) {
+    // "all" means run everything
+    if (module.start != NULL && streq(module.start, module.end, "all")) {
+        module.start = NULL;
+    }
+
     // Support slash notation: "Module/test" as a single argument
     if (module.start != NULL && test.start == NULL) {
         for (const char *p = module.start; p < module.end; p++) {

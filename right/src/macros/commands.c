@@ -1723,18 +1723,14 @@ static macro_result_t processTestSuiteCommand(parser_context_t* ctx)
     string_segment_t test = { .start = NULL, .end = NULL };
 
     if (!IsEnd(ctx)) {
-        if (ConsumeToken(ctx, "all")) {
-            // leave both NULL → run all
-        } else {
-            module.start = ctx->at;
-            module.end = TokEnd(ctx->at, ctx->end);
-            ConsumeAnyToken(ctx);
+        module.start = ctx->at;
+        module.end = TokEnd(ctx->at, ctx->end);
+        ConsumeAnyToken(ctx);
 
-            if (!IsEnd(ctx)) {
-                test.start = ctx->at;
-                test.end = TokEnd(ctx->at, ctx->end);
-                ConsumeAnyToken(ctx);
-            }
+        if (!IsEnd(ctx)) {
+            test.start = ctx->at;
+            test.end = TokEnd(ctx->at, ctx->end);
+            ConsumeAnyToken(ctx);
         }
     }
 
