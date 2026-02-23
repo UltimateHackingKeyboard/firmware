@@ -1112,7 +1112,7 @@ static const char *stringRefStart(string_ref_t ref) {
     return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
 }
 
-staticconst char *stringRefEnd(string_ref_t ref) {
+static const char *stringRefEnd(string_ref_t ref) {
     return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
 }
 
