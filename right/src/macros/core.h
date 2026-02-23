@@ -17,6 +17,8 @@
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
 
+    #define MACRO_STATE_INDEX(S) (S - MacroState)
+
     #define MAX_MACRO_NUM 255
     #define MACRO_STATE_POOL_SIZE 16
     #define MACRO_HISTORY_POOL_SIZE 16
@@ -170,8 +172,6 @@
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
             // ---- 4-aligned ----
-            macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];   // remove these since owner is indicated in the pool
-
             macro_usb_keyboard_reports_t reports;
 
             uint8_t argumentCount : 4;

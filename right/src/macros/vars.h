@@ -52,10 +52,10 @@
     } macro_argument_type_t;
 
     typedef struct {
-        macro_state_t *owner;
+        macro_state_t *owner;   // TODO: replace with macro state index
         macro_argument_type_t type;
-        uint8_t id;
-        string_ref_t name;
+        uint8_t idx;            // TODO: we don't need this; index of the argument in the macro's argument list (1-based)
+        string_ref_t name;      // macro argument name (identifier)
     } macro_argument_t;
 
     typedef enum {

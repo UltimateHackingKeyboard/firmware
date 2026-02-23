@@ -277,6 +277,9 @@ static macro_result_t endMacro(void)
         EventVector_Set(EventVector_SendUsbReports);
     }
 
+    // Deallocate all macro arguments owned by this macro
+    Macros_DeallocateMacroArgumentsByOwner(S);
+
     freeLocalScopes();
 
     S->ms.macroSleeping = false;

@@ -957,7 +957,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
 
     if (Macros_DryRun) {
-        // parse macroArg command but ignore it for now
+        // TODO: actually parse macroArg command
 
         while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
@@ -1013,19 +1013,16 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
 
     // allocate an argument slot if there is room
-    if (S->ms.argumentCount >= MAX_MACRO_ARGUMENT_COUNT) {
+    if (Macros_CountMacroArgumentsByOwner(S) >= MAX_MACRO_ARGUMENT_COUNT) {
         Macros_ReportErrorPos(ctx, "Maximum number of macro arguments exceeded");
         return MacroResult_Header;
     }
-
-    // check whether the argument name has already been used in this macro
-    // TODO: ... check "locally"
 
     // allocate a pool slot for the argument and store its metadata (name and type) there
     macro_argument_alloc_result_t res = Macros_AllocateMacroArgument(S, idStart, idEnd, argType, S->ms.argumentCount+1, &(S->ms.arguments[S->ms.argumentCount]));
     switch (res) {
     case MacroArgAllocResult_Success:
-        S->ms.argumentCount++;
+        // macro arggument successfully allocated
         break;
     case MacroArgAllocResult_PoolLimitExceeded:
         Macros_ReportErrorPos(ctx, "Too many arguments across simultaneously active macros (argument pool exhausted)");
@@ -1039,10 +1036,6 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
 
     return MacroResult_Header;
-
-// TODO: when macro ends, free the macroArgs that have been allocated for this owner in vars.c
-
-//    Macros_ReportErrorPrintf(ctx->at, "Parsing failed at '%s'?", OneWord(ctx));
 }
 
 static macro_result_t processWriteCommand(parser_context_t* ctx)
