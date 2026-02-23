@@ -9,9 +9,11 @@
 #include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "keymap.h"
 #include "config_manager.h"
+#include "macros/core.h"
 #include "macros/vars.h"
 #include "mouse_controller.h"
 #include "layer_stack.h"
+#include "postponer.h"
 
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
@@ -61,8 +63,10 @@ static bool advanceToNextTest(void) {
 }
 
 static void startTest(const test_t *test, const test_module_t *module) {
+    Macros_StopAllMacros();
     ConfigManager_ResetConfiguration(false);
     LayerStack_Reset();
+    PostponerExtended_ResetPostponer();
     if (TestSuite_Verbose) {
         LogU("[TEST] ----------------------\n");
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
@@ -102,10 +106,21 @@ void TestHooks_Tick(void) {
     bool outputDone = OutputMachine_IsDone();
     bool failed = InputMachine_Failed || OutputMachine_Failed;
     bool timedOut = InputMachine_TimedOut && !outputDone;
+    bool macrosRunning = Macros_AnyMacroRunning();
+
+    // If input/output done but macros still running, wait for timeout
+    if (inputDone && outputDone && macrosRunning && !timedOut && !failed) {
+        return;
+    }
 
     if (inputDone && (outputDone || timedOut || failed)) {
         const test_t *test = getCurrentTest();
         const test_module_t *module = AllTestModules[currentModuleIndex];
+
+        // On timeout, kill all running macros
+        if (timedOut) {
+            Macros_StopAllMacros();
+        }
 
         if (failed || timedOut) {
             if (isRerunning || singleTestMode) {
@@ -172,10 +187,13 @@ void TestHooks_Tick(void) {
     return;
 
 finish:
+    Macros_StopAllMacros();
     LogU("[TEST] ----------------------\n");
     LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
     TestHooks_Active = false;
     ConfigManager_ResetConfiguration(false);
+    LayerStack_Reset();
+    PostponerExtended_ResetPostponer();
 }
 
 void TestSuite_Init(void) {
@@ -301,6 +319,11 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
 }
 
 uint8_t TestSuite_Run(string_segment_t module, string_segment_t test) {
+    // "all" means run everything
+    if (module.start != NULL && streq(module.start, module.end, "all")) {
+        module.start = NULL;
+    }
+
     // Support slash notation: "Module/test" as a single argument
     if (module.start != NULL && test.start == NULL) {
         for (const char *p = module.start; p < module.end; p++) {

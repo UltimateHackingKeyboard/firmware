@@ -14,6 +14,7 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_IfShortcutGesture,
     &TestModule_Doubletap,
     &TestModule_CurrentMacroKeyIsActive,
+    &TestModule_ParserBenevolence,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);
