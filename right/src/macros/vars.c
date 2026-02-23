@@ -1133,7 +1133,7 @@ macro_argument_alloc_result_t Macros_AllocateMacroArgument(
     uint8_t argNumber
 ) {
     // search for existing argument of same owner with the same identifier, error if found
-    if (Macros_FindMacroArgumentByName(owner, idStart, idEnd) {
+    if (Macros_FindMacroArgumentByName(owner, idStart, idEnd)) {
         return MacroArgAllocResult_DuplicateArgumentName;
     }
 
