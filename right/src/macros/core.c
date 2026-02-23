@@ -262,36 +262,11 @@ bool Macros_AnyMacroRunning() {
 
 void Macros_StopAllMacros() {
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (MacroState[i].ms.macroPlaying) {
-            // Free local scopes for this macro
-            macro_scope_state_t* ls = MacroState[i].ls;
-            while (ls != NULL && ls->slotUsed) {
-                ls->slotUsed = false;
-                if (ls->parentScopeIndex == 255) {
-                    break;
-                }
-                ls = &MacroScopeState[ls->parentScopeIndex];
-            }
-
-            // Clear macro state
-            if (MacroState[i].ms.reportsUsed) {
-                MacroState[i].ms.reportsUsed = false;
-            }
+        if (&MacroState[i] != S) {
+            MacroState[i].ms.macroBroken = true;
             MacroState[i].ms.macroSleeping = false;
-            MacroState[i].ms.macroPlaying = false;
-            MacroState[i].ms.macroBroken = false;
-            MacroState[i].ms.macroScheduled = false;
         }
     }
-
-    // Reset scheduler state
-    Macros_SchedulerState.previousSlotIdx = 0;
-    Macros_SchedulerState.currentSlotIdx = 0;
-    Macros_SchedulerState.lastQueuedSlot = 0;
-    Macros_SchedulerState.activeSlotCount = 0;
-    Macros_SchedulerState.remainingCount = 0;
-
-    S = NULL;
 }
 
 static uint8_t currentActionCmdCount() {

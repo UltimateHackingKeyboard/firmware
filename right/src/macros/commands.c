@@ -218,12 +218,7 @@ static macro_result_t processStopAllMacrosCommand()
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
-        if (&MacroState[i] != S) {
-            MacroState[i].ms.macroBroken = true;
-            MacroState[i].ms.macroSleeping = false;
-        }
-    }
+    Macros_StopAllMacros();
     return MacroResult_Finished;
 }
 
