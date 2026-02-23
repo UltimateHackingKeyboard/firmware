@@ -282,6 +282,8 @@
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     void Macros_ContinueMacro(void);
     void Macros_Initialize();
+    bool Macros_AnyMacroRunning();
+    void Macros_StopAllMacros();
     void Macros_ResetBasicKeyboardReports();
     void Macros_SignalInterrupt(void);
     void Macros_ValidateAllMacros();
