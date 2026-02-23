@@ -250,6 +250,24 @@ void Macros_Initialize() {
     LayerStack_Reset();
 }
 
+bool Macros_AnyMacroRunning() {
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Macros_StopAllMacros() {
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (&MacroState[i] != S) {
+            MacroState[i].ms.macroBroken = true;
+            MacroState[i].ms.macroSleeping = false;
+        }
+    }
+}
+
 static uint8_t currentActionCmdCount() {
     if(S->ms.currentMacroAction.type == MacroActionType_Command) {
         return S->ms.currentMacroAction.cmd.cmdCount;
@@ -444,7 +462,7 @@ uint8_t initMacro(
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
-    S->ms.isDoubletap = KeyHistory_WasLastDoubletap();
+    S->ms.isDoubletap = keyState != NULL && KeyHistory_WasLastDoubletap();
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {

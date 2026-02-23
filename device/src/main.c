@@ -216,6 +216,7 @@ void mainRuntime(void) {
     InitProxyLogBackend();
 
     Shell_WaitUntilInitialized();
+    InitLogLevels();
     Logger_SetPriority(true);
 
     // read configurations

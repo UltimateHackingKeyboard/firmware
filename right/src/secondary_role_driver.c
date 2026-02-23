@@ -144,9 +144,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     // handle positive safety margin part 1: is action key allowed to trigger secondary yet
-    const bool safetyWaitForRelease = dualRoleRelease == NULL && actionEvent != NULL
+    const bool safetyBlockSecondary = actionEvent != NULL 
         && (int32_t)(Timer_GetCurrentTime() - actionEvent->time) < Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-    if (safetyWaitForRelease) {
+    if (safetyBlockSecondary) {
         // prevent the action from triggering secondary
         actionEvent = NULL;
     }
@@ -180,6 +180,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // now we want to trigger secondary, but are we allowed?
     // handle safety margin part 2: wait for the safety margin?
+    const bool safetyWaitForRelease = safetyBlockSecondary && dualRoleRelease == NULL;
     uint32_t waitUntil = safetyWaitForRelease ? activeTime + Cfg.SecondaryRoles_AdvancedStrategySafetyMargin : 0;
     // wait for being allowed to trigger secondary?
     if (heldTooShortForSecondary) {
