@@ -13,6 +13,7 @@
 #include "macros/vars.h"
 #include "mouse_controller.h"
 #include "layer_stack.h"
+#include "postponer.h"
 
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
@@ -65,6 +66,7 @@ static void startTest(const test_t *test, const test_module_t *module) {
     Macros_StopAllMacros();
     ConfigManager_ResetConfiguration(false);
     LayerStack_Reset();
+    PostponerExtended_ResetPostponer();
     if (TestSuite_Verbose) {
         LogU("[TEST] ----------------------\n");
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
@@ -107,7 +109,7 @@ void TestHooks_Tick(void) {
     bool macrosRunning = Macros_AnyMacroRunning();
 
     // If input/output done but macros still running, wait for timeout
-    if (inputDone && outputDone && macrosRunning && !timedOut) {
+    if (inputDone && outputDone && macrosRunning && !timedOut && !failed) {
         return;
     }
 
@@ -190,6 +192,8 @@ finish:
     LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
     TestHooks_Active = false;
     ConfigManager_ResetConfiguration(false);
+    LayerStack_Reset();
+    PostponerExtended_ResetPostponer();
 }
 
 void TestSuite_Init(void) {

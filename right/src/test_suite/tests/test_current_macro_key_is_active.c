@@ -1,22 +1,23 @@
 #include "tests.h"
 
 static const test_action_t test_postpone_holdkey_no_deadlock[] = {
-    TEST_SET_MACRO("j", "postponeKeys {\n"
-                        "  holdKey j\n"
+    TEST_SET_MACRO("u", "postponeKeys {\n"
+                        "  holdKey u\n"
                         "}"),
-    TEST_SET_MACRO("k", "tapKey i"),
+    TEST_SET_MACRO("i", "tapKey i"),
+    TEST_EXPECT__________(""),
 
-    TEST_PRESS______("j"),
+    TEST_PRESS______("u"),
     TEST_DELAY__(50),
-    TEST_EXPECT__________("j"),
-    TEST_RELEASE__U("j"),
+    TEST_EXPECT__________("u"),
+    TEST_RELEASE__U("u"),
     TEST_DELAY__(50),
     TEST_EXPECT__________(""),
-    TEST_PRESS______("k"),
+    TEST_PRESS______("i"),
     TEST_DELAY__(50),
     TEST_EXPECT__________("i"),
     TEST_EXPECT__________(""),
-    TEST_RELEASE__U("k"),
+    TEST_RELEASE__U("i"),
     TEST_DELAY__(50),
     TEST_END()
 };
@@ -26,6 +27,7 @@ static const test_action_t test_holdkey_no_premature_release[] = {
     TEST_SET_MACRO("u", "holdKey u"),
     TEST_SET_MACRO("o", "postponeKeys\n"
                         "tapKey o"),
+    TEST_EXPECT__________(""),
 
     TEST_PRESS______("i"),
     TEST_DELAY__(50),
@@ -54,6 +56,7 @@ static const test_action_t test_postpone_loop_tapkey[] = {
                         "    delayUntil 20\n"
                         "}"),
     TEST_SET_ACTION("u", "u"),
+    TEST_EXPECT__________(""),
 
     TEST_PRESS______("i"),
     TEST_DELAY__(30),
