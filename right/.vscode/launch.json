@@ -28,6 +28,23 @@
         "pemicro": {}
       },
       "showDevDebugOutput": "none"
+    },
+    {
+      "type": "cortex-debug",
+      "name": "Debug bootloader + v2-release",
+      "request": "launch",
+      "servertype": "jlink",
+      "device": "MK22FN512xxx12",
+      "interface": "swd",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/v2-release/uhk-60-right.elf",
+      "loadFiles": [
+        "${workspaceFolder}/build/v2-release/uhk-60-right-merged.hex"
+      ],
+      "runToEntryPoint": "main",
+      "armToolchainPath": "${env:ARM_GCC_DIR}/bin",
+      "svdFile": "${workspaceFolder}/../svd/MK22F51212.xml",
+      "preLaunchTask": "Build + Merge UHK 60 right (v2-release)"
     }
   ],
   "inputs": [
