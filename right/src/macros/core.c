@@ -10,6 +10,7 @@
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
 #include "macros/typedefs.h"
+#include "macros/vars.h"
 #include "module.h"
 #include "postponer.h"
 #include <string.h>
@@ -278,7 +279,7 @@ static macro_result_t endMacro(void)
     }
 
     // Deallocate all macro arguments owned by this macro
-    Macros_DeallocateMacroArgumentsByOwner(S);
+    Macros_DeallocateMacroArgumentsByOwner(MACRO_STATE_SLOT(S));
 
     freeLocalScopes();
 

@@ -1094,25 +1094,25 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
 
 // helper functions to convert to and from StringRefs and StringSegments
 
-string_ref_t createStringRef(const char *start, const char *end) {
+static string_ref_t createStringRef(const char *start, const char *end) {
     return (string_ref_t) {
         .offset = start - (const char*)ValidatedUserConfigBuffer.buffer,
         .len = (uint8_t)(end - start),
     };
 }
 
-string_segment_t stringRefToSegment(string_ref_t ref) {
+static string_segment_t stringRefToSegment(string_ref_t ref) {
     return (string_segment_t) {
         .start = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset),
         .end = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len),
     };
 }
 
-const char *stringRefStart(string_ref_t ref) {
+static const char *stringRefStart(string_ref_t ref) {
     return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
 }
 
-const char *stringRefEnd(string_ref_t ref) {
+staticconst char *stringRefEnd(string_ref_t ref) {
     return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
 }
 
@@ -1130,7 +1130,7 @@ macro_argument_alloc_result_t Macros_AllocateMacroArgument(
     const char *idStart, 
     const char *idEnd, 
     macro_argument_type_t type,
-    uint8_t argNumber,
+    uint8_t argNumber
 ) {
     // search for existing argument of same owner with the same identifier, error if found
     if (Macros_FindMacroArgumentByName(owner, idStart, idEnd) {
