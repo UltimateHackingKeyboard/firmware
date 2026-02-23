@@ -2,6 +2,7 @@
 #include "usb_protocol_handler.h"
 #include "module_flash.h"
 #include "slot.h"
+#include "slave_drivers/kboot_driver.h"
 
 typedef enum {
     UsbStatusCode_FlashModule_InvalidSlotId = 2,
@@ -24,9 +25,7 @@ void UsbCommand_FlashModule(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
 
     ModuleFlashBusy = true;
     ModuleFlashErrorCode = 0;
-
-    // TODO: Trigger actual K-boot flash sequence here.
-    // For now, stub: immediately mark as done.
-    ModuleFlashState = ModuleFlashState_Done;
-    ModuleFlashBusy = false;
+    ModuleFlashState = ModuleFlashState_Erasing;
+    KbootDriverState.phase = 0;
+    KbootDriverState.command = KbootCommand_Flash;
 }

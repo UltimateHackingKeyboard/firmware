@@ -1,6 +1,7 @@
 #include "usb_commands/usb_command_validate_buffer_crc.h"
 #include "usb_protocol_handler.h"
 #include "config_parser/config_globals.h"
+#include "module_flash.h"
 #include "crc16.h"
 
 void UsbCommand_ValidateBufferCrc(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
@@ -32,5 +33,9 @@ void UsbCommand_ValidateBufferCrc(const uint8_t *GenericHidOutBuffer, uint8_t *G
     if (computedCrc != expectedCrc) {
         SetUsbTxBufferUint8(0, UsbStatusCode_ValidateBufferCrc_CrcMismatch);
         return;
+    }
+
+    if (bufferId == ConfigBufferId_ModuleFirmware) {
+        ModuleFirmwareValidatedSize = expectedSize;
     }
 }

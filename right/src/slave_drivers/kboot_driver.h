@@ -36,24 +36,56 @@
     } kboot_ping_phase_t;
 
     typedef enum {
-        KbootPhase_SendReset,
-        KbootPhase_ReceiveResetAck,
-        KbootPhase_ReceiveResetGenericResponse,
-        KbootPhase_CheckResetSendAck,
+        KbootResetPhase_JumpToBootloader,
+        KbootResetPhase_WaitForBootloader,
+        KbootResetPhase_SendPing,
+        KbootResetPhase_CheckPingStatus,
+        KbootResetPhase_ReceivePingResponse,
+        KbootResetPhase_CheckPingResponseStatus,
+        KbootResetPhase_SendReset,
+        KbootResetPhase_Done,
     } kboot_reset_phase_t;
 
+    // Shared command transaction phases (reused by Flash and Reset).
+    // Values 240-249 so they don't collide with command-specific phases.
     typedef enum {
+        KbootCmdPhase_Tx = 240,
+        KbootCmdPhase_CheckTx,
+        KbootCmdPhase_RxAck,
+        KbootCmdPhase_CheckAck,
+        KbootCmdPhase_RxResponse,
+        KbootCmdPhase_CheckResponse,
+        KbootCmdPhase_TxAck,
+    } kboot_cmd_phase_t;
+
+    typedef enum {
+        // Boot + ping
         KbootFlashPhase_JumpToBootloader,
         KbootFlashPhase_WaitForBootloader,
         KbootFlashPhase_SendPing,
         KbootFlashPhase_CheckPingStatus,
         KbootFlashPhase_ReceivePingResponse,
         KbootFlashPhase_CheckPingResponseStatus,
-        KbootFlashPhase_SendReset,
-        KbootFlashPhase_ReceiveResetAck,
-        KbootFlashPhase_ReceiveResetGenericResponse,
-        KbootFlashPhase_SendResetAck,
+        // Transitions
+        KbootFlashPhase_StartWrite,
+        KbootFlashPhase_StartReset,
+        KbootFlashPhase_FlashDone,
+        // Data phase (loops)
+        KbootFlashPhase_SendDataChunk,
+        KbootFlashPhase_DataChunkCheckTx,
+        KbootFlashPhase_DataChunkRxAck,
+        KbootFlashPhase_DataChunkCheckAck,
+        // Final response after all data
+        KbootFlashPhase_FinalRxResponse,
+        KbootFlashPhase_FinalCheckResponse,
+        KbootFlashPhase_FinalTxAck,
     } kboot_flash_phase_t;
+
+    typedef enum {
+        KbootCmdId_Erase,
+        KbootCmdId_WriteMemory,
+        KbootCmdId_Reset,
+    } kboot_cmd_id_t;
 
     typedef struct {
         kboot_command_t command;
@@ -61,6 +93,15 @@
         uint8_t phase;
         uint32_t status;
         uint32_t startTime;
+        // Flash state
+        const uint8_t *firmwareData;
+        uint32_t firmwareSize;
+        uint32_t firmwareOffset;
+        // Shared command transaction state
+        kboot_cmd_id_t cmdId;
+        uint8_t phaseAfterCmd;
+        uint32_t cmdStartTime;
+        uint32_t cmdTimeoutMs;
     } kboot_driver_state_t;
 
 // Variables:

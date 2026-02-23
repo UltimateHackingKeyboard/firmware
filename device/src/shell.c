@@ -33,6 +33,7 @@
 #include "stubs.h"
 #include "slave_drivers/kboot_driver.h"
 #include "i2c_addresses.h"
+#include "timer.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
 
@@ -151,6 +152,7 @@ static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *arg
     shell_fprintf(shell, SHELL_NORMAL, "Kboot flash sequence started for right module\n");
     return 0;
 }
+
 #endif
 
 #if DEVICE_HAS_OLED

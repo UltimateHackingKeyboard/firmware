@@ -21,5 +21,6 @@
     extern module_flash_state_t ModuleFlashState;
     extern bool ModuleFlashBusy;
     extern uint8_t ModuleFlashErrorCode;
+    extern uint16_t ModuleFirmwareValidatedSize;
 
 #endif
