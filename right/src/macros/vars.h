@@ -52,9 +52,11 @@
     } macro_argument_type_t;
 
     typedef struct {
-        macro_state_t *owner;   // TODO: replace with macro state index
+        uint8_t owner;          // MACRO_STATE_SLOT() of the macro that owns this argument
         macro_argument_type_t type;
-        uint8_t idx;            // TODO: we don't need this; index of the argument in the macro's argument list (1-based)
+        uint8_t idx;            // index of the argument in the macro's argument list (1-based)
+                                // (we could always calculate idx by looping through the pool, 
+                                //  but returning argument+index separately everywhere becomes a nightmare...)
         string_ref_t name;      // macro argument name (identifier)
     } macro_argument_t;
 
@@ -63,11 +65,6 @@
         MacroArgAllocResult_PoolLimitExceeded,
         MacroArgAllocResult_DuplicateArgumentName,
     } macro_argument_alloc_result_t;
-
-    typedef struct {
-        uint8_t poolId;
-    } macro_argref_t;
-
 
 // Variables:
 

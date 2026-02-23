@@ -17,7 +17,7 @@
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
 
-    #define MACRO_STATE_INDEX(S) (S - MacroState)
+    #define MACRO_STATE_SLOT(S) ((S) - MacroState)
 
     #define MAX_MACRO_NUM 255
     #define MACRO_STATE_POOL_SIZE 16
@@ -174,7 +174,7 @@
             // ---- 4-aligned ----
             macro_usb_keyboard_reports_t reports;
 
-            uint8_t argumentCount : 4;
+            uint8_t argumentCount : 4; // TODO: we don't need this; we can calculate it using Macros_CountMacroArgumentsByOwner()
             bool macroHeadersProcessed : 1;
         } ms;
 
