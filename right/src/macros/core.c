@@ -11,6 +11,7 @@
 #include "macros/scancode_commands.h"
 #include "macros/status_buffer.h"
 #include "macros/typedefs.h"
+#include "macros/vars.h"
 #include "module.h"
 #include "postponer.h"
 #include <string.h>
@@ -295,6 +296,9 @@ static macro_result_t endMacro(void)
         S->ms.reportsUsed = false;
         EventVector_Set(EventVector_SendUsbReports);
     }
+
+    // Deallocate all macro arguments owned by this macro
+    Macros_DeallocateMacroArgumentsByOwner(MACRO_STATE_SLOT(S));
 
     freeLocalScopes();
 

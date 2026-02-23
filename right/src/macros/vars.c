@@ -1092,42 +1092,49 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
 // macroArguments allocation and processing
 // ----------------------------------------
 
-string_ref_t createStringRef(const char *start, const char *end) {
+// helper functions to convert to and from StringRefs and StringSegments
+
+static string_ref_t createStringRef(const char *start, const char *end) {
     return (string_ref_t) {
         .offset = start - (const char*)ValidatedUserConfigBuffer.buffer,
         .len = (uint8_t)(end - start),
     };
 }
 
-string_segment_t stringRefToSegment(string_ref_t ref) {
+static string_segment_t stringRefToSegment(string_ref_t ref) {
     return (string_segment_t) {
         .start = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset),
         .end = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len),
     };
 }
 
-const char *stringRefStart(string_ref_t ref) {
+static const char *stringRefStart(string_ref_t ref) {
     return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
 }
 
-const char *stringRefEnd(string_ref_t ref) {
+static const char *stringRefEnd(string_ref_t ref) {
     return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
 }
 
+// Allocates a macro argument in the pool and returns a reference to it. 
+// Fails if an argument with the same name already exists for this owner, 
+// or if the pool limit is exceeded.
+//
+// Returns:
+//    MacroArgAllocResult_Success and sets *outArgRef to new allocated argument on success.
+//    MacroArgAllocResult_DuplicateArgumentName if an argument with the same name already exists for this owner.
+//    MacroArgAllocResult_PoolLimitExceeded if there are no free slots in the pool.
+
 macro_argument_alloc_result_t Macros_AllocateMacroArgument(
-    macro_state_t *owner,
+    uint8_t owner,
     const char *idStart, 
     const char *idEnd, 
     macro_argument_type_t type,
-    uint8_t argNumber,
-    macro_argref_t* outArgRef
+    uint8_t argNumber
 ) {
     // search for existing argument of same owner with the same identifier, error if found
-    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
-        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
-            SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = idStart, .end = idEnd })) {
-            return MacroArgAllocResult_DuplicateArgumentName;
-        }
+    if (Macros_FindMacroArgumentByName(owner, idStart, idEnd)) {
+        return MacroArgAllocResult_DuplicateArgumentName;
     }
 
     // search for an unused slot in the pool
@@ -1135,9 +1142,8 @@ macro_argument_alloc_result_t Macros_AllocateMacroArgument(
         if (macroArguments[i].type == MacroArgType_Unused) {
             macroArguments[i].owner = owner;
             macroArguments[i].type = type;
-            macroArguments[i].id = argNumber;
+            macroArguments[i].idx = argNumber;
             macroArguments[i].name = createStringRef(idStart, idEnd);
-            *outArgRef = (macro_argref_t) { .poolId = i };
             return MacroArgAllocResult_Success;
         }
     }
@@ -1145,10 +1151,68 @@ macro_argument_alloc_result_t Macros_AllocateMacroArgument(
     return MacroArgAllocResult_PoolLimitExceeded;
 }
 
-macro_argument_t *Macros_FindMacroArgumentByName(macro_state_t *owner, const char *nameStart, const char *nameEnd) {
+// Deallocates all macro arguments for the given owner. Used when a macro ends.
+
+void Macros_DeallocateMacroArgumentsByOwner(uint8_t owner) {
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner) {
+            macroArguments[i].type = MacroArgType_Unused;
+        }
+    }
+}
+
+// Retrieve the number of arguments allocated for the given owner.
+
+uint8_t Macros_CountMacroArgumentsByOwner(uint8_t owner) {
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// Finds a macro argument by name for the given owner. Returns NULL if not found.
+
+macro_argument_t *Macros_FindMacroArgumentByName(uint8_t owner, const char *nameStart, const char *nameEnd) {
     for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
         if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
             SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = nameStart, .end = nameEnd })) {
+            return &macroArguments[i];
+        }
+    }
+    return NULL;
+}
+
+// Finds a macro argument index by name for the given owner. Returns 0 if not found.
+// Returns the argument index (1-based) if found, or 0 if not found. 
+// The index is determined by the order of arguments for the same owner in the pool.
+
+uint8_t Macros_FindMacroArgumentIndexByName(uint8_t owner, const char *nameStart, const char *nameEnd) {
+    uint8_t idx = 0; // argument index for this owner
+
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner) {
+            idx++;
+            if (SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = nameStart, .end = nameEnd })) {
+                return idx;
+            }
+        }
+    }
+    return 0; // return 0 if not found; argument indices are 1-based
+}
+
+// Finds a macro argument by index for the given owner.
+
+macro_argument_t *Macros_FindMacroArgumentByIndex(uint8_t owner, uint8_t argIndex) {
+    uint8_t idx = 0; // argument index for this owner
+
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        idx++;
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
+            idx == argIndex) {
             return &macroArguments[i];
         }
     }

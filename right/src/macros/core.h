@@ -17,6 +17,8 @@
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
 
+    #define MACRO_STATE_SLOT(S) ((S) - MacroState)
+
     #define MAX_MACRO_NUM 255
     #define MACRO_STATE_POOL_SIZE 16
     #define MACRO_HISTORY_POOL_SIZE 16
@@ -172,11 +174,9 @@
             bool isDoubletap: 1;
             secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
-            macro_argref_t arguments[MAX_MACRO_ARGUMENT_COUNT];
-
             macro_usb_keyboard_reports_t reports;
 
-            uint8_t argumentCount : 4;
+            uint8_t argumentCount : 4; // TODO: we don't need this; we can calculate it using Macros_CountMacroArgumentsByOwner()
             bool macroHeadersProcessed : 1;
         } ms;
 
