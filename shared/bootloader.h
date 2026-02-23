@@ -21,7 +21,9 @@
             .i2cSlaveAddress = address, \
             .peripheralDetectionTimeoutMs = BOOTLOADER_TIMEOUT_MS, \
             .clockFlags = CLOCK_FLAG_HIGH_SPEED_MODE, \
-            .clockDivider = ~0 \
+            .clockDivider = ~0, \
+            .bootFlags = 0xFF, \
+            .pad0 = 0xFF \
     };
 
 // Typedefs:
@@ -49,6 +51,8 @@
         uint8_t clockFlags;   // The flags in the clockFlags configuration field are enabled if the corresponding bit is cleared (0).
                               // bit 0 - HighSpeed Enable high speed mode (i.e., 48 MHz).
         uint8_t clockDivider; // Inverted value of the divider to use for core and bus clocks when in high speed mode.
+        uint8_t bootFlags;    // One's complement of direct boot flag. 0xFE = direct boot, 0xFF = no direct boot.
+        uint8_t pad0;
     } bootloader_config_t;
 
 // Functions:
