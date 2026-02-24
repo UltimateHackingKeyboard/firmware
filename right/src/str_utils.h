@@ -83,6 +83,8 @@
     const char* NextTok(const char* cmd, const char *cmdEnd);
     const char* NextCmd(const char* cmd, const char *cmdEnd);
     const char* CmdEnd(const char* cmd, const char *cmdEnd);
+    bool ConsumeOneChar(parser_context_t* ctx, char c);
+    bool ConsumeOneDot(parser_context_t* ctx);
     void ConsumeUntilDot(parser_context_t* ctx);
     void ConsumeWhiteAt(parser_context_t* ctx, const char* at);
     const char* SkipWhite(const char* cmd, const char *cmdEnd);
