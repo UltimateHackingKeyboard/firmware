@@ -207,12 +207,14 @@ const char* ConsumedToken(parser_context_t* ctx)
 {
     const char* at = ctx->at;
 
-    at--;
-
-    while (*at <= 32) {
+    if(at > ctx->begin) {
         at--;
     }
-    while (*at > 32 && *at != '.') {
+
+    while (at > ctx->begin && *at <= 32) {
+        at--;
+    }
+    while (at > ctx->begin && *at > 32 && *at != '.') {
         at--;
     }
 
@@ -357,7 +359,7 @@ void ConsumeUntilDot(parser_context_t* ctx)
 // If whitespace is found, and failOnWhite is true, report an error.
 void ConsumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
 {
-    while(*ctx->at > 32 && *ctx->at != c && !isEnd(ctx)) {
+    while(!isEnd(ctx) && *ctx->at > 32 && *ctx->at != c) {
         ctx->at++;
     }
     if (IsEnd(ctx)) {
@@ -379,10 +381,23 @@ void ConsumeUntilDot(parser_context_t* ctx)
     ConsumeUntilCharOrWhite(ctx, '.', true);
 }
 
-//void ConsumeUntilColon(parser_context_t* ctx)
-//{
-//    ConsumeUntilCharOrWhite(ctx, ':', false);
-//}
+// will not consume whitespace after the character.
+// returns true if the character was found, false otherwise.
+bool ConsumeOneChar(parser_context_t* ctx, char c)
+{
+    if (!isEnd(ctx) && *ctx->at == c) {
+        ctx->at++;
+        return true;
+    }
+    return false;
+}
+
+// will not consume whitespace after the dot.
+// returns true if the dot was found, false otherwise.
+bool ConsumeOneDot(parser_context_t* ctx)
+{
+    return ConsumeOneChar(ctx, '.');
+}
 
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
 {

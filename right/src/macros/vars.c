@@ -1026,8 +1026,8 @@ void MacroVariables_RunTests(void) {
 }
 
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
-    ConsumeUntilDot(ctx);
-    uint8_t argId = Macros_ConsumeInt(ctx);
+    ConsumeOneDot(ctx);
+    uint8_t argId = Macros_ConsumeInt(ctx);  // TODO: parse macro argument names in addition to numbers
 
     if (S->ms.currentMacroArgumentOffset == 0) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
