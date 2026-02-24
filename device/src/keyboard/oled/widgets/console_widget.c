@@ -79,7 +79,7 @@ void Oled_Log(const char *fmt, ...)
 {
     va_list myargs;
     va_start(myargs, fmt);
-    char buffer[256];
-    vsprintf(buffer, fmt, myargs);
+    char buffer[CONSOLE_BUFFER_LINE_LENGTH];
+    vsnprintf(buffer, sizeof(buffer), fmt, myargs);
     logConstant(buffer);
 }

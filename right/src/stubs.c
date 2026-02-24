@@ -30,7 +30,7 @@
     ATTRS void Oled_RequestRedraw() {};
     ATTRS void RoundTripTest_Run() {};
     ATTRS void Resend_RequestResendSync() {};
-    ATTRS void PairingScreen_Feedback(bool success) {};
+    ATTRS void PairingScreen_Feedback(const char* message) {};
     ATTRS void StateSync_CheckFirmwareVersions() {};
     ATTRS void StateSync_CheckDongleProtocolVersion() {};
     ATTRS void Trace(char a) {};

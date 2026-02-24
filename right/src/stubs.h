@@ -50,7 +50,7 @@
     extern void Oled_RequestRedraw();
     extern void RoundTripTest_Run();
     extern void Resend_RequestResendSync();
-    extern void PairingScreen_Feedback(bool success);
+    extern void PairingScreen_Feedback(const char* message);
     extern void StateSync_CheckFirmwareVersions();
     extern void StateSync_CheckDongleProtocolVersion();
     extern void PowerMode_PutBackToSleepMaybe(void);

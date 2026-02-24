@@ -1,4 +1,5 @@
 #include "layer_switcher.h"
+#include "key_history.h"
 #include "keymap.h"
 #include "layer.h"
 #include "layer_stack.h"
@@ -109,21 +110,17 @@ void updateActiveLayer() {
  *   such action was bound on a key whose base layer action hapenned to be a layer switch.)
  */
 
-key_state_t *doubleTapSwitchLayerKey;
 
-void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
-    static uint32_t doubleTapSwitchLayerStartTime = 0;
+void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t *keyState) {
     static uint32_t doubleTapSwitchLayerTriggerTime = 0;
+    static key_state_t *doubleTapSwitchLayerKey;
 
     if(KeyState_ActivatedNow(keyState)) {
         LayerStack_LegacyPop(layer);
-        if (doubleTapSwitchLayerKey == keyState && Timer_GetElapsedTimeAndSetCurrent(&doubleTapSwitchLayerStartTime) < Cfg.DoubletapTimeout) {
+        if (KeyHistory_WasLastDoubletap()) {
             LayerStack_LegacyPush(layer);
-            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
-            doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
-        } else {
             doubleTapSwitchLayerKey = keyState;
-            doubleTapSwitchLayerStartTime = Timer_GetCurrentTime();
+            doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
         }
     }
 
@@ -133,15 +130,6 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState) {
         {
             LayerStack_LegacyPop(layer);
         }
-    }
-}
-
-// If some other key is pressed between taps of a possible doubletap, discard the doubletap
-// Also, doubleTapSwitchKey is used to cancel long hold toggle, so reset it only if no layer is locked
-void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState) {
-    bool noLayerIsToggled = LayerStack_Size == 1;
-    if (doubleTapSwitchLayerKey != keyState && noLayerIsToggled) {
-        doubleTapSwitchLayerKey = NULL;
     }
 }
 
