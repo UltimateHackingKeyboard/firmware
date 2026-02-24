@@ -107,16 +107,30 @@ struct usb_manager {
             if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
                 switch (dev.power_state()) {
                 case usb::power::state::L2_SUSPEND:
+                    // TODO: use a common API instead of device specific
+#if DEVICE_IS_UHK60
+                    if (dev.configured()) {
+                        PowerMode_ActivateMode(
+                            PowerMode_Uhk60Sleep, false, false, "received device suspend event");
+                    }
+#else
                     PowerMode_SetUsbAwake(false);
+#endif
                     break;
                 case usb::power::state::L0_ON:
+#if DEVICE_IS_UHK60
+                    PowerMode_ActivateMode(
+                        PowerMode_Awake, false, false, "received device resume event");
+#else
                     PowerMode_SetUsbAwake(true);
+#endif
                     break;
                 default:
                     break;
                 }
             }
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
+                // reset the semaphore on USB configuration or reset
                 UsbReportUpdateSemaphore = 0;
             }
         });
