@@ -1062,7 +1062,7 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
 
         macro_argument_t *arg = Macros_FindMacroArgumentByName(MACRO_STATE_SLOT(S), idStart, idEnd);
         if (arg == NULL) {
-            Macros_ReportErrorPrintf(ctx, "Argument with name '$macroArg.%s' not found!", OneWord(ctx));
+            Macros_ReportErrorPrintf(ctx->at, "Argument with name '$macroArg.%s' not found!", OneWord(ctx));
             return noneVar();
         }
         argIdx = arg->idx;
@@ -1086,13 +1086,13 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
     // at this point, we have argument index and argument type.
 
     if (S->ms.currentMacroArgumentOffset == 0) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argIdx);
     }
 
     string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argIdx);
 
     if (str.start == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argId);
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argIdx);
         return noneVar();
     }
 
@@ -1122,7 +1122,7 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
     if (argType == MacroArgType_Any) {
         // for type 'any', consume the value the "old way"
         // (compatibility with existing macros that don't declare their argument types).
-        macro_variable_t res = consumeValue(&varCtx);
+        return consumeValue(&varCtx);
     } else {
         // for declared types, consume the value according to type.
         switch (argType) {
@@ -1140,7 +1140,6 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
                 return noneVar();
         }
     }
-    return res;
 }
 
 static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
