@@ -100,7 +100,7 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
     macro_variable_t res = { .type = MacroVariableType_Int, .asInt = 0 };
 
     bool numFound = false;
-    while(*ctx->at > 47 && *ctx->at < 58 && ctx->at < ctx->end) {
+    while(*ctx->at >= '0' && *ctx->at <= '9' && ctx->at < ctx->end) {
         res.asInt = res.asInt*10 + ((uint8_t)(*ctx->at))-48;
         ctx->at++;
         numFound = true;
@@ -1027,11 +1027,18 @@ void MacroVariables_RunTests(void) {
 
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
     if (!ConsumeOneDot(ctx)) {
-        Macros_ReportErrorTok(ctx, "Expected '.' after 'macroArg'");
+        Macros_ReportErrorPos(ctx, "Expected '.' after '$macroArg'");
         return noneVar();
     };
 
-    uint8_t argId = Macros_ConsumeInt(ctx);  // TODO: parse macro argument names in addition to numbers
+    if (!IsDigit(ctx)) {
+        // TODO: parse macro argument name and convert to number.
+        //       basically, Macros_FindMacroArgumentByName(), error if not found.
+        //       if found, consume the name and retrieve argument number and argument type.
+        Macros_ReportErrorPos(ctx, "Expected argument number after '$macroArg.'");
+        return noneVar();
+    }
+    uint8_t argId = Macros_ConsumeInt(ctx);
 
     if (S->ms.currentMacroArgumentOffset == 0) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
@@ -1053,6 +1060,8 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         .nestingBound = ctx->nestingBound,
     };
 
+    // TODO: if argument type is known, parse value accordingly.
+    //       if type == any, then TryExpandMacroTemplateOnce().
     macro_variable_t res = consumeValue(&varCtx);
 
     return res;

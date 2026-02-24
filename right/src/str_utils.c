@@ -133,6 +133,14 @@ bool IsEnd(parser_context_t* ctx) {
     return isEnd(ctx);
 }
 
+static bool isDigit(parser_context_t* ctx) {
+    return *ctx->at >= '0' && *ctx->at <= '9';
+}
+
+bool IsDigit(parser_context_t* ctx) {
+    return isDigit(ctx);
+}
+
 static bool isCommentLeader(parser_context_t* ctx) {
     return ctx->at + 1 < ctx->end && ctx->at[0] == '/' && ctx->at[1] == '/';
 }
