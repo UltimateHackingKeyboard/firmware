@@ -101,7 +101,7 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
 
     bool numFound = false;
     while(*ctx->at >= '0' && *ctx->at <= '9' && ctx->at < ctx->end) {
-        res.asInt = res.asInt*10 + ((uint8_t)(*ctx->at))-48;
+        res.asInt = res.asInt*10 + ((uint8_t)(*ctx->at))-'0';
         ctx->at++;
         numFound = true;
     }
@@ -111,8 +111,8 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
         ctx->at++;
 
         float b = 0.1;
-        while(*ctx->at > 47 && *ctx->at < 58 && ctx->at < ctx->end) {
-            res.asFloat += (((uint8_t)(*ctx->at))-48)*b;
+        while(*ctx->at >= '0' && *ctx->at <= '9' && ctx->at < ctx->end) {
+            res.asFloat += (((uint8_t)(*ctx->at))-'0')*b;
             b = b*0.1f;
             ctx->at++;
             numFound = true;
@@ -125,6 +125,19 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
 
     ConsumeWhite(ctx);
     return res;
+}
+
+static macro_variable_t consumeBool(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "false")) {
+        return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = false };
+    } 
+    else if (ConsumeToken(ctx, "true")) {
+        return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = true };
+    }
+
+    Macros_ReportErrorTok(ctx, "Boolean value (true/false) expected");
+    return noneVar();
 }
 
 static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
@@ -144,7 +157,6 @@ static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
 
     return stringVar((string_ref_t){ .offset = offset, .len = len });
 }
-
 
 macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
 {
@@ -1026,30 +1038,74 @@ void MacroVariables_RunTests(void) {
 }
 
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
+    uint8_t argIdx;
+    macro_argument_type_t argType;
+
     if (!ConsumeOneDot(ctx)) {
         Macros_ReportErrorPos(ctx, "Expected '.' after '$macroArg'");
         return noneVar();
     };
 
     if (!IsDigit(ctx)) {
+        // argument accessed by name, e.g., $macroArg.my_param
+
+        const char *idStart = ctx->at;
+        const char *idEnd = IdentifierEnd(ctx);
+        if (idStart == idEnd) {
+            Macros_ReportErrorPos(ctx, "Expected identifier after '$macroArg.'");
+            return noneVar();
+        }
+
         // TODO: parse macro argument name and convert to number.
         //       basically, Macros_FindMacroArgumentByName(), error if not found.
         //       if found, consume the name and retrieve argument number and argument type.
-        Macros_ReportErrorPos(ctx, "Expected argument number after '$macroArg.'");
-        return noneVar();
+
+        macro_argument_t *arg = Macros_FindMacroArgumentByName(MACRO_STATE_SLOT(S), idStart, idEnd);
+        if (arg == NULL) {
+            Macros_ReportErrorPrintf(ctx, "Argument with name '$macroArg.%s' not found!", OneWord(ctx));
+            return noneVar();
+        }
+        argIdx = arg->idx;
+        argType = arg->type;
+        ConsumeWhiteAt(ctx, idEnd);
+    } else {
+        // argument accessed by number, e.g., $macroArg.1
+        argIdx = Macros_ConsumeInt(ctx);
+        macro_argument_t *arg = Macros_FindMacroArgumentByIndex(MACRO_STATE_SLOT(S), argIdx);
+        if (arg == NULL) {
+            argType = MacroArgType_Any;
+            // TODO: assume type 'any' for this argument; 
+            //       it has probably not been declared in any macroArg statement.
+            Macros_ReportErrorPrintf(ctx->at, "Argument with id %d not found!", argIdx);
+            return noneVar();
+        } else {
+            argType = arg->type;
+        }
     }
-    uint8_t argId = Macros_ConsumeInt(ctx);
+
+    // at this point, we have argument index and argument type.
 
     if (S->ms.currentMacroArgumentOffset == 0) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
     }
 
-    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argId);
+    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argIdx);
 
     if (str.start == NULL) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argId);
         return noneVar();
     }
+
+    // TODO: if argument type is known, parse value accordingly.
+    //       if type == any, then expand??
+
+//    if (argType == MacroArgType_Any) {
+//        Trace_Printc("Argument type is any, trying to parse as template.");
+//        PushParserContext(ctx, str.start, str.start, str.end);
+//        if (Macros_ParserError) {
+//            return noneVar();
+//        }
+//    }
 
     parser_context_t varCtx = (parser_context_t) {
         .at = str.start,
@@ -1060,10 +1116,30 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         .nestingBound = ctx->nestingBound,
     };
 
-    // TODO: if argument type is known, parse value accordingly.
-    //       if type == any, then TryExpandMacroTemplateOnce().
-    macro_variable_t res = consumeValue(&varCtx);
+//  old code:  macro_variable_t res = consumeValue(&varCtx);
 
+//  new code:
+    if (argType == MacroArgType_Any) {
+        // for type 'any', consume the value the "old way"
+        // (compatibility with existing macros that don't declare their argument types).
+        macro_variable_t res = consumeValue(&varCtx);
+    } else {
+        // for declared types, consume the value according to type.
+        switch (argType) {
+            case MacroArgType_Int:
+                return consumeNumericValue(&varCtx); // should be: consumeIntValue()
+            case MacroArgType_Float:
+                return consumeNumericValue(&varCtx); // should be: consumeFloatValue()
+            case MacroArgType_Bool:
+                return consumeBool(&varCtx);
+            case MacroArgType_String: {
+                return consumeStringLiteral(&varCtx);
+            }
+            default:
+                Macros_ReportErrorNum("Unexpected argument type:", argType, NULL);
+                return noneVar();
+        }
+    }
     return res;
 }
 
