@@ -269,6 +269,10 @@ extern "C" float VerticalScrollMultiplier(void)
         break;
     }
 #endif
+    // workaround for https://github.com/UltimateHackingKeyboard/firmware/issues/1406
+    if (USB_IsMsHost()) {
+        return mouse_app::MAX_SCROLL_RESOLUTION;
+    }
     return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
 }
 
@@ -288,6 +292,10 @@ extern "C" float HorizontalScrollMultiplier(void)
         break;
     }
 #endif
+    // workaround for https://github.com/UltimateHackingKeyboard/firmware/issues/1406
+    if (USB_IsMsHost()) {
+        return mouse_app::MAX_SCROLL_RESOLUTION;
+    }
     return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
 }
 

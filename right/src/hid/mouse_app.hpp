@@ -14,10 +14,11 @@ extern "C" {
 class mouse_app : public hid::application {
     static constexpr auto LAST_BUTTON = hid::page::button(HID_MOUSE_BUTTON_COUNT);
     static constexpr int16_t AXIS_LIMIT = 4096;
-    static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
     static constexpr int16_t WHEEL_LIMIT = 32767;
 
   public:
+    static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
+
     static constexpr auto report_desc()
     {
         using namespace hid::page;
