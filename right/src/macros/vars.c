@@ -1027,11 +1027,16 @@ void MacroVariables_RunTests(void) {
 
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
     if (!ConsumeOneDot(ctx)) {
-        Macros_ReportErrorTok(ctx, "Expected '.' after 'macroArg'");
+        Macros_ReportErrorPos(ctx, "Expected '.' after '$macroArg'");
         return noneVar();
     };
 
-    uint8_t argId = Macros_ConsumeInt(ctx);  // TODO: parse macro argument names in addition to numbers
+    if (!IsDigit(ctx)) {
+        // TODO: parse macro argument name and convert to number
+        Macros_ReportErrorPos(ctx, "Expected argument number after '$macroArg.'");
+        return noneVar();
+    }
+    uint8_t argId = Macros_ConsumeInt(ctx);
 
     if (S->ms.currentMacroArgumentOffset == 0) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
