@@ -42,7 +42,7 @@ jobs:
           app-path: firmware
           manifest-file-name: west_nrfsdk.yml
           toolchains: arm-zephyr-eabi
-          sdk-version: 0.16.8
+          sdk-version: 0.17.4
 
       - name: Git user setup
         run: |
