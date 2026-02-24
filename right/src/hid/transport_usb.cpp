@@ -10,6 +10,9 @@ extern "C" {
     #include "device_state.h"
     #include <nrfx_power.h>
     #include <zephyr/kernel.h>
+#else
+    #include "buspal/bus_pal_hardware.h"
+    #include "trace.h"
 #endif
 }
 #ifdef __ZEPHYR__
@@ -153,7 +156,13 @@ struct usb_manager {
 #ifndef __ZEPHYR__
 extern "C" void USB0_IRQHandler(void)
 {
-    usb_manager::mac().handle_irq();
+    Trace_Printc("<i6");
+    if (usb::df::nxp::mcux_mac::notification_routing) {
+        usb_manager::mac().handle_irq();
+    } else {
+        USB_DeviceKhciIsrFunction(BuspalCompositeUsbDevice.device_handle);
+    }
+    Trace_Printc(">");
     SDK_ISR_EXIT_BARRIER;
 }
 #endif
