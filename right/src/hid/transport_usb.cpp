@@ -41,6 +41,7 @@ struct usb_manager {
     static auto &mac() { return instance().mac_; }
     static usb::df::device &device() { return instance().device_; }
     static bool active() { return device().is_open(); }
+    static bool ms_host() { return instance().ms_enum_.msos2_support(); }
 
     static usb_manager &instance()
     {
@@ -178,6 +179,11 @@ extern "C" bool USB_RemoteWakeup()
     }
 #endif
     return err == usb::result::ok;
+}
+
+extern "C" bool USB_IsMsHost(void)
+{
+    return usb_manager::ms_host();
 }
 
 extern "C" void USB_SetSerialNumber(uint32_t serialNumber)
