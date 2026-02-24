@@ -952,13 +952,6 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    if (Macros_DryRun) {
-        // TODO: actually parse macroArg command
-
-        while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
-
-        return MacroResult_Header;
-    }
     // parse the argument name (identifier)
     const char *idStart = ctx->at;
     const char *idEnd = IdentifierEnd(ctx); // possibly use ConsumeIdentifier here
