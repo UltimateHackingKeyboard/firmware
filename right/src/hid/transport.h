@@ -44,6 +44,7 @@ void USB_SetSerialNumber(uint32_t serialNumber);
 void USB_Enable(void);
 bool USB_RemoteWakeup(void);
 void USB_Reconfigure(void);
+bool USB_IsMsHost(void);
 
 // HOGP (BLE HID) management
 void HOGP_Enable(void);
