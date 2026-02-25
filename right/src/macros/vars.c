@@ -107,7 +107,7 @@ static macro_variable_t consumeNumericValueOfType(parser_context_t* ctx, macro_n
     }
     if (*ctx->at == '.') {
         if (expectedType == MacroNumericalValueType_Int) {
-            Macros_ReportErrorTok(ctx, "Integer value expected");
+            Macros_ReportErrorTok(ctx, "Integer value expected but found:");
             return noneVar();
         }
         res.type = MacroVariableType_Float;
@@ -123,7 +123,7 @@ static macro_variable_t consumeNumericValueOfType(parser_context_t* ctx, macro_n
         }
     }
     if (!numFound) {
-        Macros_ReportErrorTok(ctx, "Numeric value expected");
+        Macros_ReportErrorTok(ctx, "Numeric value expected but found:");
         return noneVar();
     }
 
@@ -160,7 +160,7 @@ static macro_variable_t consumeBool(parser_context_t* ctx)
         return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = true };
     }
 
-    Macros_ReportErrorTok(ctx, "Boolean value (true/false) expected");
+    Macros_ReportErrorTok(ctx, "Boolean value (true/false) expected but found:");
     return noneVar();
 }
 
@@ -430,6 +430,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
 
 static macro_variable_t consumeValue(parser_context_t* ctx)
 {
+    // TODO: this shouldn't be here, when properly handled by $macroArg :any type.
     if (*ctx->at == '&') {
         TryExpandMacroTemplateOnce(ctx);
         if (Macros_ParserError) {
