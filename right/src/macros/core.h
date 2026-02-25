@@ -176,7 +176,7 @@
             // ---- 4-aligned ----
             macro_usb_keyboard_reports_t reports;
 
-            uint8_t argumentCount : 4; // TODO: we don't need this; we can calculate it using Macros_CountMacroArgumentsByOwner()
+            //uint8_t argumentCount : 4; // TODO: we don't need this; we can calculate it using Macros_CountMacroArgumentsByOwner()
             bool macroHeadersProcessed : 1;
         } ms;
 

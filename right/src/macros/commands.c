@@ -1001,7 +1001,12 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         argType = MacroArgType_Any;
     }
 
-    // allocate an argument slot if there is room
+    // The following two blocks (counting arguments, then allocating argument) 
+    // could be optimised to walk the macro arg pool only once.
+    // The current implementation is straightforward to read, and the slight performance
+    // decrease at the start of a macro (when macroArg commands are processed) seems negligible.
+
+    // check whether we are exceeding the arguments for this macro
     uint8_t argNumber = Macros_CountMacroArgumentsByOwner(MACRO_STATE_SLOT(S));
     if (argNumber >= MAX_MACRO_ARGUMENT_COUNT) {
         Macros_ReportErrorPos(ctx, "Maximum number of macro arguments exceeded");

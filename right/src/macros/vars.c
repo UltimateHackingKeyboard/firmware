@@ -1056,10 +1056,8 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
             return noneVar();
         }
 
-        // TODO: parse macro argument name and convert to number.
-        //       basically, Macros_FindMacroArgumentByName(), error if not found.
-        //       if found, consume the name and retrieve argument number and argument type.
-
+        // parse macro argument name and convert to number; error if not found.
+        // if found, consume the name and retrieve argument number and argument type.
         macro_argument_t *arg = Macros_FindMacroArgumentByName(MACRO_STATE_SLOT(S), idStart, idEnd);
         if (arg == NULL) {
             Macros_ReportErrorPrintf(ctx->at, "Argument with name '$macroArg.%s' not found!", OneWord(ctx));
@@ -1070,14 +1068,13 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         ConsumeWhiteAt(ctx, idEnd);
     } else {
         // argument accessed by number, e.g., $macroArg.1
+
         argIdx = Macros_ConsumeInt(ctx);
         macro_argument_t *arg = Macros_FindMacroArgumentByIndex(MACRO_STATE_SLOT(S), argIdx);
         if (arg == NULL) {
+            // if not found (= undeclared), assume type 'any' for this argument
+            // (backwards compatibility to macro arguments without macroArg declaration).
             argType = MacroArgType_Any;
-            // TODO: assume type 'any' for this argument; 
-            //       it has probably not been declared in any macroArg statement.
-            Macros_ReportErrorPrintf(ctx->at, "Argument with id %d not found!", argIdx);
-            return noneVar();
         } else {
             argType = arg->type;
         }
@@ -1096,17 +1093,6 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         return noneVar();
     }
 
-    // TODO: if argument type is known, parse value accordingly.
-    //       if type == any, then expand??
-
-//    if (argType == MacroArgType_Any) {
-//        Trace_Printc("Argument type is any, trying to parse as template.");
-//        PushParserContext(ctx, str.start, str.start, str.end);
-//        if (Macros_ParserError) {
-//            return noneVar();
-//        }
-//    }
-
     parser_context_t varCtx = (parser_context_t) {
         .at = str.start,
         .begin = str.start,
@@ -1116,9 +1102,6 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         .nestingBound = ctx->nestingBound,
     };
 
-//  old code:  macro_variable_t res = consumeValue(&varCtx);
-
-//  new code:
     if (argType == MacroArgType_Any) {
         // for type 'any', consume the value the "old way"
         // (compatibility with existing macros that don't declare their argument types).
@@ -1127,9 +1110,9 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         // for declared types, consume the value according to type.
         switch (argType) {
             case MacroArgType_Int:
-                return consumeNumericValue(&varCtx); // should be: consumeIntValue()
+                return consumeNumericValue(&varCtx); // TODO: should be: consumeIntValue()
             case MacroArgType_Float:
-                return consumeNumericValue(&varCtx); // should be: consumeFloatValue()
+                return consumeNumericValue(&varCtx); // TODO: should be: consumeFloatValue()
             case MacroArgType_Bool:
                 return consumeBool(&varCtx);
             case MacroArgType_String: {

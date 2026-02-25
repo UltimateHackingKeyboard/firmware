@@ -56,7 +56,8 @@
         macro_argument_type_t type;
         uint8_t idx;            // index of the argument in the macro's argument list (1-based)
                                 // (we could always calculate idx by looping through the pool, 
-                                //  but returning argument+index separately everywhere becomes a nightmare...)
+                                //  but returning argument+index separately everywhere becomes 
+                                //  a nightmare...)
         string_ref_t name;      // macro argument name (identifier)
     } macro_argument_t;
 
