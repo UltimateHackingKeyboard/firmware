@@ -95,7 +95,7 @@ static macro_variable_t noneVar()
     return (macro_variable_t) { .asInt = 1, .type = MacroVariableType_None };
 }
 
-static macro_variable_t consumeNumericValue(parser_context_t* ctx)
+static macro_variable_t consumeNumericValueOfType(parser_context_t* ctx, macro_numericalvalue_type_t expectedType)
 {
     macro_variable_t res = { .type = MacroVariableType_Int, .asInt = 0 };
 
@@ -106,6 +106,10 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
         numFound = true;
     }
     if (*ctx->at == '.') {
+        if (expectedType == MacroNumericalValueType_Int) {
+            Macros_ReportErrorTok(ctx, "Integer value expected");
+            return noneVar();
+        }
         res.type = MacroVariableType_Float;
         res.asFloat = (float) res.asInt;
         ctx->at++;
@@ -123,8 +127,28 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
         return noneVar();
     }
 
+    if (expectedType == MacroNumericalValueType_Float && res.type == MacroVariableType_Int) {
+        res.asFloat = (float) res.asInt;
+        res.type = MacroVariableType_Float;
+    }
+
     ConsumeWhite(ctx);
     return res;
+}
+
+static macro_variable_t consumeIntValue(parser_context_t* ctx)
+{
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Int;
+}
+
+static macro_variable_t consumeFloatValue(parser_context_t* ctx)
+{
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Float);
+}
+
+static macro_variable_t consumeNumericValue(parser_context_t* ctx)
+{
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Any);
 }
 
 static macro_variable_t consumeBool(parser_context_t* ctx)
@@ -1110,9 +1134,9 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         // for declared types, consume the value according to type.
         switch (argType) {
             case MacroArgType_Int:
-                return consumeNumericValue(&varCtx); // TODO: should be: consumeIntValue()
+                return consumeIntValue(&varCtx);
             case MacroArgType_Float:
-                return consumeNumericValue(&varCtx); // TODO: should be: consumeFloatValue()
+                return consumeFloatValue(&varCtx);
             case MacroArgType_Bool:
                 return consumeBool(&varCtx);
             case MacroArgType_String: {

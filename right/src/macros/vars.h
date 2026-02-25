@@ -22,6 +22,12 @@
 // Typedefs:
 
     typedef enum {
+        MacroNumericalValueType_Any = 0,
+        MacroNumericalValueType_Int,
+        MacroNumericalValueType_Float,
+    } macro_numericalvalue_type_t;
+
+    typedef enum {
         MacroVariableType_Int,
         MacroVariableType_Float,
         MacroVariableType_Bool,
