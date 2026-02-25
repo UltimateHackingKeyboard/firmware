@@ -1012,7 +1012,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     macro_argument_alloc_result_t res = Macros_AllocateMacroArgument(MACRO_STATE_SLOT(S), idStart, idEnd, argType, argNumber+1);
     switch (res) {
     case MacroArgAllocResult_Success:
-        // macro arggument successfully allocated
+        // macro argument successfully allocated
         break;
     case MacroArgAllocResult_PoolLimitExceeded:
         Macros_ReportErrorPos(ctx, "Too many arguments across simultaneously active macros (argument pool exhausted)");
