@@ -1028,7 +1028,8 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     }
 
     // rest of command is descriptive label, ignore. TODO: Should be parsed as string literal.
-    while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
+    //while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
+    (void) consumeStringLiteral(ctx);
 
     return MacroResult_Header;
 }
