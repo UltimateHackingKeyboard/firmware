@@ -1027,9 +1027,9 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         return MacroResult_Header;
     }
 
-    // rest of command is descriptive label, ignore. TODO: Should be parsed as string literal.
+    // rest of command is descriptive label, ignore. TODO: Should be parsed as string token.
     //while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
-    (void) consumeStringLiteral(ctx);
+    Macros_ConsumeStringToken(ctx);
 
     return MacroResult_Header;
 }
