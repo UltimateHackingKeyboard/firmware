@@ -138,7 +138,7 @@ static macro_variable_t consumeNumericValueOfType(parser_context_t* ctx, macro_n
 
 static macro_variable_t consumeIntValue(parser_context_t* ctx)
 {
-    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Int;
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Int);
 }
 
 static macro_variable_t consumeFloatValue(parser_context_t* ctx)
@@ -1203,13 +1203,15 @@ static string_segment_t stringRefToSegment(string_ref_t ref) {
     };
 }
 
-static const char *stringRefStart(string_ref_t ref) {
-    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
-}
+// currently unused:
+//static const char *stringRefStart(string_ref_t ref) {
+//    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
+//}
 
-static const char *stringRefEnd(string_ref_t ref) {
-    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
-}
+// currently unused:
+//static const char *stringRefEnd(string_ref_t ref) {
+//    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
+//}
 
 // Allocates a macro argument in the pool and returns a reference to it. 
 // Fails if an argument with the same name already exists for this owner, 
