@@ -480,6 +480,8 @@ macro_result_t Macros_ProcessTextAction(void)
 
 static macro_action_t decodeKeyAndConsume(parser_context_t* ctx, macro_sub_action_t defaultSubAction)
 {
+    // TODO: allow $macroArg.xxx for type scancode ("modded scancode") here as well
+
     macro_action_t action;
     const char* end = TokEnd(ctx->at, ctx->end);
     MacroShortcutParser_Parse(ctx->at, end, defaultSubAction, &action, NULL);

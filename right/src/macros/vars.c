@@ -1129,7 +1129,10 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
     if (argType == MacroArgType_Any) {
         // for type 'any', consume the value the "old way"
         // (compatibility with existing macros that don't declare their argument types).
-        return consumeValue(&varCtx);
+        // but that doesn't work well ($macroArg vs. &macroArg).
+
+        // TODO: really, we should probably handle template expansion here (treat is as &macroArg).
+        return consumeValue(&varCtx);   // this has limited functionality
     } else {
         // for declared types, consume the value according to type.
         switch (argType) {

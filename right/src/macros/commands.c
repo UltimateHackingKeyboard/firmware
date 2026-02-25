@@ -1373,6 +1373,8 @@ conditionPassed:
 
 uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
 {
+    // TODO: allow $macroArg.xxx for type keyId here as well
+
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
