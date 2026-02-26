@@ -505,7 +505,7 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
         default:
             goto failed;
     }
-a   a   
+
 failed:
     if (IsIdentifierChar(*ctx->at)) {
         Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '\"%s\"'?", OneWord(ctx));
