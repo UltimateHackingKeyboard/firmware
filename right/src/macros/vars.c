@@ -1132,7 +1132,9 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         // (compatibility with existing macros that don't declare their argument types).
         // but that doesn't work well ($macroArg vs. &macroArg).
 
-        // TODO: really, we should probably handle template expansion here (treat is as &macroArg).
+        // TODO: really, we should probably handle template expansion here (treat it as &macroArg).
+        //       Currently, it fails when unquoted strings are supplied as argument value, and
+        //       it fails with a very weird error message.
         return consumeValue(&varCtx);   // this has limited functionality
     } else {
         // for declared types, consume the value according to type.
