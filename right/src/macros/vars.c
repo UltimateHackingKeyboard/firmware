@@ -1109,6 +1109,7 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
 
     if (S->ms.currentMacroArgumentOffset == 0) {
         Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argIdx);
+        return noneVar();
     }
 
     string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argIdx);
@@ -1118,27 +1119,27 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         return noneVar();
     }
 
-    parser_context_t varCtx = (parser_context_t) {
-        .at = str.start,
-        .begin = str.start,
-        .end = str.end,
-        .macroState = ctx->macroState,
-        .nestingLevel = ctx->nestingLevel,
-        .nestingBound = ctx->nestingBound,
-    };
-
     if (argType == MacroArgType_Any) {
-        // for type 'any', consume the value the "old way"
-        // (compatibility with existing macros that don't declare their argument types).
-        // but that doesn't work well ($macroArg vs. &macroArg).
+        // for type 'any', consume the value as a template expansion (i.e. &macroArg)
+        // for compatibility with existing macros that don't declare their argument types.
 
-        // TODO: really, we should probably handle template expansion here (treat it as &macroArg).
-        //       Currently, it fails when unquoted strings are supplied as argument value, and
-        //       it fails with a very weird error message.
-        return consumeValue(&varCtx);   // this has limited functionality
+        PushParserContext(ctx, str.start, str.start, str.end);
+        //if (Macros_ParserError) {
+        //    return noneVar();
+       // }
+        return consumeValue(ctx);
     } else {
-        // for declared types, consume the value according to type.
-        switch (argType) {
+            // for declared types, consume the value according to type.
+            parser_context_t varCtx = (parser_context_t) {
+                .at = str.start,
+                .begin = str.start,
+                .end = str.end,
+                .macroState = ctx->macroState,
+                .nestingLevel = ctx->nestingLevel,
+                .nestingBound = ctx->nestingBound,
+            };
+        
+            switch (argType) {
             case MacroArgType_Int:
                 return consumeIntValue(&varCtx);
             case MacroArgType_Float:
