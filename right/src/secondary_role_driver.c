@@ -125,6 +125,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     if (reachedTimeout) {
         if (isDoubletap && Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary) {
+            KeyHistory_ConsumeDoubletap(resolutionKey, resolutionKey->activationId);
             RESOLVED(SecondaryRoleState_Primary);
         }
         if (isActiveTimeout) {

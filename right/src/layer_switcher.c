@@ -118,6 +118,7 @@ void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t *keyState) {
     if(KeyState_ActivatedNow(keyState)) {
         LayerStack_LegacyPop(layer);
         if (KeyHistory_WasLastDoubletap()) {
+            KeyHistory_ConsumeDoubletap(keyState, keyState->activationId);
             LayerStack_LegacyPush(layer);
             doubleTapSwitchLayerKey = keyState;
             doubleTapSwitchLayerTriggerTime = Timer_GetCurrentTime();
