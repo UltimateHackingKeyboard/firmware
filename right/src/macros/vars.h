@@ -28,11 +28,11 @@
     } macro_numericalvalue_type_t;
 
     typedef enum {
+        MacroVariableType_None = 0,
         MacroVariableType_Int,
         MacroVariableType_Float,
         MacroVariableType_Bool,
         MacroVariableType_String,
-        MacroVariableType_None,
     } macro_variable_type_t;
 
     typedef struct {

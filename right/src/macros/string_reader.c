@@ -12,12 +12,165 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+// new code:
+
 typedef enum {
-   StringType_Raw,
-   StringType_DoubleQuote,
-   StringType_SingleQuote,
+    StringType_Undetermined = 0,
+    StringType_Raw,
+    StringType_DoubleQuote,
+    StringType_SingleQuote,
+    StringType_Verbatim,
 } string_type_t;
 
+typedef struct {
+    const char* at;
+    uint16_t stringOffset;
+    uint16_t index;
+    uint16_t subIndex;
+    string_type_t stringType;
+} string_reader_context_t;
+
+static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
+{
+    stringCtx->at = ctx->at;
+    stringCtx->stringOffset = 0;
+    stringCtx->index = 0;
+    stringCtx->subIndex = 0;
+    if (mode == StrReadMode_Verbatim) {
+        stringCtx->stringType = StringType_Verbatim;
+    } else {
+        stringCtx->stringType = StringType_Undetermined;
+    }
+}
+
+#if 0
+static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
+{
+    if (at >= ctx->end) {
+        return '\0';
+    }
+
+    switch(*at) {
+        case '\\':
+            if (stringType == StringType_SingleQuote || at+1 == ctx->end) {
+                goto normalChar;
+            } else {
+                (*index)++;
+                at++;
+                switch (*at) {
+                    case 'n':
+                        (*index)++;
+                        return '\n';
+                    default:
+                        (*index)++;
+                        return *at;
+                }
+            }
+        case '"':
+            if (stringType == StringType_DoubleQuote) {
+                at++;
+                (*index)++;
+                return '\0';
+            } else {
+                goto normalChar;
+            }
+        case '\'':
+            if (stringType == StringType_SingleQuote) {
+                at++;
+                (*index)++;
+                return '\0';
+            } else {
+                goto normalChar;
+            }
+        case '\n':
+            return '\0';
+        case '$':
+            if (stringType == StringType_SingleQuote) {
+                goto normalChar;
+            } else {
+                parser_context_t ctx2 = {
+                    .macroState = ctx->macroState,
+                    .begin = ctx->begin,
+                    .at = at,
+                    .end = ctx->end,
+                    .nestingLevel = ctx->nestingLevel,
+                    .nestingBound = ctx->nestingLevel,
+                };
+                ConsumeCommentsAsWhite(false);
+                char res = consumeExpressionChar(&ctx2, stringType, subIndex);
+                ConsumeCommentsAsWhite(true);
+
+                if (ctx2.nestingLevel != ctx->nestingLevel) {
+                    Macros_ReportError("Macro template has overflown expression boundary! Undefined behavior coming!", ctx2.at, ctx2.end);
+                    while (ctx2.nestingLevel > ctx->nestingLevel && PopParserContext(&ctx2)) {
+                    }
+                    *index += 1;
+                    return '$';
+                }
+
+                if (*subIndex == 0) {
+                    *index += ctx2.at - at;
+                }
+                return res;
+            }
+        default:
+        normalChar:
+            (*index)++;
+            return *at;
+    }
+}
+
+static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
+{
+    const char* at = ctx->at;
+
+    at += stringCtx->stringOffset;
+
+    if (stringCtx->stringType == StringType_Verbatim) {
+        char res = StrRead_ConsumeCharInString(ctx, stringCtx);
+        if (res == '\0') {
+            stringCtx->stringOffset += stringCtx->index;
+            stringCtx->index = 0;
+        }
+        return res;
+    }
+
+    string_type_t stringType;
+    switch (*at) {
+        case '\'':
+            stringType = StringType_SingleQuote;
+            break;
+        case '"':
+            stringType = StringType_DoubleQuote;
+            break;
+        default:
+            stringType = StringType_Raw;
+            break;
+    }
+
+    if (*index == 0 && stringType != StringType_Raw) {
+        (*index)++;
+    }
+
+    at += *index;
+
+    // (This is correct, we don't want a context pop here.)
+    if (at == ctx->end) {
+        ctx->at = ctx->end;
+        return '\0';
+    }
+
+    char maybeRes = Macros_ConsumeCharInString(ctx, stringType, at, index, subIndex);
+
+    if (maybeRes == '\0') {
+        return tryConsumeAnotherStringLiteral(ctx, stringOffset, index, subIndex);
+    } else {
+        return maybeRes;
+    }
+}
+#endif
+
+// existing code:
 
 static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex);
 
