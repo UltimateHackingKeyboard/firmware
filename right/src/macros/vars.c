@@ -164,6 +164,16 @@ static macro_variable_t consumeBool(parser_context_t* ctx)
     return noneVar();
 }
 
+static macro_variable_t consumeRawStringNonExpanded(parser_context_t* ctx)
+{
+    // the remaining context is the string. No expansions.
+    uint16_t offset = ctx->at - (const char*)ValidatedUserConfigBuffer.buffer;
+    uint8_t len = ctx->end - ctx->at;
+    ctx->at = ctx->end;
+
+    return stringVar((string_ref_t){ .offset = offset, .len = len });
+}
+
 static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
 {
     const char* stringStart = ctx->at;
@@ -471,7 +481,6 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
             else {
                 goto failed;
             }
-
         case 't':
             if (ConsumeToken(ctx, "true")) {
                 return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = true };
@@ -479,7 +488,6 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
             else {
                 goto failed;
             }
-
         case '$':
             ctx->at++;
             return consumeDollarExpression(ctx);
@@ -497,10 +505,10 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
         default:
             goto failed;
     }
-
+a   a   
 failed:
     if (IsIdentifierChar(*ctx->at)) {
-        Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '$%s'?", OneWord(ctx));
+        Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '\"%s\"'?", OneWord(ctx));
     } else {
         Macros_ReportErrorTok(ctx, "Could not parse");
     }
@@ -1120,13 +1128,10 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
     }
 
     if (argType == MacroArgType_Any) {
-        // for type 'any', consume the value as a template expansion (i.e. &macroArg)
+        // for type 'any', consume the value as a template expansion (i.e. like &macroArg)
         // for compatibility with existing macros that don't declare their argument types.
 
         PushParserContext(ctx, str.start, str.start, str.end);
-        //if (Macros_ParserError) {
-        //    return noneVar();
-       // }
         return consumeValue(ctx);
     } else {
             // for declared types, consume the value according to type.
@@ -1147,7 +1152,12 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
             case MacroArgType_Bool:
                 return consumeBool(&varCtx);
             case MacroArgType_String: {
-                return consumeStringLiteral(&varCtx);
+                // this used to be consumeStringLiteral, but that leads to $-expansions
+                // within the string, even if not enclosed in double-quotes. 
+                // Values configured for arguments should be interpreted as raw strings 
+                // without expansions.
+                // Use type 'any' if you want $-expansions in your arguments.
+                return consumeRawStringNonExpanded(&varCtx);
             }
             default:
                 Macros_ReportErrorNum("Unexpected argument type:", argType, NULL);

@@ -148,6 +148,9 @@ static char consumeExpressionCharOfString(const macro_variable_t* variable, uint
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index)
 {
     char c;
+
+    // TODO: this TRY_EXPAND_TEMPLATE won't be needed if we expand $macroArg:any correctly.
+    //       It will be handled automatically in Macros_ConsumeAnyValue() below.
     if (TRY_EXPAND_TEMPLATE(ctx)) {
         // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
         // (If there is an expansion, it is handled within a new context copy.)
@@ -330,7 +333,6 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
         return maybeRes;
     }
 }
-
 
 static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex)
 {

@@ -170,6 +170,9 @@ static void consumeWhite(parser_context_t* ctx)
                 ctx->at++;
             }
         }
+        // TODO: this TRY_EXPAND_TEMPLATE needs to be replaced with expansion of $macroArg:any here.
+        //       Note: possible command injection vulnerability if we allow template expansion in white space.
+        //       Do we want to allow this at all?
         if (TRY_EXPAND_TEMPLATE(ctx)) {
             continue;
         } else {
