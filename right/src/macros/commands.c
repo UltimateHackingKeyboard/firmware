@@ -943,10 +943,6 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
 
 static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 {
-    uint16_t stringOffset = 0;
-    uint16_t textIndex = 0;
-    uint16_t textSubIndex = 0;
-
     if (S->ms.macroHeadersProcessed) {
         Macros_ReportErrorPos(ctx, "macroArg commands must be placed before any other commands in the macro");
         return MacroResult_Finished;
@@ -978,10 +974,12 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         else if (ConsumeToken(ctx, "string")) {
             argType = MacroArgType_String;
         }
-        else if (ConsumeToken(ctx, "keyid")) {
+        else if (ConsumeToken(ctx, "keyid") || ConsumeToken(ctx, "keyId")) {
             argType = MacroArgType_KeyId;
         }
-        else if (ConsumeToken(ctx, "scancode")) {
+        else if (ConsumeToken(ctx, "scancode") || ConsumeToken(ctx, "scanCode") || 
+                 ConsumeToken(ctx, "moddedScanCode") || ConsumeToken(ctx, "moddedScancode") || 
+                 ConsumeToken(ctx, "shortcut")) {
             argType = MacroArgType_ScanCode;
         }
         else if (ConsumeToken(ctx, "any")) {
@@ -1027,8 +1025,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         return MacroResult_Header;
     }
 
-    // rest of command is descriptive label, ignore. TODO: Should be parsed as string token.
-    //while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
+    // rest of command is descriptive label, ignore.
     Macros_ConsumeStringToken(ctx);
 
     return MacroResult_Header;
