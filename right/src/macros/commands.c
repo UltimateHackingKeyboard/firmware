@@ -4,7 +4,6 @@
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
 #include "host_connection.h"
-#include "key_history.h"
 #include "keymap.h"
 #include "layer.h"
 #include "layer_stack.h"
