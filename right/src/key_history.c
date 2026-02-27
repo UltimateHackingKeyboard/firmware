@@ -21,10 +21,10 @@ static previous_key_event_type_t lastPress;
 
 void KeyHistory_RecordPress(const key_state_t *keyState)
 {
-    bool isDoubletap = 
+    const bool isDoubletap = 
         keyState == lastPress.keyState
         && CurrentPostponedTime < lastPress.timestamp + Cfg.DoubletapTimeout;
-    bool isStrictDoubletap = isDoubletap &&
+    const bool isStrictDoubletap = isDoubletap &&
         (lastPress.doubletapState == DoubletapState_First || lastPress.doubletapState == DoubletapState_LooseDoubletap);
 
     lastPress = (previous_key_event_type_t){
