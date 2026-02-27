@@ -15,7 +15,8 @@
 
 void KeyHistory_RecordPress(const key_state_t *keyState);
 void KeyHistory_RecordRelease(const key_state_t *keyState);
-bool KeyHistory_WasLastDoubletap();
-void KeyHistory_ConsumeDoubletap(const key_state_t *keyState, uint8_t keyActivationId);
+bool KeyHistory_WasLastStrictDoubletap();
+bool KeyHistory_WasLastLooseDoubletap();
+
 
 #endif

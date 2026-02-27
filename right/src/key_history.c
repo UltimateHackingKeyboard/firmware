@@ -3,9 +3,10 @@
 #include "postponer.h"
 
 typedef enum {
-    DoubletapState_PossibleFirst,
-    DoubletapState_Doubletap,
     DoubletapState_Blocked,
+    DoubletapState_First,
+    DoubletapState_LooseDoubletap,
+    DoubletapState_StrictDoubletap,
 } doubletap_state_t;
 
 typedef struct {
@@ -20,16 +21,19 @@ static previous_key_event_type_t lastPress;
 
 void KeyHistory_RecordPress(const key_state_t *keyState)
 {
-    bool isDoublePress = 
+    bool isDoubletap = 
         keyState == lastPress.keyState
-        && (lastPress.doubletapState == DoubletapState_PossibleFirst || lastPress.doubletapState == DoubletapState_Doubletap)
         && CurrentPostponedTime < lastPress.timestamp + Cfg.DoubletapTimeout;
+    bool isStrictDoubletap = isDoubletap &&
+        (lastPress.doubletapState == DoubletapState_First || lastPress.doubletapState == DoubletapState_LooseDoubletap);
 
     lastPress = (previous_key_event_type_t){
         .keyState = keyState,
         .keyActivationId = keyState->activationId,
         .timestamp = CurrentPostponedTime,
-        .doubletapState = isDoublePress ? DoubletapState_Doubletap : DoubletapState_PossibleFirst,
+        .doubletapState = isDoubletap
+            ? (isStrictDoubletap ? DoubletapState_StrictDoubletap : DoubletapState_LooseDoubletap)
+            : DoubletapState_First,
     };
 }
 
@@ -40,15 +44,12 @@ void KeyHistory_RecordRelease(const key_state_t *keyState)
     }
 }
 
-bool KeyHistory_WasLastDoubletap()
+bool KeyHistory_WasLastStrictDoubletap()
 {
-    return lastPress.doubletapState == DoubletapState_Doubletap;
+    return lastPress.doubletapState == DoubletapState_StrictDoubletap;
 }
 
-void KeyHistory_ConsumeDoubletap(const key_state_t *keyState, uint8_t keyActivationId)
+bool KeyHistory_WasLastLooseDoubletap()
 {
-    if(keyState == lastPress.keyState && keyActivationId == lastPress.keyActivationId)    
-    {
-        lastPress.doubletapState = DoubletapState_Blocked;
-    }
+    return lastPress.doubletapState >= DoubletapState_LooseDoubletap;
 }

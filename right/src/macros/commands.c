@@ -556,10 +556,6 @@ static bool processIfDoubletapCommand(bool negate)
     if (Macros_DryRun) {
         return true;
     }
-    if(S->ms.isDoubletap)
-    {
-        KeyHistory_ConsumeDoubletap(S->ms.currentMacroKey, S->ms.keyActivationId);
-    }
     return S->ms.isDoubletap != negate;
 }
 
