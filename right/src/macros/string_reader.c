@@ -43,7 +43,6 @@ static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* 
     }
 }
 
-#if 0
 static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
 {
     if (at >= ctx->end) {
@@ -52,32 +51,32 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
 
     switch(*at) {
         case '\\':
-            if (stringType == StringType_SingleQuote || at+1 == ctx->end) {
+            if (stringCtx->stringType == StringType_SingleQuote || at+1 == ctx->end) {
                 goto normalChar;
             } else {
-                (*index)++;
+                stringCtx->index++;
                 at++;
                 switch (*at) {
                     case 'n':
-                        (*index)++;
+                        stringCtx->index++;
                         return '\n';
                     default:
-                        (*index)++;
+                        stringCtx->index++;
                         return *at;
                 }
             }
         case '"':
-            if (stringType == StringType_DoubleQuote) {
+            if (stringCtx->stringType == StringType_DoubleQuote) {
                 at++;
-                (*index)++;
+                stringCtx->index++;
                 return '\0';
             } else {
                 goto normalChar;
             }
         case '\'':
-            if (stringType == StringType_SingleQuote) {
+            if (stringCtx->stringType == StringType_SingleQuote) {
                 at++;
-                (*index)++;
+                stringCtx->index++;
                 return '\0';
             } else {
                 goto normalChar;
@@ -85,7 +84,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
         case '\n':
             return '\0';
         case '$':
-            if (stringType == StringType_SingleQuote) {
+            if (stringCtx->stringType == StringType_SingleQuote) {
                 goto normalChar;
             } else {
                 parser_context_t ctx2 = {
@@ -97,7 +96,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
                     .nestingBound = ctx->nestingLevel,
                 };
                 ConsumeCommentsAsWhite(false);
-                char res = consumeExpressionChar(&ctx2, stringType, subIndex);
+                char res = consumeExpressionChar(&ctx2, stringCtx->stringType, stringCtx->subIndex);
                 ConsumeCommentsAsWhite(true);
 
                 if (ctx2.nestingLevel != ctx->nestingLevel) {
@@ -108,26 +107,42 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
                     return '$';
                 }
 
-                if (*subIndex == 0) {
-                    *index += ctx2.at - at;
+                if (stringCtx->subIndex == 0) {
+                    stringCtx->index += ctx2.at - at;
                 }
                 return res;
             }
         default:
         normalChar:
-            (*index)++;
+            stringCtx->index++;
             return *at;
     }
 }
+
+// A string can be either a verbatim string (without quotes, with no support for escapes and expansions), 
+// a raw string (without quotes, with support for escapes and expansions), or a series of string literals. 
+// Each literal is either a double-quoted string (with support for escapes and expansions), or
+// a single-quoted string (with support for only a single-quote-escape but no expansions). 
+// Literals are concatenated without any interventing characters.
+
+// For example, the following are all valid strings:
+// hello $worldname world         => raw string with expansions, so $worldname is expanded.
+// "hello"' $worldname '"world"   => three literals: double-quoted string, single-quoted string, double-quoted string
+//                                   the single-quoted part prevents expansions in that part, so $worldname is not expanded.
+// "hello \"$worldname\" world"   => double-quoted string with escapes and expansions, so $worldname is expanded, and remains double-quoted due to the escapes.
+
+// If any of these examples are read as a verbatim string, all the characters will be read 
+// verbatim (as-is) until the end of the context, including all $ signs and quotes (no expansions, no escapes).
 
 static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
 {
     const char* at = ctx->at;
 
-    at += stringCtx->stringOffset;
+    at += stringCtx->stringOffset;  // point to the next literal part of the string.
 
     if (stringCtx->stringType == StringType_Verbatim) {
         char res = StrRead_ConsumeCharInString(ctx, stringCtx);
+        // I don't think we even need this part; for verbatim strings, there cannot be another part.
         if (res == '\0') {
             stringCtx->stringOffset += stringCtx->index;
             stringCtx->index = 0;
@@ -135,24 +150,23 @@ static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_con
         return res;
     }
 
-    string_type_t stringType;
     switch (*at) {
         case '\'':
-            stringType = StringType_SingleQuote;
+            stringCtx->stringType = StringType_SingleQuote;
             break;
         case '"':
-            stringType = StringType_DoubleQuote;
+            stringCtx->stringType = StringType_DoubleQuote;
             break;
         default:
-            stringType = StringType_Raw;
+            stringCtx->stringType = StringType_Raw;
             break;
     }
 
-    if (*index == 0 && stringType != StringType_Raw) {
-        (*index)++;
+    if (stringCtx->index == 0 && stringCtx->stringType != StringType_Raw) {
+        stringCtx->index++;
     }
 
-    at += *index;
+    at += stringCtx->index;
 
     // (This is correct, we don't want a context pop here.)
     if (at == ctx->end) {
@@ -160,15 +174,14 @@ static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_con
         return '\0';
     }
 
-    char maybeRes = Macros_ConsumeCharInString(ctx, stringType, at, index, subIndex);
+    char maybeRes = StrRead_ConsumeCharInString(ctx, stringCtx);
 
     if (maybeRes == '\0') {
-        return tryConsumeAnotherStringLiteral(ctx, stringOffset, index, subIndex);
+        return StrRead_tryConsumeAnotherStringLiteral(ctx, stringCtx);
     } else {
         return maybeRes;
     }
 }
-#endif
 
 // existing code:
 

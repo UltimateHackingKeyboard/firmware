@@ -21,7 +21,7 @@
 
 typedef enum {
     StrReadMode_Verbatim, // do not expand anything in the string. Reads until end of context.
-    StrReadMode_Literal,  // read a string literal, with support for escapes and $-expansions.
+    StrReadMode_Literal,  // read a string literal, with support for quotes, escapes and $-expansions.
 } string_reader_mode_t;
 
 // Variables:
