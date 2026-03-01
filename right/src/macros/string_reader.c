@@ -31,6 +31,8 @@ typedef struct {
 } string_reader_context_t;
 
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
+static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_context_t* stringCtx);
+static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx);
 
 static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
 {
@@ -57,14 +59,20 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
         return '\0';
     }
 
+    if(stringCtx->stringType == StringType_Verbatim) {
+        char res = *at;
+        stringCtx->at++;
+        return res;
+    }
+
     switch(*at) {
         case '\\':
-            if (stringCtx->stringType == StringType_SingleQuote || stringCtx->at+1 >= ctx->end) {
+            if (stringCtx->stringType == StringType_SingleQuote || at+1 >= ctx->end) {
                 goto normalChar;
             } else {
                 stringCtx->index++;
                 at++;
-                switch (*stringCtx->at) {
+                switch (*at) {
                     case 'n':
                         stringCtx->index++;
                         return '\n';
@@ -95,6 +103,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
             if (stringCtx->stringType == StringType_SingleQuote) {
                 goto normalChar;
             } else {
+                // new context at $ (e.g. $macroArg.1 blah blah)
                 parser_context_t ctx2 = {
                     .macroState = ctx->macroState,
                     .begin = ctx->begin,
@@ -103,9 +112,10 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
                     .nestingLevel = ctx->nestingLevel,
                     .nestingBound = ctx->nestingLevel,
                 };
-                ConsumeCommentsAsWhite(false);
-                char res = consumeExpressionChar(&ctx2, stringCtx->stringType, &stringCtx->subIndex);
-                ConsumeCommentsAsWhite(true);
+
+                ConsumeCommentsAsWhite(false); // a bit of a hack, turn off comments processing
+                char res = StrRead_consumeExpressionChar(&ctx2, stringCtx);
+                ConsumeCommentsAsWhite(true);  // turn it back on
 
                 if (ctx2.nestingLevel != ctx->nestingLevel) {
                     Macros_ReportError("Macro template has overflown expression boundary! Undefined behavior coming!", ctx2.at, ctx2.end);
@@ -190,6 +200,76 @@ static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_con
         return res;
     }
 }
+
+extern string_segment_t StringRefToSegment(string_ref_t ref);
+
+static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx)
+{
+    // read the nth character of the string variable, where n is the value of *idx. 
+    // If n exceeds the string length, return '\0' and reset *idx to 0.
+
+    string_segment_t str = StringRefToSegment(variable->asStringRef);
+    uint8_t len = str.end - str.start;
+
+    if (*idx < len) {
+        char c = str.start[*idx];
+        (*idx)++;
+        return c;
+    } else {
+        *idx = 0;    
+        return '\0';
+    }
+}
+
+static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_context_t* stringCtx)
+{
+    char c;
+
+    // TODO: this TRY_EXPAND_TEMPLATE won't be needed if we expand $macroArg:any correctly.
+    //       It will be handled automatically in Macros_ConsumeAnyValue() below.
+    if (TRY_EXPAND_TEMPLATE(ctx)) {
+        // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
+        // (If there is an expansion, it is handled within a new context copy.)
+        c = consumeCharOfTemplate(ctx, stringCtx->stringType, &stringCtx->subIndex);
+        PopParserContext(ctx);
+
+        if (stringCtx->subIndex == 0) {
+            UnconsumeWhite(ctx);
+        }
+        return c;
+    } else {
+        macro_variable_t res = Macros_ConsumeAnyValue(ctx);
+        UnconsumeWhite(ctx);
+
+        switch (res.type) {
+            case MacroVariableType_Int:
+                c = consumeExpressionCharOfInt(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_Float:
+                c = consumeExpressionCharOfFloat(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_Bool:
+                c = consumeExpressionCharOfBool(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_String:
+                c = StrRead_consumeExpressionCharOfString(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_None:
+                c = '?';
+                break;
+            default:
+                Macros_ReportErrorNum("Unrecognized variable type", res.type, ctx->at);
+                return '\0';
+        }
+    }
+
+    if (Macros_ParserError) {
+        ctx->at++;
+        stringCtx->subIndex = 0;
+    }
+    return c;
+}
+
 
 // existing code:
 

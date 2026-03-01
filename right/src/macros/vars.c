@@ -1220,6 +1220,10 @@ static string_segment_t stringRefToSegment(string_ref_t ref) {
     };
 }
 
+string_segment_t StringRefToSegment(string_ref_t ref) {
+    return stringRefToSegment(ref);
+}
+
 // currently unused:
 //static const char *stringRefStart(string_ref_t ref) {
 //    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);

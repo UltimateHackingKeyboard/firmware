@@ -44,9 +44,12 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
 #endif
         return textLen;
     } else if (ctx->at != ctx->end) {
-        uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
+        string_reader_context_t stringCtx;
+
+        StrRead_InitContext(ctx, &stringCtx, StrReadMode_Undetermined);
+
         for (uint8_t i = 0; true; i++) {
-            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
+            char c = StrRead_ConsumeCharOfString(ctx, &stringCtx);
             if (c == '\0') {
                 break;
             }
