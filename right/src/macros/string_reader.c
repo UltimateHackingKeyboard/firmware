@@ -151,8 +151,9 @@ char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t*
     if (stringCtx->stringType == StringType_Verbatim) {
         stringCtx->at = at + stringCtx->index;
         char res = StrRead_ConsumeCharInString(ctx, stringCtx);
-        // I don't think we even need this part; for verbatim strings, there cannot be another part.
+
         if (res == '\0') {
+            ctx->at += stringCtx->stringOffset + stringCtx->index;
             stringCtx->stringOffset += stringCtx->index;
             stringCtx->index = 0;
         }
