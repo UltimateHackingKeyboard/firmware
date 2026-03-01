@@ -22,15 +22,8 @@ typedef enum {
     StringType_Verbatim,
 } string_type_t;
 
-typedef struct {
-    const char* at;
-    uint16_t stringOffset;
-    uint16_t index;
-    uint16_t subIndex;
-    string_type_t stringType;
-} string_reader_context_t;
-
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
+
 static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_context_t* stringCtx);
 static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx);
 
@@ -152,7 +145,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
 // If any of these examples are read as a verbatim string, all the characters will be read 
 // verbatim (as-is) until the end of the context, including all $ signs and quotes (no expansions, no escapes).
 
-static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
+static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx)
 {
     const char* at = ctx->at;
 
