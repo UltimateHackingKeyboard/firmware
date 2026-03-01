@@ -46,7 +46,7 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
     } else if (ctx->at != ctx->end) {
         string_reader_context_t stringCtx;
 
-        StrRead_InitContext(ctx, &stringCtx, StrReadMode_Verbatim);
+        StrRead_InitContext(ctx, &stringCtx, StrReadMode_Literal);
 
         for (uint8_t i = 0; true; i++) {
             char c = StrRead_ConsumeCharOfString(ctx, &stringCtx);
