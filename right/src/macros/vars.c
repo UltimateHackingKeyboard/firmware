@@ -80,6 +80,11 @@ static macro_variable_t intVar(int32_t value)
     return (macro_variable_t) { .asInt = value, .type = MacroVariableType_Int };
 }
 
+static macro_variable_t floatVar(float value)
+{
+    return (macro_variable_t) { .asFloat = value, .type = MacroVariableType_Float };
+}
+
 static macro_variable_t boolVar(bool value)
 {
     return (macro_variable_t) { .asBool = value, .type = MacroVariableType_Bool };
@@ -154,24 +159,43 @@ static macro_variable_t consumeNumericValue(parser_context_t* ctx)
 static macro_variable_t consumeBool(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "false")) {
-        return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = false };
+        return boolVar(false);
     } 
     else if (ConsumeToken(ctx, "true")) {
-        return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = true };
+        return boolVar(true);
     }
 
     Macros_ReportErrorTok(ctx, "Boolean value (true/false) expected but found:");
     return noneVar();
 }
 
-static macro_variable_t consumeRawStringNonExpanded(parser_context_t* ctx)
+static macro_variable_t consumeKeyIdValue(parser_context_t* ctx)
+{
+    uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
+    if (keyId == 255) {
+        macro_variable_t res = consumeValue(ctx);
+        return coalesceType(ctx, res, MacroVariableType_Int);
+    }
+    return intVar(keyId);
+}
+
+static macro_variable_t consumeScancodeValue(parser_context_t* ctx)
+// consume "scancode" = modded scancode = "shortcut", return as string variable.
+{
+    const char* atStart = ctx->at;
+    // should preparse the Mods+Scancode for validity.
+    // macro_action_t action = decodeKeyAndConsume(ctx, MacroSubAction_None);
+    // const char* atEnd = ctx->at;
+    const char* atEnd = TokEnd(ctx->at, ctx->end);
+    ConsumeWhiteAt(ctx, atEnd);
+
+    return stringVar(createStringRef(atStart, atEnd));
+}
+
+static macro_variable_t consumeStringVerbatim(parser_context_t* ctx)
 {
     // the remaining context is the string. No expansions.
-    uint16_t offset = ctx->at - (const char*)ValidatedUserConfigBuffer.buffer;
-    uint8_t len = ctx->end - ctx->at;
-    ctx->at = ctx->end;
-
-    return stringVar((string_ref_t){ .offset = offset, .len = len });
+    return stringVar(createStringRef(ctx->at, ctx->end));
 }
 
 static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
@@ -186,10 +210,7 @@ static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
         return noneVar();
     }
 
-    uint16_t offset = stringStart - (const char*)ValidatedUserConfigBuffer.buffer;
-    uint8_t len = ctx->at - stringStart;
-
-    return stringVar((string_ref_t){ .offset = offset, .len = len });
+    return stringVar(createStringRef(stringStart, ctx->at));
 }
 
 macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
@@ -414,7 +435,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         ConsumeUntilDot(ctx);
         uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
         if (keyId == 255) {
-            Macros_ReportErrorTok(ctx, "KeyId abbreviation expected");
+            Macros_ReportErrorTok(ctx, "KeyId abbreviation expected:");
             return noneVar();
         }
         return intVar(keyId);
@@ -961,6 +982,16 @@ bool Macros_ConsumeBool(parser_context_t* ctx)
     return coalesceType(ctx, res, MacroVariableType_Bool).asBool;
 }
 
+string_segment_t Macros_ConsumeString(parser_context_t* ctx)
+{
+    macro_variable_t res = consumeValue(ctx);
+    if (res.type != MacroVariableType_String) {
+        // Macros_ReportError("String value expected but found:", NULL, NULL);
+        return (string_segment_t){ .start = NULL, .end = NULL };
+    }
+    return stringRefToSegment(res.asStringRef);
+}
+
 macro_variable_t Macros_ConsumeAnyValue(parser_context_t *ctx)
 {
     return consumeValue(ctx);
@@ -977,7 +1008,23 @@ macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx)
 
     if (dst != NULL) {
         dst->type = src.type;
-        dst->asInt = src.asInt;
+        switch (src.type) {
+            case MacroVariableType_Int:
+                dst->asInt = src.asInt;
+                break;
+            case MacroVariableType_Float:
+                dst->asFloat = src.asFloat;
+                break;
+            case MacroVariableType_Bool:
+                dst->asBool = src.asBool;
+                break;
+            case MacroVariableType_String:
+                dst->asStringRef = src.asStringRef;
+                break;
+            default:
+                Macros_ReportErrorNum("Unexpected variable type:", src.type, NULL);
+                break;
+        }
     }
 
     return MacroResult_Finished;
@@ -1154,11 +1201,15 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
             case MacroArgType_String: {
                 // this used to be consumeStringLiteral, but that leads to $-expansions
                 // within the string, even if not enclosed in double-quotes. 
-                // Values configured for arguments should be interpreted as raw strings 
+                // Values configured for arguments should be interpreted as verbatim strings 
                 // without expansions.
                 // Use type 'any' if you want $-expansions in your arguments.
-                return consumeRawStringNonExpanded(&varCtx);
+                return consumeStringVerbatim(&varCtx);
             }
+            case MacroArgType_KeyId:
+                return consumeKeyIdValue(&varCtx);
+            case MacroArgType_ScanCode:
+                return consumeScancodeValue(&varCtx);
             default:
                 Macros_ReportErrorNum("Unexpected argument type:", argType, NULL);
                 return noneVar();

@@ -1370,7 +1370,8 @@ conditionPassed:
 
 uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
 {
-    // TODO: allow $macroArg.xxx for type keyId here as well
+    // TODO: allow $macroArg.xxx for type keyId here as well.
+    // - this should already work via Macros_ConsumeInt() -> consumeValue() chain.
 
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 

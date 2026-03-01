@@ -288,7 +288,7 @@ static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_reader_c
 }
 
 
-// existing code:
+// existing code:a  
 
 static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex);
 
