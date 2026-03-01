@@ -59,6 +59,10 @@ static macro_variable_t consumeValue(parser_context_t* ctx);
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res);
 static macro_variable_t consumeMinMaxOperation(parser_context_t* ctx, operator_t op);
 static macro_variable_t negateBool(parser_context_t *ctx, macro_variable_t res);
+static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t value, macro_variable_type_t dstType);
+
+static string_ref_t createStringRef(const char *start, const char *end);
+static string_segment_t stringRefToSegment(string_ref_t ref);
 
 macro_result_t Macros_ProcessStatsVariablesCommand(void) {
     if (Macros_DryRun) {
@@ -80,10 +84,10 @@ static macro_variable_t intVar(int32_t value)
     return (macro_variable_t) { .asInt = value, .type = MacroVariableType_Int };
 }
 
-static macro_variable_t floatVar(float value)
-{
-    return (macro_variable_t) { .asFloat = value, .type = MacroVariableType_Float };
-}
+//static macro_variable_t floatVar(float value)
+//{
+//    return (macro_variable_t) { .asFloat = value, .type = MacroVariableType_Float };
+//}
 
 static macro_variable_t boolVar(bool value)
 {
