@@ -520,7 +520,13 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
             .nestingLevel = ctx->nestingLevel,
             .nestingBound = ctx->nestingBound,
         };
+        if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
+            stringCtx.at++;
+        }
         action = decodeKeyAndConsume(&stringCtx, type);
+        if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
+            stringCtx.at++;
+        }
     }
     else {
         action = decodeKeyAndConsume(ctx, type);
