@@ -30,6 +30,8 @@ typedef struct {
     string_type_t stringType;
 } string_reader_context_t;
 
+static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
+
 static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
 {
     stringCtx->at = ctx->at;
@@ -43,20 +45,26 @@ static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* 
     }
 }
 
+static char StrRead_tryConsumeAnotherStringLiteral(parser_context_t *ctx, string_reader_context_t *stringCtx)
+{
+    return 0;
+}
+
 static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
 {
+    char* at = stringCtx->at;
     if (at >= ctx->end) {
         return '\0';
     }
 
     switch(*at) {
         case '\\':
-            if (stringCtx->stringType == StringType_SingleQuote || at+1 == ctx->end) {
+            if (stringCtx->stringType == StringType_SingleQuote || stringCtx->at+1 >= ctx->end) {
                 goto normalChar;
             } else {
                 stringCtx->index++;
                 at++;
-                switch (*at) {
+                switch (*stringCtx->at) {
                     case 'n':
                         stringCtx->index++;
                         return '\n';
@@ -103,7 +111,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
                     Macros_ReportError("Macro template has overflown expression boundary! Undefined behavior coming!", ctx2.at, ctx2.end);
                     while (ctx2.nestingLevel > ctx->nestingLevel && PopParserContext(&ctx2)) {
                     }
-                    *index += 1;
+                    stringCtx->subIndex += 1;
                     return '$';
                 }
 
@@ -169,17 +177,17 @@ static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_con
     at += stringCtx->index;
 
     // (This is correct, we don't want a context pop here.)
-    if (at == ctx->end) {
+    if (at >= ctx->end) {
         ctx->at = ctx->end;
         return '\0';
     }
 
-    char maybeRes = StrRead_ConsumeCharInString(ctx, stringCtx);
+    char res = StrRead_ConsumeCharInString(ctx, stringCtx);
 
-    if (maybeRes == '\0') {
+    if (res == '\0') {
         return StrRead_tryConsumeAnotherStringLiteral(ctx, stringCtx);
     } else {
-        return maybeRes;
+        return res;
     }
 }
 
@@ -575,4 +583,3 @@ static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stri
             return *at;
     }
 }
-
