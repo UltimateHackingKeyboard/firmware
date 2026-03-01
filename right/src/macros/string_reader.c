@@ -39,7 +39,7 @@ void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringC
 
 static char StrRead_tryConsumeAnotherStringLiteral(parser_context_t *ctx, string_reader_context_t *stringCtx)
 {
-    return 0;
+    return '\0';
 }
 
 static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
@@ -146,7 +146,7 @@ char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t*
 {
     const char* at = ctx->at;
 
-    at += stringCtx->stringOffset;  // point to the next literal part of the string.
+    at += stringCtx->stringOffset;  // point to the current literal of the string.
 
     if (stringCtx->stringType == StringType_Verbatim) {
         char res = StrRead_ConsumeCharInString(ctx, stringCtx);
@@ -182,9 +182,10 @@ char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t*
         return '\0';
     }
 
+    stringCtx->at = at;
     char res = StrRead_ConsumeCharInString(ctx, stringCtx);
 
-    if (res == '\0') {
+    if (res == '\0' && stringCtx->stringType != StringType_Verbatim) {
         return StrRead_tryConsumeAnotherStringLiteral(ctx, stringCtx);
     } else {
         return res;
