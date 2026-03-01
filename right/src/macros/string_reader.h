@@ -24,6 +24,14 @@ typedef enum {
     StrReadMode_Literal,  // read a string literal, with support for quotes, escapes and $-expansions.
 } string_reader_mode_t;
 
+typedef enum {
+    StringType_Undetermined = 0,
+    StringType_Raw,
+    StringType_DoubleQuote,
+    StringType_SingleQuote,
+    StringType_Verbatim,
+} string_type_t;
+
 typedef struct {
     const char* at;
     uint16_t stringOffset;

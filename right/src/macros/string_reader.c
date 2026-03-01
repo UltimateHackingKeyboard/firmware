@@ -14,14 +14,6 @@
 
 // new code:
 
-typedef enum {
-    StringType_Undetermined = 0,
-    StringType_Raw,
-    StringType_DoubleQuote,
-    StringType_SingleQuote,
-    StringType_Verbatim,
-} string_type_t;
-
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
 
 static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_context_t* stringCtx);
