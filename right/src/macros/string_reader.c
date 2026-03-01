@@ -52,7 +52,7 @@ static char StrRead_tryConsumeAnotherStringLiteral(parser_context_t *ctx, string
 
 static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
 {
-    char* at = stringCtx->at;
+    const char* at = stringCtx->at;
     if (at >= ctx->end) {
         return '\0';
     }
@@ -104,7 +104,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
                     .nestingBound = ctx->nestingLevel,
                 };
                 ConsumeCommentsAsWhite(false);
-                char res = consumeExpressionChar(&ctx2, stringCtx->stringType, stringCtx->subIndex);
+                char res = consumeExpressionChar(&ctx2, stringCtx->stringType, &stringCtx->subIndex);
                 ConsumeCommentsAsWhite(true);
 
                 if (ctx2.nestingLevel != ctx->nestingLevel) {
