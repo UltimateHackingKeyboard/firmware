@@ -51,7 +51,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
 
     if(stringCtx->stringType == StringType_Verbatim) {
         char res = *at;
-        stringCtx->at++;
+        stringCtx->index++;
         return res;
     }
 
@@ -149,6 +149,7 @@ char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t*
     at += stringCtx->stringOffset;  // point to the current literal of the string.
 
     if (stringCtx->stringType == StringType_Verbatim) {
+        stringCtx->at = at + stringCtx->index;
         char res = StrRead_ConsumeCharInString(ctx, stringCtx);
         // I don't think we even need this part; for verbatim strings, there cannot be another part.
         if (res == '\0') {
