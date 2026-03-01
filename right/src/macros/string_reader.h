@@ -49,8 +49,8 @@ typedef struct {
     bool Macros_CompareStringToken(parser_context_t* ctx, string_segment_t str);
     void Macros_ConsumeStringToken(parser_context_t* ctx);
 
-    static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode);
-    static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx);
+    void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode);
+    char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx);
 
 #endif
 

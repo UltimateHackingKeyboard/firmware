@@ -19,7 +19,7 @@ static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringTyp
 static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_context_t* stringCtx);
 static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx);
 
-static void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
+void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
 {
     stringCtx->at = ctx->at;
     stringCtx->stringOffset = 0;
@@ -137,7 +137,7 @@ static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_con
 // If any of these examples are read as a verbatim string, all the characters will be read 
 // verbatim (as-is) until the end of the context, including all $ signs and quotes (no expansions, no escapes).
 
-static char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx)
+char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx)
 {
     const char* at = ctx->at;
 
