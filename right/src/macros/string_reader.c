@@ -14,6 +14,11 @@
 
 // new code:
 
+static char consumeExpressionCharOfInt(const macro_variable_t* variable, uint16_t* idx);
+static char consumeExpressionCharOfFloat(const macro_variable_t* variable, uint16_t* idx);
+static char consumeExpressionCharOfBool(const macro_variable_t* variable, uint16_t* idx);
+static char consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx);
+static char consumeCharOfTemplate(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
 
 static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_reader_context_t* stringCtx);
