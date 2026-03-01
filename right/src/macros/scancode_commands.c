@@ -498,6 +498,8 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
         reports = &Macros_PersistentReports;
     }
 
+    macro_action_t action;
+
     // TODO: allow $macroArg.xxx for type scancode ("modded scancode") here as well.
     // - check for $
     // - if found, call Macros_ConsumeString() to get a string segment (uses consumeValue())
@@ -507,23 +509,21 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
     if (*ctx->at == '$') {
         string_segment_t segment = Macros_ConsumeString(ctx);
         if (segment.start == NULL) {
-            Macros_ReportErrorTok("Expected shortcut string but found:");
+            Macros_ReportErrorTok(ctx, "Expected shortcut string but found:");
             return MacroResult_Finished;
         }
-        else {
-            parser_context_t stringCtx = (parser_context_t) {
-                .begin = segment.start,
-                .at = segment.start,
-                .end = segment.end,
-                .macroState = ctx->macroState,
-                .nestingLevel = ctx->nestingLevel,
-                .nestingBound = ctx->nestingBound,
-            };
-        }
-        macro_action_t action = decodeKeyAndConsume(&stringCtx, type);
+        parser_context_t stringCtx = (parser_context_t) {
+            .begin = segment.start,
+            .at = segment.start,
+            .end = segment.end,
+            .macroState = ctx->macroState,
+            .nestingLevel = ctx->nestingLevel,
+            .nestingBound = ctx->nestingBound,
+        };
+        action = decodeKeyAndConsume(&stringCtx, type);
     }
     else {
-        macro_action_t action = decodeKeyAndConsume(ctx, type);
+        action = decodeKeyAndConsume(ctx, type);
     }
 
     if (Macros_DryRun) {
