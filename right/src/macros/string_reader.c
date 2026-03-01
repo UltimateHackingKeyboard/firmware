@@ -39,7 +39,31 @@ void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringC
 
 static char StrRead_tryConsumeAnotherStringLiteral(parser_context_t *ctx, string_reader_context_t *stringCtx)
 {
-    return '\0';
+    const char* at = ctx->at + stringCtx->stringOffset + stringCtx->index;
+
+    if (at >= ctx->end) {
+        ctx->at = ctx->end;
+        return '\0';
+    }
+
+    switch (*at) {
+        case '\'':
+        case '"':
+            // advance the string reader context to the beginning quote of the next literal
+            stringCtx->stringOffset += stringCtx->index;
+            stringCtx->index = 0;
+            return StrRead_ConsumeCharOfString(ctx, stringCtx);
+        default:
+            // advance the main context to the end of the current string
+            ctx->at = at;
+            ConsumeWhite(ctx);
+            // we probably don't need to reset the string reader context here,
+            // any new string reading should call InitContext() again.
+            stringCtx->stringOffset = 0;
+            stringCtx->index = 0;
+            stringCtx->subIndex = 0;
+            return '\0';
+    }
 }
 
 static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
