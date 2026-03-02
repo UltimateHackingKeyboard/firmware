@@ -273,7 +273,7 @@ static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_reader_c
                 c = consumeExpressionCharOfBool(&res, &stringCtx->subIndex);
                 break;
             case MacroVariableType_String:
-                c = StrRead_consumeExpressionCharOfString(&res, &stringCtx->subIndex);
+                c = /*StrRead_*/consumeExpressionCharOfString(&res, &stringCtx->subIndex);
                 break;
             case MacroVariableType_None:
                 c = '?';
