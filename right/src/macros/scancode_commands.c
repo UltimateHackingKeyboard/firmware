@@ -489,6 +489,18 @@ static macro_action_t decodeKeyAndConsume(parser_context_t* ctx, macro_sub_actio
     return action;
 }
 
+void dequoteContext(parser_context_t* ctx)
+{
+    if (ctx->at < ctx->end && (*ctx->at == '\'' || *ctx->at == '"')) {
+        char limiter = *ctx->at++;         // remember starting quote and skip it
+        if (ctx->end > ctx->at && *(ctx->end - 1) == limiter) {  // check if ending quote matches starting quote
+            ctx->end--;                    // if yes, skip the ending quote as well
+        } else {
+            ctx->at--;                     // if not, step back and keep quotes
+        }
+    }
+}
+
 macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_sub_action_t type, macro_usb_keyboard_reports_t* reports)
 {
     if (reports == NULL) {
@@ -520,9 +532,7 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
             .nestingLevel = ctx->nestingLevel,
             .nestingBound = ctx->nestingBound,
         };
-        if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
-            stringCtx.at++;
-        }
+        dequoteContext(&stringCtx); // remove enclosing quotes if they exist (hack to allow simple strings)
         action = decodeKeyAndConsume(&stringCtx, type);
         if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
             stringCtx.at++;
