@@ -230,7 +230,11 @@ static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variab
 
     if (*idx < len) {
         char c = str.start[*idx];
-        (*idx)++;
+        if (c != '\0') {
+            (*idx)++;
+        } else {
+            *idx = 0;
+        }
         return c;
     } else {
         *idx = 0;    
