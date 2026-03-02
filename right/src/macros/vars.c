@@ -532,12 +532,16 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
     }
 
 failed:
+    return consumeStringLiteral(ctx);
+
+#if 0
     if (IsIdentifierChar(*ctx->at)) {
         Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '\"%s\"'?", OneWord(ctx));
     } else {
         Macros_ReportErrorTok(ctx, "Could not parse");
     }
     return noneVar();
+#endif
 }
 
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res)
