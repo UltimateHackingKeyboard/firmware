@@ -162,11 +162,11 @@ bool IsWhite(parser_context_t* ctx) {
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
-        while (*ctx->at <= 32 && !isEnd(ctx)) {
+        while (!isEnd(ctx) && ctx->at <= 32) {
             ctx->at++;
         }
-        if (isCommentLeader(ctx) && consumeCommentsAsWhite) {
-            while (*ctx->at != '\n' && !isEnd(ctx)) {
+        if (consumeCommentsAsWhite && isCommentLeader(ctx)) {
+            while (!isEnd(ctx) && *ctx->at != '\n') {
                 ctx->at++;
             }
         }
@@ -236,8 +236,8 @@ bool ConsumeToken(parser_context_t* ctx, const char *b)
 {
     const char* at = ctx->at;
     while(at < ctx->end && *b) {
-        if (*at <= 32 || at == ctx->end || *b <= 32) {
-            bool res = (*at <= 32 || at == ctx->end) && *b <= 32;
+        if (at >= ctx->end || *at <= 32 || *b <= 32) {
+            bool res = (at >= ctx->end || *at <= 32) && *b <= 32;
             if (res) {
                 ctx->at = at;
                 consumeWhite(ctx);
@@ -248,7 +248,7 @@ bool ConsumeToken(parser_context_t* ctx, const char *b)
             return false;
         }
     }
-    bool res = (*at <= 32 || at == ctx->end || !isIdentifierChar(*at) || !isIdentifierChar(*(at-1))) && *b <= 32;
+    bool res = (at >= ctx->end || *at <= 32 || !isIdentifierChar(*at) || !isIdentifierChar(*(at-1))) && *b <= 32;
     if (res) {
         ctx->at = at;
         consumeWhite(ctx);
@@ -269,8 +269,8 @@ bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)
     const char* b = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset);
     const char* bEnd = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
     while(at < ctx->end && b < bEnd) {
-        if (*at <= 32 || at == ctx->end || *b <= 32 || b == bEnd) {
-            bool res = (*at <= 32 || at == ctx->end) && *b <= 32;
+        if (at >= ctx->end || *at <= 32 || b >= bEnd || *b <= 32) {
+            bool res = (at >= ctx->end || *at <= 32) && *b <= 32;
             if (res) {
                 ctx->at = at;
                 consumeWhite(ctx);
@@ -281,7 +281,7 @@ bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)
             return false;
         }
     }
-    bool res = (*at <= 32 || at == ctx->end || *at == '.') && (*b <= 32 || b == bEnd);
+    bool res = (at >= ctx->end || *at <= 32 || *at == '.') && (b >= bEnd || *b <= 32);
     if (res) {
         ctx->at = at;
         consumeWhite(ctx);
@@ -313,8 +313,8 @@ bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
     const char* b = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset);
     const char* bEnd = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
     while(at < ctx->end && b < bEnd) {
-        if (!isIdentifierChar(*at) || at == ctx->end || !isIdentifierChar(*b) || b == bEnd) {
-            bool res = (!isIdentifierChar(*at) || at == ctx->end) && (!isIdentifierChar(*b) || b == bEnd);
+        if (at >= ctx->end || !isIdentifierChar(*at) || b >= bEnd || !isIdentifierChar(*b)) {
+            bool res = (at >= ctx->end || !isIdentifierChar(*at)) && (b >= bEnd || !isIdentifierChar(*b));
             if (res) {
                 ctx->at = at;
                 consumeWhite(ctx);
@@ -326,7 +326,7 @@ bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
         }
     }
 
-    bool res = (!isIdentifierChar(*at) || at == ctx->end) && (!isIdentifierChar(*b) || b == bEnd);
+    bool res = (at >= ctx->end || !isIdentifierChar(*at)) && (b >= bEnd || !isIdentifierChar(*b));
     if (res) {
         ctx->at = at;
         consumeWhite(ctx);
@@ -337,7 +337,7 @@ bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
 const char* IdentifierEnd(parser_context_t* ctx)
 {
     const char* at = ctx->at;
-    while (isIdentifierChar(*at) && at < ctx->end) {
+    while (at < ctx->end && isIdentifierChar(*at)) {
         at++;
     }
     return at;
@@ -348,21 +348,6 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
     ctx->at = IdentifierEnd(ctx);
     consumeWhite(ctx);
 }
-
-#if 0
-/* old ConsumeUntilDot (replaced below) */
-
-void ConsumeUntilDot(parser_context_t* ctx)
-{
-    while(*ctx->at > 32 && *ctx->at != '.' && !isEnd(ctx))    {
-        ctx->at++;
-    }
-    if (*ctx->at != '.') {
-        Macros_ReportError("'.' expected", ctx->at, ctx->at);
-    }
-    ctx->at++;
-}
-#endif
 
 // Consume characters until a specific character is found or whitespace is hit.
 // If end of context is reached, report an error.
@@ -413,8 +398,8 @@ bool ConsumeOneDot(parser_context_t* ctx)
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
 {
     while(a < aEnd && *b) {
-        if (*a <= 32 || a == aEnd || *b <= 32) {
-            return (*a <= 32 || a == aEnd) && *b <= 32;
+        if (a >= aEnd || *a <= 32 || *b <= 32) {
+            return (a >= aEnd || *a <= 32) && *b <= 32;
         }
         if (*a++ != *b++) {
             return false;
@@ -426,14 +411,14 @@ bool TokenMatches(const char *a, const char *aEnd, const char *b)
 bool TokenMatches2(const char *a, const char *aEnd, const char *b, const char *bEnd)
 {
     while(a < aEnd && b < bEnd) {
-        if (*a <= 32 || a == aEnd || *b <= 32 || b == bEnd) {
-            return (*a <= 32 || a == aEnd) && *b <= 32;
+        if (a >= aEnd || *a <= 32 || b >= bEnd || *b <= 32) {
+            return (a >= aEnd || *a <= 32) && *b <= 32;
         }
         if (*a++ != *b++) {
             return false;
         }
     }
-    return (*a <= 32 || a == aEnd || *a == '.') && (*b <= 32 || b == bEnd);
+    return (a >= aEnd || *a <= 32 || *a == '.') && (b >= bEnd || *b <= 32);
 }
 
 uint8_t TokLen(const char *a, const char *aEnd)

@@ -1186,9 +1186,12 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         // for type 'any', consume the value as a template expansion (i.e. like &macroArg)
         // for compatibility with existing macros that don't declare their argument types.
 
+#if 0
+        // TODO: This doesn't work; it will cause firmware crashes.
+        // I don't understand why.
         PushParserContext(ctx, str.start, str.start, str.end);
         return consumeValue(ctx);
-#if 0
+#else
         parser_context_t varCtx = (parser_context_t) {
             .at = str.start,
             .begin = str.start,
