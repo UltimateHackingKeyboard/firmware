@@ -90,6 +90,7 @@
     void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var);
     bool TryExpandMacroTemplateOnce(parser_context_t* ctx);
 
+    string_segment_t StringRefToSegment(string_ref_t ref);
     macro_argument_alloc_result_t Macros_AllocateMacroArgument(uint8_t owner, const char *idStart, const char *idEnd, macro_argument_type_t type, uint8_t argNumber);
     void Macros_DeallocateMacroArgumentsByOwner(uint8_t owner);
     uint8_t Macros_CountMacroArgumentsByOwner(uint8_t owner);
