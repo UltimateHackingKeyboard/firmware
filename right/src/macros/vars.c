@@ -1186,8 +1186,9 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         // for type 'any', consume the value as a template expansion (i.e. like &macroArg)
         // for compatibility with existing macros that don't declare their argument types.
 
-        // PushParserContext(ctx, str.start, str.start, str.end);
-        // return consumeValue(ctx);
+        PushParserContext(ctx, str.start, str.start, str.end);
+        return consumeValue(ctx);
+#if 0
         parser_context_t varCtx = (parser_context_t) {
             .at = str.start,
             .begin = str.start,
@@ -1198,6 +1199,7 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         };
 
         return consumeValue(&varCtx);
+#endif
     } else {
             // for declared types, consume the value according to type.
             parser_context_t varCtx = (parser_context_t) {

@@ -124,7 +124,7 @@ static bool isEnd(parser_context_t* ctx) {
         return false;
     }
     while (ctx->nestingLevel > 0 && ctx->at >= ctx->end && PopParserContext(ctx)) {
-        /* everything was don in PopParserContext */
+        /* everything was done in PopParserContext */
     };
     return ctx->at >= ctx->end;
 }
@@ -439,7 +439,7 @@ bool TokenMatches2(const char *a, const char *aEnd, const char *b, const char *b
 uint8_t TokLen(const char *a, const char *aEnd)
 {
     uint8_t l = 0;
-    while(*a > 32 && a < aEnd) {
+    while(a < aEnd && *a > 32) {
         l++;
         a++;
     }
@@ -448,7 +448,7 @@ uint8_t TokLen(const char *a, const char *aEnd)
 
 const char* TokEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd > 32 && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd > 32)    {
         cmd++;
     }
     return cmd;
@@ -457,10 +457,10 @@ const char* TokEnd(const char* cmd, const char *cmdEnd)
 // This doesn't handle expansions. Don't use it in actual macro context.
 const char* NextTok(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd > 32 && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd > 32)    {
         cmd++;
     }
-    while(*cmd <= 32 && cmd < cmdEnd) {
+    while(cmd < cmdEnd && *cmd <= 32) {
         cmd++;
     }
     if (cmd < cmdEnd - 1 && cmd[0] == '/' && cmd[1] == '/') {
@@ -471,7 +471,7 @@ const char* NextTok(const char* cmd, const char *cmdEnd)
 
 void ConsumeAnyToken(parser_context_t* ctx)
 {
-    while (*ctx->at > 32 && ctx->at < ctx->end) {
+    while (ctx->at < ctx->end && *ctx->at > 32) {
         ctx->at++;
     }
     consumeWhite(ctx);
@@ -482,12 +482,12 @@ struct command_entry* ConsumeGperfToken(parser_context_t* ctx)
     const char* start = ctx->at;
 
     // parse an identifier token
-    while (isIdentifierChar(*ctx->at) && ctx->at < ctx->end) {
+    while (ctx->at < ctx->end && isIdentifierChar(*ctx->at)) {
         ctx->at++;
     }
 
     // parse a single char operator if token wasn't matched.
-    if (ctx->at == start && !isIdentifierChar(*ctx->at) && *ctx->at > 32 && ctx->at < ctx->end) {
+    if (ctx->at < ctx->end && ctx->at == start && !isIdentifierChar(*ctx->at) && *ctx->at > 32) {
         ctx->at++;
     }
 
@@ -498,11 +498,11 @@ struct command_entry* ConsumeGperfToken(parser_context_t* ctx)
 
 const char* NextCmd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd != '\n')    {
         cmd++;
     }
     const char* lastNewline = cmd;
-    while(*cmd <= 32 && cmd < cmdEnd) {
+    while(cmd < cmdEnd && *cmd <= 32) {
         if (*cmd == '\n') {
             lastNewline = cmd;
         }
@@ -518,7 +518,7 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
 
 const char* CmdEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd != '\n')    {
         cmd++;
     }
     return cmd;
@@ -526,7 +526,7 @@ const char* CmdEnd(const char* cmd, const char *cmdEnd)
 
 const char* SkipWhite(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd <= 32 && cmd < cmdEnd) {
+    while(cmd < cmdEnd && *cmd <= 32) {
         cmd++;
     }
     return cmd;
@@ -681,7 +681,7 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
     uint8_t count = 1;
     const char* textEnd = text + textLen;
 
-    while ( *text <= 32 && text < textEnd) {
+    while (text < textEnd && *text <= 32) {
         text++;
     }
 
@@ -769,4 +769,3 @@ const char* DeviceModelName(device_id_t device) {
             return "Unknown device";
     }
 }
-
