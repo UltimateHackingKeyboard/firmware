@@ -1259,18 +1259,24 @@ static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
 bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     ASSERT(*ctx->at == '&');
 
+    // save context position to restore if the "try" fails
+    const char *savedAt = ctx->at;
+
     ctx->at++;
 
     Trace_Printc("e1");
 
     if (ConsumeToken(ctx, "macroArg")) {
-        ConsumeOneDot(ctx);
-        uint8_t argId = Macros_ConsumeInt(ctx);
-        expandArgumentInplace(ctx, argId);
-        return true;
+        if(ConsumeOneDot(ctx)) {
+            uint8_t argId = Macros_ConsumeInt(ctx);
+            expandArgumentInplace(ctx, argId);
+            return true;
+        }
     }
 
-    ctx->at--;
+    // restore parser context if no expansion was performed
+    ctx->at = savedAt;
+
     return false;
 }
 
