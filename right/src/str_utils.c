@@ -349,6 +349,7 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
     consumeWhite(ctx);
 }
 
+#if 0
 // Consume characters until a specific character is found or whitespace is hit.
 // If end of context is reached, report an error.
 // If the character is found, consume it.
@@ -376,7 +377,9 @@ void ConsumeUntilDot(parser_context_t* ctx)
 {
     ConsumeUntilCharOrWhite(ctx, '.', true);
 }
+#endif
 
+// will consume exactly one character.
 // will not consume whitespace after the character.
 // returns true if the character was found, false otherwise.
 bool ConsumeOneChar(parser_context_t* ctx, char c)
