@@ -259,7 +259,7 @@ static macro_variable_t consumeVariable(parser_context_t* ctx)
     }
 
     ConsumeAnyIdentifier(ctx);
-    return (macro_variable_t){};
+    return (macro_variable_t){};    // TODO: shouldn't this be noneVar()?
 }
 
 // Expects <variable name>
@@ -424,7 +424,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(Timer_GetCurrentTime() & 0x7FFFFFFF);
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         int8_t queueIdx = Macros_ConsumeInt(ctx);
         if (queueIdx >= PostponerQuery_PendingKeypressCount()) {
             if (!Macros_DryRun) {
@@ -436,7 +436,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(PostponerExtended_PendingId(queueIdx));
     }
     else if (ConsumeToken(ctx, "keyId")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
         if (keyId == 255) {
             Macros_ReportErrorTok(ctx, "KeyId abbreviation expected:");
@@ -445,7 +445,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(keyId);
     }
     else if (ConsumeToken(ctx, "uhk")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         if (ConsumeToken(ctx, "name")) {
             return stringVar(Cfg.DeviceName);
         } else {
@@ -1264,7 +1264,7 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     Trace_Printc("e1");
 
     if (ConsumeToken(ctx, "macroArg")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         uint8_t argId = Macros_ConsumeInt(ctx);
         expandArgumentInplace(ctx, argId);
         return true;
