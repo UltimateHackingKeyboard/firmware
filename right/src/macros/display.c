@@ -214,6 +214,7 @@ void processList(parser_context_t* ctx, bool show, uint16_t time) {
 
 macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
 {
+    // TODO: I guess ATTR_UNUSED is not correct here?
     ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
 
     macro_result_t res = MacroResult_Finished;
