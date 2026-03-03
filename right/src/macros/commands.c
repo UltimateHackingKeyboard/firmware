@@ -2486,7 +2486,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
     if (cmdTokEnd > ctx->at && cmdTokEnd[-1] == ':') {
         //skip labels
         ConsumeAnyToken(ctx);
-        if (ctx->at == ctx->end && IsEnd(ctx)) {
+        if (/* ctx->at >= ctx->end && */ IsEnd(ctx)) {
             return MacroResult_Finished;
         }
     }

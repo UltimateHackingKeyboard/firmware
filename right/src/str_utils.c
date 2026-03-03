@@ -162,7 +162,7 @@ bool IsWhite(parser_context_t* ctx) {
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
-        while (!isEnd(ctx) && ctx->at <= 32) {
+        while (!isEnd(ctx) && *ctx->at <= 32) {
             ctx->at++;
         }
         if (consumeCommentsAsWhite && isCommentLeader(ctx)) {
