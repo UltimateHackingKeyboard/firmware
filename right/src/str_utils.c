@@ -354,7 +354,7 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
 // If end of context is reached, report an error.
 // If the character is found, consume it.
 // If whitespace is found, and failOnWhite is true, report an error.
-void ConsumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
+void consumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
 {
     while(!isEnd(ctx) && *ctx->at > 32 && *ctx->at != c) {
         ctx->at++;
@@ -375,7 +375,7 @@ void ConsumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
 
 void ConsumeUntilDot(parser_context_t* ctx)
 {
-    ConsumeUntilCharOrWhite(ctx, '.', true);
+    consumeUntilCharOrWhite(ctx, '.', true);
 }
 #endif
 
