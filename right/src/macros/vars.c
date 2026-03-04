@@ -185,10 +185,10 @@ static macro_variable_t consumeKeyIdValue(parser_context_t* ctx)
 static macro_variable_t consumeScancodeValue(parser_context_t* ctx)
 // consume "scancode" = modded scancode = "shortcut", return as string variable.
 {
+    // this function could preparse the Mods+Scancode for validity, e.g.
+    //   macro_action_t action = decodeKeyAndConsume(ctx, MacroSubAction_None);
+    // but for now we return the raw string.
     const char* atStart = ctx->at;
-    // should preparse the Mods+Scancode for validity.
-    // macro_action_t action = decodeKeyAndConsume(ctx, MacroSubAction_None);
-    // const char* atEnd = ctx->at;
     const char* atEnd = TokEnd(ctx->at, ctx->end);
     ConsumeWhiteAt(ctx, atEnd);
 
