@@ -37,6 +37,10 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
     if (Macros_IsNUM(ctx)) {
 #ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
+        if (value.type == MacroVariableType_None) {
+            Macros_ReportErrorTok(ctx, "Value expected but found:");
+            return 0;
+        }
         SegmentDisplay_SerializeVar(str, value);
         textLen = 3;
 #else
