@@ -38,7 +38,7 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
 #ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
         if (value.type == MacroVariableType_None) {
-            Macros_ReportErrorTok(ctx, "Value expected but found:");
+            Macros_ReportErrorTok(ctx, "Could not resolve:");
             return 0;
         }
         SegmentDisplay_SerializeVar(str, value);
