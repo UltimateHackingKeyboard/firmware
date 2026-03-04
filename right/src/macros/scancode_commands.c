@@ -512,7 +512,7 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
 
     macro_action_t action;
 
-    // TODO: allow $macroArg.xxx for type scancode ("modded scancode") here as well.
+    // Allow $macroArg.xxx for type scancode ("modded scancode") here as well.
     // - check for $
     // - if found, call Macros_ConsumeString() to get a string segment (uses consumeValue())
     // - Macros_ConsumeString() is new (in vars.c) and should coalesceType to string
