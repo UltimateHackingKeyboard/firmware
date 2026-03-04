@@ -531,7 +531,7 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
     }
 
 failed:
-    return consumeStringLiteral(ctx);
+    return consumeStringLiteral(ctx);  // try reading as a raw string literal
 
 #if 0
     if (IsIdentifierChar(*ctx->at)) {
@@ -1203,38 +1203,37 @@ static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
         return consumeValue(&varCtx);
 #endif
     } else {
-            // for declared types, consume the value according to type.
-            parser_context_t varCtx = (parser_context_t) {
-                .at = str.start,
-                .begin = str.start,
-                .end = str.end,
-                .macroState = ctx->macroState,
-                .nestingLevel = ctx->nestingLevel,
-                .nestingBound = ctx->nestingBound,
-            };
-        
-            switch (argType) {
-            case MacroArgType_Int:
-                return consumeIntValue(&varCtx);
-            case MacroArgType_Float:
-                return consumeFloatValue(&varCtx);
-            case MacroArgType_Bool:
-                return consumeBool(&varCtx);
-            case MacroArgType_String: {
-                // this used to be consumeStringLiteral, but that leads to $-expansions
-                // within the string, even if not enclosed in double-quotes. 
-                // Values configured for arguments should be interpreted as verbatim strings 
-                // without expansions.
-                // Use type 'any' if you want $-expansions in your arguments.
-                return consumeStringVerbatim(&varCtx);
-            }
-            case MacroArgType_KeyId:
-                return consumeKeyIdValue(&varCtx);
-            case MacroArgType_ScanCode:
-                return consumeScancodeValue(&varCtx);
-            default:
-                Macros_ReportErrorNum("Unexpected argument type:", argType, NULL);
-                return noneVar();
+        // for declared types, consume the value according to type.
+        parser_context_t varCtx = (parser_context_t) {
+            .at = str.start,
+            .begin = str.start,
+            .end = str.end,
+            .macroState = ctx->macroState,
+            .nestingLevel = ctx->nestingLevel,
+            .nestingBound = ctx->nestingBound,
+        };
+    
+        switch (argType) {
+        case MacroArgType_Int:
+            return consumeIntValue(&varCtx);
+        case MacroArgType_Float:
+            return consumeFloatValue(&varCtx);
+        case MacroArgType_Bool:
+            return consumeBool(&varCtx);
+        case MacroArgType_String:
+            // this used to be consumeStringLiteral, but that leads to $-expansions
+            // within the string, even if not enclosed in double-quotes. 
+            // Values configured for arguments of type string should be interpreted 
+            // as verbatim strings without expansions.
+            // Use type 'any' if you want $-expansions in your arguments.
+            return consumeStringVerbatim(&varCtx);
+        case MacroArgType_KeyId:
+            return consumeKeyIdValue(&varCtx);
+        case MacroArgType_ScanCode:
+            return consumeScancodeValue(&varCtx);
+        default:
+            Macros_ReportErrorNum("Unexpected argument type:", argType, NULL);
+            return noneVar();
         }
     }
 }
