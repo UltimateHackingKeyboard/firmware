@@ -59,12 +59,12 @@
 
     typedef struct {
         uint8_t owner;          // MACRO_STATE_SLOT() of the macro that owns this argument
-        macro_argument_type_t type;
         uint8_t idx;            // index of the argument in the macro's argument list (1-based)
                                 // (we could always calculate idx by looping through the pool, 
                                 //  but returning argument+index separately everywhere becomes 
                                 //  a nightmare...)
         string_ref_t name;      // macro argument name (identifier)
+        macro_argument_type_t type;
     } macro_argument_t;
 
     typedef enum {
@@ -90,6 +90,7 @@
     void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var);
     bool TryExpandMacroTemplateOnce(parser_context_t* ctx);
 
+    string_segment_t StringRefToSegment(string_ref_t ref);
     macro_argument_alloc_result_t Macros_AllocateMacroArgument(uint8_t owner, const char *idStart, const char *idEnd, macro_argument_type_t type, uint8_t argNumber);
     void Macros_DeallocateMacroArgumentsByOwner(uint8_t owner);
     uint8_t Macros_CountMacroArgumentsByOwner(uint8_t owner);

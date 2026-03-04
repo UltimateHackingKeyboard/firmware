@@ -177,8 +177,7 @@ static macro_variable_t consumeKeyIdValue(parser_context_t* ctx)
 {
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
     if (keyId == 255) {
-        macro_variable_t res = consumeValue(ctx);
-        return coalesceType(ctx, res, MacroVariableType_Int);
+        return consumeIntValue(ctx);
     }
     return intVar(keyId);
 }
@@ -186,10 +185,10 @@ static macro_variable_t consumeKeyIdValue(parser_context_t* ctx)
 static macro_variable_t consumeScancodeValue(parser_context_t* ctx)
 // consume "scancode" = modded scancode = "shortcut", return as string variable.
 {
+    // this function could preparse the Mods+Scancode for validity, e.g.
+    //   macro_action_t action = decodeKeyAndConsume(ctx, MacroSubAction_None);
+    // but for now we return the raw string.
     const char* atStart = ctx->at;
-    // should preparse the Mods+Scancode for validity.
-    // macro_action_t action = decodeKeyAndConsume(ctx, MacroSubAction_None);
-    // const char* atEnd = ctx->at;
     const char* atEnd = TokEnd(ctx->at, ctx->end);
     ConsumeWhiteAt(ctx, atEnd);
 
@@ -259,7 +258,7 @@ static macro_variable_t consumeVariable(parser_context_t* ctx)
     }
 
     ConsumeAnyIdentifier(ctx);
-    return (macro_variable_t){};   // TODO: shouldn't this be noneVar()?
+    return (macro_variable_t){};    // TODO: shouldn't this be noneVar()?
 }
 
 // Expects <variable name>
@@ -424,7 +423,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(Timer_GetCurrentTime() & 0x7FFFFFFF);
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         int8_t queueIdx = Macros_ConsumeInt(ctx);
         if (queueIdx >= PostponerQuery_PendingKeypressCount()) {
             if (!Macros_DryRun) {
@@ -436,7 +435,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(PostponerExtended_PendingId(queueIdx));
     }
     else if (ConsumeToken(ctx, "keyId")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
         if (keyId == 255) {
             Macros_ReportErrorTok(ctx, "KeyId abbreviation expected:");
@@ -445,7 +444,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(keyId);
     }
     else if (ConsumeToken(ctx, "uhk")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         if (ConsumeToken(ctx, "name")) {
             return stringVar(Cfg.DeviceName);
         } else {
@@ -1258,18 +1257,24 @@ static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
 bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     ASSERT(*ctx->at == '&');
 
+    // save context position to restore if the "try" fails
+    const char *savedAt = ctx->at;
+
     ctx->at++;
 
     Trace_Printc("e1");
 
     if (ConsumeToken(ctx, "macroArg")) {
-        ConsumeUntilDot(ctx);
-        uint8_t argId = Macros_ConsumeInt(ctx);
-        expandArgumentInplace(ctx, argId);
-        return true;
+        if(ConsumeOneDot(ctx)) {
+            uint8_t argId = Macros_ConsumeInt(ctx);
+            expandArgumentInplace(ctx, argId);
+            return true;
+        }
     }
 
-    ctx->at--;
+    // restore parser context if no expansion was performed
+    ctx->at = savedAt;
+
     return false;
 }
 

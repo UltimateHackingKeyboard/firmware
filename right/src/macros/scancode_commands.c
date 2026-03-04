@@ -512,7 +512,7 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
 
     macro_action_t action;
 
-    // TODO: allow $macroArg.xxx for type scancode ("modded scancode") here as well.
+    // Allow $macroArg.xxx for type scancode ("modded scancode") here as well.
     // - check for $
     // - if found, call Macros_ConsumeString() to get a string segment (uses consumeValue())
     // - Macros_ConsumeString() is new (in vars.c) and should coalesceType to string
@@ -534,6 +534,7 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
         };
         dequoteContext(&stringCtx); // remove enclosing quotes if they exist (hack to allow simple strings)
         action = decodeKeyAndConsume(&stringCtx, type);
+        // the next part should not be necessary, because dequoteContext should have already removed the quotes.
         if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
             stringCtx.at++;
         }

@@ -37,6 +37,10 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
     if (Macros_IsNUM(ctx)) {
 #ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
+        if (value.type == MacroVariableType_None) {
+            Macros_ReportErrorTok(ctx, "Could not resolve:");
+            return 0;
+        }
         SegmentDisplay_SerializeVar(str, value);
         textLen = 3;
 #else
@@ -214,6 +218,7 @@ void processList(parser_context_t* ctx, bool show, uint16_t time) {
 
 macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
 {
+    // TODO: I guess ATTR_UNUSED is not correct here?
     ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
 
     macro_result_t res = MacroResult_Finished;
