@@ -534,6 +534,7 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
         };
         dequoteContext(&stringCtx); // remove enclosing quotes if they exist (hack to allow simple strings)
         action = decodeKeyAndConsume(&stringCtx, type);
+        // the next part should not be necessary, because dequoteContext should have already removed the quotes.
         if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
             stringCtx.at++;
         }

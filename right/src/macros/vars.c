@@ -177,8 +177,7 @@ static macro_variable_t consumeKeyIdValue(parser_context_t* ctx)
 {
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
     if (keyId == 255) {
-        macro_variable_t res = consumeValue(ctx);
-        return coalesceType(ctx, res, MacroVariableType_Int);
+        return consumeIntValue(ctx);
     }
     return intVar(keyId);
 }
