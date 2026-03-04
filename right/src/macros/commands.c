@@ -1370,13 +1370,12 @@ conditionPassed:
 
 uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
 {
-    // TODO: allow $macroArg.xxx for type keyId here as well.
-    // - this should already work via Macros_ConsumeInt() -> consumeValue() chain.
-
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
-        uint8_t num = Macros_ConsumeInt(ctx);
+        // through the consumeValue() chain, this will parse plain integers, 
+        // numeric variables, and $macroArg of type :keyId (in both text or numeric form).
+        uint8_t num = Macros_ConsumeInt(ctx);  
         if (Macros_ParserError) {
             return 255;
         } else {
@@ -2486,6 +2485,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
     if (cmdTokEnd > ctx->at && cmdTokEnd[-1] == ':') {
         //skip labels
         ConsumeAnyToken(ctx);
+        // TODO: why not just IsEnd() in this condition?
+        //       The ctx->at check is done inside IsEnd() anyway.
         if (/* ctx->at >= ctx->end && */ IsEnd(ctx)) {
             return MacroResult_Finished;
         }

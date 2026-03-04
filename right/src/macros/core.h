@@ -173,11 +173,9 @@
             macro_autorepeat_state_t autoRepeatPhase: 1;
             bool isDoubletap: 1;
             secondary_role_state_t secondaryRoleState: 2;
+            bool macroHeadersProcessed : 1;
             // ---- 4-aligned ----
             macro_usb_keyboard_reports_t reports;
-
-            //uint8_t argumentCount : 4; // TODO: we don't need this; we can calculate it using Macros_CountMacroArgumentsByOwner()
-            bool macroHeadersProcessed : 1;
         } ms;
 
         // action scope data
