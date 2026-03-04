@@ -30,7 +30,6 @@
 
 // Typedefs:
 
-
     typedef struct macro_state_t macro_state_t;
 
     typedef struct {

@@ -943,10 +943,6 @@ static macro_result_t processPlayMacroCommand(parser_context_t* ctx)
 
 static macro_result_t processMacroArgCommand(parser_context_t* ctx)
 {
-    uint16_t stringOffset = 0;
-    uint16_t textIndex = 0;
-    uint16_t textSubIndex = 0;
-
     if (S->ms.macroHeadersProcessed) {
         Macros_ReportErrorPos(ctx, "macroArg commands must be placed before any other commands in the macro");
         return MacroResult_Finished;
@@ -978,10 +974,12 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         else if (ConsumeToken(ctx, "string")) {
             argType = MacroArgType_String;
         }
-        else if (ConsumeToken(ctx, "keyid")) {
+        else if (ConsumeToken(ctx, "keyid") || ConsumeToken(ctx, "keyId")) {
             argType = MacroArgType_KeyId;
         }
-        else if (ConsumeToken(ctx, "scancode")) {
+        else if (ConsumeToken(ctx, "scancode") || ConsumeToken(ctx, "scanCode") || 
+                 ConsumeToken(ctx, "moddedScanCode") || ConsumeToken(ctx, "moddedScancode") || 
+                 ConsumeToken(ctx, "shortcut")) {
             argType = MacroArgType_ScanCode;
         }
         else if (ConsumeToken(ctx, "any")) {
@@ -1001,7 +999,12 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         argType = MacroArgType_Any;
     }
 
-    // allocate an argument slot if there is room
+    // The following two blocks (counting arguments, then allocating argument) 
+    // could be optimised to walk the macro arg pool only once.
+    // The current implementation is straightforward to read, and the slight performance
+    // decrease at the start of a macro (when macroArg commands are processed) seems negligible.
+
+    // check whether we are exceeding the arguments for this macro
     uint8_t argNumber = Macros_CountMacroArgumentsByOwner(MACRO_STATE_SLOT(S));
     if (argNumber >= MAX_MACRO_ARGUMENT_COUNT) {
         Macros_ReportErrorPos(ctx, "Maximum number of macro arguments exceeded");
@@ -1012,7 +1015,7 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     macro_argument_alloc_result_t res = Macros_AllocateMacroArgument(MACRO_STATE_SLOT(S), idStart, idEnd, argType, argNumber+1);
     switch (res) {
     case MacroArgAllocResult_Success:
-        // macro arggument successfully allocated
+        // macro argument successfully allocated
         break;
     case MacroArgAllocResult_PoolLimitExceeded:
         Macros_ReportErrorPos(ctx, "Too many arguments across simultaneously active macros (argument pool exhausted)");
@@ -1022,8 +1025,8 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
         return MacroResult_Header;
     }
 
-    // rest of command is descriptive label, ignore. TODO: Should be parsed as string literal.
-    while (Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex) != '\0') {};
+    // rest of command is descriptive label, ignore.
+    Macros_ConsumeStringToken(ctx);
 
     return MacroResult_Header;
 }
@@ -1367,6 +1370,9 @@ conditionPassed:
 
 uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
 {
+    // TODO: allow $macroArg.xxx for type keyId here as well.
+    // - this should already work via Macros_ConsumeInt() -> consumeValue() chain.
+
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
@@ -2480,7 +2486,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
     if (cmdTokEnd > ctx->at && cmdTokEnd[-1] == ':') {
         //skip labels
         ConsumeAnyToken(ctx);
-        if (ctx->at == ctx->end && IsEnd(ctx)) {
+        if (/* ctx->at >= ctx->end && */ IsEnd(ctx)) {
             return MacroResult_Finished;
         }
     }

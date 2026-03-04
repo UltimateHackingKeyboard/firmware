@@ -22,11 +22,17 @@
 // Typedefs:
 
     typedef enum {
+        MacroNumericalValueType_Any = 0,
+        MacroNumericalValueType_Int,
+        MacroNumericalValueType_Float,
+    } macro_numericalvalue_type_t;
+
+    typedef enum {
+        MacroVariableType_None = 0,
         MacroVariableType_Int,
         MacroVariableType_Float,
         MacroVariableType_Bool,
         MacroVariableType_String,
-        MacroVariableType_None,
     } macro_variable_type_t;
 
     typedef struct {
@@ -53,11 +59,12 @@
 
     typedef struct {
         uint8_t owner;          // MACRO_STATE_SLOT() of the macro that owns this argument
-        macro_argument_type_t type;
         uint8_t idx;            // index of the argument in the macro's argument list (1-based)
                                 // (we could always calculate idx by looping through the pool, 
-                                //  but returning argument+index separately everywhere becomes a nightmare...)
+                                //  but returning argument+index separately everywhere becomes 
+                                //  a nightmare...)
         string_ref_t name;      // macro argument name (identifier)
+        macro_argument_type_t type;
     } macro_argument_t;
 
     typedef enum {
@@ -77,11 +84,13 @@
     int32_t Macros_ConsumeInt(parser_context_t* ctx);
     float Macros_ConsumeFloat(parser_context_t* ctx);
     bool Macros_ConsumeBool(parser_context_t* ctx);
+    string_segment_t Macros_ConsumeString(parser_context_t* ctx);
     macro_variable_t Macros_ConsumeAnyValue(parser_context_t* ctx);
     void MacroVariables_RunTests(void);
     void Macros_SerializeVar(char* buffer, uint8_t len, macro_variable_t var);
     bool TryExpandMacroTemplateOnce(parser_context_t* ctx);
 
+    string_segment_t StringRefToSegment(string_ref_t ref);
     macro_argument_alloc_result_t Macros_AllocateMacroArgument(uint8_t owner, const char *idStart, const char *idEnd, macro_argument_type_t type, uint8_t argNumber);
     void Macros_DeallocateMacroArgumentsByOwner(uint8_t owner);
     uint8_t Macros_CountMacroArgumentsByOwner(uint8_t owner);
