@@ -21,10 +21,6 @@ extern shell_t Shell;
 
 // Functions:
 
-extern void UninitShell(void);
-extern void ReinitShell(void);
 extern void InitShellCommands(void);
-extern void Shell_Execute(const char *cmd, const char *source);
-extern void Shell_WaitUntilInitialized(void);
 
 #endif // SHELL_H__
