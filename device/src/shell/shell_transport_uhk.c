@@ -13,6 +13,7 @@
 #include "wormhole.h"
 #include "config_manager.h"
 #include "sinks.h"
+#include "shell_log_backend.h"
 #include "macros/status_buffer.h"
 
 #define LOG_MODULE_NAME shell_transport_uhk
@@ -331,6 +332,8 @@ void ShellUartTransport_Uninit(void)
 {
     struct uart_transport_data *data = &uartTransportData;
 
+    ShellLogBackend_ClearUart();
+
     if (data->dev) {
         uart_rx_disable(data->dev);
     }
@@ -358,4 +361,6 @@ void ShellUartTransport_Reinit(void)
     __ASSERT_NO_MSG(err == 0);
 
     data->uartEnabled = true;
+
+    ShellLogBackend_SetUart(data->dev);
 }
