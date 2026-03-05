@@ -215,6 +215,7 @@ void mainRuntime(void) {
     // Needs to be after ShellUartTransport_Reinit, probably
     InitShellCommands();
     Shell_WaitUntilInitialized();
+    InitLogLevels();
     Logger_SetPriority(true);
 
     // read configurations

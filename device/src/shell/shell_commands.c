@@ -21,8 +21,11 @@
 #include "shell_backend_usb.h"
 #include "sinks.h"
 #include "wormhole.h"
+#include "stubs.h"
+#include "test_suite/test_suite.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
+#include <string.h>
 
 shell_t Shell = {
     .keyLog = 0,
@@ -383,6 +386,109 @@ static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+// <<<<<<< HEAD:device/src/shell/shell_commands.c
+// =======
+// void Shell_WaitUntilInitialized(void) {
+//     const struct shell *sh = shell_backend_uart_get_ptr();
+//     if (sh) {
+//         // if we set levels before shell is ready, the shell will mercilessly overwrite them
+//         while (!shell_ready(sh)) {
+//             k_msleep(10);
+//         }
+//     }
+// }
+
+// static int reinitShell(const struct device *const dev)
+// {
+//     int ret;
+//     const struct shell *sh = NULL;
+
+//     sh = shell_backend_uart_get_ptr();
+
+//     if (!sh) {
+//         LogS("Shell backend not found\n");
+//         return -ENODEV;
+//     }
+
+//     if (!dev) {
+//         LogS("Shell device is NULL\n");
+//         return -ENODEV;
+//     }
+//     const struct device *const dev2 = DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
+
+//     // (Re)initialize the shell
+//     bool log_backend = true;
+//     uint32_t level = 4U;
+//     ret = shell_init(sh, dev2, sh->ctx->cfg.flags, log_backend, level);
+//     if (ret < 0) {
+//         LogS("Shell init failed: %d\n", ret);
+//         return ret;
+//     }
+
+//     k_sleep(K_MSEC(10));
+
+//     // Start the shell
+//     ret = shell_start(sh);
+//     if (ret < 0) {
+//         LogS("Shell start failed: %d\n", ret);
+//         return ret;
+//     }
+
+//     Shell_WaitUntilInitialized();
+
+//     return 0;
+// }
+
+// static bool shellUninitialized = false;
+
+// static void shell_uninit_cb(const struct shell *sh, int res) {
+//     shellUninitialized = true;
+// }
+
+// void UninitShell(void)
+// {
+//     const struct shell *sh = NULL;
+
+//     sh = shell_backend_uart_get_ptr();
+//     shellUninitialized = false;
+
+//     shell_uninit(sh, shell_uninit_cb);
+
+//     while (!shellUninitialized) {
+//         k_sleep(K_MSEC(10));
+//     }
+// }
+
+// void ReinitShell(void) {
+//     if (!DEVICE_IS_UHK80_RIGHT) {
+//         return;
+//     }
+
+//     if (PinWiringConfig->device_uart_shell == NULL) {
+//         return;
+//     } else {
+//         reinitShell(PinWiringConfig->device_uart_shell->device);
+//     }
+// }
+
+static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[])
+{
+    string_segment_t module = { .start = NULL, .end = NULL };
+    string_segment_t test = { .start = NULL, .end = NULL };
+
+    if (argc >= 2) {
+        module.start = argv[1];
+        module.end = argv[1] + strlen(argv[1]);
+    }
+    if (argc >= 3) {
+        test.start = argv[2];
+        test.end = argv[2] + strlen(argv[2]);
+    }
+
+    TestSuite_Run(module, test);
+    return 0;
+}
+
 void InitShellCommands(void)
 {
 
@@ -424,6 +530,7 @@ void InitShellCommands(void)
         SHELL_CMD(log, &uhk_log_cmds, "Log management", NULL),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
+        SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
