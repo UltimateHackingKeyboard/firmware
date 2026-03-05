@@ -14,7 +14,6 @@
     #include "keyboard/charger.h"
     #include "keyboard/leds.h"
     #include "state_sync.h"
-    #include "proxy_log_backend.h"
 #else
     #include "slave_drivers/is31fl3xxx_driver.h"
     #include "usb_composite_device.h"
@@ -257,7 +256,6 @@ void PowerMode_RestartedTo(power_mode_t mode) {
     KeyBacklightBrightness = 0;
     lastDeepPowerMode = mode;
 
-    InitProxyLogBackend();
     InitLeds_Min();
     InitKeyScanner_Min();
     InitCharger_Min();

@@ -179,11 +179,46 @@ static const test_action_t test_macro_if_not_doubletap[] = {
     TEST_END()
 };
 
+// Test: Releasing a key between taps prevents doubletap triggers, like when typing out "Oof"
+// Setup: macro with ifDoubletap that types different keys based on doubletap, another key does not have to do anything
+// Action: Hold mod, tap key, release mod, tap key
+// Expected: key should trigger singletap action both times
+static const test_action_t other_key_release_breaks_doubletap[] = {
+    TEST_SET_CONFIG("doubletapTimeout 400"),
+    TEST_SET_ACTION("i", "i"),
+    TEST_SET_MACRO("u",
+        "ifDoubletap tapKey n\n"
+        "tapKey u\n"
+    ),
+
+    // First tap - should produce "u" (not doubletap)
+    TEST_PRESS______("i"),
+    TEST_EXPECT__________("i"),
+    TEST_PRESS______("u"),
+    TEST_EXPECT__________("u i"),
+    TEST_DELAY__(50),
+    TEST_RELEASE__U("u"),
+    TEST_EXPECT__________("i"),
+    TEST_RELEASE__U("i"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("u"),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
+
+    TEST_END()
+};
+
+
+
 static const test_t doubletap_tests[] = {
     { .name = "layer_doubletap_toggle", .actions = test_layer_doubletap_toggle },
     { .name = "layer_doubletap_interrupt", .actions = test_layer_doubletap_interrupt },
     { .name = "macro_if_doubletap", .actions = test_macro_if_doubletap },
     { .name = "macro_if_not_doubletap", .actions = test_macro_if_not_doubletap },
+    { .name = "other_key_release_breaks_doubletap", .actions = other_key_release_breaks_doubletap },
 };
 
 const test_module_t TestModule_Doubletap = {

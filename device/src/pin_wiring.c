@@ -1,5 +1,5 @@
 #include "attributes.h"
-#include "shell.h"
+#include "shell/shell_transport_uhk.h"
 #include "bt_conn.h"
 #include "device.h"
 #include "keyboard/charger.h"
@@ -21,7 +21,6 @@
 #include "mouse_keys.h"
 #include "config_manager.h"
 #include <zephyr/shell/shell_backend.h>
-#include <zephyr/shell/shell_uart.h>
 #include <zephyr/shell/shell.h>
 #include "connections.h"
 #include "logger_priority.h"
@@ -236,7 +235,7 @@ void PinWiring_SelectRouting(void) {
 }
 
 void PinWiring_UninitShell(void) {
-    UninitShell();
+    ShellUartTransport_Uninit();
     uninitUart(&uart0);
 }
 

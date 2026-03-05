@@ -60,9 +60,61 @@ static const test_action_t test_secondary_role_negative_safety[] = {
     TEST_END()
 };
 
+// Secondary role test: Timeout triggers primary after multitap
+// Key u has primary=u, secondary=LS
+static const test_action_t test_secondary_role_multitap_to_primary[] = {
+    // Configure with negative safetyMargin - biased towards secondary role
+    TEST_SET_CONFIG("secondaryRole.defaultStrategy advanced"),
+    TEST_SET_CONFIG("secondaryRole.advanced.timeout 100"),
+    TEST_SET_CONFIG("secondaryRole.advanced.timeoutAction secondary"),
+    TEST_SET_CONFIG("secondaryRole.advanced.doubletapToPrimary 1"),
+    TEST_SET_CONFIG("doubletapTimeout 300"),
+    TEST_DELAY__(50),
+    TEST_SET_SECONDARY_ROLE("u", HID_KEYBOARD_SC_U, SecondaryRole_LeftShift),
+
+    // First a doubletap
+    TEST_PRESS______("u"),
+    TEST_DELAY__(50),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(100),
+    TEST_EXPECT__________(""),
+
+    // Now a tripletap
+    TEST_PRESS______("u"),
+    TEST_DELAY__(50),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(50),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________("u"),
+    TEST_RELEASE__U("u"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+
+    TEST_END()
+};
+
+
+
 static const test_t secondary_role_tests[] = {
     { .name = "positive_safety_margin", .actions = test_secondary_role_positive_safety },
     { .name = "negative_safety_margin", .actions = test_secondary_role_negative_safety },
+    { .name = "test_secondary_role_multitap_to_primary", .actions = test_secondary_role_multitap_to_primary },
 };
 
 const test_module_t TestModule_SecondaryRoles = {
