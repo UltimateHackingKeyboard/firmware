@@ -272,16 +272,16 @@ void UnNotify()
 
 macro_result_t Macros_ProcessNotifyCommand(parser_context_t* ctx)
 {
-#if DEVICE_HAS_OLED
     char* buf;
     uint8_t bufLen;
 
     getDisplayStringBuffer(DisplayStringSlot_Notify, &buf, &bufLen);
     consumeDisplayString(ctx, buf, bufLen);
     if (!Macros_DryRun) {
+#if DEVICE_HAS_OLED
         NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
-    }
 #endif
+    }
 
     return MacroResult_Finished;
 }

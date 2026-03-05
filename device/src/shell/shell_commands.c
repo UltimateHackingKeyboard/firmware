@@ -5,31 +5,22 @@
 #include "keyboard/leds.h"
 #include "keyboard/oled/oled.h"
 #include "logger.h"
-#include "proxy_log_backend.h"
 #include "usb_log_buffer.h"
 #include "usb/usb.h"
-#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/shell/shell.h>
-#include "bt_conn.h"
-#include "keyboard/charger.h"
 #include "ledmap.h"
-#include "event_scheduler.h"
 #include "host_connection.h"
 #include "thread_stats.h"
 #include "trace.h"
 #include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
-#include <zephyr/shell/shell_backend.h>
-#include <zephyr/shell/shell_uart.h>
-#include <zephyr/shell/shell.h>
 #include "connections.h"
 #include "logger_priority.h"
-#include "pin_wiring.h"
-#include "device.h"
-#include "logger.h"
 #include "shell_backend_usb.h"
+#include "sinks.h"
+#include "wormhole.h"
 #include "stubs.h"
 #include "test_suite/test_suite.h"
 #include <zephyr/irq.h>
@@ -43,24 +34,6 @@ shell_t Shell = {
     .oledEn = 1,
     .sdbState = 1,
 };
-
-void list_backends_by_iteration(void) {
-    const struct shell *shell;
-    size_t idx = 0;
-    size_t backendCount = shell_backend_count_get();
-
-    printk("Available shell backends:\n");
-    for (size_t i = 0; i < backendCount; i++) {
-        shell = shell_backend_get(idx);
-        printk("- Backend %zu: %s\n", idx, shell->name);
-        idx++;
-    }
-}
-
-void Shell_Execute(const char *cmd, const char *source) {
-    ShellBackend_Exec(cmd, source);
-    return;
-}
 
 static int cmd_uhk_keylog(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -369,9 +342,9 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
 
 static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
 {
-    if (argc == 1 || argv[1][0] == '1') {
+    if (argc > 1 && argv[1][0] == '1') {
         WormCfg->UsbLogEnabled = true;
-    } else if (argc == 1 || argv[1][0] == '0') {
+    } else if (argc > 1 && argv[1][0] == '0') {
         WormCfg->UsbLogEnabled = false;
     }
 
@@ -384,6 +357,28 @@ static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_useShellSinks(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", ShellConfig_UseShellSinks ? 1 : 0);
+    } else {
+        ShellConfig_UseShellSinks = argv[1][0] == '1';
+    }
+    return 0;
+}
+
+static int cmd_uhk_logStatus(const struct shell *shell, size_t argc, char *argv[])
+{
+    uint16_t usbBufferFill, usbBufferSize;
+    UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
+
+    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
+    printk("Has log: %d\n", UsbLogBuffer_HasLog);
+    printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
+    printk("UseShellSinks: %d\n", ShellConfig_UseShellSinks ? 1 : 0);
+    return 0;
+}
+
 static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
 {
     UsbLogBuffer_SnapToStatusBuffer();
@@ -391,88 +386,90 @@ static int cmd_uhk_snaplog(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
-void Shell_WaitUntilInitialized(void) {
-    const struct shell *sh = shell_backend_uart_get_ptr();
-    if (sh) {
-        // if we set levels before shell is ready, the shell will mercilessly overwrite them
-        while (!shell_ready(sh)) {
-            k_msleep(10);
-        }
-    }
-}
+// <<<<<<< HEAD:device/src/shell/shell_commands.c
+// =======
+// void Shell_WaitUntilInitialized(void) {
+//     const struct shell *sh = shell_backend_uart_get_ptr();
+//     if (sh) {
+//         // if we set levels before shell is ready, the shell will mercilessly overwrite them
+//         while (!shell_ready(sh)) {
+//             k_msleep(10);
+//         }
+//     }
+// }
 
-static int reinitShell(const struct device *const dev)
-{
-    int ret;
-    const struct shell *sh = NULL;
+// static int reinitShell(const struct device *const dev)
+// {
+//     int ret;
+//     const struct shell *sh = NULL;
 
-    sh = shell_backend_uart_get_ptr();
+//     sh = shell_backend_uart_get_ptr();
 
-    if (!sh) {
-        LogS("Shell backend not found\n");
-        return -ENODEV;
-    }
+//     if (!sh) {
+//         LogS("Shell backend not found\n");
+//         return -ENODEV;
+//     }
 
-    if (!dev) {
-        LogS("Shell device is NULL\n");
-        return -ENODEV;
-    }
-    const struct device *const dev2 = DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
+//     if (!dev) {
+//         LogS("Shell device is NULL\n");
+//         return -ENODEV;
+//     }
+//     const struct device *const dev2 = DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
 
-    // (Re)initialize the shell
-    bool log_backend = true;
-    uint32_t level = 4U;
-    ret = shell_init(sh, dev2, sh->ctx->cfg.flags, log_backend, level);
-    if (ret < 0) {
-        LogS("Shell init failed: %d\n", ret);
-        return ret;
-    }
+//     // (Re)initialize the shell
+//     bool log_backend = true;
+//     uint32_t level = 4U;
+//     ret = shell_init(sh, dev2, sh->ctx->cfg.flags, log_backend, level);
+//     if (ret < 0) {
+//         LogS("Shell init failed: %d\n", ret);
+//         return ret;
+//     }
 
-    k_sleep(K_MSEC(10));
+//     k_sleep(K_MSEC(10));
 
-    // Start the shell
-    ret = shell_start(sh);
-    if (ret < 0) {
-        LogS("Shell start failed: %d\n", ret);
-        return ret;
-    }
+//     // Start the shell
+//     ret = shell_start(sh);
+//     if (ret < 0) {
+//         LogS("Shell start failed: %d\n", ret);
+//         return ret;
+//     }
 
-    Shell_WaitUntilInitialized();
+//     Shell_WaitUntilInitialized();
 
-    return 0;
-}
+//     return 0;
+// }
 
-static bool shellUninitialized = false;
+// static bool shellUninitialized = false;
 
-static void shell_uninit_cb(const struct shell *sh, int res) {
-    shellUninitialized = true;
-}
+// static void shell_uninit_cb(const struct shell *sh, int res) {
+//     shellUninitialized = true;
+// }
 
-void UninitShell(void)
-{
-    const struct shell *sh = NULL;
+// void UninitShell(void)
+// {
+//     const struct shell *sh = NULL;
 
-    sh = shell_backend_uart_get_ptr();
-    shellUninitialized = false;
+//     sh = shell_backend_uart_get_ptr();
+//     shellUninitialized = false;
 
-    shell_uninit(sh, shell_uninit_cb);
+//     shell_uninit(sh, shell_uninit_cb);
 
-    while (!shellUninitialized) {
-        k_sleep(K_MSEC(10));
-    }
-}
+//     while (!shellUninitialized) {
+//         k_sleep(K_MSEC(10));
+//     }
+// }
 
-void ReinitShell(void) {
-    if (!DEVICE_IS_UHK80_RIGHT) {
-        return;
-    }
+// void ReinitShell(void) {
+//     if (!DEVICE_IS_UHK80_RIGHT) {
+//         return;
+//     }
 
-    if (PinWiringConfig->device_uart_shell == NULL) {
-        return;
-    } else {
-        reinitShell(PinWiringConfig->device_uart_shell->device);
-    }
-}
+//     if (PinWiringConfig->device_uart_shell == NULL) {
+//         return;
+//     } else {
+//         reinitShell(PinWiringConfig->device_uart_shell->device);
+//     }
+// }
 
 static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -494,6 +491,14 @@ static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[
 
 void InitShellCommands(void)
 {
+
+    SHELL_STATIC_SUBCMD_SET_CREATE(uhk_log_cmds,
+        SHELL_CMD_ARG(usbLog, NULL, "Set/get USB log enabled", cmd_uhk_logs, 1, 1),
+        SHELL_CMD_ARG(priority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
+        SHELL_CMD_ARG(snapshot, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
+        SHELL_CMD_ARG(status, NULL, "print log status overview", cmd_uhk_logStatus, 1, 0),
+        SHELL_CMD_ARG(useShellSinks, NULL, "get/set shell sinks mode", cmd_uhk_useShellSinks, 1, 1),
+        SHELL_SUBCMD_SET_END);
 
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
         SHELL_CMD_ARG(keylog, NULL, "get/set key logging", cmd_uhk_keylog, 1, 1),
@@ -522,9 +527,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 0),
-        SHELL_CMD_ARG(logPriority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
-        SHELL_CMD_ARG(logs, NULL, "Set/get proxy log enabled", cmd_uhk_logs, 1, 1),
-        SHELL_CMD_ARG(snaplog, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
+        SHELL_CMD(log, &uhk_log_cmds, "Log management", NULL),
         SHELL_CMD_ARG(shells, NULL, "list available shell backends", cmd_uhk_shells, 1, 0),
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
@@ -532,4 +535,3 @@ void InitShellCommands(void)
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
 }
-
