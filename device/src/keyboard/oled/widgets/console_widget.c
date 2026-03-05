@@ -19,6 +19,7 @@
 
 static char consoleBuffer[CONSOLE_BUFFER_LINE_COUNT][CONSOLE_BUFFER_LINE_LENGTH] = {};
 static uint8_t consoleBufferStart = 0;
+static uint8_t currentCol = 0;
 static bool consoleBufferIsDirty = true;
 
 void ConsoleWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8_t h)
@@ -60,10 +61,37 @@ widget_t ConsoleWidget_Build()
 }
 
 
+static void advanceLine(void)
+{
+    consoleBufferStart = (consoleBufferStart + 1) % CONSOLE_BUFFER_LINE_COUNT;
+    consoleBuffer[consoleBufferStart][0] = '\0';
+    currentCol = 0;
+}
+
+static const char shellPrompt[] = "uhk80:right$";
+
 static void logConstant(const char* text)
 {
-    consoleBufferStart = (consoleBufferStart+1) % CONSOLE_BUFFER_LINE_COUNT;
-    snprintf(&consoleBuffer[consoleBufferStart][0], CONSOLE_BUFFER_LINE_LENGTH, "%s", text);
+    for (const char* p = text; *p != '\0'; p++) {
+        if (currentCol == 0 && strncmp(p, shellPrompt, sizeof(shellPrompt) - 1) == 0) {
+            p += sizeof(shellPrompt) - 2;
+            consoleBuffer[consoleBufferStart][currentCol++] = '$';
+            consoleBuffer[consoleBufferStart][currentCol] = '\0';
+            continue;
+        }
+        if (*p == '\n') {
+            if (currentCol > 0) {
+                advanceLine();
+            }
+        } else if (*p == '\r') {
+            // skip
+        } else {
+            if (currentCol < CONSOLE_BUFFER_LINE_LENGTH - 1) {
+                consoleBuffer[consoleBufferStart][currentCol++] = *p;
+                consoleBuffer[consoleBufferStart][currentCol] = '\0';
+            }
+        }
+    }
 
     consoleBufferIsDirty = true;
 
