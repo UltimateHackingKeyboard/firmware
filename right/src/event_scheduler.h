@@ -48,6 +48,7 @@
         EventSchedulerEvent_BlinkStatusIcons,
         EventSchedulerEvent_UnselectHostConnection,
         EventSchedulerEvent_OneShotTimeout,
+        EventSchedulerEvent_KickHid,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
@@ -71,7 +72,7 @@
        // some other minor triggers
        EventVector_KeyboardLedState =                      1 << 10,
        EventVector_UsbMacroCommandWaitingForExecution =    1 << 11,
-       EventVector_ProtocolChanged =                       1 << 12,
+       // EventVector_ProtocolChanged =                       1 << 12, // unused
        EventVector_LedManagerFullUpdateNeeded =            1 << 13,
        EventVector_KeymapReloadNeeded =                    1 << 14,
        EventVector_SegmentDisplayNeedsUpdate =             1 << 15,

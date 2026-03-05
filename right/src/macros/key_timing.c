@@ -16,10 +16,12 @@ void KeyTiming_RecordKeystroke(key_state_t *keyState, bool active, uint32_t pres
         active ? "DOWN" : "UP", keyAbbreviation, pressTime, activationTime);
 }
 
-void KeyTiming_RecordReport(usb_basic_keyboard_report_t* report)
+extern hid_keyboard_report_t *ActiveKeyboardReport;
+
+void KeyTiming_RecordReport(hid_keyboard_report_t* report)
 {
     LogTo(DEVICE_ID, defaultTarget, "%d OUT %s\n",
-        Timer_GetCurrentTime(), Utils_GetUsbReportString(ActiveUsbBasicKeyboardReport));
+        Timer_GetCurrentTime(), Utils_GetUsbReportString(ActiveKeyboardReport));
 }
 
 void KeyTiming_RecordComment(key_state_t* keyState, secondary_role_state_t state, int32_t resolutionLine)

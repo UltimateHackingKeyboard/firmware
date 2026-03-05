@@ -31,12 +31,6 @@ void RunUserLogic(void) {
         Trace_Printc("l2");
         SwitchKeymapById(CurrentKeymapIndex, true);
     }
-#ifndef __ZEPHYR__
-    if (EventVector_IsSet(EventVector_ProtocolChanged)) {
-        Trace_Printc("l3");
-        UsbBasicKeyboard_HandleProtocolChange();
-    }
-#endif
     if (EventVector_IsSet(EventVector_UsbMacroCommandWaitingForExecution)) {
         Trace_Printc("l4");
         UsbMacroCommand_ExecuteSynchronously();

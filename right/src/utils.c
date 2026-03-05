@@ -16,7 +16,6 @@
 #include "macros/keyid_parser.h"
 #include "macros/status_buffer.h"
 #include "macros/shortcut_parser.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "led_display.h"
 
 #if !defined(MIN)
@@ -87,7 +86,7 @@ void Utils_DecodeId(uint16_t keyid, uint8_t* outSlotId, uint8_t* outSlotIdx)
 
 static char usbReportString[32];
 
-const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report)
+const char* Utils_GetUsbReportString(const hid_keyboard_report_t* report)
 {
     char *p = usbReportString;
     char *end = usbReportString + sizeof(usbReportString) - 1;
@@ -111,7 +110,7 @@ const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report)
     }
 
     bool hasMods = (p > usbReportString);
-    bool hasScancodes = UsbBasicKeyboard_ScancodeCount(report) > 0;
+    bool hasScancodes = KeyboardReport_ScancodeCount(report) > 0;
 
     if (hasMods && hasScancodes && p < end) {
         *p++ = '-';
@@ -120,10 +119,10 @@ const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report)
     bool first = !hasMods;
     for (uint8_t sc = 4; sc < 232 && p < end - 4; sc++) {
         // Skip modifier scancodes (0xE0-0xE7) - they're already printed as modifiers above
-        if (UsbBasicKeyboard_IsModifier(sc)) {
+        if (KeyboardReport_IsModifier(sc)) {
             continue;
         }
-        if (UsbBasicKeyboard_ContainsScancode(report, sc)) {
+        if (KeyboardReport_ContainsScancode(report, sc)) {
             if (!first && p < end) *p++ = ' ';
             first = false;
             char c = MacroShortcutParser_ScancodeToCharacter(sc);
@@ -142,7 +141,7 @@ const char* Utils_GetUsbReportString(const usb_basic_keyboard_report_t* report)
     return usbReportString;
 }
 
-void Utils_PrintReport(const char* prefix, usb_basic_keyboard_report_t* report)
+void Utils_PrintReport(const char* prefix, hid_keyboard_report_t* report)
 {
     Macros_SetStatusString(prefix, NULL);
     Macros_SetStatusString(" ", NULL);
@@ -162,29 +161,4 @@ const char* Utils_KeyAbbreviation(key_state_t* keyState)
     //maps according to static enUs mapping
     uint8_t keyId = Utils_KeyStateToKeyId(keyState);
     return MacroKeyIdParser_KeyIdToAbbreviation(keyId);
-}
-
-// Try resending a report for 512ms. Give up if it doesn't succeed by then.
-bool ShouldResendReport(bool statusOk, uint8_t* counter) {
-
-    if (statusOk) {
-        *counter = 0;
-        return false;
-    }
-
-    // keep this low, since the actual delay this causes with a full queue is
-    // queueLength * maxDelay
-    const uint16_t maxDelay = 128; //ms
-    const uint8_t granularity = 16; //ms
-    uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
-
-    if (*counter == 0) {
-        *counter = minimizedTime;
-        return true;
-    } else if ((uint8_t)(minimizedTime - *counter) < (maxDelay / granularity)) {
-        return true;
-    } else {
-        *counter = 0;
-        return false;
-    }
 }
