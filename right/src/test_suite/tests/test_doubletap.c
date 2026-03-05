@@ -185,6 +185,7 @@ static const test_action_t test_macro_if_not_doubletap[] = {
 // Expected: key should trigger singletap action both times
 static const test_action_t other_key_release_breaks_doubletap[] = {
     TEST_SET_CONFIG("doubletapTimeout 400"),
+    TEST_SET_ACTION("i", "i"),
     TEST_SET_MACRO("u",
         "ifDoubletap tapKey n\n"
         "tapKey u\n"
@@ -192,11 +193,14 @@ static const test_action_t other_key_release_breaks_doubletap[] = {
 
     // First tap - should produce "u" (not doubletap)
     TEST_PRESS______("i"),
+    TEST_EXPECT__________("i"),
     TEST_PRESS______("u"),
+    TEST_EXPECT__________("u i"),
+    TEST_DELAY__(50),
     TEST_RELEASE__U("u"),
+    TEST_EXPECT__________("i"),
     TEST_RELEASE__U("i"),
     TEST_DELAY__(50),
-    TEST_EXPECT__________("u"),
     TEST_EXPECT__________(""),
     TEST_PRESS______("u"),
     TEST_RELEASE__U("u"),
