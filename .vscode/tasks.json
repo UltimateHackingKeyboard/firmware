@@ -10,13 +10,8 @@
 			"options": {
 				"cwd": "${workspaceFolder:firmware}"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"config",
-				"manifest.file",
-				"west_nrfsdk.yml"
-			]
+			"type": "shell",
+			"command": "west config manifest.file west_nrfsdk.yml && west config manifest.path firmware"
 		},
 		{
 			"label": "Select McuXpresso SDK",
@@ -27,16 +22,11 @@
 			"options": {
 				"cwd": "${workspaceFolder:firmware}"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"config",
-				"manifest.file",
-				"west_mcuxsdk.yml"
-			]
+			"type": "shell",
+			"command": "west config manifest.file west_mcuxsdk.yml && west config manifest.path firmware"
 		},
 		{
-			"label": "West update",
+			"label": "West update and patch",
 			"group": {
 				"kind": "none",
 				"isDefault": true
@@ -44,30 +34,8 @@
 			"options": {
 				"cwd": "${workspaceFolder:firmware}"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"update"
-			]
-		},
-		{
-			"label": "West patch",
-			"group": {
-				"kind": "none",
-				"isDefault": true
-			},
-			"options": {
-				"cwd": "${workspaceFolder:firmware}"
-			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"patch"
-			],
-			"dependsOrder": "sequence",
-			"dependsOn": [
-				"West update"
-			]
+			"type": "shell",
+			"command": "west update && west patch",
 		},
 		{
 			"label": "Select SDK by vscode workspace",
@@ -81,13 +49,8 @@
 			"runOptions": {
 				"runOn": "folderOpen"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"config",
-				"manifest.file",
-				"west_${config:firmware.startupSdk}.yml"
-			]
+			"type": "shell",
+			"command": "west config manifest.file west_${config:firmware.startupSdk}.yml && west config manifest.path firmware"
 		}
 	]
 }
