@@ -996,6 +996,7 @@ string_segment_t Macros_ConsumeString(parser_context_t* ctx)
 {
     macro_variable_t res = consumeValue(ctx);
     if (res.type != MacroVariableType_String) {
+        // Do not report error directly here, just return a "null" string.
         // Macros_ReportError("String value expected but found:", NULL, NULL);
         return (string_segment_t){ .start = NULL, .end = NULL };
     }
