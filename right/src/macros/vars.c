@@ -334,8 +334,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    goto unexpected_variable_type;
             }
             break;
         case MacroVariableType_Float:
@@ -355,8 +354,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    goto unexpected_variable_type;
             }
             break;
         case MacroVariableType_Bool:
@@ -376,8 +374,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    goto unexpected_variable_type;
             }
             break;
         case MacroVariableType_String:
@@ -393,13 +390,13 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    goto unexpected_variable_type;
             }
             break;
         case MacroVariableType_None:
             break;
         default:
+unexpected_variable_type:
             Macros_ReportErrorNum("Unexpected variable type:", dstType, NULL);
             break;
     }
