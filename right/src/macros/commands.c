@@ -1272,7 +1272,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
         CTX_COPY(ctx2, *ctx);
         uint8_t totalArgs = 0;
         uint8_t argKeyId = 255;
-        while((argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255 && ctx2.at < ctx2.end) {
+        while(ctx2.at < ctx2.end && (argKeyId = Macros_TryConsumeKeyId(&ctx2)) != 255) {
             totalArgs++;
         }
         if (totalArgs > PostponerQuery_PendingKeypressCount()) {
@@ -1285,7 +1285,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
     uint8_t numArgs = 0;
     bool someoneNotReleased = false;
     uint8_t argKeyId = 255;
-    while((argKeyId = Macros_TryConsumeKeyId(ctx)) != 255 && ctx->at < ctx->end) {
+    while(ctx->at < ctx->end && (argKeyId = Macros_TryConsumeKeyId(ctx)) != 255) {
         numArgs++;
         if (pendingCount < numArgs || insufficientNumberForAnyOrder) {
             uint32_t referenceTime = transitive && pendingCount > 0 ? PostponerExtended_LastPressTime() : S->ms.currentMacroStartTime;
@@ -1318,14 +1318,14 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
             }
         }
         else if (orGate) {
-            // go through all canidates all at once
+            // go through all candidates all at once
             while (true) {
                 // first keyid had already been processed.
                 if (PostponerQuery_ContainsKeyId(argKeyId)) {
                     numArgs = 1;
                     goto matched;
                 }
-                if ((argKeyId = Macros_TryConsumeKeyId(ctx)) == 255 || ctx->at == ctx->end) {
+                if (ctx->at == ctx->end || (argKeyId = Macros_TryConsumeKeyId(ctx)) == 255) {
                     break;
                 }
             }
