@@ -310,6 +310,14 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     return res;
 }
 
+static macro_variable_t reportUnexpectedVariableType(parser_context_t* ctx, macro_variable_type_t type)
+{
+    // TODO: would there be any way to trace the current position down the 
+    //       context stack and report it here?
+    Macros_ReportErrorNum("Unexpected variable type:", type, NULL);
+    return noneVar();
+}
+
 static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t value, macro_variable_type_t dstType)
 {
     if (value.type == dstType) {
@@ -334,7 +342,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    goto unexpected_variable_type;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_Float:
@@ -354,7 +362,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    goto unexpected_variable_type;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_Bool:
@@ -374,7 +382,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    goto unexpected_variable_type;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_String:
@@ -390,15 +398,13 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    goto unexpected_variable_type;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_None:
             break;
         default:
-unexpected_variable_type:
-            Macros_ReportErrorNum("Unexpected variable type:", dstType, NULL);
-            break;
+            return reportUnexpectedVariableType(ctx, value.type);;
     }
     value.type = dstType;
     return value;
