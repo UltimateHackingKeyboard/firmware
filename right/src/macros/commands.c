@@ -136,18 +136,22 @@ static bool isCurrentMacroPostponing()
  */
 bool Macros_CurrentMacroKeyIsActive()
 {
+    if (S->ms.oneShot == 1) {
+        return true;
+    }
     if (S->ms.currentMacroKey == NULL) {
-        return S->ms.oneShot == 1;
+        return false;
+    }
+    if (S->ms.currentMacroKey->activationId != S->ms.keyActivationId) {
+        return false;
+    }
+    if (!KeyState_Active(S->ms.currentMacroKey)) {
+        return false;
     }
     if (isCurrentMacroPostponing()) {
-        bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
-        bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
-        return  (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
-    } else {
-        bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
-        bool keyIsActive = KeyState_Active(S->ms.currentMacroKey);
-        return (isSameActivation && keyIsActive) || S->ms.oneShot == 1;
+        return !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey);
     }
+    return true;
 }
 
 static macro_result_t writeNum(uint32_t a)
