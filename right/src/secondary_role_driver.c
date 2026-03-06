@@ -250,7 +250,7 @@ static void startResolution(
 {
     // store current state
     currentlyResolving = true;
-    isDoubletap = KeyHistory_WasLastMultitap();
+    isDoubletap = KeyHistory_WasMultitap(keyState, keyState->activationId);
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;

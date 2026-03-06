@@ -33,7 +33,7 @@ uint8_t Postponer_LastKeyMods = 0;
 //static uint8_t cyclesUntilActivation = 0;
 static uint32_t lastPressTime;
 
-#define POS(idx) ((bufferPosition + POSTPONER_BUFFER_SIZE + (idx)) % POSTPONER_BUFFER_SIZE)
+#define POS(idx) ((bufferPosition + (idx)) % POSTPONER_BUFFER_SIZE)
 
 uint32_t CurrentPostponedTime = 0;
 
