@@ -166,6 +166,8 @@ static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str
     }
 }
 
+// this attempts to consume a KEYID_ABBREV (textual key id)).
+// returns the key id, or 255 if not found (invalid key id).
 uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
 {
     // this gets identifier till the next dot only
