@@ -463,7 +463,7 @@ uint8_t initMacro(
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
-    S->ms.isDoubletap = keyState != NULL && KeyHistory_GetMultitapCount(keyState, keyActivationId) % 2 == 0;
+    S->ms.multitapCount = keyState == NULL ? 0 : KeyHistory_GetMultitapCount(keyState, keyActivationId);
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {

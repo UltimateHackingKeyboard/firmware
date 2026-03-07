@@ -155,9 +155,10 @@
             uint8_t nextSlot;
             uint8_t oneShot : 2;
             bool macroInterrupted : 1;
-            uint8_t keyActivationId: 4;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
+            uint8_t keyActivationId: 4;
+
             bool macroBroken : 1;
             bool macroPlaying : 1;
             bool macroScheduled : 1;
@@ -166,7 +167,8 @@
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
-            bool isDoubletap: 1;
+
+            uint8_t multitapCount : 6;
             secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
 

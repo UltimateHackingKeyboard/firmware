@@ -9,7 +9,7 @@
 typedef struct {
     const key_state_t *keyState;
     uint32_t timestamp;
-    uint8_t multiTapCount;
+    uint8_t multiTapCount : 6;
     uint8_t keyActivationId : 4;
     bool multiTapBreaker : 1;
 } key_press_event_t;
