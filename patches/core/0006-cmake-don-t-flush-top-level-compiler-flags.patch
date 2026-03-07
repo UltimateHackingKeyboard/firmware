@@ -1,0 +1,27 @@
+From 2c8942648651f955bba2990e92354b04a46e07b7 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Mon, 23 Feb 2026 20:03:41 +0100
+Subject: [PATCH] cmake: don't flush top-level compiler flags
+
+This was preventing CMAKE_C_FLAGS_RELEASE and similar from being set in the presets.
+
+---
+ cmake/extension/mcux.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/cmake/extension/mcux.cmake b/cmake/extension/mcux.cmake
+index db62e4e..8b2b203 100644
+--- a/cmake/extension/mcux.cmake
++++ b/cmake/extension/mcux.cmake
+@@ -71,7 +71,7 @@ macro(project project_name)
+   # valiate compiler version
+   # The reason to validate compiler version here is that cmake engine code will get CMAKE_C_COMPILER_VERSION and CMAKE_CXX_COMPILER_VERSION just in "project" macro invocation.
+   _validate_compiler_version()
+-  clear_default_added_compiler_flags()
++
+   # parse arguments
+   set(options NO_DEFAULT_CONFIG)
+   set(single_value PROJECT_BOARD_PORT_PATH PROJECT_DEVICE_PORT_PATH PROJECT_TYPE CUSTOM_LINKER)
+-- 
+2.43.0
+

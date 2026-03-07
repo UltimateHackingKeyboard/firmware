@@ -1,0 +1,183 @@
+From bfbb7259e128b6fac0ac3736a8f8297533b332fd Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Mon, 9 Feb 2026 22:35:13 +0100
+Subject: [PATCH] delegate: allow constructing from non-capturing lambdas
+
+Signed-off-by: Benedek Kupper <kupper.benedek@gmail.com>
+---
+ include/etl/private/delegate_cpp11.h | 63 +++++++++++++++++++++++++++-
+ test/test_delegate.cpp               | 47 +++++++++++++++++++--
+ 2 files changed, 105 insertions(+), 5 deletions(-)
+
+diff --git a/include/etl/private/delegate_cpp11.h b/include/etl/private/delegate_cpp11.h
+index 288c3a5..c7d41e2 100644
+--- a/include/etl/private/delegate_cpp11.h
++++ b/include/etl/private/delegate_cpp11.h
+@@ -155,10 +155,23 @@ namespace etl
+ 
+     //*************************************************************************
+     // Delete construction from rvalue reference lambda or functor.
++    // Excludes non-capturing lambdas convertible to a function pointer.
+     //*************************************************************************
+-    template <typename TLambda, typename = etl::enable_if_t<etl::is_class<TLambda>::value && !etl::is_same<etl::delegate<TReturn(TArgs...)>, TLambda>::value, void>>
++    template <typename TLambda, typename = etl::enable_if_t<etl::is_class<TLambda>::value && !etl::is_same<etl::delegate<TReturn(TArgs...)>, TLambda>::value && !etl::is_convertible<TLambda, TReturn(*)(TArgs...)>::value, void>>
+     ETL_CONSTEXPR14 delegate(TLambda&& instance) = delete;
+ 
++    //*************************************************************************
++    // Construct from non-capturing rvalue lambda convertible to function pointer.
++    // Converts to a function pointer to avoid storing a dangling pointer
++    // to a destroyed temporary.
++    //*************************************************************************
++    template <typename TLambda, etl::enable_if_t<etl::is_class<TLambda>::value && !etl::is_reference<TLambda>::value && etl::is_convertible<TLambda, TReturn(*)(TArgs...)>::value, int> = 0>
++    delegate(TLambda&& instance) ETL_NOEXCEPT
++    {
++      TReturn(*fp)(TArgs...) = static_cast<TReturn(*)(TArgs...)>(instance);
++      assign(reinterpret_cast<void*>(fp), function_ptr_stub);
++    }
++
+     //*************************************************************************
+     /// Create from function (Compile time).
+     //*************************************************************************
+@@ -189,6 +202,19 @@ namespace etl
+       return delegate((void*)(&instance), const_lambda_stub<TLambda>);
+     }
+ 
++    //*************************************************************************
++    // Create from non-capturing rvalue lambda convertible to function pointer.
++    // Converts to a function pointer to avoid storing a dangling pointer
++    // to a destroyed temporary.
++    //*************************************************************************
++    template <typename TLambda, etl::enable_if_t<etl::is_class<TLambda>::value && !etl::is_reference<TLambda>::value && etl::is_convertible<TLambda, TReturn(*)(TArgs...)>::value, int> = 0>
++    ETL_NODISCARD
++    static delegate create(TLambda&& instance) ETL_NOEXCEPT
++    {
++      TReturn(*fp)(TArgs...) = static_cast<TReturn(*)(TArgs...)>(instance);
++      return delegate(reinterpret_cast<void*>(fp), function_ptr_stub);
++    }
++
+     //*************************************************************************
+     /// Create from instance method (Run time).
+     //*************************************************************************
+@@ -305,6 +331,18 @@ namespace etl
+       assign((void*)(&instance), const_lambda_stub<TLambda>);
+     }
+ 
++    //*************************************************************************
++    // Set from non-capturing rvalue lambda convertible to function pointer.
++    // Converts to a function pointer to avoid storing a dangling pointer
++    // to a destroyed temporary.
++    //*************************************************************************
++    template <typename TLambda, etl::enable_if_t<etl::is_class<TLambda>::value && !etl::is_reference<TLambda>::value && etl::is_convertible<TLambda, TReturn(*)(TArgs...)>::value, int> = 0>
++    void set(TLambda&& instance) ETL_NOEXCEPT
++    {
++      TReturn(*fp)(TArgs...) = static_cast<TReturn(*)(TArgs...)>(instance);
++      assign(reinterpret_cast<void*>(fp), function_ptr_stub);
++    }
++
+     //*************************************************************************
+     /// Set from instance method (Run time).
+     //*************************************************************************
+@@ -494,6 +532,19 @@ namespace etl
+       return *this;
+     }
+ 
++    //*************************************************************************
++    // Create from non-capturing rvalue lambda convertible to function pointer.
++    // Converts to a function pointer to avoid storing a dangling pointer
++    // to a destroyed temporary.
++    //*************************************************************************
++    template <typename TLambda, etl::enable_if_t<etl::is_class<TLambda>::value && !etl::is_reference<TLambda>::value && etl::is_convertible<TLambda, TReturn(*)(TArgs...)>::value, int> = 0>
++    delegate& operator =(TLambda&& instance) ETL_NOEXCEPT
++    {
++      TReturn(*fp)(TArgs...) = static_cast<TReturn(*)(TArgs...)>(instance);
++      assign(reinterpret_cast<void*>(fp), function_ptr_stub);
++      return *this;
++    }
++
+     //*************************************************************************
+     /// Checks equality.
+     //*************************************************************************
+@@ -679,6 +730,16 @@ namespace etl
+       return (Method)(etl::forward<TArgs>(args)...);
+     }
+ 
++    //*************************************************************************
++    /// Stub call for a runtime function pointer stored in the object field.
++    //*************************************************************************
++    static TReturn function_ptr_stub(void* object, TArgs... args)
++    {
++      ETL_STATIC_ASSERT(sizeof(void*) >= sizeof(TReturn(*)(TArgs...)), "etl::delegate: function pointer too large to store in object field");
++      TReturn(*fp)(TArgs...) = reinterpret_cast<TReturn(*)(TArgs...)>(object);
++      return fp(etl::forward<TArgs>(args)...);
++    }
++
+     //*************************************************************************
+     /// Stub call for a lambda or functor function.
+     //*************************************************************************
+diff --git a/test/test_delegate.cpp b/test/test_delegate.cpp
+index 57c52e8..3f6d8f5 100644
+--- a/test/test_delegate.cpp
++++ b/test/test_delegate.cpp
+@@ -634,16 +634,55 @@ namespace
+ #endif
+ 
+     //*************************************************************************
+-    TEST_FIXTURE(SetupFixture, test_lambda_int_create)
++    TEST_FIXTURE(SetupFixture, test_construct_from_rvalue_non_capturing_lambda)
+     {
+-      auto lambda = [](int i, int j) { function_called = FunctionCalled::Lambda_Called; parameter_correct = (i == VALUE1) && (j == VALUE2); };
++      etl::delegate<int(int, int)> d([](int i, int j) { function_called = FunctionCalled::Lambda_Called; parameter_correct = (i == VALUE1) && (j == VALUE2); return i + j; });
+ 
+-      etl::delegate<void(int, int)> d(lambda);
++      int result = d(VALUE1, VALUE2);
+ 
+-      d(VALUE1, VALUE2);
++      CHECK(function_called == FunctionCalled::Lambda_Called);
++      CHECK(parameter_correct);
++      CHECK_EQUAL(result, VALUE1 + VALUE2);
++    }
++
++    //*************************************************************************
++    TEST_FIXTURE(SetupFixture, test_assign_from_rvalue_non_capturing_lambda)
++    {
++      etl::delegate<int(int, int)> d;
++
++      d = [](int i, int j) { function_called = FunctionCalled::Lambda_Called; parameter_correct = (i == VALUE1) && (j == VALUE2); return i + j + 2; };
++
++      int result = d(VALUE1, VALUE2);
++
++      CHECK(function_called == FunctionCalled::Lambda_Called);
++      CHECK(parameter_correct);
++      CHECK_EQUAL(result, VALUE1 + VALUE2 + 2);
++    }
++
++    //*************************************************************************
++    TEST_FIXTURE(SetupFixture, test_create_from_rvalue_non_capturing_lambda)
++    {
++      auto d = etl::delegate<int(int, int)>::create([](int i, int j) { function_called = FunctionCalled::Lambda_Called; parameter_correct = (i == VALUE1) && (j == VALUE2); return i + j + 5; });
++
++      int result = d(VALUE1, VALUE2);
++
++      CHECK(function_called == FunctionCalled::Lambda_Called);
++      CHECK(parameter_correct);
++      CHECK_EQUAL(result, VALUE1 + VALUE2 + 5);
++    }
++
++    //*************************************************************************
++    TEST_FIXTURE(SetupFixture, test_set_from_rvalue_non_capturing_lambda_returning_int)
++    {
++      etl::delegate<int(int, int)> d;
++
++      d.set([](int i, int j) { function_called = FunctionCalled::Lambda_Called; parameter_correct = (i == VALUE1) && (j == VALUE2); return i + j + 6; });
++
++      int result = d(VALUE1, VALUE2);
+ 
+       CHECK(function_called == FunctionCalled::Lambda_Called);
+       CHECK(parameter_correct);
++      CHECK_EQUAL(result, VALUE1 + VALUE2 + 6);
+     }
+ 
+ #if ETL_USING_CPP17
+-- 
+2.43.0
+

@@ -8,7 +8,6 @@
 #endif
     #include "crc16.h"
     #include "slot.h"
-    #include "usb_interfaces/usb_interface_mouse.h"
     #include "slave_scheduler.h"
 
 // Typedefs:

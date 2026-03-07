@@ -6,16 +6,16 @@
 #include "keyboard/oled/oled.h"
 #include "logger.h"
 #include "usb_log_buffer.h"
-#include "usb/usb.h"
+#include "hid/transport.h"
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/shell/shell.h>
 #include "ledmap.h"
 #include "host_connection.h"
 #include "thread_stats.h"
 #include "trace.h"
-#include "usb_compatibility.h"
 #include "mouse_keys.h"
 #include "config_manager.h"
+#include "bt_health.h"
 #include "connections.h"
 #include "logger_priority.h"
 #include "shell_backend_usb.h"
@@ -135,19 +135,9 @@ static int cmd_uhk_rollover(const struct shell *shell, size_t argc, char *argv[]
 {
     if (argc == 1) {
         shell_fprintf(
-            shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == Rollover_NKey) ? 'n' : '6');
+            shell, SHELL_NORMAL, "%c\n", (HID_GetKeyboardRollover() == ROLLOVER_N_KEY) ? 'n' : '6');
     } else {
-        HID_SetKeyboardRollover((argv[1][0] == '6') ? Rollover_6Key : Rollover_NKey);
-    }
-    return 0;
-}
-
-static int cmd_uhk_gamepad(const struct shell *shell, size_t argc, char *argv[])
-{
-    if (argc == 1) {
-        shell_fprintf(shell, SHELL_NORMAL, "%c\n", HID_GetGamepadActive() ? 'y' : 'n');
-    } else {
-        HID_SetGamepadActive(argv[1][0] != '0');
+        HID_SetKeyboardRollover((argv[1][0] == '6') ? ROLLOVER_6_KEY : ROLLOVER_N_KEY);
     }
     return 0;
 }
@@ -306,6 +296,12 @@ static int cmd_uhk_irqs(const struct shell *shell, size_t argc, char *argv[]) {
     printk("========================================\n");
     printk("Total configured IRQs listed above\n");
     printk("========================================\n\n");
+    return 0;
+}
+
+static int cmd_uhk_healthcheck(const struct shell *shell, size_t argc, char *argv[])
+{
+    Bt_HealthCheck(LogTarget_Uart, false);
     return 0;
 }
 
@@ -520,10 +516,10 @@ void InitShellCommands(void)
 #endif
         SHELL_CMD_ARG(
             rollover, NULL, "get/set keyboard rollover mode (n/6)", cmd_uhk_rollover, 1, 1),
-        SHELL_CMD_ARG(gamepad, NULL, "switch gamepad on/off", cmd_uhk_gamepad, 1, 1),
         SHELL_CMD_ARG(passkey, NULL, "send passkey for bluetooth pairing", cmd_uhk_passkey, 2, 0),
         SHELL_CMD_ARG(btunpair, NULL, "unpair bluetooth devices", cmd_uhk_btunpair, 1, 1),
         SHELL_CMD_ARG(connections, NULL, "list BLE connections", cmd_uhk_connections, 1, 0),
+        SHELL_CMD_ARG(healthcheck, NULL, "run BT and HOGP health check", cmd_uhk_healthcheck, 1, 0),
         SHELL_CMD_ARG(threads, NULL, "list thread statistics", cmd_uhk_threads, 1, 0),
         SHELL_CMD_ARG(trace, NULL, "lists minimalistic event trace", cmd_uhk_trace, 1, 0),
         SHELL_CMD_ARG(mouseMultipliers, NULL, "print mouse multipliers", cmd_uhk_mouseMultipliers, 1, 0),

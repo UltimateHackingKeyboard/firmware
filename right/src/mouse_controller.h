@@ -6,7 +6,7 @@
     #include "key_action.h"
     #include "key_states.h"
     #include "usb_report_updater.h"
-    #include "usb_interfaces/usb_interface_mouse.h"
+    #include "hid/mouse_report.h"
 
 // Macros:
 
@@ -34,7 +34,7 @@
 // Variables:
 
     extern usb_keyboard_reports_t MouseControllerKeyboardReports;
-    extern usb_mouse_report_t MouseControllerMouseReport;
+    extern hid_mouse_report_t MouseControllerMouseReport;
 
 
 // Functions:

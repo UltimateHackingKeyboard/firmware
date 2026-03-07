@@ -31,7 +31,6 @@
 #include "usb_device_config.h"
 #include "usb.h"
 #include "usb_device.h"
-#include "usb_report_updater.h"
 
 #include "usb_device_class.h"
 
@@ -332,7 +331,6 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
             hidHandle->configuration = 0U;
             hidHandle->interruptInPipeBusy = 0U;
             hidHandle->interruptOutPipeBusy = 0U;
-            UsbReportUpdateSemaphore = 0;
             break;
         case kUSB_DeviceClassEventSetConfiguration:
             /* Get the new configuration. */
@@ -490,7 +488,7 @@ usb_status_t USB_DeviceHidEvent(void *handle, uint32_t event, void *param)
                         break;
                     case USB_DEVICE_HID_REQUEST_SET_PROTOCOL:
                         /* Set protocol request - only supported for BOOT subclass */
-                        if (hidHandle->configStruct->classInfomation->interfaceList->interfaces->subclassCode == USB_HID_SUBCLASS_BOOT)
+                        if (hidHandle->configStruct->classInfomation->interfaceList->interfaces->subclassCode == 1)
                         {
                             error = hidHandle->configStruct->classCallback(
                                 (class_handle_t)hidHandle, kUSB_DeviceHidEventSetProtocol, &controlRequest->setup->wValue);
