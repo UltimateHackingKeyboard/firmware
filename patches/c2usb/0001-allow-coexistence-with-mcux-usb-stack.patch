@@ -15,14 +15,14 @@ index e14ad09..481e1dc 100644
 +++ b/c2usb/port/nxp/CMakeLists.txt
 @@ -15,10 +15,6 @@ if(CONFIG_C2USB_MCUX_MAC)
          PRIVATE
-             ${PROJECT_NAME}
+             c2usb
      )
 -    # since MCUX_COMPONENT_middleware.usb.device.controller.driver cannot be disabled
 -    mcux_project_remove_source(BASE_PATH ${SdkRootDirPath}/middleware/usb/device
 -        SOURCES usb_device_dci.c
 -    )
  else()
-     set_target_properties(${PROJECT_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+     set_target_properties(c2usb PROPERTIES EXCLUDE_FROM_ALL TRUE)
  endif()
 diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
 index 665f189..03b9a50 100644

@@ -27,8 +27,8 @@ extern "C" {
 #include "mouse_app.hpp"
 #include "usb/df/class/hid.hpp"
 #include "usb/df/device.hpp"
-#include "usb/df/vendor/microsoft_os_extension.hpp"
-#include "usb/df/vendor/microsoft_xinput.hpp"
+#include "usb/df/vendor/microsoft/os_extension.hpp"
+#include "usb/df/vendor/microsoft/xinput.hpp"
 #include <magic_enum.hpp>
 
 using namespace magic_enum::bitwise_operators;
