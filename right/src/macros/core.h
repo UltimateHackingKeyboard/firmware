@@ -145,6 +145,8 @@
             macro_action_t currentMacroAction;
             key_state_t *currentMacroKey;
             uint32_t currentMacroStartTime;
+            uint8_t previousKeyId;
+            uint32_t previousKeyPressTime;
             uint16_t currentMacroActionIndex;
             uint16_t currentMacroArgumentOffset;
             uint16_t bufferOffset;

@@ -342,6 +342,12 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
     else if (ConsumeToken(ctx, "thisKeyId")) {
         return intVar(Utils_KeyStateToKeyId(ctx->macroState->ms.currentMacroKey));
     }
+    else if (ConsumeToken(ctx, "previousKeyId")) {
+        return intVar(ctx->macroState->ms.previousKeyId);
+    }
+    else if (ConsumeToken(ctx, "previousKeyPressTime")) {
+        return intVar(ctx->macroState->ms.previousKeyPressTime);
+    }
     else if (ConsumeToken(ctx, "currentAddress")) {
         return intVar(ctx->macroState->ls->ms.commandAddress);
     }

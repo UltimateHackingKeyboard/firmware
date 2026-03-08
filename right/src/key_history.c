@@ -4,15 +4,7 @@
 
 #define HISTORY_SIZE 2
 #define LAST (position % HISTORY_SIZE)
-#define POS(p) ((position - p) % HISTORY_SIZE)
-
-typedef struct {
-    const key_state_t *keyState;
-    uint32_t timestamp;
-    uint8_t multiTapCount : 6;
-    uint8_t keyActivationId : 4;
-    bool multiTapBreaker : 1;
-} key_press_event_t;
+#define POS(p) ((position - p) % HISTORY_SIZE) // Proceeding backwards in time
 
 static key_press_event_t history[HISTORY_SIZE];
 static uint8_t position = 0;
@@ -40,6 +32,19 @@ void KeyHistory_RecordRelease(const key_state_t *keyState)
     if (keyState != history[LAST].keyState) {
         history[LAST].multiTapBreaker = true;
     }
+}
+
+const key_press_event_t * KeyHistory_GetPreceedingPress(const key_state_t *keyState, uint8_t activationId)
+{
+    for (uint8_t i = 0; i < HISTORY_SIZE - 1; ++i) {
+        if(history[POS(i)].keyState == keyState && history[POS(i)].keyActivationId == activationId) {
+            if (history[POS(++i)].keyState != NULL) {
+                return &history[POS(i)];
+            }
+            return NULL;
+        }
+    }
+    return NULL;
 }
 
 uint8_t KeyHistory_GetMultitapCount(const key_state_t *keyState, uint8_t activationId) {

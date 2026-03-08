@@ -463,7 +463,18 @@ uint8_t initMacro(
     S->ms.currentMacroStartTime = CurrentPostponedTime;
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
-    S->ms.multitapCount = keyState == NULL ? 0 : KeyHistory_GetMultitapCount(keyState, keyActivationId);
+
+    S->ms.multitapCount = 0;
+    S->ms.previousKeyPressTime = 0;
+    S->ms.previousKeyId = 255;
+    if (keyState != NULL) {
+        S->ms.multitapCount = KeyHistory_GetMultitapCount(keyState, keyActivationId);
+        const key_press_event_t * const prevEvt = KeyHistory_GetPreceedingPress(keyState, keyActivationId);
+        if (prevEvt != NULL) {
+            S->ms.previousKeyId = Utils_KeyStateToKeyId(prevEvt->keyState);
+            S->ms.previousKeyPressTime = prevEvt->timestamp;
+        }
+    }
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {
