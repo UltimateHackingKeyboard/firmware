@@ -782,6 +782,8 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
     - `$currentTime` returns current time in milliseconds in 31 bit range.
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
     - `$uhk.name` returns a reference to the uhk name string.
+    - `$previousKeyId` returns the id of the last key that was pressed previously to the one which started the macro
+    - `$previousKeyPressTime` returns the time activation time of the last key pressed previously to the one which started the macro
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpreted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.
 - `custom text` is an arbitrary text starting on the next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
