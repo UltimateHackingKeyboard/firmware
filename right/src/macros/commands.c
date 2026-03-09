@@ -962,6 +962,9 @@ static macro_result_t processMacroArgCommand(parser_context_t* ctx)
     macro_argument_type_t argType;
 
     if (ConsumeToken(ctx, ":")) {
+        // strange test:
+        *ctx->at = 'i';
+        // end of test
         if (ConsumeToken(ctx, "int")) {
             argType = MacroArgType_Int;
         }
