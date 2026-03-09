@@ -1325,7 +1325,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                     numArgs = 1;
                     goto matched;
                 }
-                if (ctx->at == ctx->end || (argKeyId = Macros_TryConsumeKeyId(ctx)) == 255) {
+                if (ctx->at >= ctx->end || (argKeyId = Macros_TryConsumeKeyId(ctx)) == 255) {
                     break;
                 }
             }
