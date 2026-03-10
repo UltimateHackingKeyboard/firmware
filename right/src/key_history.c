@@ -4,7 +4,7 @@
 
 #define HISTORY_SIZE 2
 #define LAST (position % HISTORY_SIZE)
-#define POS(p) ((position - p) % HISTORY_SIZE) // Proceeding backwards in time
+#define POS(p) ((position + HISTORY_SIZE - p) % HISTORY_SIZE) // Proceeding backwards in time
 
 static key_press_event_t history[HISTORY_SIZE];
 static uint8_t position = 0;
@@ -17,7 +17,8 @@ void KeyHistory_RecordPress(const key_state_t *keyState)
         && !lastPress->multiTapBreaker
         && CurrentPostponedTime < lastPress->timestamp + Cfg.DoubletapTimeout;
 
-    ++position;
+    position = (position + 1) % HISTORY_SIZE;
+    
     history[LAST] = (key_press_event_t) {
         .keyState = keyState,
         .keyActivationId = keyState->activationId,
