@@ -33,6 +33,9 @@ uint16_t Utils_KeyStateToKeyId(const key_state_t *key) {
 #if DEVICE_IS_UHK_DONGLE
     return 0;
 #else
+    if (key == NULL) {
+        return 255;
+    }
     uint16_t arrayPos = (uint16_t)(key - (key_state_t*)KeyStates);
     return RECODE_ID(arrayPos, MAX_KEY_COUNT_PER_MODULE, 64);
 #endif
