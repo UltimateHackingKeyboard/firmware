@@ -402,6 +402,55 @@ static bool macroIsValid(uint8_t index)
     return exists && isNonEmpty;
 }
 
+macro_result_t Macros_ExecMacro(uint8_t macroIndex)
+{
+    if (!macroIsValid(macroIndex))  {
+       S->ms.macroBroken = true;
+       return MacroResult_Finished;
+    }
+
+    //reset to address zero and load first address
+    resetToAddressZero(macroIndex);
+
+    if (Cfg.Macros_Scheduler == Scheduler_Preemptive) {
+        continueMacro();
+    }
+
+    return MacroResult_JumpedForward;
+}
+
+uint8_t startMacro(
+    uint8_t index,
+    key_state_t *keyState,
+    uint16_t argumentOffset,
+    uint8_t keyActivationId,
+    uint8_t parentMacroSlot,
+    bool runFirstAction,
+    const char *inlineText,
+    const macro_state_t *parentMacroState
+);
+
+macro_result_t Macros_CallMacro(uint8_t macroIndex)
+{
+    uint32_t parentSlotIndex = S - MacroState;
+    uint8_t childSlotIndex = startMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, parentSlotIndex, true, NULL, S);
+
+    if (childSlotIndex != 255) {
+        unscheduleCurrentSlot();
+        S->ms.macroSleeping = true;
+        S->ms.wakeMeOnKeystateChange = false;
+        S->ms.wakeMeOnTime = false;
+    }
+
+    return MacroResult_Finished | MacroResult_YieldFlag;
+}
+
+macro_result_t Macros_ForkMacro(uint8_t macroIndex)
+{
+    startMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, 255, true, NULL, S);
+    return MacroResult_Finished;
+}
+
 uint8_t initMacro(
     uint8_t index,
     key_state_t *keyState,
@@ -470,6 +519,7 @@ uint8_t initMacro(
 }
 
 
+//partentMacroSlot == 255 means no parent
 uint8_t startMacro(
     uint8_t index,
     key_state_t *keyState,
@@ -506,7 +556,6 @@ uint8_t startMacro(
     return slotIndex;
 }
 
-//partentMacroSlot == 255 means no parent
 uint8_t Macros_StartMacro(
     uint8_t index,
     key_state_t *keyState,
@@ -516,44 +565,6 @@ uint8_t Macros_StartMacro(
     const char *inlineText
 ) {
     return startMacro(index, keyState, argumentOffset, keyActivationId, MacroIndex_None, runFirstAction, inlineText, NULL);
-}
-
-macro_result_t Macros_ExecMacro(uint8_t macroIndex)
-{
-    if (!macroIsValid(macroIndex))  {
-       S->ms.macroBroken = true;
-       return MacroResult_Finished;
-    }
-
-    //reset to address zero and load first address
-    resetToAddressZero(macroIndex);
-
-    if (Cfg.Macros_Scheduler == Scheduler_Preemptive) {
-        continueMacro();
-    }
-
-    return MacroResult_JumpedForward;
-}
-
-macro_result_t Macros_CallMacro(uint8_t macroIndex)
-{
-    uint32_t parentSlotIndex = S - MacroState;
-    uint8_t childSlotIndex = startMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, parentSlotIndex, true, NULL, S);
-
-    if (childSlotIndex != 255) {
-        unscheduleCurrentSlot();
-        S->ms.macroSleeping = true;
-        S->ms.wakeMeOnKeystateChange = false;
-        S->ms.wakeMeOnTime = false;
-    }
-
-    return MacroResult_Finished | MacroResult_YieldFlag;
-}
-
-macro_result_t Macros_ForkMacro(uint8_t macroIndex)
-{
-    startMacro(macroIndex, S->ms.currentMacroKey, 0, S->ms.keyActivationId, MacroIndex_None, true, NULL, S);
-    return MacroResult_Finished;
 }
 
 uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId)
