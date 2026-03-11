@@ -26,24 +26,18 @@
 #if !DEVICE_IS_UHK_DONGLE
 //this is noop at the moment, prepared for time when MAX_KEY_COUNT_PER_MODULE changes
 //the purpose is to preserve current keyids
-static uint16_t recodeId(uint16_t newFormat, uint16_t fromBase, uint16_t toBase)
-{
-    return toBase * (newFormat / fromBase) + (newFormat % fromBase);
-}
+#define RECODE_ID(id, oldBase, newBase) (newBase * (id / oldBase) + id % oldBase)
 #endif
 
-uint16_t Utils_KeyStateToKeyId(key_state_t* key)
-{
+uint16_t Utils_KeyStateToKeyId(const key_state_t *key) {
 #if DEVICE_IS_UHK_DONGLE
     return 0;
 #else
     if (key == NULL) {
-        return 0;
+        return 255;
     }
-    uint32_t ptr1 = (uint32_t)(key_state_t*)key;
-    uint32_t ptr2 = (uint32_t)(key_state_t*)&(KeyStates[0][0]);
-    uint32_t res = (ptr1 - ptr2) / sizeof(key_state_t);
-    return recodeId(res, MAX_KEY_COUNT_PER_MODULE, 64);
+    uint16_t arrayPos = (uint16_t)(key - (key_state_t*)KeyStates);
+    return RECODE_ID(arrayPos, MAX_KEY_COUNT_PER_MODULE, 64);
 #endif
 }
 
@@ -52,7 +46,7 @@ key_state_t* Utils_KeyIdToKeyState(uint16_t keyid)
 #if DEVICE_IS_UHK_DONGLE
     return NULL;
 #else
-    return &(((key_state_t*)KeyStates)[recodeId(keyid, 64, MAX_KEY_COUNT_PER_MODULE)]);
+    return &(((key_state_t*)KeyStates)[RECODE_ID(keyid, 64, MAX_KEY_COUNT_PER_MODULE)]);
 #endif
 }
 
