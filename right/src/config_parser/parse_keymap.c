@@ -28,30 +28,31 @@
 static uint8_t tempKeymapCount;
 static uint8_t tempMacroCount;
 
-static void parseKeyActionColor(key_action_t *keyAction, config_buffer_t *buffer)
+static void parseKeyActionColor(key_definition_t *keyDefinition, config_buffer_t *buffer)
 {
     if (PerKeyRgbPresent) {
-        keyAction->color.red = ReadUInt8(buffer);
-        keyAction->color.green = ReadUInt8(buffer);
-        keyAction->color.blue = ReadUInt8(buffer);
-        keyAction->colorOverridden = false;
+        keyDefinition->color.red = ReadUInt8(buffer);
+        keyDefinition->color.green = ReadUInt8(buffer);
+        keyDefinition->color.blue = ReadUInt8(buffer);
+        keyDefinition->colorOverridden = false;
     } else {
-        keyAction->color.red = 0;
-        keyAction->color.green = 0;
-        keyAction->color.blue = 0;
-        keyAction->colorOverridden = false;
+        keyDefinition->color.red = 0;
+        keyDefinition->color.green = 0;
+        keyDefinition->color.blue = 0;
+        keyDefinition->colorOverridden = false;
     }
 }
 
-static parser_error_t parseNoneAction(key_action_t *keyAction, config_buffer_t *buffer)
+static parser_error_t parseNoneAction(key_definition_t *keyDefinition, config_buffer_t *buffer)
 {
-    keyAction->type = KeyActionType_None;
-    parseKeyActionColor(keyAction, buffer);
+    keyDefinition->action.type = KeyActionType_None;
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyStrokeAction, config_buffer_t *buffer)
+static parser_error_t parseKeyStrokeAction(key_definition_t *keyDefinition, uint8_t keyStrokeAction, config_buffer_t *buffer)
 {
+    key_action_t *keyAction = &keyDefinition->action;
     uint8_t keystrokeType = (SERIALIZED_KEYSTROKE_TYPE_MASK_KEYSTROKE_TYPE & keyStrokeAction) >> SERIALIZED_KEYSTROKE_TYPE_OFFSET_KEYSTROKE_TYPE;
 
     keyAction->type = KeyActionType_Keystroke;
@@ -79,13 +80,14 @@ static parser_error_t parseKeyStrokeAction(key_action_t *keyAction, uint8_t keyS
     keyAction->keystroke.secondaryRole = keyStrokeAction & SERIALIZED_KEYSTROKE_TYPE_MASK_HAS_LONGPRESS
         ? ReadUInt8(buffer) + 1
         : 0;
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseConnectionsAction(key_action_t *keyAction, config_buffer_t *buffer) {
+static parser_error_t parseConnectionsAction(key_definition_t *keyDefinition, config_buffer_t *buffer) {
     uint8_t connectionCommand = ReadUInt8(buffer);
 
+    key_action_t *keyAction = &keyDefinition->action;
     keyAction->type = KeyActionType_Connections;
 
     switch (connectionCommand) {
@@ -127,13 +129,14 @@ static parser_error_t parseConnectionsAction(key_action_t *keyAction, config_buf
             break;
     }
 
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseOtherAction(key_action_t *keyAction, config_buffer_t *buffer) {
+static parser_error_t parseOtherAction(key_definition_t *keyDefinition, config_buffer_t *buffer) {
     uint8_t otherAction = ReadUInt8(buffer);
 
+    key_action_t *keyAction = &keyDefinition->action;
     switch (otherAction) {
         case SerializedOtherAction_Sleep:
             keyAction->type = KeyActionType_Other;
@@ -148,41 +151,44 @@ static parser_error_t parseOtherAction(key_action_t *keyAction, config_buffer_t 
             return ParserError_InvalidSerializedOtherAction;
     }
 
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseSwitchLayerAction(key_action_t *keyAction, config_buffer_t *buffer)
+static parser_error_t parseSwitchLayerAction(key_definition_t *keyDefinition, config_buffer_t *buffer)
 {
     uint8_t layer = ReadUInt8(buffer) + 1;
     switch_layer_mode_t mode = ReadUInt8(buffer);
 
+    key_action_t *keyAction = &keyDefinition->action;
     keyAction->type = KeyActionType_SwitchLayer;
     keyAction->switchLayer.layer = layer;
     keyAction->switchLayer.mode = mode;
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseSwitchKeymapAction(key_action_t *keyAction, config_buffer_t *buffer)
+static parser_error_t parseSwitchKeymapAction(key_definition_t *keyDefinition, config_buffer_t *buffer)
 {
     uint8_t keymapIndex = ReadUInt8(buffer);
 
+    key_action_t *keyAction = &keyDefinition->action;
     if (keymapIndex >= tempKeymapCount) {
         ConfigParser_Error(buffer, "Invalid keymap index: %d", keymapIndex);
         return ParserError_InvalidSerializedSwitchKeymapAction;
     }
     keyAction->type = KeyActionType_SwitchKeymap;
     keyAction->switchKeymap.keymapId = keymapIndex;
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffer_t *buffer)
+static parser_error_t parsePlayMacroAction(key_definition_t *keyDefinition, config_buffer_t *buffer)
 {
     uint16_t actionOffset = buffer->offset-1;
     uint8_t macroIndex = ReadUInt8(buffer);
 
+    key_action_t *keyAction = &keyDefinition->action;
     if (macroIndex >= tempMacroCount) {
         ConfigParser_Error(buffer, "Invalid macro index: %d", macroIndex);
         return ParserError_InvalidSerializedPlayMacroAction;
@@ -190,12 +196,13 @@ static parser_error_t parsePlayMacroAction(key_action_t *keyAction, config_buffe
     keyAction->type = KeyActionType_PlayMacro;
     keyAction->playMacro.macroId = macroIndex;
     keyAction->playMacro.offset = actionOffset;
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
     return ParserError_Success;
 }
 
-static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t *buffer)
+static parser_error_t parseMouseAction(key_definition_t *keyDefinition, config_buffer_t *buffer)
 {
+    key_action_t *keyAction = &keyDefinition->action;
     keyAction->type = KeyActionType_Mouse;
 
     uint8_t mouseAction = ReadUInt8(buffer);
@@ -207,43 +214,43 @@ static parser_error_t parseMouseAction(key_action_t *keyAction, config_buffer_t 
     memset(&keyAction->mouseAction, 0, sizeof keyAction->mouseAction);
     keyAction->mouseAction = mouseAction;
 
-    parseKeyActionColor(keyAction, buffer);
+    parseKeyActionColor(keyDefinition, buffer);
 
     return ParserError_Success;
 }
 
-static void noneBlockAction(key_action_t *keyAction, rgb_t* color, parse_mode_t parseMode)
+static void noneBlockAction(key_definition_t *keyDefinition, rgb_t* color, parse_mode_t parseMode)
 {
-    keyAction->type = KeyActionType_None;
-    keyAction->color.red = color->red;
-    keyAction->color.green = color->green;
-    keyAction->color.blue = color->blue;
-    keyAction->colorOverridden = false;
+    keyDefinition->action.type = KeyActionType_None;
+    keyDefinition->color.red = color->red;
+    keyDefinition->color.green = color->green;
+    keyDefinition->color.blue = color->blue;
+    keyDefinition->colorOverridden = false;
 }
 
-static parser_error_t parseNoneBlock(key_action_t *keyAction, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t *color, parse_mode_t parseMode)
+static parser_error_t parseNoneBlock(key_definition_t *keyDefinition, config_buffer_t *buffer, uint8_t *actionCountToNone, rgb_t *color, parse_mode_t parseMode)
 {
     if (color != NULL) {
         if (actionCountToNone != NULL) {
             *actionCountToNone = ReadUInt8(buffer);
 
             // Parse color
-            key_action_t dummyAction;
-            parseKeyActionColor(&dummyAction, buffer);
-            color->red = dummyAction.color.red;
-            color->green = dummyAction.color.green;
-            color->blue = dummyAction.color.blue;
+            key_definition_t dummyDefinition;
+            parseKeyActionColor(&dummyDefinition, buffer);
+            color->red = dummyDefinition.color.red;
+            color->green = dummyDefinition.color.green;
+            color->blue = dummyDefinition.color.blue;
         }
     }
 
     if (actionCountToNone != NULL && *actionCountToNone > 0) {
-        noneBlockAction(keyAction, color, parseMode);
+        noneBlockAction(keyDefinition, color, parseMode);
     }
 
     return ParserError_Success;
 }
 
-static parser_error_t parseArgumentAction(key_action_t *keyAction, config_buffer_t *buffer, bool *wasArgument, string_segment_t *argument) {
+static parser_error_t parseArgumentAction(key_definition_t *keyDefinition, config_buffer_t *buffer, bool *wasArgument, string_segment_t *argument) {
     uint16_t length = ReadCompactLength(buffer);
 
     if (wasArgument != NULL) {
@@ -262,30 +269,30 @@ static parser_error_t parseArgumentAction(key_action_t *keyAction, config_buffer
     return ParserError_Success;
 }
 
-static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_key_action_type_t keyActionType, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor, bool *wasArgument)
+static parser_error_t parseKeyAction(key_definition_t *keyDefinition, serialized_key_action_type_t keyActionType, config_buffer_t *buffer, parse_mode_t parseMode, uint8_t *actionCountToNone, rgb_t* noneBlockColor, bool *wasArgument)
 {
     switch (keyActionType) {
         case SerializedKeyActionType_None:
-            return parseNoneAction(keyAction, buffer);
+            return parseNoneAction(keyDefinition, buffer);
         case SerializedKeyActionType_KeyStroke ... SerializedKeyActionType_LastKeyStroke:
-            return parseKeyStrokeAction(keyAction, keyActionType, buffer);
+            return parseKeyStrokeAction(keyDefinition, keyActionType, buffer);
         case SerializedKeyActionType_SwitchLayer:
-            return parseSwitchLayerAction(keyAction, buffer);
+            return parseSwitchLayerAction(keyDefinition, buffer);
         case SerializedKeyActionType_SwitchKeymap:
-            return parseSwitchKeymapAction(keyAction, buffer);
+            return parseSwitchKeymapAction(keyDefinition, buffer);
         case SerializedKeyActionType_Mouse:
-            return parseMouseAction(keyAction, buffer);
+            return parseMouseAction(keyDefinition, buffer);
         case SerializedKeyActionType_PlayMacro:
-            return parsePlayMacroAction(keyAction, buffer);
+            return parsePlayMacroAction(keyDefinition, buffer);
         case SerializedKeyActionType_Connections:
-            return parseConnectionsAction(keyAction, buffer);
+            return parseConnectionsAction(keyDefinition, buffer);
         case SerializedKeyActionType_Other:
-            return parseOtherAction(keyAction, buffer);
+            return parseOtherAction(keyDefinition, buffer);
         case SerializedKeyActionType_NoneBlock:
-            return parseNoneBlock(keyAction, buffer, actionCountToNone, noneBlockColor, parseMode);
+            return parseNoneBlock(keyDefinition, buffer, actionCountToNone, noneBlockColor, parseMode);
         case SerializedKeyActionType_Label:
         case SerializedKeyActionType_Argument:
-            return parseArgumentAction(keyAction, buffer, wasArgument, NULL);
+            return parseArgumentAction(keyDefinition, buffer, wasArgument, NULL);
     }
 
     ConfigParser_Error(buffer, "Invalid key action type: %d", keyActionType);
@@ -294,7 +301,7 @@ static parser_error_t parseKeyAction(key_action_t *keyAction, serialized_key_act
 
 static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buffer, uint8_t moduleId, uint8_t keymapIdx, parse_mode_t parseMode)
 {
-    key_action_t dummyKeyAction;
+    key_definition_t dummyKeyDefinition;
     parser_error_t errorCode;
     uint16_t actionCount = ReadCompactLength(buffer);
 
@@ -323,17 +330,17 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         bool isNoneActionType = keyActionType == SerializedKeyActionType_None || keyActionType == SerializedKeyActionType_NoneBlock;
         bool isTransparent = parseMode == ParseMode_Overlay && isNoneActionType;
 
-        key_action_t *keyAction = (isValidRange && !isDryRun && !isTransparent) ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyAction;
+        key_definition_t *keyDefinition = (isValidRange && !isDryRun && !isTransparent) ? &CurrentKeymap[targetLayer][slotId][actionIdx] : &dummyKeyDefinition;
 
         bool wasAction = false;
 
         if (isNoneActionInNoneBlock) {
-            noneBlockAction(keyAction, &noneBlockColor, parseMode);
+            noneBlockAction(keyDefinition, &noneBlockColor, parseMode);
             wasAction = true;
         } else {
             bool wasArgument = false;
             uint8_t actionCountToNone = 0;
-            errorCode = parseKeyAction(keyAction, keyActionType, buffer, parseMode, &actionCountToNone, &noneBlockColor, &wasArgument);
+            errorCode = parseKeyAction(keyDefinition, keyActionType, buffer, parseMode, &actionCountToNone, &noneBlockColor, &wasArgument);
 
             if (errorCode != ParserError_Success) {
                 return errorCode;
@@ -345,6 +352,7 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
         }
 
         if (wasAction) {
+            key_action_t *keyAction = &keyDefinition->action;
             if (keyAction->type == KeyActionType_PlayMacro && Macros_ValidationInProgress) {
                 Macros_ValidateMacro(keyAction->playMacro.macroId, keyAction->playMacro.offset, moduleId, actionIdx, keymapIdx, targetLayer);
             }
@@ -355,8 +363,8 @@ static parser_error_t parseKeyActions(uint8_t targetLayer, config_buffer_t *buff
 
     /* default second touchpad action to right button */
     if (parseMode != ParseMode_DryRun && moduleId == ModuleId_TouchpadRight) {
-        CurrentKeymap[targetLayer][slotId][1].type = KeyActionType_Mouse;
-        CurrentKeymap[targetLayer][slotId][1].mouseAction = SerializedMouseAction_RightClick;
+        CurrentKeymap[targetLayer][slotId][1].action.type = KeyActionType_Mouse;
+        CurrentKeymap[targetLayer][slotId][1].action.mouseAction = SerializedMouseAction_RightClick;
     }
     return ParserError_Success;
 }
@@ -390,16 +398,16 @@ static parser_error_t parseLayerId(config_buffer_t *buffer, uint8_t layer, layer
 
 static void applyDefaultRightModuleActions(uint8_t layer, parse_mode_t parseMode) {
     if(parseMode != ParseMode_DryRun && layer <= LayerId_RegularLast) {
-        CurrentKeymap[layer][SlotId_RightModule][0] = (key_action_t){ .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_LeftClick };
-        CurrentKeymap[layer][SlotId_RightModule][1] = (key_action_t){ .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_RightClick };
+        CurrentKeymap[layer][SlotId_RightModule][0] = (key_definition_t){ .action = { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_LeftClick }};
+        CurrentKeymap[layer][SlotId_RightModule][1] = (key_definition_t){ .action = { .type = KeyActionType_Mouse, .mouseAction = SerializedMouseAction_RightClick }};
     }
 }
 
 static void applyDefaultLeftModuleActions(uint8_t layer, parse_mode_t parseMode) {
     if(parseMode != ParseMode_DryRun && layer <= LayerId_RegularLast) {
-        CurrentKeymap[layer][SlotId_LeftModule][0] = (key_action_t){ .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DELETE }};
-        CurrentKeymap[layer][SlotId_LeftModule][1] = (key_action_t){ .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSPACE }};
-        CurrentKeymap[layer][SlotId_LeftModule][2] = (key_action_t){ .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_ENTER }};
+        CurrentKeymap[layer][SlotId_LeftModule][0] = (key_definition_t){ .action = { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_DELETE }}};
+        CurrentKeymap[layer][SlotId_LeftModule][1] = (key_definition_t){ .action = { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_BACKSPACE }}};
+        CurrentKeymap[layer][SlotId_LeftModule][2] = (key_definition_t){ .action = { .type = KeyActionType_Keystroke, .keystroke = { .scancode = HID_KEYBOARD_SC_ENTER }}};
     }
 }
 
@@ -576,7 +584,7 @@ string_segment_t ParseMacroArgument(uint16_t offset, uint8_t argumentNumber)
     buffer.offset = offset;
 
     // Dry run parse the PlayMacro action
-    key_action_t dummyKeyAction;
+    key_definition_t dummyKeyAction;
     serialized_key_action_type_t actionType = ReadUInt8(&buffer);
     parseKeyAction(&dummyKeyAction, actionType, &buffer, ParseMode_DryRun, NULL, NULL, NULL);
 

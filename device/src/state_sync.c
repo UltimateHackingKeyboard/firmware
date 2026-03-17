@@ -249,12 +249,12 @@ void receiveLayerModuleActions(sync_command_action_t* actions, uint8_t layerId, 
     for (uint8_t i = 0; i < count; i++) {
         uint8_t actionIdx = actionOffset + i;
         uint8_t bufferIdx = bufferOffset + i;
-        key_action_t *dstAction = &CurrentKeymap[layerId][slotId][actionIdx];
-        dstAction->color = actions[bufferIdx].color;
-        dstAction->colorOverridden = actions[bufferIdx].colorOverriden;
-        dstAction->type = actions[bufferIdx].type;
-        dstAction->keystroke.modifiers = actions[bufferIdx].modifierPresent ? 0xff : 0;
-        dstAction->keystroke.scancode = actions[bufferIdx].scancode;
+        key_definition_t *dstKeyDef = &CurrentKeymap[layerId][slotId][actionIdx];
+        dstKeyDef->color = actions[bufferIdx].color;
+        dstKeyDef->colorOverridden = actions[bufferIdx].colorOverriden;
+        dstKeyDef->action.type = actions[bufferIdx].type;
+        dstKeyDef->action.keystroke.modifiers = actions[bufferIdx].modifierPresent ? 0xff : 0;
+        dstKeyDef->action.keystroke.scancode = actions[bufferIdx].scancode;
     }
 }
 
@@ -586,12 +586,12 @@ static void prepareLayerActions(layer_id_t layerId, uint8_t slotId, uint8_t buff
     for (uint8_t i = 0; i < count; i++) {
         uint8_t actionIdx = actionOffset + i;
         uint8_t bufferIdx = bufferOffset + i;
-        key_action_t *action = &CurrentKeymap[layerId][slotId][actionIdx];
-        buffer->actions[bufferIdx].type = action->type;
-        buffer->actions[bufferIdx].scancode = action->keystroke.scancode;
-        buffer->actions[bufferIdx].color = action->color;
-        buffer->actions[bufferIdx].colorOverriden = action->colorOverridden;
-        buffer->actions[bufferIdx].modifierPresent = action->keystroke.modifiers != 0;
+        key_definition_t *keyDef = &CurrentKeymap[layerId][slotId][actionIdx];
+        buffer->actions[bufferIdx].type = keyDef->action.type;
+        buffer->actions[bufferIdx].scancode = keyDef->action.keystroke.scancode;
+        buffer->actions[bufferIdx].color = keyDef->color;
+        buffer->actions[bufferIdx].colorOverriden = keyDef->colorOverridden;
+        buffer->actions[bufferIdx].modifierPresent = keyDef->action.keystroke.modifiers != 0;
     }
 }
 

@@ -486,6 +486,8 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
                 applyOtherAction(action->other.actionSubtype);
             }
             break;
+        case KeyActionType_None:
+            break;
     }
 }
 
@@ -699,17 +701,17 @@ static void updateActionStates() {
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {
-                        actionCache[slotId][keyId].action = CurrentKeymap[Postponer_LastKeyLayer][slotId][keyId];
+                        actionCache[slotId][keyId].action = CurrentKeymap[Postponer_LastKeyLayer][slotId][keyId].action;
                         Postponer_LastKeyLayer = 255;
                     } else if (Cfg.LayerConfig[ActiveLayer].modifierLayerMask != 0) {
-                        if (CurrentKeymap[ActiveLayer][slotId][keyId].type != KeyActionType_None) {
-                            actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId];
+                        if (CurrentKeymap[ActiveLayer][slotId][keyId].action.type != KeyActionType_None) {
+                            actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId].action;
                             actionCache[slotId][keyId].modifierLayerMask = ActiveLayerModifierMask;
                         } else {
-                            actionCache[slotId][keyId].action = CurrentKeymap[LayerId_Base][slotId][keyId];
+                            actionCache[slotId][keyId].action = CurrentKeymap[LayerId_Base][slotId][keyId].action;
                         }
                     } else {
-                        actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId];
+                        actionCache[slotId][keyId].action = CurrentKeymap[ActiveLayer][slotId][keyId].action;
                     }
                     if (Postponer_LastKeyMods != 0) {
                         actionCache[slotId][keyId].action.keystroke.modifiers = Postponer_LastKeyMods;
@@ -719,7 +721,7 @@ static void updateActionStates() {
                 }
 
                 cachedAction = &actionCache[slotId][keyId];
-                actionBase = &CurrentKeymap[LayerId_Base][slotId][keyId];
+                actionBase = &CurrentKeymap[LayerId_Base][slotId][keyId].action;
 
                 Trace_Printc("w3");
                 //apply base-layer holds
