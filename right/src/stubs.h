@@ -31,7 +31,7 @@
     extern void ScreenManager_SwitchScreenEvent();
     extern void Charger_UpdateBatteryState();
     extern void Charger_UpdateBatteryCharging();
-    extern const rgb_t* PairingScreen_ActionColor(key_action_t* action);
+    extern const rgb_t* PairingScreen_ActionColor(key_action_t* key);
     extern void UartBridge_Enable();
     extern void UartModules_Enable();
     extern status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer);
