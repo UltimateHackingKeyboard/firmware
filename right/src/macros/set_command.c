@@ -1,5 +1,6 @@
 #include "macros/set_command.h"
 #include "attributes.h"
+#include "chords.h"
 #include "config_parser/parse_config.h"
 #include "config_parser/parse_keymap.h"
 #include "key_states.h"
@@ -799,6 +800,17 @@ static macro_variable_t navigationModeAction(parser_context_t* ctx, set_command_
     return noneVar();
 }
 
+static inline key_coordinates_t validateKeyId(uint8_t keyId, const char *at) {
+    uint8_t slotIdx = keyId/64;
+    uint8_t inSlotIdx = keyId%64;
+
+    if(slotIdx > SLOT_COUNT || inSlotIdx > MAX_KEY_COUNT_PER_MODULE) {
+        Macros_ReportErrorNum("Invalid key id:", keyId, at);
+    }
+
+    return (key_coordinates_t){.slotId = slotIdx, .inSlotId = inSlotIdx};
+}
+
 static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t action)
 {
     uint8_t layerId = Macros_ConsumeLayerId(ctx);
@@ -820,12 +832,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
     key_action_t keyAction = parseKeyAction(ctx);
 
-    uint8_t slotIdx = keyId/64;
-    uint8_t inSlotIdx = keyId%64;
-
-    if(slotIdx > SLOT_COUNT || inSlotIdx > MAX_KEY_COUNT_PER_MODULE) {
-        Macros_ReportErrorNum("Invalid key id:", keyId, keyIdPos.at);
-    }
+    key_coordinates_t cords = validateKeyId(keyId, keyIdPos.at);
 
     if (Macros_ParserError) {
         return noneVar();
@@ -834,13 +841,67 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
         return noneVar();
     }
 
-    key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx].action;
+    key_action_t* actionSlot = &CurrentKeymap[layerId][cords.slotId][cords.inSlotId].action;
 
 #ifdef __ZEPHYR__
     StateSync_UpdateLayer(layerId, true);
 #endif
 
     *actionSlot = keyAction;
+    return noneVar();
+}
+
+static macro_variable_t chordAction(parser_context_t* ctx, set_command_action_t action)
+{
+    uint8_t layerId = Macros_ConsumeLayerId(ctx);
+
+    uint8_t keyCount = 0;
+    uint8_t keys[MAX_CHORD_KEYS];
+    const char *duplicatePos = NULL;
+    do {
+        const char *keyPos = ctx->at;
+        keys[keyCount] = Macros_TryConsumeKeyId(ctx);
+
+        if (keys[keyCount] == 255) break;
+
+        validateKeyId(keys[keyCount], keyPos);
+        if(duplicatePos == NULL) {
+            for (int i = 0; i < keyCount; ++i) {
+                if (keys[i] == keys[keyCount]) {
+                    duplicatePos = keyPos;
+                    break;
+                }
+            }
+        }
+    } while (++keyCount < MAX_CHORD_KEYS);
+
+    if(duplicatePos != NULL) {
+        Macros_ReportError("Cannot have duplicate keys in a chord!", duplicatePos, NULL);
+    }
+
+    if (keyCount < 2 || keyCount == MAX_CHORD_KEYS) {
+        CTX_COPY(errorPos, *ctx);
+        if (keyCount < 2 || Macros_TryConsumeKeyId(ctx) != 255) {
+            while (Macros_TryConsumeKeyId(ctx) != 255) {}
+            Macros_ReportErrorPos(&errorPos, "Invalid number of keys in chord.  Must be between 2 and 5.");
+        }
+    }
+
+    if (action == SetCommandAction_Read) {
+        Macros_ReportErrorPos(ctx, "Reading actions is not supported!");
+        return noneVar();
+    }
+
+    key_action_t chordAction = parseKeyAction(ctx);
+
+    if (Macros_ParserError || Macros_DryRun) {
+        return noneVar();
+    }
+
+    if (!Chords_TryAddChord(layerId, keys, keyCount, &chordAction)) {
+        Macros_ReportErrorPos(ctx, "Could not add chords, no more free chord slots.");
+    }
+
     return noneVar();
 }
 
@@ -998,6 +1059,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "keymapAction")) {
         ConsumeUntilDot(ctx);
         return keymapAction(ctx, action);
+    }
+    else if (ConsumeToken(ctx, "chord")) {
+        ConsumeUntilDot(ctx);
+        return chordAction(ctx, action);
     }
     else if (ConsumeToken(ctx, "navigationModeAction")) {
         ConsumeUntilDot(ctx);

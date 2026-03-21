@@ -1,6 +1,7 @@
 #include <string.h>
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
+#include "chords.h"
 #include "keymap.h"
 #include "layer.h"
 #include "layer_switcher.h"
@@ -53,6 +54,7 @@ void SwitchKeymapById(uint8_t index, bool resetLayerStack)
 #endif
     SegmentDisplay_UpdateKeymapText();
     if (DEVICE_IS_MASTER) {
+        Chords_ResetChords();
         MacroEvent_RegisterLayerMacros();
         MacroEvent_OnKeymapChange(index);
         MacroEvent_OnLayerChange(ActiveLayer);

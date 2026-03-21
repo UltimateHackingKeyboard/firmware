@@ -1302,8 +1302,12 @@ uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
+        bool ErrorBefore = Macros_ParserError;
+        Macros_ParserError = false;
         uint8_t num = Macros_ConsumeInt(ctx);
-        if (Macros_ParserError) {
+        bool ErrorAfter = Macros_ParserError;
+        Macros_ParserError |= ErrorBefore;
+        if (ErrorAfter) {
             return 255;
         } else {
             return num;
