@@ -80,6 +80,12 @@ void KeyboardReport_ForeachScancode(const hid_keyboard_report_t *report, void (*
     }
 }
 
+/*
+ * Finds the first scancode difference between two reports for the purposes
+ * of macro recorder.
+ *
+ * Do not use for other purposes, or read up the recorder for result coding.
+ * */
 bool KeyboardReport_FindFirstDifference(
     const hid_keyboard_report_t *current, const hid_keyboard_report_t *previous, uint8_t *result)
 {

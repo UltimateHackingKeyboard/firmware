@@ -66,4 +66,6 @@
     void UsbReportUpdater_ResetKeyboardReports(usb_keyboard_reports_t* reports);
     void RecordKeyTiming_ReportKeystroke(key_state_t *keyState, bool active, uint32_t pressTime, uint32_t activationTime);
 
+    hid_keyboard_report_t* GetInactiveKeyboardReport(void);
+
 #endif

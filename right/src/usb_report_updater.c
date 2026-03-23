@@ -56,6 +56,7 @@
 #include "bt_pair.h"
 #include "connections.h"
 #include "keyboard/oled/screens/pairing_screen.h"
+#include "keyboard/input_interceptor.h"
 #else
 #include "stubs.h"
 #endif
@@ -126,6 +127,11 @@ static void switchActiveControlsReport() {
     } else {
         ActiveControlsReport = &controlsReports[0];
     }
+}
+
+hid_keyboard_report_t* GetInactiveKeyboardReport(void)
+{
+    return ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0];
 }
 
 void UsbReportUpdater_ResetKeyboardReports(usb_keyboard_reports_t* reports) {
@@ -893,13 +899,9 @@ static void sendActiveReports(bool resending) {
 
     if (KeyboardReport_HasChange(keyboardReports) && (!resending || keyboardNeedsResending)) {
 #ifdef __ZEPHYR__
-        uint8_t newScancode = 0;
-        if (InteractivePairingInProgress && KeyboardReport_FindFirstDifference(ActiveKeyboardReport,
-            ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0], &newScancode)) {
-            PairingScreen_RegisterScancode(newScancode);
+        if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
             switchActiveKeyboardReport();
         } else
-
 #endif
         {
             MacroRecorder_RecordBasicReport(ActiveKeyboardReport);
