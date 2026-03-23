@@ -62,7 +62,7 @@
 
 // SetEmpty: assign an empty (None) action to a key
 #define TEST_SET_EMPTY(key_id) \
-    TEST_SET_GENERIC_ACTION(key_id, ((key_action_t){ .type = KeyActionType_None }))
+    TEST_SET_GENERIC_ACTION(key_id, ((key_definition_t){ .type = KeyActionType_None }))
 
 // SetConfig: run a set command to configure settings
 #define TEST_SET_CONFIG(config_text) \

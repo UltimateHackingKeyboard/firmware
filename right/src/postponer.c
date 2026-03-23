@@ -585,7 +585,7 @@ static uint8_t priority(key_state_t *key, bool active)
     if (!active) {
         return 0;
     }
-    key_action_t* a = &CurrentKeymap[ActiveLayer][0][0] + (key - &KeyStates[0][0]);
+    key_action_t* a = &(&CurrentKeymap[ActiveLayer][0][0] + (key - &KeyStates[0][0]))->action;
     switch (a->type) {
         case KeyActionType_Keystroke:
             if (a->keystroke.secondaryRole || a->keystroke.scancode == 0) {
@@ -600,6 +600,11 @@ static uint8_t priority(key_state_t *key, bool active)
             return 2;
         case KeyActionType_PlayMacro:
             return 1;
+        case KeyActionType_None:
+        case KeyActionType_InlineMacro:
+        case KeyActionType_Connections:
+        case KeyActionType_Other:
+            return 0;
     }
     return 0;
 }
@@ -656,7 +661,7 @@ static bool isEligibleForAutoShift()
 
     uint8_t effectiveLayer = evt->key.layer == 255 ? ActiveLayer : evt->key.layer;
 
-    key_action_t* a = &CurrentKeymap[effectiveLayer][0][0] + (key - &KeyStates[0][0]);
+    key_action_t* a = &(&CurrentKeymap[effectiveLayer][0][0] + (key - &KeyStates[0][0]))->action;
 
     if (a->type != KeyActionType_Keystroke) {
         return false;
