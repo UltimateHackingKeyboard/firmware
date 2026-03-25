@@ -208,7 +208,7 @@ void InputMachine_Tick(void) {
                     return;
                 }
 
-                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                CurrentKeymap[LayerId_Base][slotId][keyId].action = keyAction;
                 LOG_VERBOSE("[TEST] > SetAction [%s] = '%s'\n", action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
@@ -229,7 +229,7 @@ void InputMachine_Tick(void) {
                     }
                 };
 
-                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                CurrentKeymap[LayerId_Base][slotId][keyId].action = keyAction;
                 LOG_VERBOSE("[TEST] > SetMacro [%s] = '%s'\n", action->keyId, action->macroText);
                 InputMachine_ActionIndex++;
                 break;
@@ -251,8 +251,8 @@ void InputMachine_Tick(void) {
                     }
                 };
 
-                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
-                CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
+                CurrentKeymap[LayerId_Base][slotId][keyId].action = keyAction;
+                CurrentKeymap[action->layerId][slotId][keyId].action = keyAction;
                 LOG_VERBOSE("[TEST] > SetLayerHold [%s] = layer %d, mode %d\n", action->keyId, action->layerId, action->switchLayerMode);
                 InputMachine_ActionIndex++;
                 break;
@@ -277,7 +277,7 @@ void InputMachine_Tick(void) {
                     return;
                 }
 
-                CurrentKeymap[action->layerId][slotId][keyId] = keyAction;
+                CurrentKeymap[action->layerId][slotId][keyId].action = keyAction;
                 LOG_VERBOSE("[TEST] > SetLayerAction layer %d [%s] = '%s'\n", action->layerId, action->keyId, action->shortcutStr);
                 InputMachine_ActionIndex++;
                 break;
@@ -301,7 +301,7 @@ void InputMachine_Tick(void) {
                     }
                 };
 
-                CurrentKeymap[LayerId_Base][slotId][keyId] = keyAction;
+                CurrentKeymap[LayerId_Base][slotId][keyId].action = keyAction;
                 LOG_VERBOSE("[TEST] > SetSecondaryRole [%s] = scancode %d, secondary %d\n",
                     action->keyId, action->primaryScancode, action->secondaryRoleId);
                 InputMachine_ActionIndex++;
@@ -316,7 +316,7 @@ void InputMachine_Tick(void) {
                     return;
                 }
 
-                CurrentKeymap[LayerId_Base][slotId][keyId] = action->keyAction;
+                CurrentKeymap[LayerId_Base][slotId][keyId].action = action->keyAction;
                 LOG_VERBOSE("[TEST] > SetGenericAction [%s] = type %d\n", action->keyId, action->keyAction.type);
                 InputMachine_ActionIndex++;
                 break;

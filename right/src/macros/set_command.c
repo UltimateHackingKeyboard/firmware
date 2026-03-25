@@ -840,7 +840,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
         return noneVar();
     }
 
-    key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+    key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx].action;
 
 #ifdef __ZEPHYR__
     StateSync_UpdateLayer(layerId, true);

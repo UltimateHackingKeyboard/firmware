@@ -1574,7 +1574,7 @@ static bool processIfKeyDefinedCommand(parser_context_t* ctx, bool negate)
     uint8_t slot;
     uint8_t slotIdx;
     Utils_DecodeId(keyid, &slot, &slotIdx);
-    key_action_t* action = &CurrentKeymap[ActiveLayer][slot][slotIdx];
+    key_action_t* action = &CurrentKeymap[ActiveLayer][slot][slotIdx].action;
     return (action->type != KeyActionType_None) != negate;
 }
 
