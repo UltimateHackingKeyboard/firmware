@@ -13,5 +13,6 @@
 
     void ShellUartTransport_Uninit(void);
     void ShellUartTransport_Reinit(void);
+    void ShellUartTransport_InjectInput(const char *cmd);
 
 #endif

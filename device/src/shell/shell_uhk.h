@@ -11,5 +11,6 @@
     int ShellUhk_Init(void);
     void Shell_WaitUntilInitialized(void);
     void Shell_Execute(const char *cmd, const char *source);
+    void Shell_Input(const char *cmd);
 
 #endif

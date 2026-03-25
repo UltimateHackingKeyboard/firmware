@@ -34,6 +34,8 @@ enum vt100_state {
     VT100_CSI_PARAMS,
 };
 
+#define INJECT_BUF_SIZE 64
+
 struct uart_transport_data {
     const struct device *dev;
     shell_transport_handler_t handler;
@@ -52,6 +54,11 @@ struct uart_transport_data {
     struct uart_async_rx_config async_rx_config;
     atomic_t pending_rx_req;
     uint8_t rx_data[UART_RX_TOTAL_SIZE];
+
+    // Injected input (Shell_Input)
+    uint8_t injectBuf[INJECT_BUF_SIZE];
+    size_t injectLen;
+    size_t injectPos;
 };
 
 static struct uart_transport_data uartTransportData;
@@ -280,6 +287,17 @@ static int uartTransportRead(const struct shell_transport *transport,
                              void *buf, size_t length, size_t *cnt)
 {
     struct uart_transport_data *data = (struct uart_transport_data *)transport->ctx;
+
+    // Drain injected input first
+    if (data->injectPos < data->injectLen) {
+        size_t remaining = data->injectLen - data->injectPos;
+        size_t toRead = MIN(remaining, length);
+        memcpy(buf, data->injectBuf + data->injectPos, toRead);
+        data->injectPos += toRead;
+        *cnt = toRead;
+        return 0;
+    }
+
     struct uart_async_rx *async_rx = &data->async_rx;
 
     uint8_t *rxBuf;
@@ -363,4 +381,21 @@ void ShellUartTransport_Reinit(void)
     data->uartEnabled = true;
 
     ShellLogBackend_SetUart(data->dev);
+}
+
+void ShellUartTransport_InjectInput(const char *cmd)
+{
+    struct uart_transport_data *data = &uartTransportData;
+
+    size_t len = strlen(cmd);
+    if (len >= INJECT_BUF_SIZE) {
+        len = INJECT_BUF_SIZE - 1;
+    }
+
+    memcpy(data->injectBuf, cmd, len);
+    data->injectBuf[len] = '\n';
+    data->injectLen = len + 1;
+    data->injectPos = 0;
+
+    data->handler(SHELL_TRANSPORT_EVT_RX_RDY, data->context);
 }

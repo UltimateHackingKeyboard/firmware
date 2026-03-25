@@ -8,6 +8,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/mpsc_pbuf.h>
 
+LOG_MODULE_REGISTER(UhkShell, LOG_LEVEL_INF);
+
 // --- Configuration ---
 
 #define SHELL_LOG_QUEUE_SIZE 512
@@ -82,6 +84,13 @@ void Shell_Execute(const char *cmd, const char *source)
         sh_mutable->ctx->vt100_ctx.cons.terminal_wid = 80;
     }
 
-    printk("Executing following command from %s in %s: '%s'\n", source ? source : "unknown", sh->name, cmd);
+    if (source) {
+        LOG_INF("Executing following command from %s in %s: '%s'\n", source ? source : "unknown", sh->name, cmd);
+    }
     shell_execute_cmd(sh, cmd);
+}
+
+void Shell_Input(const char *cmd)
+{
+    ShellUartTransport_InjectInput(cmd);
 }
