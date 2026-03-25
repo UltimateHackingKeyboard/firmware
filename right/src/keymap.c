@@ -94,6 +94,7 @@ void OverlayKeymap(uint8_t srcKeymap)
     };
     buffer.offset = AllKeymaps[srcKeymap].offset;
     ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
 
@@ -117,6 +118,7 @@ void OverlayLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
     };
     buffer.offset = AllKeymaps[srcKeymap].offset;
     ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
 void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
@@ -129,6 +131,7 @@ void ReplaceLayer(layer_id_t dstLayer, uint8_t srcKeymap, layer_id_t srcLayer)
     };
     buffer.offset = AllKeymaps[srcKeymap].offset;
     ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
 void ReplaceKeymap(uint8_t srcKeymap)
@@ -139,6 +142,7 @@ void ReplaceKeymap(uint8_t srcKeymap)
     };
     buffer.offset = AllKeymaps[srcKeymap].offset;
     ParseKeymap(&buffer, srcKeymap, AllKeymapsCount, AllMacrosCount, parseConfig);
+    EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
 string_segment_t GetKeymapName(uint8_t keymapId)
