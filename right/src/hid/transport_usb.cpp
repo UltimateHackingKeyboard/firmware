@@ -33,7 +33,7 @@ extern "C" {
 
 using namespace magic_enum::bitwise_operators;
 
-static uint8_t usb_serial_number[4]{};
+static uint8_t usb_serial_number[5]{};
 
 constexpr usb::product_info product_info{CONFIG_USB_DEVICE_VID, CONFIG_USB_DEVICE_MANUFACTURER,
     CONFIG_USB_DEVICE_PID, CONFIG_USB_DEVICE_PRODUCT,
@@ -197,10 +197,12 @@ extern "C" bool USB_IsMsHost(void)
 
 extern "C" void USB_SetSerialNumber(uint32_t serialNumber)
 {
-    static_assert(sizeof(usb_serial_number) >= 4, "usb_serial_number size is too small");
+    const uint8_t serialNumberByteCount = 5;
+
+    static_assert(sizeof(usb_serial_number) >= serialNumberByteCount, "usb_serial_number size is too small");
 
     // Convert each pair of decimal digits into a single byte
-    for (uint8_t i = 4; i < 255; --i) {
+    for (uint8_t i = serialNumberByteCount-1; i < 255; --i) {
         uint8_t byte = 0;
         for (uint8_t j = 0; j < 2; ++j) {
             uint8_t digit = serialNumber % 10;
