@@ -66,6 +66,21 @@ void RunUserLogic(void) {
     );
 }
 
+void RunDongleLogic() {
+    if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
+        UpdateUsbReports();
+    }
+
+     EventVector_Unset(EventVector_KeyboardLedState);
+
+    LOG_SCHEDULE(
+            EventVector_ReportMask("=== ", EventScheduler_Vector)
+            );
+    if (EventScheduler_Vector & EventVector_UserLogicUpdateMask & (~EventVector_NewMessage)) {
+        EventVector_ReportMask("Warning: following event hasn't been unset: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask);
+    }
+}
+
 void RunUhk80LeftHalfLogic() {
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {
         LedManager_FullUpdate();

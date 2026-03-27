@@ -37,6 +37,10 @@
     } UsbReportUpdateFlags_t;
 // Variables:
 
+    extern hid_keyboard_report_t *ActiveKeyboardReport;
+    extern hid_controls_report_t *ActiveControlsReport;
+    extern hid_mouse_report_t *ActiveMouseReport;
+
     extern uint32_t UsbReportUpdateCounter;
     extern volatile uint8_t UsbReportUpdateSemaphore;
     extern bool TestUsbStack;

@@ -98,14 +98,10 @@ usb_keyboard_reports_t NativeKeyboardReports = {
 
 static hid_keyboard_report_t keyboardReports[2];
 hid_keyboard_report_t * ActiveKeyboardReport = &keyboardReports[0];
-static hid_controls_report_t controlsReports[2], * ActiveControlsReport = &controlsReports[0];
-static hid_mouse_report_t mouseReports[2], * ActiveMouseReport = &mouseReports[0];
-
-static void resetActiveReports() {
-    memset(ActiveMouseReport, 0, sizeof *ActiveMouseReport);
-    memset(ActiveKeyboardReport, 0, sizeof *ActiveKeyboardReport);
-    memset(ActiveControlsReport, 0, sizeof *ActiveControlsReport);
-}
+static hid_controls_report_t controlsReports[2];
+hid_controls_report_t * ActiveControlsReport = &controlsReports[0];
+static hid_mouse_report_t mouseReports[2];
+hid_mouse_report_t * ActiveMouseReport = &mouseReports[0];
 
 static void switchActiveKeyboardReport() {
     if (ActiveKeyboardReport == &keyboardReports[0]) {
@@ -113,6 +109,7 @@ static void switchActiveKeyboardReport() {
     } else {
         ActiveKeyboardReport = &keyboardReports[0];
     }
+    memset(ActiveKeyboardReport, 0, sizeof *ActiveKeyboardReport);
 }
 static void switchActiveMouseReport() {
     if (ActiveMouseReport == &mouseReports[0]) {
@@ -120,6 +117,7 @@ static void switchActiveMouseReport() {
     } else {
         ActiveMouseReport = &mouseReports[0];
     }
+    memset(ActiveMouseReport, 0, sizeof *ActiveMouseReport);
 }
 static void switchActiveControlsReport() {
     if (ActiveControlsReport == &controlsReports[0]) {
@@ -127,6 +125,7 @@ static void switchActiveControlsReport() {
     } else {
         ActiveControlsReport = &controlsReports[0];
     }
+    memset(ActiveControlsReport, 0, sizeof *ActiveControlsReport);
 }
 
 hid_keyboard_report_t* GetInactiveKeyboardReport(void)
@@ -525,8 +524,6 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
 
 static void mergeReports(void)
 {
-    resetActiveReports();
-
     InputModifiers = 0;
 
     {
@@ -898,7 +895,7 @@ static void sendActiveReports(bool resending) {
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     if (KeyboardReport_HasChange(keyboardReports) && (!resending || keyboardNeedsResending)) {
-#ifdef __ZEPHYR__
+#if __ZEPHYR__ && !DEVICE_IS_UHK_DONGLE
         if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
             switchActiveKeyboardReport();
         } else

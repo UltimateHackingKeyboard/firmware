@@ -26,6 +26,7 @@
 #include "debug.h"
 #include "trace.h"
 #include "usb_commands/usb_command_reenumerate.h"
+#include "usb_report_updater.h"
 #include "pin_wiring.h"
 
 #if DEVICE_IS_KEYBOARD
@@ -206,18 +207,19 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
     const uint8_t* message = data;
     switch (propertyId) {
         case SyncablePropertyId_KeyboardReport:
-            Hid_SendKeyboardReport((const hid_keyboard_report_t*)message);
+            KeyboardReport_MergeReports((const hid_keyboard_report_t*)message, ActiveKeyboardReport);
             break;
         case SyncablePropertyId_MouseReport:
-            Hid_SendMouseReport((const hid_mouse_report_t*)message);
+            MouseReport_MergeReports((hid_mouse_report_t*)message, ActiveMouseReport);
             break;
         case SyncablePropertyId_ControlsReport:
-            Hid_SendControlsReport((const hid_controls_report_t*)message);
+            ControlsReport_MergeReports((const hid_controls_report_t*)message, ActiveControlsReport);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
-            break;
+            return;
     }
+    EventVector_Set(EventVector_SendUsbReports);
 }
 
 static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
