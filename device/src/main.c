@@ -307,14 +307,6 @@ void mainRuntime(void) {
         detectSpinningEventLoop();
         UserLogic_LastEventloopTime = Timer_GetCurrentTime();
     }
-#elif DEVICE_IS_UHK_DONGLE
-    while (true)
-    {
-        Messenger_ProcessQueue();
-        RunDongleLogic();
-        scheduleNextRun();
-        detectSpinningEventLoop();
-    }
 #else
     while (true)
     {
