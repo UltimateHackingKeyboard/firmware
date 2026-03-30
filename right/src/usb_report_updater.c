@@ -2,6 +2,7 @@
 #include <errno.h>
 #include "atomicity.h"
 #include "bt_defs.h"
+#include "chords.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
 #include "key_action.h"
@@ -365,13 +366,13 @@ static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *ca
     }
 }
 
-static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action, key_action_t *actionBase, usb_keyboard_reports_t* reports)
+static void applyKeystrokeSecondary(key_state_t *keyState, key_action_cached_t *cachedAction, usb_keyboard_reports_t* reports)
 {
-    secondary_role_t secondaryRole = action->keystroke.secondaryRole;
+    secondary_role_t secondaryRole = cachedAction->action.keystroke.secondaryRole;
     if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
         // If the cached action is the current base role, then hold, otherwise keymap was changed. In that case do nothing just
         // as a well behaved hold action should.
-        if(KeyState_Active(keyState) && action->type == actionBase->type && action->keystroke.secondaryRole == actionBase->keystroke.secondaryRole) {
+        if(KeyState_Active(keyState) && cachedAction->originKeymap == CurrentKeymapIndex) {
             LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole), false);
         }
         if (KeyState_ActivatedNow(keyState) || KeyState_DeactivatedNow(keyState)) {
@@ -385,7 +386,7 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
     }
 }
 
-static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
+static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAction, usb_keyboard_reports_t* reports)
 {
     key_action_t* action = &cachedAction->action;
     if (action->keystroke.secondaryRole) {
@@ -395,7 +396,7 @@ static void applyKeystroke(key_state_t *keyState, key_action_cached_t *cachedAct
                 applyKeystrokePrimary(keyState, cachedAction, reports);
                 return;
             case SecondaryRoleState_Secondary:
-                applyKeystrokeSecondary(keyState, action, actionBase, reports);
+                applyKeystrokeSecondary(keyState, cachedAction, reports);
                 return;
             case SecondaryRoleState_DontKnowYet:
                 // Repeatedly trigger to keep Postponer in postponing mode until the driver decides.
@@ -498,7 +499,7 @@ static void applyOtherAction(other_action_t actionSubtype)
     }
 }
 
-void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports)
+void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, usb_keyboard_reports_t* reports)
 {
     key_action_t* action = &cachedAction->action;
 
@@ -506,7 +507,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
         case KeyActionType_Keystroke:
             if (KeyState_NonZero(keyState)) {
                 EventVector_Set(EventVector_NativeActionReportsUsed);
-                applyKeystroke(keyState, cachedAction, actionBase, reports);
+                applyKeystroke(keyState, cachedAction, reports);
             }
             break;
         case KeyActionType_Mouse:
@@ -740,7 +741,6 @@ static void updateActionStates() {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_cached_t *cachedAction;
-            key_action_t *actionBase;
 
             if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
@@ -750,10 +750,24 @@ static void updateActionStates() {
 
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
-                if (KeyState_ActivatedNow(keyState)) {
+
+                // Here we handle the chords
+                uint8_t layerInEffect = Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()
+                    ? Postponer_LastKeyLayer : ActiveLayer;
+                chord_resolution_t chordRes = CurrentKeymap[layerInEffect][slotId][keyId].isPartOfChord
+                    ? Chords_Driver(keyState, layerInEffect, &actionCache[slotId][keyId].action) : ChordResolution_Failed;
+                if (chordRes == ChordResolution_Wait) {
+                    actionCache[slotId][keyId].action = (key_action_t){.type = KeyActionType_None};
+                    EventVector_Set(EventVector_NativeActionsPostponing);
+                }
+                else if (chordRes == ChordResolution_Resolved) {
+
+                }
+                if (chordRes == ChordResolution_Failed && KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
+                    actionCache[slotId][keyId].originKeymap = CurrentKeymapIndex;
                     ++keyState->activationId;
                     KeyHistory_RecordPress(keyState);
 
@@ -785,15 +799,11 @@ static void updateActionStates() {
                 }
 
                 cachedAction = &actionCache[slotId][keyId];
-                actionBase = &CurrentKeymap[LayerId_Base][slotId][keyId].action;
 
                 Trace_Printc("w3");
-                //apply base-layer holds
-                applyLayerHolds(keyState, actionBase);
-                Trace_Printc("w4");
 
                 //apply active-layer action
-                ApplyKeyAction(keyState, cachedAction, actionBase, &NativeKeyboardReports);
+                ApplyKeyAction(keyState, cachedAction, &NativeKeyboardReports);
 
                 if (KeyState_DeactivatedNow(keyState)) {
                     KeyHistory_RecordRelease(keyState);

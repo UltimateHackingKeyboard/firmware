@@ -31,7 +31,7 @@ static uint16_t recodeId(uint16_t newFormat, uint16_t fromBase, uint16_t toBase)
 }
 #endif
 
-uint16_t Utils_KeyStateToKeyId(key_state_t* key)
+uint16_t Utils_KeyStateToKeyId(const key_state_t* key)
 {
 #if DEVICE_IS_UHK_DONGLE
     return 0;

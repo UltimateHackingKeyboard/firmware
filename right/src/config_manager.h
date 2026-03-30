@@ -91,7 +91,8 @@
         uint16_t AutoRepeatDelayRate;
         uint16_t Macros_OneShotTimeout;
         uint16_t AutoShiftDelay;
-        uint8_t ChordingDelay;
+        uint8_t ChordingDelay;  
+        uint8_t ChordTimeout;
         key_state_t* EmergencyKey;
 
         // bluetooth

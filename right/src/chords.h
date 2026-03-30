@@ -26,5 +26,13 @@ typedef struct {
 bool Chords_TryAddChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount, key_action_t *action);
 chord_search_result_t Chords_TryGetChordAction(key_action_t *outAction, uint8_t layer, chord_keys_t keys, uint8_t keyCount);
 void Chords_ResetChords();
+
+typedef enum {
+    ChordResolution_Wait,
+    ChordResolution_Failed,
+    ChordResolution_Resolved,
+} chord_resolution_t;
+
+chord_resolution_t Chords_Driver(key_state_t *keyState, uint8_t layer, key_action_t *resolvedAction);
  
 #endif

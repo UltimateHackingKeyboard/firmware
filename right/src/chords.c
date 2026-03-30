@@ -1,5 +1,11 @@
 #include "chords.h"
+#include "config_manager.h"
+#include "event_scheduler.h"
+#include "keymap.h"
+#include "layer.h"
 #include "macros/status_buffer.h"
+#include "postponer.h"
+#include "utils.h"
 
 #define MAX_CHORDS_COUNT 64
 
@@ -25,6 +31,33 @@ static inline void sortKeys(chord_keys_t keys, uint8_t keyCount)
         }
     }
 }
+
+uint8_t findUsedKeys(chord_keys_t unusedKeys, uint8_t keyCount, const chord_def_t *chord) {
+    uint8_t i = 0;
+    uint8_t j = 0;
+    while (i < keyCount && j < chord->keyCount) {
+        while (i < keyCount && unusedKeys[i] < chord->keys[j]) {++i;}
+        if (unusedKeys[i] == chord->keys[j]) {
+            memmove(unusedKeys + i, unusedKeys + i + 1, keyCount-- - i);
+        }
+        while (j < chord->keyCount && chord->keys[j] < unusedKeys[i]) {++j;}
+    }
+    return keyCount;
+}
+
+void handleUpdateKeysOfDeletedChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount) {
+    // Now figure out what keys should be marked as now unused
+    for (int i = 0; i < ChordCount; ++i) {
+        if (Chords[i].layer < layer) continue;
+        if (Chords[i].layer > layer) break;
+        if ((keyCount = findUsedKeys(keys, keyCount, &Chords[i])) == 0) break;
+    }
+
+    for (int i = 0; i < keyCount; ++i) {
+        CurrentKeymap[layer][keys[i]/64][keys[i]%64].isPartOfChord = false;
+    }
+}
+
 
 /*
 Chords are stored sorted as follows:
@@ -55,9 +88,10 @@ bool Chords_TryAddChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount, key_
     if (chordCmp == 0) {
         // We already have the chord, erase or update, depending on provided action
         if (action->type == KeyActionType_None) {
-            // Erase the chord and return
+            // Erase the chord
             memmove(&Chords[i], &Chords[i + 1], sizeof(chord_def_t) * (--ChordCount - i));
             memset(&Chords[ChordCount], 0, sizeof(chord_def_t));
+            handleUpdateKeysOfDeletedChord(layer, keys, keyCount);
             return true;
         }
         // Just overwrite action, the rest of the chord is already in place
@@ -84,6 +118,9 @@ bool Chords_TryAddChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount, key_
     chord->keyCount = keyCount;
     chord->layer = layer;
     chord->action = *action;
+    for (i = 0; i < keyCount; ++i) {
+        CurrentKeymap[layer][keys[i]/64][keys[i]%64].isPartOfChord = true;
+    }
     return true;
 }
 
@@ -157,4 +194,76 @@ chord_search_result_t Chords_TryGetChordAction(key_action_t *outAction, uint8_t 
 
 void Chords_ResetChords() {
     ChordCount = 0;
+}
+
+static struct {
+    key_state_t *initialKey;
+    uint32_t initialTime;
+} ResolutionState;
+
+static inline void finishResolution() {
+    ResolutionState.initialKey->current = true;
+    ResolutionState.initialKey->previous = false;
+    memset(&ResolutionState, 0, sizeof(ResolutionState));
+}
+
+#define DOWAIT(start) EventScheduler_Schedule(start + Cfg.ChordTimeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord");\
+    return ChordResolution_Wait;
+#define DOFAIL         finishResolution();\
+        return ChordResolution_Failed;
+#define RESOLVED         PostponerExtended_ConsumePendingKeypresses(keyCount, true);\
+        finishResolution();\
+        return ChordResolution_Resolved;
+#define MUSTCHOOSE ((ResolutionState.initialTime + Cfg.ChordTimeout <= Timer_GetCurrentTime()) || PostponerQuery_IsKeyReleased(keyState))
+
+chord_resolution_t Chords_Driver(key_state_t *keyState, uint8_t layer, key_action_t *resolvedAction)
+{
+    if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
+        ResolutionState.initialKey = keyState;
+        ResolutionState.initialTime = CurrentPostponedTime;
+        DOWAIT(CurrentPostponedTime)
+    }
+    else if (ResolutionState.initialKey != keyState) {
+        return ChordResolution_Failed;
+    }
+
+    chord_keys_t pressedKeys;
+    uint8_t keyCount = PostponerQuery_GetPendingKeypresses(pressedKeys, MAX_CHORD_KEYS);
+    if(keyCount == MAX_CHORD_KEYS) {
+        DOFAIL
+    }
+ 
+    pressedKeys[keyCount] = Utils_KeyStateToKeyId(keyState);
+
+    //Macros_SetStatusString("KeyCount: ", NULL);
+    //Macros_SetStatusNum(keyCount + 1);
+    //Macros_SetStatusChar('\n');
+
+    chord_search_result_t searchRes = Chords_TryGetChordAction(resolvedAction, layer, pressedKeys, keyCount + 1);
+
+    //Macros_SetStatusString("SearchRes: ", NULL);
+    //Macros_SetStatusNum(searchRes);
+    //Macros_SetStatusNum(MUSTCHOOSE);
+    //Macros_SetStatusNum(ResolutionState.initialTime);
+    //Macros_SetStatusNum(Timer_GetCurrentTime());
+    //Macros_SetStatusNum(KeyState_DeactivatedNow(keyState));
+    //Macros_SetStatusChar('\n');
+
+    switch (searchRes) {
+    case ChordSearch_FinalMatch:
+        RESOLVED
+    case ChordSearch_Nothing:
+        DOFAIL
+    case ChordSearch_PartialOnly:
+        if (MUSTCHOOSE) {
+            DOFAIL
+        }
+        DOWAIT(ResolutionState.initialTime)
+    case ChordSearch_MatchAndPartial:
+        if (MUSTCHOOSE) {
+            RESOLVED
+        }
+        DOWAIT(ResolutionState.initialTime)
+    } 
+    return ChordResolution_Failed;
 }
