@@ -113,6 +113,9 @@ extern "C" int Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+#if DEVICE_IS_UHK_DONGLE
+    Dongle_SignalUsbReportSent();
+#endif
 }
 
 extern "C" int Hid_SendMouseReport(const hid_mouse_report_t *report)
@@ -142,6 +145,9 @@ extern "C" int Hid_SendMouseReport(const hid_mouse_report_t *report)
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+#if DEVICE_IS_UHK_DONGLE
+    Dongle_SignalUsbReportSent();
+#endif
 }
 
 extern "C" int Hid_SendControlsReport(const hid_controls_report_t *report)
@@ -171,6 +177,9 @@ extern "C" int Hid_SendControlsReport(const hid_controls_report_t *report)
 extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+#if DEVICE_IS_UHK_DONGLE
+    Dongle_SignalUsbReportSent();
+#endif
 }
 
 static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)

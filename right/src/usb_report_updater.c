@@ -854,7 +854,7 @@ static uint8_t mouseRetries = 0;
 static bool mouseNeedsResending = false;
 
 // Try resending a report for 512ms. Give up if it doesn't succeed by then.
-static bool shouldResendReport(bool statusOk, uint8_t* counter) {
+bool ShouldResendReport(bool statusOk, uint8_t* counter) {
 
     if (statusOk) {
         *counter = 0;
@@ -916,7 +916,7 @@ static void sendActiveReports(bool resending) {
                 //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
                 UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
-                if (shouldResendReport(ret == 0, &keyboardRetries)) {
+                if (ShouldResendReport(ret == 0, &keyboardRetries)) {
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
@@ -940,7 +940,7 @@ static void sendActiveReports(bool resending) {
     if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsNeedsResending)) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
         ret = Hid_SendControlsReport(ActiveControlsReport);
-        if (shouldResendReport(ret == 0, &controlsRetries)) {
+        if (ShouldResendReport(ret == 0, &controlsRetries)) {
             controlsNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
@@ -963,7 +963,7 @@ static void sendActiveReports(bool resending) {
 
         UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
         ret = Hid_SendMouseReport(ActiveMouseReport);
-        if (shouldResendReport(ret == 0, &mouseRetries)) {
+        if (ShouldResendReport(ret == 0, &mouseRetries)) {
             mouseNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
