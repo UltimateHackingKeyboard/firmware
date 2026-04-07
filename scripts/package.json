@@ -24,7 +24,7 @@
   "dongleProtocolVersion": "1.0.2",
   "userConfigVersion": "13.0.0",
   "hardwareConfigVersion": "1.0.0",
-  "smartMacrosVersion": "3.13.0",
+  "smartMacrosVersion": "3.13.1",
   "devices": [
     {
       "deviceId": 1,

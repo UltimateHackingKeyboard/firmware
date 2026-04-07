@@ -1,11 +1,12 @@
 # Changelog
 
+
 All notable changes to this project will be documented in this file.
 
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
-## [16.2.1] - 2026-02-17
+## [16.2.1] - 2026-04-07
 
 Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.1
 
@@ -14,10 +15,10 @@ General:
 - Refactor doubletap handling.
 
 Macro fixes:
-- Fix backlight update after overlayLayer, overlayKeymap, replaceLayer, replaceKeymap commands. [`SMARTMACROS:PATCH`]
-- Fix macro crashes (main thread stack overflows) on too deeply nested expressions.  [`SMARTMACROS:PATCH`]
-- Fix a 16.2.0 macro parser benevolence: e.g., parser wouldn't accept `if(` due to missing space. [`SMARTMACROS:PATCH`]
-- Fix some key release scenarios in postponed nested local scopes. [`SMARTMACROS:PATCH`]
+- Fix backlight update after overlayLayer, overlayKeymap, replaceLayer, replaceKeymap commands. `SMARTMACROS:PATCH`
+- Fix macro crashes (main thread stack overflows) on too deeply nested expressions.  `SMARTMACROS:PATCH`
+- Fix a 16.2.0 macro parser benevolence: e.g., parser wouldn't accept `if(` due to missing space. `SMARTMACROS:PATCH`
+- Fix some key release scenarios in postponed nested local scopes. `SMARTMACROS:PATCH`
 
 ## [16.2.0] - 2026-02-17
 
