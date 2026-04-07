@@ -141,7 +141,7 @@ struct usb_manager {
     }
 
 #ifdef __ZEPHYR__
-    usb::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)),
+    usb::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256,
         (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED)
             ? usb::power::state::L2_SUSPEND
             : usb::power::state::L3_OFF};
@@ -199,10 +199,11 @@ extern "C" void USB_SetSerialNumber(uint32_t serialNumber)
 {
     const uint8_t serialNumberByteCount = 5;
 
-    static_assert(sizeof(usb_serial_number) >= serialNumberByteCount, "usb_serial_number size is too small");
+    static_assert(
+        sizeof(usb_serial_number) >= serialNumberByteCount, "usb_serial_number size is too small");
 
     // Convert each pair of decimal digits into a single byte
-    for (uint8_t i = serialNumberByteCount-1; i < 255; --i) {
+    for (uint8_t i = serialNumberByteCount - 1; i < 255; --i) {
         uint8_t byte = 0;
         for (uint8_t j = 0; j < 2; ++j) {
             uint8_t digit = serialNumber % 10;
