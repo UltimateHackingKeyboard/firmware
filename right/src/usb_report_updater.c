@@ -49,6 +49,7 @@
 #include "hid/transport.h"
 
 #ifdef __ZEPHYR__
+#include "bt_conn.h"
 #include "debug_eventloop_timing.h"
 #include "shell.h"
 #include "keyboard/charger.h"
@@ -57,6 +58,10 @@
 #include "connections.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "keyboard/input_interceptor.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(UsbReports, LOG_LEVEL_INF);
+
 #else
 #include "stubs.h"
 #endif
@@ -878,13 +883,23 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
     }
 }
 
+static void reportRetry(int err) {
+    // uint32_t currentTime = Timer_GetCurrentTime();
+    // uint32_t seconds = currentTime / 1000;
+    // uint32_t milliseconds = currentTime % 1000;
+    // LogUO("Tried sending keyboard report, result: %d. Time %d.%d\n", err, seconds, milliseconds);
+}
+
 static void handleFail(int errorCode) {
 #ifdef __ZEPHYR__
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        LogUO("Send failed: no connection\n", errorCode);
+        LOG_WRN("Send failed: no connection selected: %d\n", errorCode);
     } else {
-        LogUO("Send failed: %d\n", errorCode);
-        HostConnections_Reconnect();
+        LOG_WRN("Send failed: %d\n", errorCode);
+        if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 5000) {
+            LOG_ERR("Send failed. Please try to pair the device again?\n");
+            // HostConnections_Reconnect();
+        }
     }
 #endif
 }
@@ -917,6 +932,7 @@ static void sendActiveReports(bool resending) {
                 UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
                 if (ShouldResendReport(ret == 0, &keyboardRetries)) {
+                    reportRetry(ret);
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
@@ -941,6 +957,7 @@ static void sendActiveReports(bool resending) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ShouldResendReport(ret == 0, &controlsRetries)) {
+            reportRetry(ret);
             controlsNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
@@ -964,6 +981,7 @@ static void sendActiveReports(bool resending) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ShouldResendReport(ret == 0, &mouseRetries)) {
+            reportRetry(ret);
             mouseNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
