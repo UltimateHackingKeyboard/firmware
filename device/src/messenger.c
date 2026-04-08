@@ -209,7 +209,7 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
     }
 }
 
-static int sendDongleReport(uint8_t propertyId, const uint8_t* message) {
+static errno_t sendDongleReport(uint8_t propertyId, const uint8_t* message) {
     switch (propertyId) {
         case SyncablePropertyId_KeyboardReport:
             return Hid_SendKeyboardReport((const hid_keyboard_report_t*)message);
@@ -237,7 +237,7 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
             return;
     }
 
-    int ret = sendDongleReport(propertyId, message);
+    errno_t ret = sendDongleReport(propertyId, message);
 
 #if DEVICE_IS_UHK_DONGLE
     uint8_t retryCounter = 0;

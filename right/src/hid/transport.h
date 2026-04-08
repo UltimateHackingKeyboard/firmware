@@ -1,9 +1,17 @@
 #ifndef __HID_TRANSPORT_H__
 #define __HID_TRANSPORT_H__
 
+#include <string.h>
 #include "hid/keyboard_report.h"
 #include "hid/mouse_report.h"
 #include "hid/controls_report.h"
+
+// Return type for functions that return errno-style error codes (0 = success, negative = error).
+typedef int errno_t;
+
+static inline const char* ErrToStr(errno_t err) {
+    return strerror(-err);
+}
 
 typedef enum  {
     HID_TRANSPORT_USB,
@@ -19,9 +27,9 @@ typedef enum
 void Hid_TransportStateChanged(hid_transport_t transport, bool enabled);
 
 // report sending
-int Hid_SendKeyboardReport(const hid_keyboard_report_t* report);
-int Hid_SendMouseReport(const hid_mouse_report_t* report) ;
-int Hid_SendControlsReport(const hid_controls_report_t* report);
+errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t* report);
+errno_t Hid_SendMouseReport(const hid_mouse_report_t* report);
+errno_t Hid_SendControlsReport(const hid_controls_report_t* report);
 
 void Hid_KeyboardReportSentCallback(hid_transport_t transport);
 void Hid_MouseReportSentCallback(hid_transport_t transport);

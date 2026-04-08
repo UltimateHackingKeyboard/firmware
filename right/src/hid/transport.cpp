@@ -86,7 +86,7 @@ extern "C" void Hid_TransportStateChanged(
 #endif
 }
 
-extern "C" int Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
+extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
     switch (determineSink()) {
     case ReportSink_Usb:
@@ -118,7 +118,7 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 #endif
 }
 
-extern "C" int Hid_SendMouseReport(const hid_mouse_report_t *report)
+extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 {
     switch (determineSink()) {
     case ReportSink_Usb:
@@ -150,7 +150,7 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 #endif
 }
 
-extern "C" int Hid_SendControlsReport(const hid_controls_report_t *report)
+extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 {
     switch (determineSink()) {
     case ReportSink_Usb:

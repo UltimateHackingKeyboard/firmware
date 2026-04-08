@@ -82,7 +82,7 @@ static void initConfig()
 static void sendFirstReport()
 {
     hid_keyboard_report_t emptyReport = {0};
-    int ret = -1;
+    errno_t ret = -1;
     // Wait until sending a report is successful, but don't block longer than 5 seconds.
     while (ret && Timer_GetCurrentTime() < 5000) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;

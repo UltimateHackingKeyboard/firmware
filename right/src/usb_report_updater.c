@@ -883,22 +883,25 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
     }
 }
 
-static void reportRetry(int err) {
+static void reportRetry(errno_t err) {
     // uint32_t currentTime = Timer_GetCurrentTime();
     // uint32_t seconds = currentTime / 1000;
     // uint32_t milliseconds = currentTime % 1000;
-    // LogUO("Tried sending keyboard report, result: %d. Time %d.%d\n", err, seconds, milliseconds);
+    // LogUO("Tried sending keyboard report, result: %s. Time %d.%d\n", ErrToStr(err), seconds, milliseconds);
 }
 
-static void handleFail(int errorCode) {
+static void handleFail(errno_t errorCode) {
 #ifdef __ZEPHYR__
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        LOG_WRN("Send failed: no connection selected: %d\n", errorCode);
+        LOG_WRN("Send failed: no connection selected: %s\n", ErrToStr(errorCode));
     } else {
-        LOG_WRN("Send failed: %d\n", errorCode);
-        if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 5000) {
-            LOG_ERR("Send failed. Please try to pair the device again?\n");
-            // HostConnections_Reconnect();
+        LOG_WRN("Send failed: %s\n", ErrToStr(errorCode));
+        if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
+            // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
+            if (!WormCfg->devMode) {
+                LOG_ERR("Send failed. Trying to reconnect.\n");
+                HostConnections_Reconnect();
+            }
         }
     }
 #endif
@@ -907,7 +910,7 @@ static void handleFail(int errorCode) {
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
-    int ret;
+    errno_t ret;
 
     // in case of usb error, this gets set back again
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
