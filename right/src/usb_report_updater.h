@@ -52,6 +52,11 @@
     extern usb_keyboard_reports_t NativeKeyboardReports;
     extern uint32_t LastUsbGetKeyboardStateRequestTimestamp;
     extern uint32_t UsbReportUpdater_LastActivityTime;
+    // Estimated absolute time (Timer_GetCurrentTime() units, ms) at which the
+    // transport will be ready to accept the next report. Used to throttle
+    // report construction when the transport is slow (BLE HID, dongle).
+    // Bumped forward on dispatch and reduced from the send-completion callback.
+    extern uint32_t UsbReportWindowEstimate;
 
 // Functions:
 

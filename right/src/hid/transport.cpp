@@ -40,11 +40,39 @@ float HidReportBleLatencyAvgMs = 0;
 }
 static uint32_t bleDispatchTimeMs = 0;
 
+// Approximate transport window intervals (ms) used by the report-construction
+// throttle. After dispatch we estimate the next free window at "now + 2 *
+// interval" (worst case: we just missed a window). The send-completion
+// callback then reduces the estimate to "now + interval".
+static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
+static constexpr uint32_t BLE_HID_REPORT_INTERVAL_MS = 11;
+static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 7;
+
+static uint32_t reportIntervalForSink(report_sink_t sink)
+{
+    switch (sink) {
+    case ReportSink_Usb:
+        return USB_REPORT_INTERVAL_MS;
+    case ReportSink_BleHid:
+        return BLE_HID_REPORT_INTERVAL_MS;
+    case ReportSink_Dongle:
+        return DONGLE_REPORT_INTERVAL_MS;
+    default:
+        return 0;
+    }
+}
+
+static uint32_t reportIntervalForTransport(hid_transport_t transport)
+{
+    return (transport == HID_TRANSPORT_USB) ? USB_REPORT_INTERVAL_MS : BLE_HID_REPORT_INTERVAL_MS;
+}
+
 static void noteReportDispatched(report_sink_t sink)
 {
     if (sink == ReportSink_BleHid && bleDispatchTimeMs == 0) {
         bleDispatchTimeMs = Timer_GetCurrentTime();
     }
+    UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
 }
 
 static void noteReportSent(hid_transport_t transport)
@@ -57,6 +85,8 @@ static void noteReportSent(hid_transport_t transport)
             WATCH_FLOAT_VALUE(HidReportBleLatencyAvgMs, 0);
         }
     }
+    UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForTransport(transport);
+    EventVector_WakeMain();
 }
 
 static report_sink_t determineSink()
