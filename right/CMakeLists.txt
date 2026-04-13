@@ -2,9 +2,21 @@ cmake_minimum_required(VERSION 3.22.0)
 
 add_subdirectory(sysbuild)
 
+# Avoid linking test executables (prevents newlib _exit/_sbrk etc. linker errors)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY CACHE STRING "")
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(WORKSPACE_TOPDIR "${CMAKE_CURRENT_LIST_DIR}/../..")
+set(CPM_bitfilled_SOURCE "${WORKSPACE_TOPDIR}/modules/lib/bitfilled")
+set(CPM_hid-rp_SOURCE "${WORKSPACE_TOPDIR}/modules/lib/hid-rp")
+set(CPM_etl_SOURCE "${WORKSPACE_TOPDIR}/modules/lib/etl")
+
+set(EXTRA_MCUX_MODULES ${CMAKE_CURRENT_LIST_DIR}/../../c2usb)
 
 set(board frdmk22f) # TODO: how to remove the board selection?
 set(device MK22F51212)
@@ -19,13 +31,14 @@ set(IS_MCUX_SDK ON)
 set(BL_APP_VECTOR_TABLE_ADDRESS 0xc000)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
-    PROJECT_NAME=${DEVICE_PROJECT_NAME}
-    DEVICE_ID=${DEVICE_ID}
-    DEVICE_PID=${DEVICE_PID}
     BL_HAS_BOOTLOADER_CONFIG=1
     BL_APP_VECTOR_TABLE_ADDRESS=${BL_APP_VECTOR_TABLE_ADDRESS}
     __STARTUP_CLEAR_BSS
     #USB_STACK_BM
+)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC
+    c2usb
 )
 
 add_subdirectory(src)

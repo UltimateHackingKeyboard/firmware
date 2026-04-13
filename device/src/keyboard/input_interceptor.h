@@ -5,7 +5,7 @@
 
     #include <inttypes.h>
     #include <stdbool.h>
-    #include "usb_interfaces/usb_interface_basic_keyboard.h"
+    #include "hid/keyboard_report.h"
 
 // Macros:
 
@@ -16,6 +16,6 @@
 
 // Functions:
 
-    bool InputInterceptor_RegisterReport(usb_basic_keyboard_report_t* activeReport);
+    bool InputInterceptor_RegisterReport(hid_keyboard_report_t* activeReport);
 
 #endif

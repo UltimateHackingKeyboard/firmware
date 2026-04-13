@@ -68,4 +68,8 @@
 
     void Messenger_Init();
 
+#if DEVICE_IS_UHK_DONGLE
+    void Dongle_SignalUsbReportSent(void);
+#endif
+
 #endif // __MESSENGER_H__

@@ -1,0 +1,12 @@
+# Need to refer the root Kconfig.mcuxpreso to get all Kconfig data
+source "Kconfig.mcuxpresso"
+
+# Board example specific Kconfig can be linked in this way if needed
+osource "${project_board_port_path}/Kconfig"
+
+config BOARD_UHK_60_RIGHT_V1
+    bool "UHK 60 v1"
+config BOARD_UHK_60_RIGHT_V2
+    bool "UHK 60 v2"
+
+rsource  "Kconfig.device"

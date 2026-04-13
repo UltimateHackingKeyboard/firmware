@@ -10,17 +10,8 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"build",
-				"--build-dir",
-				"${cwd}/build/uhk-80-left",
-				"${cwd}",
-				"--",
-				"--preset",
-				"uhk-80-left"
-			],
+			"type": "shell",
+			"command": "west build --build-dir ${cwd}/build/uhk-80-left ${cwd} -- --preset uhk-80-left",
 			"problemMatcher": [
 				"$gcc"
 			]
@@ -34,17 +25,8 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"build",
-				"--build-dir",
-				"${cwd}/build/uhk-80-right",
-				"${cwd}",
-				"--",
-				"--preset",
-				"uhk-80-right"
-			],
+			"type": "shell",
+			"command": "west build --build-dir ${cwd}/build/uhk-80-right ${cwd} -- --preset uhk-80-right",
 			"problemMatcher": [
 				"$gcc"
 			]
@@ -58,17 +40,8 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
-			"type": "process",
-			"command": "west",
-			"args": [
-				"build",
-				"--build-dir",
-				"${cwd}/build/uhk-dongle",
-				"${cwd}",
-				"--",
-				"--preset",
-				"uhk-dongle"
-			],
+			"type": "shell",
+			"command": "west build --build-dir ${cwd}/build/uhk-dongle ${cwd} -- --preset uhk-dongle",
 			"problemMatcher": [
 				"$gcc"
 			]
