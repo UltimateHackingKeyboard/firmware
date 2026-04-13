@@ -26,7 +26,6 @@
 #include "postponer.h"
 #include "secondary_role_driver.h"
 #include "power_mode.h"
-#include "usb_composite_device.h"
 #include "host_connection.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "str_utils.h"

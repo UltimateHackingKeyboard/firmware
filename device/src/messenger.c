@@ -11,7 +11,7 @@
 #include "shared/slave_protocol.h"
 #include "state_sync.h"
 #include "thread_stats.h"
-#include "usb/usb_compatibility.h"
+#include "hid/transport.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "module.h"
@@ -30,6 +30,15 @@
 
 #if DEVICE_IS_KEYBOARD
 #include "keyboard/uart_bridge.h"
+#endif
+
+#if DEVICE_IS_UHK_DONGLE
+#include <zephyr/kernel.h>
+#include "usb_report_updater.h"
+
+static K_SEM_DEFINE(dongleUsbSem, 0, 1);
+
+void Dongle_SignalUsbReportSent(void) { k_sem_give(&dongleUsbSem); }
 #endif
 
 static k_tid_t mainThreadId = 0;
@@ -200,24 +209,43 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
     }
 }
 
+static errno_t sendDongleReport(uint8_t propertyId, const uint8_t* message) {
+    switch (propertyId) {
+        case SyncablePropertyId_KeyboardReport:
+            return Hid_SendKeyboardReport((const hid_keyboard_report_t*)message);
+        case SyncablePropertyId_MouseReport:
+            return Hid_SendMouseReport((const hid_mouse_report_t*)message);
+        case SyncablePropertyId_ControlsReport:
+            return Hid_SendControlsReport((const hid_controls_report_t*)message);
+        default:
+            return 0;
+    }
+}
+
 static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, uint16_t len) {
     uint8_t ATTR_UNUSED messageId = *(data++);
     uint8_t propertyId = *(data++);
     const uint8_t* message = data;
+
     switch (propertyId) {
         case SyncablePropertyId_KeyboardReport:
-            UsbCompatibility_SendKeyboardReport((usb_basic_keyboard_report_t*)message);
-            break;
         case SyncablePropertyId_MouseReport:
-            UsbCompatibility_SendMouseReport((usb_mouse_report_t*)message);
-            break;
         case SyncablePropertyId_ControlsReport:
-            UsbCompatibility_SendConsumerReport2(message);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
-            break;
+            return;
     }
+
+    errno_t ret = sendDongleReport(propertyId, message);
+
+#if DEVICE_IS_UHK_DONGLE
+    uint8_t retryCounter = 0;
+    while (ShouldResendReport(ret == 0, &retryCounter)) {
+        k_sem_take(&dongleUsbSem, K_MSEC(128));
+        ret = sendDongleReport(propertyId, message);
+    }
+#endif
 }
 
 static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {

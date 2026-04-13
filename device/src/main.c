@@ -24,7 +24,7 @@
 #include "shell/shell_transport_uhk.h"
 #include "shell/shell_uhk.h"
 #include "device.h"
-#include "usb/usb.h"
+#include "hid/transport.h"
 #include "bt_conn.h"
 #include "settings.h"
 #include "flash.h"
@@ -306,6 +306,14 @@ void mainRuntime(void) {
         scheduleNextRun();
         detectSpinningEventLoop();
         UserLogic_LastEventloopTime = Timer_GetCurrentTime();
+    }
+#elif DEVICE_IS_UHK_DONGLE
+    while (true)
+    {
+        Messenger_ProcessQueue();
+        RunDongleLogic();
+        scheduleNextRun();
+        detectSpinningEventLoop();
     }
 #else
     while (true)

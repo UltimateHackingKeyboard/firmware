@@ -6,6 +6,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/logging/log_ctrl.h>
 #include <zephyr/sys/mpsc_pbuf.h>
 
 LOG_MODULE_REGISTER(UhkShell, LOG_LEVEL_INF);
@@ -50,6 +51,11 @@ int ShellUhk_Init(void)
     mpsc_pbuf_init(UhkShell.log_backend->mpsc_buffer,
                    UhkShell.log_backend->mpsc_buffer_config);
     UhkShell.log_backend->backend->cb->ctx = (void *)&UhkShell;
+    // Mark the shell log backend as DISABLED (not UNINIT) so Zephyr's "log" shell
+    // commands don't bail out with "Shell log backend not initialized."
+    // The shell backend's process() checks this state and does nothing on DISABLED,
+    // so no duplicate output even though we mark it active below.
+    UhkShell.log_backend->control_block->state = SHELL_LOG_BACKEND_DISABLED;
 
     ShellLogBackend_SetUart(dev);
 
@@ -65,6 +71,16 @@ void Shell_WaitUntilInitialized(void)
         // if we set levels before shell is ready, the shell will mercilessly overwrite them
         while (!shell_ready(sh)) {
             k_msleep(10);
+        }
+
+        // Make UhkShell_backend share UhkLog's filter slot so that the shell's
+        // "log enable/disable/status" commands operate on UhkLog's filters.
+        // UhkShell_backend's process() is a no-op (state=DISABLED), so activating
+        // it doesn't produce duplicate output.
+        const struct log_backend *uhkLog = log_backend_get_by_name("UhkLog");
+        if (uhkLog) {
+            sh->log_backend->backend->cb->id = uhkLog->cb->id;
+            sh->log_backend->backend->cb->active = true;
         }
     }
 }

@@ -1,0 +1,98 @@
+# custom Kconfig defaults are set per board here,
+# as the board-specific Kconfig files are used for mcuboot build as well
+
+config DEVICE_ID
+    int "UHK device id"
+    default 1 if BOARD_UHK_60_RIGHT_V1
+    default 2 if BOARD_UHK_60_RIGHT_V2
+    default 3 if BOARD_UHK_80_LEFT
+    default 4 if BOARD_UHK_80_RIGHT
+    default 5 if BOARD_UHK_DONGLE
+    help
+        The device id that identifies the specific UHK.
+
+config KEYBOARD_MAX_SCANCODE
+    hex "highest keyboard scancode"
+    default 0xDD
+    range 0x66 0xDD
+    help
+        The highest keyboard scancode value influences the overall length of the HID record sent to the host.
+        The value 0x86 is the maximum for Android devices (which don't exchange the MTU from the default 23)
+        to still receive the "NKRO" report layout. If a higher scancode is used, the report size will exceed this size,
+        causing a fallback to 6KRO report layout on Android.
+
+# Device vid / pid / comment:
+#
+# old:
+# 0x1D50    0x6120    UHK 60 v1 KBOOT Bootloader
+# 0x1D50    0x6121    UHK Bootloader proxy
+# 0x1D50    0x6122    UHK 60 v1 Keyboard firmware
+# 0x1D50    0x6123    UHK 60 v2 KBOOT Bootloader
+# 0x1D50    0x6124    UHK 60 v2 Keyboard firmware
+#
+# new:
+# 0x37A8    0x0000    UHK 60 v1 BusPal proxy
+# 0x37A8    0x0001    UHK 60 v1 keyboard firmware
+# 0x37A8    0x0002    UHK 60 v2 BusPal proxy
+# 0x37A8    0x0003    UHK 60 v2 keyboard firmware
+# 0x37A8    0x0004    UHK Dongle MCUboot bootloader
+# 0x37A8    0x0005    UHK Dongle firmware
+# 0x37A8    0x0006    UHK 80 left MCUboot
+# 0x37A8    0x0007    UHK 80 left keyboard firmware
+# 0x37A8    0x0008    UHK 80 right MCUboot
+# 0x37A8    0x0009    UHK 80 right keyboard firmware
+
+# by using the same Kconfig symbol names as mcuboot, the board Kconfig files can contain the values
+config USB_DEVICE_VID
+    hex "USB vendor ID"
+    range 0x0000 0xFFFF
+    default 0x37A8
+    help
+        The USB vendor ID is used to identify the specific UHK device.
+
+config USB_DEVICE_MANUFACTURER
+    string "USB vendor name"
+    default "Ultimate Gadget Laboratories"
+    help
+        The USB vendor name is used to describe the specific UHK device to the host OS user.
+        Macro value is in quotes
+
+config USB_BUSPAL_DEVICE_PID
+    hex "USB BusPal product ID"
+    range 0x0000 0xFFFF
+    default 0x0000 if BOARD_UHK_60_RIGHT_V1
+    default 0x0002 if BOARD_UHK_60_RIGHT_V2
+    default 0x0000
+    help
+        The USB BusPal product ID is used to identify the specific UHK device.
+
+config USB_DEVICE_PID
+    hex "USB product ID"
+    range 0x0000 0xFFFF
+    default 0x0001 if BOARD_UHK_60_RIGHT_V1
+    default 0x0003 if BOARD_UHK_60_RIGHT_V2
+    default 0x0005 if BOARD_UHK_DONGLE
+    default 0x0007 if BOARD_UHK_80_LEFT
+    default 0x0009 if BOARD_UHK_80_RIGHT
+    help
+        The USB product ID is used to identify the specific UHK device.
+
+config USB_DEVICE_PRODUCT
+    string "USB product name"
+    default "UHK 60 v1" if BOARD_UHK_60_RIGHT_V1
+    default "UHK 60 v2" if BOARD_UHK_60_RIGHT_V2
+    default "UHK dongle" if BOARD_UHK_DONGLE
+    default "UHK 80 Left USB" if BOARD_UHK_80_LEFT
+    default "UHK 80 Right USB" if BOARD_UHK_80_RIGHT
+    help
+        The USB product name is used to describe the specific UHK device to the host OS user.
+        Macro value is in quotes
+
+config USB_DEVICE_PRODUCT_VERSION
+    hex "USB product version"
+    range 0x0000 0xFFFF
+    default 0x0001 if BOARD_UHK_60_RIGHT_V1
+    default 0x0002 if BOARD_UHK_60_RIGHT_V2
+    default 0x0001
+    help
+        The USB product version is used to identify the UHK device operating mode.

@@ -1,18 +1,30 @@
-From 17f6f616c91abe1929df346866b1c3405f09594e Mon Sep 17 00:00:00 2001
+From 2f8bfdef70e9d099e5778c92081e2d217c330fba Mon Sep 17 00:00:00 2001
 From: Benedek Kupper <kupper.benedek@gmail.com>
-Date: Tue, 22 Jul 2025 15:52:37 +0200
+Date: Thu, 5 Feb 2026 21:34:25 +0100
 Subject: [PATCH] use SDK delay for wakeup
 
 ---
- device/usb_device_ehci.c | 6 +-----
- device/usb_device_khci.c | 6 +-----
- 2 files changed, 2 insertions(+), 10 deletions(-)
+ device/usb_device_ehci.c | 11 +----------
+ device/usb_device_khci.c | 11 +----------
+ 2 files changed, 2 insertions(+), 20 deletions(-)
 
 diff --git a/device/usb_device_ehci.c b/device/usb_device_ehci.c
-index 1780f87..e6462fe 100644
+index 1780f87..87f7a06 100644
 --- a/device/usb_device_ehci.c
 +++ b/device/usb_device_ehci.c
-@@ -2073,11 +2073,7 @@ usb_status_t USB_DeviceEhciControl(usb_device_controller_handle ehciHandle, usb_
+@@ -1944,11 +1944,6 @@ usb_status_t USB_DeviceEhciControl(usb_device_controller_handle ehciHandle, usb_
+ 
+ #if ((defined(USB_DEVICE_CONFIG_REMOTE_WAKEUP)) && (USB_DEVICE_CONFIG_REMOTE_WAKEUP > 0U))
+     usb_device_struct_t *deviceHandle;
+-#endif
+-#if (defined(USB_DEVICE_CONFIG_LOW_POWER_MODE) && (USB_DEVICE_CONFIG_LOW_POWER_MODE > 0U))
+-#if ((defined(USB_DEVICE_CONFIG_REMOTE_WAKEUP)) && (USB_DEVICE_CONFIG_REMOTE_WAKEUP > 0U))
+-    uint64_t startTick;
+-#endif
+ #endif
+ 
+     if (NULL == ehciHandle)
+@@ -2073,11 +2068,7 @@ usb_status_t USB_DeviceEhciControl(usb_device_controller_handle ehciHandle, usb_
  #endif
              ehciState->registerBase->PORTSC1 &= ~USBHS_PORTSC1_PHCD_MASK;
              ehciState->registerBase->PORTSC1 |= USBHS_PORTSC1_FPR_MASK;
@@ -26,10 +38,22 @@ index 1780f87..e6462fe 100644
              error = kStatus_USB_Success;
              break;
 diff --git a/device/usb_device_khci.c b/device/usb_device_khci.c
-index c62addc..f0e1fce 100644
+index c62addc..0ee7f7e 100644
 --- a/device/usb_device_khci.c
 +++ b/device/usb_device_khci.c
-@@ -1627,11 +1627,7 @@ usb_status_t USB_DeviceKhciControl(usb_device_controller_handle khciHandle, usb_
+@@ -1507,11 +1507,6 @@ usb_status_t USB_DeviceKhciControl(usb_device_controller_handle khciHandle, usb_
+ #endif
+ #if ((defined(USB_DEVICE_CONFIG_REMOTE_WAKEUP)) && (USB_DEVICE_CONFIG_REMOTE_WAKEUP > 0U))
+     usb_device_struct_t *deviceHandle;
+-#endif
+-#if ((defined(USB_DEVICE_CONFIG_LOW_POWER_MODE)) && (USB_DEVICE_CONFIG_LOW_POWER_MODE > 0U))
+-#if ((defined(USB_DEVICE_CONFIG_REMOTE_WAKEUP)) && (USB_DEVICE_CONFIG_REMOTE_WAKEUP > 0U))
+-    uint64_t startTick;
+-#endif
+ #endif
+     usb_status_t status = kStatus_USB_Error;
+ 
+@@ -1627,11 +1622,7 @@ usb_status_t USB_DeviceKhciControl(usb_device_controller_handle khciHandle, usb_
  #if defined(USB_DEVICE_CONFIG_REMOTE_WAKEUP) && (USB_DEVICE_CONFIG_REMOTE_WAKEUP > 0U)
          case kUSB_DeviceControlResume:
              khciState->registerBase->CTL |= USB_CTL_RESUME_MASK;

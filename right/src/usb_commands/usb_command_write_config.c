@@ -12,7 +12,7 @@ void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *Ge
     uint16_t offset = GetUsbRxBufferUint16(2);
     const uint8_t paramsSize = USB_STATUS_CODE_SIZE + sizeof(length) + sizeof(offset);
 
-    if (length > USB_GENERIC_HID_IN_BUFFER_LENGTH - paramsSize) {
+    if (length > USB_COMMAND_BUFFER_LENGTH - paramsSize) {
         SetUsbTxBufferUint8(0, UsbStatusCode_WriteConfig_LengthTooLarge);
         return;
     }

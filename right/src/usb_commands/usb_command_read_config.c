@@ -21,7 +21,7 @@ void UsbCommand_ReadConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
         SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_InvalidConfigBufferId);
     }
 
-    if (length > USB_GENERIC_HID_IN_BUFFER_LENGTH - USB_STATUS_CODE_SIZE) {
+    if (length > USB_COMMAND_BUFFER_LENGTH - USB_STATUS_CODE_SIZE) {
         SetUsbTxBufferUint8(0, UsbStatusCode_ReadConfig_LengthTooLarge);
         return;
     }

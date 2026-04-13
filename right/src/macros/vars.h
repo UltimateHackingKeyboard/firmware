@@ -7,7 +7,6 @@
     #include <stdbool.h>
     #include "attributes.h"
     #include "key_action.h"
-    #include "usb_device_config.h"
     #include "key_states.h"
     #include "str_utils.h"
     #include "macros/typedefs.h"
