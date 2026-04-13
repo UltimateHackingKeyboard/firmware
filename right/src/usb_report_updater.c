@@ -883,6 +883,18 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
     }
 }
 
+static void clearMouseMovement(void) {
+    ActiveMouseReport->x = 0;
+    ActiveMouseReport->y = 0;
+    ActiveMouseReport->wheelX = 0;
+    ActiveMouseReport->wheelY = 0;
+
+    for (uhk_module_state_t *moduleState = UhkModuleStates; moduleState < UhkModuleStates + UHK_MODULE_MAX_SLOT_COUNT; moduleState++) {
+        moduleState->pointerDelta.x = 0;
+        moduleState->pointerDelta.y = 0;
+    }
+}
+
 static void reportRetry(errno_t err) {
     // uint32_t currentTime = Timer_GetCurrentTime();
     // uint32_t seconds = currentTime / 1000;
@@ -991,6 +1003,7 @@ static void sendActiveReports(bool resending) {
         } else {
             if (ret != 0) {
                 handleFail(ret);
+                clearMouseMovement(); // Don't make cursor jump if we have connection issues.
             }
             mouseNeedsResending = false;
             switchActiveMouseReport();
@@ -1046,7 +1059,9 @@ void UpdateUsbReports(void)
     bool resending = EventVector_IsSet(EventVector_ResendUsbReports);
     Resending = resending;
 
-    if (!resending) {
+    if (resending) {
+        justPreprocessInput(); // don't allow resending to block input processing
+    } else {
         Trace_Printc("u2");
         updateActiveUsbReports();
     }
