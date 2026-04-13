@@ -401,7 +401,12 @@ static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionId
     if (KeyState_DeactivatedNow(keyState)) {
         if (inProgress == keyState && currentTime - startTime < unpairTimeout) {
             inProgress = NULL;
-            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            uint8_t connId = hostConnectionIdx + ConnectionId_HostConnectionFirst;
+            if (connId == SelectedHostConnectionId) {
+                HostConnection_Unselect();
+            } else {
+                HostConnections_SelectByHostConnIndex(hostConnectionIdx);
+            }
         }
     }
 
