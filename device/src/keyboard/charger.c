@@ -362,7 +362,7 @@ void Charger_UpdateBatteryState() {
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
 
 #ifdef CONFIG_BT_BAS
-        bt_bas_set_battery_level(batteryState.batteryPercentage);
+        // bt_bas_set_battery_level(batteryState.batteryPercentage);
 #endif
         stateChanged = false;
     }
