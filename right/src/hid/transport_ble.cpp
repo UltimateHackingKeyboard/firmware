@@ -86,7 +86,6 @@ extern "C" int HOGP_HealthCheck()
         return -3;
     }
 
-    printk("HOGP HealthCheck: OK (registered, peer connected, interval %u)\n",
-           info.le.interval);
+    printk("HOGP HealthCheck: OK (registered, peer connected, interval %u)\n", info.le.interval_us);
     return 0;
 }
