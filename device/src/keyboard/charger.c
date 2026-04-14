@@ -4,7 +4,6 @@
 #include "charger.h"
 #include "battery_window_calculator.h"
 #include "keyboard/charger.h"
-#include "nrf52840.h"
 #include "oled/screens/notification_screen.h"
 #include "power_mode.h"
 #include "shell.h"

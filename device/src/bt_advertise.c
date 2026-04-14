@@ -143,7 +143,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
         case ADVERTISE_NUS | ADVERTISE_HID:
             LOG_DBG("Adv: advertise nus+hid.");
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
-            advParam = *BT_LE_ADV_CONN_ONE_TIME;
+            advParam = *BT_LE_ADV_CONN_FAST_1;
             err = BT_LE_ADV_START(&advParam, adHid, sdHid);
 
             break;
@@ -152,13 +152,13 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
                 LOG_DBG("Adv: advertise nus, with allow list.");
                 setFilters(advConfig);
 
-                advParam = *BT_LE_ADV_CONN_ONE_TIME;
-                advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
+                advParam = *BT_LE_ADV_CONN_FAST_1;
+                advParam.options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
 
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
                 LOG_DBG("Adv: advertise nus, without allow list.");
-                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                advParam = *BT_LE_ADV_CONN_FAST_1;
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             }
             break;
@@ -167,21 +167,15 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
                 LOG_DBG("Adv: direct advertise nus, with allow list.");
                 setFilters(advConfig);
 
-                advParam = *BT_LE_ADV_CONN_ONE_TIME;
-                advParam.options = BT_LE_ADV_OPT_CONNECTABLE | BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
+                advParam = *BT_LE_ADV_CONN_FAST_1;
+                advParam.options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
 
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
                 LOG_DBG("Adv: direct advertise nus, without allow list.");
-                advParam = *BT_LE_ADV_CONN_ONE_TIME;
+                advParam = *BT_LE_ADV_CONN_FAST_1;
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             }
-
-            //// TODO: fix and reenable this?
-            // printk("Advertising against %s", GetAddrString(advConfig.addr));
-            // advParam = *BT_LE_ADV_CONN_DIR_LOW_DUTY(advConfig.addr);
-            // advParam.options |= BT_LE_ADV_OPT_DIR_ADDR_RPA;
-            // err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             break;
         default:
             LOG_INF("Adv: Attempted to start advertising without any type! Ignoring.");
