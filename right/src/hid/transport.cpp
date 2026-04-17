@@ -34,11 +34,12 @@ typedef enum {
 
 // Exponential moving average (alpha=1/8) of the measured delay between a
 // BLE HID report being handed to the stack and the corresponding sent callback
-// firing. Useful for observing whether the send pipeline is saturated.
+// firing. Populated when DEBUG_BLE_LATENCY_STATS is enabled; useful for
+// observing whether the send pipeline is saturated.
 extern "C" {
 float HidReportBleLatencyAvgMs = 0;
 }
-static uint32_t bleDispatchTimeMs = 0;
+static uint32_t dispatchTimeMs = 0;
 
 // Approximate transport window intervals (ms) used by the report-construction
 // throttle. After dispatch we estimate the next free window at "now + 2 *
@@ -75,24 +76,31 @@ static uint32_t reportIntervalForTransport(hid_transport_t transport)
 
 static void noteReportDispatched(report_sink_t sink)
 {
-    if (sink == ReportSink_BleHid && bleDispatchTimeMs == 0) {
-        bleDispatchTimeMs = Timer_GetCurrentTime();
+    if (DEBUG_BLE_LATENCY_STATS) {
+        if (dispatchTimeMs == 0) {
+            dispatchTimeMs = Timer_GetCurrentTime();
+        }
     }
     UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
 }
 
 static void noteReportSent(hid_transport_t transport)
 {
-    if (transport == HID_TRANSPORT_BLE) {
-        if (bleDispatchTimeMs != 0) {
-            uint32_t delta = Timer_GetCurrentTime() - bleDispatchTimeMs;
+    if (DEBUG_BLE_LATENCY_STATS) {
+        if (dispatchTimeMs != 0) {
+            uint32_t delta = Timer_GetCurrentTime() - dispatchTimeMs;
             HidReportBleLatencyAvgMs = (HidReportBleLatencyAvgMs * 7 + delta) / 8;
-            bleDispatchTimeMs = 0;
+            dispatchTimeMs = 0;
             WATCH_FLOAT_VALUE(HidReportBleLatencyAvgMs, 0);
         }
     }
     UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForTransport(transport);
     EventVector_WakeMain();
+}
+
+extern "C" void HidTransport_NoteNusReportSent(void)
+{
+    noteReportSent(HID_TRANSPORT_BLE);
 }
 
 static report_sink_t determineSink()
@@ -153,7 +161,6 @@ extern "C" void Hid_TransportStateChanged(
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
     report_sink_t sink = determineSink();
-    errno_t result;
     noteReportDispatched(sink);
     switch (sink) {
     case ReportSink_Usb:
@@ -189,7 +196,6 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 {
     report_sink_t sink = determineSink();
-    errno_t result;
     noteReportDispatched(sink);
     switch (sink) {
     case ReportSink_Usb:
@@ -225,7 +231,6 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 {
     report_sink_t sink = determineSink();
-    errno_t result;
     noteReportDispatched(sink);
     switch (sink) {
     case ReportSink_Usb:

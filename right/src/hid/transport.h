@@ -35,6 +35,11 @@ void Hid_KeyboardReportSentCallback(hid_transport_t transport);
 void Hid_MouseReportSentCallback(hid_transport_t transport);
 void Hid_ControlsReportSentCallback(hid_transport_t transport);
 
+// Called from NUS server 'sent' callback on UHK80 right half to feed
+// dongle-bound reports into the same latency EMA as BLE HID. Assumes any
+// right-half NUS send corresponds to a USB report being relayed to the dongle.
+void HidTransport_NoteNusReportSent(void);
+
 void Hid_MouseScrollResolutionsChanged(
     hid_transport_t transport, float verticalMultiplier, float horizontalMultiplier);
 

@@ -74,10 +74,11 @@ uint32_t UsbReportUpdater_LastActivityTime;
 
 uint32_t UsbReportWindowEstimate = 0;
 
-// Maximum lookahead used by the throttle check: if the estimated next
-// transport window is more than this many milliseconds in the future, we
-// postpone report construction so that further keystroke state can accumulate.
-#define USB_REPORT_WINDOW_LOOKAHEAD_MS 4
+// This is how much time we leave for report construction.
+//
+// If too low, we will be missing transports. If too high, we will be introducing
+// latency.
+#define USB_REPORT_WINDOW_LOOKAHEAD_MS 6
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
