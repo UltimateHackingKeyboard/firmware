@@ -1,7 +1,7 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-#define WATCHES true
+#define WATCHES false
 #define DEBUG_SEMAPHORES false
 #define DEBUG_STATESYNC false
 #define DEBUG_CONSOLE false
@@ -24,6 +24,8 @@
 #define DEBUG_UHK60_SLEEPS false
 
 #define DEBUG_ROLL_STATUS_BUFFER false
+
+#define DEBUG_BLE_LATENCY_STATS false
 
 
 #ifdef __ZEPHYR__
@@ -174,5 +176,7 @@
 #else
 #define EVENTLOOP_TIMING(CODE)
 #endif
+
+void Debug_RecordBleSendResult(int ret);
 
 #endif // __DEBUG_H__

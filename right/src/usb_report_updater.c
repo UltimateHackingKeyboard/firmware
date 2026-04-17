@@ -1022,24 +1022,7 @@ static void sendActiveReports(bool resending) {
             switchActiveMouseReport();
         }
 
-        static uint32_t thisMs = 0;
-        static uint32_t succ = 0;
-        static uint32_t fail = 0;
-
-        uint32_t now = Timer_GetCurrentTime();
-
-        if (now / 1024 != thisMs) {
-            printk("Succ: %d, Fail: %d\n", succ, fail);
-            thisMs = now / 1024;
-            succ = 0;
-            fail = 0;
-        }
-
-        if (ret == 0) {
-            succ++;
-        } else {
-            fail++;
-        }
+        Debug_RecordBleSendResult(ret);
 
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;

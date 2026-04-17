@@ -15,6 +15,7 @@
 #include "key_states.h"
 #include <limits.h>
 #include "macros/status_buffer.h"
+#include "hid/transport.h"
 #include "segment_display.h"
 
 uint8_t CurrentWatch = 0;
@@ -250,3 +251,31 @@ void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n) {
 #else
 
 #endif
+
+void Debug_RecordBleSendResult(int ret)
+{
+    if (DEBUG_BLE_LATENCY_STATS) {
+        static uint32_t thisMs = 0;
+        static uint32_t succ = 0;
+        static uint32_t fail = 0;
+
+        uint32_t now = Timer_GetCurrentTime();
+
+        uint16_t latInt = (uint16_t)HidReportBleLatencyAvgMs;
+        uint16_t latFra = (uint16_t)((HidReportBleLatencyAvgMs - latInt) * 100); // Show two decimal places
+
+        if (now / 1024 != thisMs) {
+            LogU("BLE report send: succ=%u, fail=%u, latency=%d.%d\n", succ, fail, latInt, latFra);
+
+            thisMs = now / 1024;
+            succ = 0;
+            fail = 0;
+        }
+
+        if (ret == 0) {
+            succ++;
+        } else {
+            fail++;
+        }
+    }
+}

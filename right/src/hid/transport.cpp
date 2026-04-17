@@ -91,7 +91,6 @@ static void noteReportSent(hid_transport_t transport)
             uint32_t delta = Timer_GetCurrentTime() - dispatchTimeMs;
             HidReportBleLatencyAvgMs = (HidReportBleLatencyAvgMs * 7 + delta) / 8;
             dispatchTimeMs = 0;
-            WATCH_FLOAT_VALUE(HidReportBleLatencyAvgMs, 0);
         }
     }
     UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForTransport(transport);

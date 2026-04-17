@@ -24,6 +24,9 @@ typedef enum
     ROLLOVER_6_KEY = 1,
 } rollover_t;
 
+
+extern float HidReportBleLatencyAvgMs;
+
 void Hid_TransportStateChanged(hid_transport_t transport, bool enabled);
 
 // report sending
@@ -58,6 +61,8 @@ void USB_Enable(void);
 bool USB_RemoteWakeup(void);
 void USB_Reconfigure(void);
 bool USB_IsMsHost(void);
+
+
 
 // HOGP (BLE HID) management
 void HOGP_Enable(void);
