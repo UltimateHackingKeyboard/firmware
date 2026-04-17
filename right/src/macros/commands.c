@@ -549,12 +549,22 @@ static macro_result_t processRecordMacroDelayCommand()
     return MacroResult_Finished;
 }
 
-static bool processIfDoubletapCommand(bool negate)
+static bool processIfDoubletapCommand(parser_context_t *ctx, bool negate)
 {
+    uint8_t n = 2;
+    if (ConsumeToken(ctx, "taps")) {
+        n = Macros_ConsumeInt(ctx);
+    }
+
     if (Macros_DryRun) {
         return true;
     }
-    return S->ms.isDoubletap != negate;
+
+    if (S->ms.currentMacroKey == NULL) {
+        return false;
+    }
+
+    return (S->ms.multitapCount % n == 0) != negate;
 }
 
 static bool processIfModifierCommand(bool negate, uint8_t modmask)
@@ -2092,9 +2102,9 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case CommandId_if:
             PROCESS_CONDITION(processIfCommand(ctx))
         case CommandId_ifDoubletap:
-            PROCESS_CONDITION(processIfDoubletapCommand(false))
+            PROCESS_CONDITION(processIfDoubletapCommand(ctx, false))
         case CommandId_ifNotDoubletap:
-            PROCESS_CONDITION(processIfDoubletapCommand(true))
+            PROCESS_CONDITION(processIfDoubletapCommand(ctx, true))
         case CommandId_ifInterrupted:
             PROCESS_CONDITION(processIfInterruptedCommand(false))
         case CommandId_ifNotInterrupted:

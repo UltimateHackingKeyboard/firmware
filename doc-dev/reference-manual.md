@@ -202,7 +202,7 @@ CONDITION = {ifShortcut | ifNotShortcut} [IFSHORTCUT_OPTIONS]* [KEYID]+
 CONDITION = {ifGesture | ifNotGesture} [IFSHORTCUT_OPTIONS]* [KEYID]+
 CONDITION = {ifPrimary | ifSecondary} [ simpleStrategy | advancedStrategy | ignoreTriggersFromSameHalf | acceptTriggersFromSameHalf ]
 CONDITION = {ifHold | ifTap}
-CONDITION = {ifDoubletap | ifNotDoubletap}
+CONDITION = {ifDoubletap | ifNotDoubletap} [taps <number of taps (INT)>]
 CONDITION = {ifInterrupted | ifNotInterrupted}
 CONDITION = {ifReleased | ifNotReleased}
 CONDITION = {ifKeyActive | ifNotKeyActive} KEYID
@@ -541,7 +541,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 
 - `if BOOL` allows switching based on a custom expression. E.g., `if ($keystrokeDelay > 10) ...`
 - `else` condition is true if the previous command ended due to a failed condition.
-- `ifDoubletap/ifNotDoubletap` is true if the macro was started at most 300ms after the start of another instance of the same macro.
+- `ifDoubletap/ifNotDoubletap` is true if the macro was started at most 300ms after the start of another instance of the same macro.  If `taps` is provided, test for that number of rapid taps in a row, for example `ifDoubletap taps 3` will test for a tripletap.
 - `ifInterrupted/ifNotInterrupted` is true if a keystroke action or mouse action was triggered during macro runtime. Allows fake implementation of secondary roles. Also allows interruption of cycles.
 - `ifReleased/ifNotReleased` is true if the key which activated current macro has been released. If the key has been physically released but the release has been postponed by another key, the conditien yields false. If the key has been physically released and the postponing mode was initiated by this macro (e.g., `postponeKeys ifReleased goTo ($currentAddress+2)`), it returns non-postponed release state (i.e., true if there's a matching release event in the postponing queue).
 - `ifPending/ifNotPending <n>` is true if there is at least `n` postponed keys in the postponing queue. In context of postponing mechanism, this condition acts similar in place of ifInterrupted.
@@ -620,7 +620,7 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
   This allows the user to trigger chorded shortcuts in an arbitrary order (all at the "same" time). E.g., if `A+Ctrl` is pressed instead of `Ctrl+A`, the keyboard will still send `Ctrl+A` if the two key presses follow within the specified time.
 - `set autoShiftDelay 0 | <time in ms (INT)>` If nonzero, the autoshift feature is turned on. This adds shift to a scancode when the key is held for at least `autoShiftDelay` ms. (E.g., tapping 'a' results in 'a', pressing 'a' for a little bit longer results in 'A'.)
 - `set debounceDelay <time in ms, at most 250>` prevents key state from changing for some time after every state change. This is needed because contacts of mechanical switches can bounce after contact and therefore change state multiple times in span of a few milliseconds. Official firmware debounce time is 50 ms for both press and release. Recommended value is 10-50, default is 50.
-- `set doubletapTimeout <time in ms, at most 65535>` controls doubletap timeouts for both layer switchers and for the `ifDoubletap` condition.
+- `set doubletapTimeout <time in ms, at most 65535>` controls doubletap interval limit for layer switchers, secondary role doubletap to primary, and for the `ifDoubletap` condition.
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set oneShotTimeout <time in ms, at most 65535>` sets the timeout for `oneShot` modifier. Zero means infinite.
@@ -782,6 +782,8 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
     - `$currentTime` returns current time in milliseconds in 31 bit range.
     - `$queuedKeyId.<index (NUMBER)>` which stands for a zero-indexed position in the postponer queue.
     - `$uhk.name` returns a reference to the uhk name string.
+    - `$previousKeyId` returns the id of the last key that was pressed previously to the one which started the macro
+    - `$previousKeyPressTime` returns the time activation time of the last key pressed previously to the one which started the macro
 - `KEYMAPID` - is assumed to be 3 characters long abbreviation of a keymap.
 - `MACROID` - macro slot identifier is either a number or a single ascii character (interpreted as a one-byte value). `$thisKeyId` can be used so that the same macro refers to different slots when assigned to different keys.
 - `custom text` is an arbitrary text starting on the next non-space character and ending at the end of the text action. (Yes, this should be refactored in the future.)
