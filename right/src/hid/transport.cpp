@@ -45,8 +45,14 @@ static uint32_t bleDispatchTimeMs = 0;
 // interval" (worst case: we just missed a window). The send-completion
 // callback then reduces the estimate to "now + interval".
 static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
-static constexpr uint32_t BLE_HID_REPORT_INTERVAL_MS = 11;
 static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 7;
+
+#if DEVICE_IS_UHK80_RIGHT
+extern "C" uint32_t BleHidReportIntervalMs;
+static inline uint32_t bleHidReportIntervalMs() { return BleHidReportIntervalMs; }
+#else
+static inline uint32_t bleHidReportIntervalMs() { return 11; }
+#endif
 
 static uint32_t reportIntervalForSink(report_sink_t sink)
 {
@@ -54,7 +60,7 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
     case ReportSink_Usb:
         return USB_REPORT_INTERVAL_MS;
     case ReportSink_BleHid:
-        return BLE_HID_REPORT_INTERVAL_MS;
+        return bleHidReportIntervalMs();
     case ReportSink_Dongle:
         return DONGLE_REPORT_INTERVAL_MS;
     default:
@@ -64,7 +70,7 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
 
 static uint32_t reportIntervalForTransport(hid_transport_t transport)
 {
-    return (transport == HID_TRANSPORT_USB) ? USB_REPORT_INTERVAL_MS : BLE_HID_REPORT_INTERVAL_MS;
+    return (transport == HID_TRANSPORT_USB) ? USB_REPORT_INTERVAL_MS : bleHidReportIntervalMs();
 }
 
 static void noteReportDispatched(report_sink_t sink)
