@@ -72,6 +72,14 @@ static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 uint32_t UsbReportUpdater_LastActivityTime;
 
+uint32_t UsbReportWindowEstimate = 0;
+
+// This is how much time we leave for report construction.
+//
+// If too low, we will be missing transports. If too high, we will be introducing
+// latency.
+#define USB_REPORT_WINDOW_LOOKAHEAD_MS 6
+
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
 // Modifiers can be applied as one of the following classes
@@ -1013,6 +1021,9 @@ static void sendActiveReports(bool resending) {
             mouseNeedsResending = false;
             switchActiveMouseReport();
         }
+
+        Debug_RecordBleSendResult(ret);
+
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
@@ -1027,14 +1038,31 @@ static void sendActiveReports(bool resending) {
 
 static bool blockedByKeystrokeDelay() {
     static uint32_t postponedMasks = 0;
-    if (Timer_GetCurrentTime() < lastBasicReportTime + Cfg.KeystrokeDelay) {
+    uint32_t currentTime = Timer_GetCurrentTime();
+    uint32_t blockedUntil = 0;
+    bool blocked = false;
+    if (currentTime < lastBasicReportTime + Cfg.KeystrokeDelay) {
+        blockedUntil = lastBasicReportTime + Cfg.KeystrokeDelay;
+        blocked = true;
+    }
+    // Throttle on slow transports (BLE HID, dongle): if the estimated next
+    // transport window is further than the lookahead in the future, postpone
+    // report construction so that further keystroke state can accumulate.
+    if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
+        uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
+        if (!blocked || throttleUntil > blockedUntil) {
+            blockedUntil = throttleUntil;
+        }
+        blocked = true;
+    }
+    if (blocked) {
         DISABLE_IRQ();
         postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
         EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_MainTriggers) | EventVector_KeystrokeDelayPostponing;
         ENABLE_IRQ();
 
         // Make sure to wake up postponer so that it can process the events.
-        EventScheduler_Reschedule(lastBasicReportTime + Cfg.KeystrokeDelay, EventSchedulerEvent_Postponer, "keystroke delay");
+        EventScheduler_Reschedule(blockedUntil, EventSchedulerEvent_Postponer, "report throttle");
 
         justPreprocessInput();
         return true;

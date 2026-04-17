@@ -1,6 +1,5 @@
 #include <string.h>
 #include "debug.h"
-#include "hid/keyboard_report.h"
 
 #ifdef __ZEPHYR__
 #include "logger.h"
@@ -16,6 +15,7 @@
 #include "key_states.h"
 #include <limits.h>
 #include "macros/status_buffer.h"
+#include "hid/transport.h"
 #include "segment_display.h"
 
 uint8_t CurrentWatch = 0;
@@ -25,7 +25,7 @@ static uint32_t lastWatch = 0;
 
 static void showInt(int32_t n) {
 #ifdef __ZEPHYR__
-    Log("%i: %i", CurrentWatch, n);
+    Log("W%i: %i\n", CurrentWatch, n);
 #else
     SegmentDisplay_SetInt(n, SegmentDisplaySlot_Debug);
 #endif
@@ -33,7 +33,7 @@ static void showInt(int32_t n) {
 
 static void showString(const char* str) {
 #ifdef __ZEPHYR__
-    Log("%i: %s", CurrentWatch, str);
+    Log("W%i: %s\n", CurrentWatch, str);
 #else
     SegmentDisplay_SetText(strlen(str), str, SegmentDisplaySlot_Debug);
 #endif
@@ -41,7 +41,9 @@ static void showString(const char* str) {
 
 static void showFloat(float f) {
 #ifdef __ZEPHYR__
-    Log("%i: %f", CurrentWatch, (double)f);
+    uint16_t intPart = (uint16_t)f;
+    uint16_t fracPart = (uint16_t)((f - intPart) * 100); // Show two decimal places
+    Log("W%i: %u.%02u\n", CurrentWatch, intPart, fracPart);
 #else
     SegmentDisplay_SetFloat(f, SegmentDisplaySlot_Debug);
 #endif
@@ -249,3 +251,31 @@ void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n) {
 #else
 
 #endif
+
+void Debug_RecordBleSendResult(int ret)
+{
+    if (DEBUG_BLE_LATENCY_STATS) {
+        static uint32_t thisMs = 0;
+        static uint32_t succ = 0;
+        static uint32_t fail = 0;
+
+        uint32_t now = Timer_GetCurrentTime();
+
+        uint16_t latInt = (uint16_t)HidReportBleLatencyAvgMs;
+        uint16_t latFra = (uint16_t)((HidReportBleLatencyAvgMs - latInt) * 100); // Show two decimal places
+
+        if (now / 1024 != thisMs) {
+            LogU("BLE report send: succ=%u, fail=%u, latency=%d.%d\n", succ, fail, latInt, latFra);
+
+            thisMs = now / 1024;
+            succ = 0;
+            fail = 0;
+        }
+
+        if (ret == 0) {
+            succ++;
+        } else {
+            fail++;
+        }
+    }
+}
