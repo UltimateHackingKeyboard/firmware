@@ -111,7 +111,7 @@ std::span<const uint8_t> keyboard_app::move_to_buffer(const hid_keyboard_report_
         auto &keys_nkro = keys_[buf_idx].nkro;
 
         ::memcpy(&keys_nkro.modifiers, &report.modifiers, sizeof(report.modifiers));
-        ::memcpy(&keys_nkro.scancodes, &report.bitfield, sizeof(report.bitfield));
+        ::memcpy(static_cast<void *>(&keys_nkro.scancodes), &report.bitfield, sizeof(report.bitfield));
 
         return std::span<const uint8_t>(
             reinterpret_cast<const uint8_t *>(&keys_nkro), sizeof(keys_nkro));

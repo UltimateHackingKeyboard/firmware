@@ -237,7 +237,7 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
             return;
     }
 
-    errno_t ret = sendDongleReport(propertyId, message);
+    errno_t ATTR_UNUSED ret = sendDongleReport(propertyId, message);
 
 #if DEVICE_IS_UHK_DONGLE
     uint8_t retryCounter = 0;
