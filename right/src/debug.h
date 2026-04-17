@@ -1,7 +1,7 @@
 #ifndef __DEBUG_H__
 #define __DEBUG_H__
 
-#define WATCHES false
+#define WATCHES true
 #define DEBUG_SEMAPHORES false
 #define DEBUG_STATESYNC false
 #define DEBUG_CONSOLE false
@@ -25,6 +25,7 @@
 
 #define DEBUG_ROLL_STATUS_BUFFER false
 
+
 #ifdef __ZEPHYR__
     #include "logger.h"
     #include <zephyr/kernel.h>
@@ -32,6 +33,7 @@
 
 #include <stdint.h>
 #include "key_states.h"
+#include "hid/keyboard_report.h"
 
 #if WATCHES
 
@@ -111,7 +113,6 @@
     bool WatchCondition(uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
-    struct hid_keyboard_report_t;
     void AddReportToStatusBuffer(char* dbgTag, hid_keyboard_report_t *report);
 
     #ifdef __ZEPHYR__

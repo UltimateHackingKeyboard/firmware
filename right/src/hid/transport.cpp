@@ -12,6 +12,7 @@ extern "C" {
 #include "key_states.h"
 #include "logger.h"
 #include "macro_events.h"
+#include "timer.h"
 #include "usb_report_updater.h"
 }
 #include "command_app.hpp"
@@ -30,6 +31,33 @@ typedef enum {
     ReportSink_BleHid,
     ReportSink_Dongle,
 } report_sink_t;
+
+// Exponential moving average (alpha=1/8) of the measured delay between a
+// BLE HID report being handed to the stack and the corresponding sent callback
+// firing. Useful for observing whether the send pipeline is saturated.
+extern "C" {
+float HidReportBleLatencyAvgMs = 0;
+}
+static uint32_t bleDispatchTimeMs = 0;
+
+static void noteReportDispatched(report_sink_t sink)
+{
+    if (sink == ReportSink_BleHid && bleDispatchTimeMs == 0) {
+        bleDispatchTimeMs = Timer_GetCurrentTime();
+    }
+}
+
+static void noteReportSent(hid_transport_t transport)
+{
+    if (transport == HID_TRANSPORT_BLE) {
+        if (bleDispatchTimeMs != 0) {
+            uint32_t delta = Timer_GetCurrentTime() - bleDispatchTimeMs;
+            HidReportBleLatencyAvgMs = (HidReportBleLatencyAvgMs * 7 + delta) / 8;
+            bleDispatchTimeMs = 0;
+            WATCH_FLOAT_VALUE(HidReportBleLatencyAvgMs, 0);
+        }
+    }
+}
 
 static report_sink_t determineSink()
 {
@@ -88,7 +116,10 @@ extern "C" void Hid_TransportStateChanged(
 
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
-    switch (determineSink()) {
+    report_sink_t sink = determineSink();
+    errno_t result;
+    noteReportDispatched(sink);
+    switch (sink) {
     case ReportSink_Usb:
         return keyboard_app::usb_handle().send_report(*report);
 #if DEVICE_IS_UHK80_RIGHT
@@ -113,6 +144,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+    // noteReportSent(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -120,7 +152,10 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 {
-    switch (determineSink()) {
+    report_sink_t sink = determineSink();
+    errno_t result;
+    noteReportDispatched(sink);
+    switch (sink) {
     case ReportSink_Usb:
         return mouse_app::usb_handle().send_report(*report);
 #if DEVICE_IS_UHK80_RIGHT
@@ -145,6 +180,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+    noteReportSent(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -152,7 +188,10 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 
 extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 {
-    switch (determineSink()) {
+    report_sink_t sink = determineSink();
+    errno_t result;
+    noteReportDispatched(sink);
+    switch (sink) {
     case ReportSink_Usb:
         return controls_app::usb_handle().send_report(*report);
 #if DEVICE_IS_UHK80_RIGHT
@@ -177,6 +216,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+    // noteReportSent(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif

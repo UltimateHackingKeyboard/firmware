@@ -1,6 +1,5 @@
 #include <string.h>
 #include "debug.h"
-#include "hid/keyboard_report.h"
 
 #ifdef __ZEPHYR__
 #include "logger.h"
@@ -25,7 +24,7 @@ static uint32_t lastWatch = 0;
 
 static void showInt(int32_t n) {
 #ifdef __ZEPHYR__
-    Log("%i: %i", CurrentWatch, n);
+    Log("W%i: %i\n", CurrentWatch, n);
 #else
     SegmentDisplay_SetInt(n, SegmentDisplaySlot_Debug);
 #endif
@@ -33,7 +32,7 @@ static void showInt(int32_t n) {
 
 static void showString(const char* str) {
 #ifdef __ZEPHYR__
-    Log("%i: %s", CurrentWatch, str);
+    Log("W%i: %s\n", CurrentWatch, str);
 #else
     SegmentDisplay_SetText(strlen(str), str, SegmentDisplaySlot_Debug);
 #endif
@@ -41,7 +40,9 @@ static void showString(const char* str) {
 
 static void showFloat(float f) {
 #ifdef __ZEPHYR__
-    Log("%i: %f", CurrentWatch, (double)f);
+    uint16_t intPart = (uint16_t)f;
+    uint16_t fracPart = (uint16_t)((f - intPart) * 100); // Show two decimal places
+    Log("W%i: %u.%02u\n", CurrentWatch, intPart, fracPart);
 #else
     SegmentDisplay_SetFloat(f, SegmentDisplaySlot_Debug);
 #endif
