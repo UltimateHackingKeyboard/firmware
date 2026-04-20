@@ -6,9 +6,6 @@
     #include <stdint.h>
     #include "attributes.h"
     #include "lufa/HIDClassCommon.h"
-#ifndef __ZEPHYR__
-    #include "usb_composite_device.h"
-#endif
     #include "module.h"
     #include "config_parser/parse_keymap.h"
 
@@ -83,7 +80,7 @@
     } rgb_t;
 
     typedef struct {
-        uint8_t type;
+        key_action_type_t type;
         union {
             struct {
                 keystroke_type_t keystrokeType;
@@ -114,9 +111,13 @@
                 other_action_t actionSubtype;
             } ATTR_PACKED other;
         };
+    } ATTR_PACKED key_action_t;
+
+    typedef struct {
+        key_action_t action;
         rgb_t color;
         bool colorOverridden;
-    } ATTR_PACKED key_action_t;
+    } ATTR_PACKED key_definition_t;
 
     typedef struct {
         key_action_t action;

@@ -26,5 +26,8 @@ extern const test_module_t TestModule_Autorepeat;
 extern const test_module_t TestModule_Chording;
 extern const test_module_t TestModule_AutoShift;
 extern const test_module_t TestModule_IfShortcutGesture;
+extern const test_module_t TestModule_Doubletap;
+extern const test_module_t TestModule_CurrentMacroKeyIsActive;
+extern const test_module_t TestModule_ParserBenevolence;
 
 #endif

@@ -31,7 +31,7 @@
     extern void ScreenManager_SwitchScreenEvent();
     extern void Charger_UpdateBatteryState();
     extern void Charger_UpdateBatteryCharging();
-    extern const rgb_t* PairingScreen_ActionColor(key_action_t* action);
+    extern const rgb_t* PairingScreen_ActionColor(key_action_t* key);
     extern void UartBridge_Enable();
     extern void UartModules_Enable();
     extern status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer);
@@ -50,7 +50,7 @@
     extern void Oled_RequestRedraw();
     extern void RoundTripTest_Run();
     extern void Resend_RequestResendSync();
-    extern void PairingScreen_Feedback(bool success);
+    extern void PairingScreen_Feedback(const char* message);
     extern void StateSync_CheckFirmwareVersions();
     extern void StateSync_CheckDongleProtocolVersion();
     extern void PowerMode_PutBackToSleepMaybe(void);

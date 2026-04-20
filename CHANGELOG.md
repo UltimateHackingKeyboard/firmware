@@ -1,9 +1,76 @@
 # Changelog
 
+
 All notable changes to this project will be documented in this file.
 
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
+
+## [16.3.0] - 2026-04-13
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.1
+
+Features:
+
+- Second tap on a host switch action cancels it.
+
+Fixes and maintenance:
+
+- Refactor: port uhk60 onto c2usb in order to increase codebase maintainability.
+- Refactor: rewrite usb stack integration.
+- Fix: rework usb-report send failure handling.
+- Fix: increase bluetooth reliability - bluetooth hid interfaces should no longer stop functioning randomly.
+- Fix: implement workaround for slow scrolling on microsoft hosts.
+- Fix: preprocess input during usb report send retries.
+- Fix: don't accumulate mouse coordinates during usb report send retries to prevent cursor jumps.
+
+## [16.2.1] - 2026-04-07
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.1
+
+General:
+- Implement new zephyr backends for shell and logging.
+- Refactor doubletap handling.
+
+Macro fixes:
+- Fix backlight update after overlayLayer, overlayKeymap, replaceLayer, replaceKeymap commands. `SMARTMACROS:PATCH`
+- Fix macro crashes (main thread stack overflows) on too deeply nested expressions.  `SMARTMACROS:PATCH`
+- Fix a 16.2.0 macro parser benevolence: e.g., parser wouldn't accept `if(` due to missing space. `SMARTMACROS:PATCH`
+- Fix some key release scenarios in postponed nested local scopes. `SMARTMACROS:PATCH`
+
+## [16.2.0] - 2026-02-17
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.0
+
+General:
+- Fix: UHK 60 I2C scheduling caused various issues with modules and left half during 16.1.0 and 16.1.1.
+- Fix: BLE reliability: always exchange MTU right after the connection is established.
+- Fix: Macro key release detection that caused subtle timing bugs with advanced macros.
+- Use a fixed keymap for the BLE pairing PIN flow.
+
+Macro behaviors:
+- Validate all macros in general context. In 16.1.x, unmapped macros weren't validated. `SMARTMACROS:PATCH`
+- Lower default `ifGesture` timeout to 500ms. `SMARTMACROS:MINOR`
+- Add `notify` command. `SMARTMACROS:MINOR`
+- Global doubletap detection:
+  - Doubletaps are now detected globally at the beginning of keypress lifecycle. Separate `secondaryRole.advanced.doubletapTime` has been deprecated. `SMARTMACROS:MINOR`
+  - Macros will now remember and reuse secondary role resolutions for the rest of their runtime, regardless of key events
+  - Fix: secondary role could incorrectly trigger doubletaps
+  - Fix: macros could incorrectly trigger doubletaps
+- Secondary Role keys (HRM):
+  - Added `secondaryRole.advanced.timeoutType { active | passive }` option to postpone timeout action until release. `SMARTMACROS:MINOR`
+  - Made Trigger by mouse subject to minimum hold time to prevent vibration on key press from triggering secondary role when using a trackball module. `SMARTMACROS:PATCH`
+  - Made Trigger by mouse reliably trigger secondary role immediately. `SMARTMACROS:PATCH`
+  - Fixed a number of edge cases related to safety margin where secondary role keys would not trigger in a timely manner. `SMARTMACROS:PATCH`
+
+Minor changes and refactors:
+- Improve macro performance: use GNU perfect hashing for main macro switch.
+- Refactor USB logging backend.
+- Refactor event scheduler to use binary heap.
+- Improve status buffer rolling.
+- Fix shell initialization: logging levels and sometimes entire shell initialization would fail due to timing and thread priority issues.
+- Lower some compiled-in logging levels, but set them manually to higher levels by default.
+- Fix setting Zephyr log levels via `zephyr log enable inf Bt`.
 
 ## [16.1.1] - 2026-01-21
 

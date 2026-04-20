@@ -11,7 +11,7 @@
     ATTRS void ScreenManager_SwitchScreenEvent() {};
     ATTRS void Charger_UpdateBatteryState() {};
     ATTRS void Charger_UpdateBatteryCharging() {};
-    ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* action) { return NULL; };
+    ATTRS const rgb_t* PairingScreen_ActionColor(key_action_t* key) { return NULL; };
     ATTRS void UartBridge_Enable() {};
     ATTRS void UartModules_Enable() {};
     ATTRS status_t ZephyrI2c_MasterTransferNonBlocking(i2c_master_transfer_t *transfer) { return kStatus_Fail; };
@@ -30,7 +30,7 @@
     ATTRS void Oled_RequestRedraw() {};
     ATTRS void RoundTripTest_Run() {};
     ATTRS void Resend_RequestResendSync() {};
-    ATTRS void PairingScreen_Feedback(bool success) {};
+    ATTRS void PairingScreen_Feedback(const char* message) {};
     ATTRS void StateSync_CheckFirmwareVersions() {};
     ATTRS void StateSync_CheckDongleProtocolVersion() {};
     ATTRS void Trace(char a) {};

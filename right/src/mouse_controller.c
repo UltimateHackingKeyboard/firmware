@@ -5,7 +5,6 @@
 #include "layer.h"
 #include "macros/status_buffer.h"
 #include "slave_protocol.h"
-#include "usb_interfaces/usb_interface_mouse.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"
@@ -14,7 +13,6 @@
 #include "mouse_keys.h"
 #include "slave_scheduler.h"
 #include "layer_switcher.h"
-#include "usb_report_updater.h"
 #include "caret_config.h"
 #include "debug.h"
 #include "postponer.h"
@@ -67,7 +65,7 @@ usb_keyboard_reports_t MouseControllerKeyboardReports = {
     .recomputeStateVectorMask = EventVector_MouseController,
     .postponeMask = EventVector_MouseControllerPostponing,
 };
-usb_mouse_report_t MouseControllerMouseReport;
+hid_mouse_report_t MouseControllerMouseReport;
 
 static void processAxisLocking(axis_locking_args_t args);
 static void handleRunningCaretModeAction(module_kinetic_state_t* ks);
@@ -247,17 +245,17 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
-        PostponerCore_TrackKeyEvent(singleTap, false, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
     }
     if (action & Action_Press) {
-        PostponerCore_TrackKeyEvent(singleTap, true, 0xff, Timer_GetCurrentTime());
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_Doubletap) {
         // some systems do debouncing because mouse switches are unreliable
-        uint16_t delay = 20;
-        PostponerCore_TrackKeyEvent(singleTap, false, 0xff, Timer_GetCurrentTime());
+        const uint16_t delay = 20;
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
         PostponerCore_TrackDelay(delay);
-        PostponerCore_TrackKeyEvent(singleTap, true, 0xff, Timer_GetCurrentTime()+delay);
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_ResetHoldContinuationTimeout) {
         continuationDelayStart = Timer_GetCurrentTime();

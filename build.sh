@@ -158,17 +158,23 @@ function dealiasDeviceZephyr() {
 }
 
 function dealiasDeviceMcux() {
+    if [ "$DEBUG" == "1" ]; then
+        BUILD_TYPE="debug"
+    else
+        BUILD_TYPE="release"
+    fi
+
     case $DEVICE in
         uhk-60v1-right|rightv1|right)
             DEVICE="uhk-60v1-right"
-            VARIANT="v1-release"
+            VARIANT="v1-$BUILD_TYPE"
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             ;;
         uhk-60v2-right|rightv2|right)
             DEVICE="uhk-60v2-right"
-            VARIANT="v2-release"
+            VARIANT="v2-$BUILD_TYPE"
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
             USBDEVICEARG="--vid=0x37a8 --pid=3"
@@ -315,33 +321,22 @@ function performZephyrAction() {
     case $ACTION in
         build)
             # reference version of the build process is to be found in scripts/make-release.mjs
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                unset PYTHONPATH
-                unset PYTHONHOME
-                ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
-                    --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
-                    --pristine \
-                    -- \
-                    --preset $DEVICE
-                exit $?
-END
+            ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+                --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
+                --pristine \
+                -- \
+                --preset $DEVICE
             exitOnFail $?
             createCentralCompileCommands
             ;;
         make)
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west build --build-dir $ROOT/device/build/$DEVICE device
-                exit $?
-END
+            west build --build-dir $ROOT/device/build/$DEVICE device
             exitOnFail $?
             ;;
         flash)
             export BUILD_DIR="$ROOT/device/build/$DEVICE"
             export DEVICE="$DEVICE"
-            nrfutil toolchain-manager launch --shell --ncs-version $NCS_VERSION << END
-                west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
-                exit $?
-END
+            west flash --softreset --build-dir $BUILD_DIR $DEVICEARG $OTHER_ARGS
             exitOnFail $?
             ;;
         flashUsb)

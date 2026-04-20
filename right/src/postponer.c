@@ -89,7 +89,6 @@ static void applyEventAndConsume(postponer_buffer_record_type_t* rec) {
         case PostponerEventType_ReleaseKey:
             KEY_TIMING(KeyTiming_RecordKeystroke(rec->event.key.keyState, rec->event.key.active, rec->time, Timer_GetCurrentTime()));
             rec->event.key.keyState->current = rec->event.key.active;
-            rec->event.key.keyState->activationTimestamp = rec->event.key.pressTimestamp;
             Postponer_LastKeyLayer = rec->event.key.layer;
             Postponer_LastKeyMods = rec->event.key.modifiers;
             // This gives the key two ticks (this and next) to get properly processed before execution of next queued event.
@@ -215,7 +214,7 @@ bool PostponerCore_IsNonEmpty(void) {
     return bufferSize > 0;
 }
 
-void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer, uint8_t pressTimestamp)
+void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
     LOG_SCHEDULE(printk("P postponer: new event\n"));
     prependEvent(
@@ -226,13 +225,12 @@ void PostponerCore_PrependKeyEvent(key_state_t *keyState, bool active, uint8_t l
                         .active = active,
                         .layer = layer,
                         .modifiers = 0,
-                        .pressTimestamp = pressTimestamp,
                     }
                 }
             );
 }
 
-void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer, uint8_t pressTimestamp)
+void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t layer)
 {
     LOG_SCHEDULE(printk("P postponer: new event\n"));
     appendEvent(
@@ -243,7 +241,6 @@ void PostponerCore_TrackKeyEvent(key_state_t *keyState, bool active, uint8_t lay
                         .active = active,
                         .layer = layer,
                         .modifiers = 0,
-                        .pressTimestamp = pressTimestamp,
                     }
                 }
             );
@@ -588,7 +585,7 @@ static uint8_t priority(key_state_t *key, bool active)
     if (!active) {
         return 0;
     }
-    key_action_t* a = &CurrentKeymap[ActiveLayer][0][0] + (key - &KeyStates[0][0]);
+    key_action_t* a = &(&CurrentKeymap[ActiveLayer][0][0] + (key - &KeyStates[0][0]))->action;
     switch (a->type) {
         case KeyActionType_Keystroke:
             if (a->keystroke.secondaryRole || a->keystroke.scancode == 0) {
@@ -603,6 +600,11 @@ static uint8_t priority(key_state_t *key, bool active)
             return 2;
         case KeyActionType_PlayMacro:
             return 1;
+        case KeyActionType_None:
+        case KeyActionType_InlineMacro:
+        case KeyActionType_Connections:
+        case KeyActionType_Other:
+            return 0;
     }
     return 0;
 }
@@ -659,7 +661,7 @@ static bool isEligibleForAutoShift()
 
     uint8_t effectiveLayer = evt->key.layer == 255 ? ActiveLayer : evt->key.layer;
 
-    key_action_t* a = &CurrentKeymap[effectiveLayer][0][0] + (key - &KeyStates[0][0]);
+    key_action_t* a = &(&CurrentKeymap[effectiveLayer][0][0] + (key - &KeyStates[0][0]))->action;
 
     if (a->type != KeyActionType_Keystroke) {
         return false;

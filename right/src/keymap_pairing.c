@@ -26,9 +26,11 @@ static void setPairingKey(const char* keyIdStr, uint16_t scancode)
     }
     uint8_t slotId = KEYID_TO_SLOT(keyId);
     uint8_t keyIndex = KEYID_TO_INDEX(keyId);
-    CurrentKeymap[LayerId_Base][slotId][keyIndex] = (key_action_t){
-        .type = KeyActionType_Keystroke,
-        .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = scancode }
+    CurrentKeymap[LayerId_Base][slotId][keyIndex] = (key_definition_t){
+        .action = {
+            .type = KeyActionType_Keystroke,
+            .keystroke = { .keystrokeType = KeystrokeType_Basic, .scancode = scancode }
+        }
     };
 }
 

@@ -179,7 +179,6 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     uint16_t keystrokeDelay = Cfg.KeystrokeDelay;
 
     secondary_role_strategy_t secondaryRoles_Strategy = SecondaryRoleStrategy_Simple;
-    uint16_t secondaryRoles_AdvancedStrategyDoubletapTimeout = Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
     uint16_t secondaryRoles_AdvancedStrategyTimeout = Cfg.SecondaryRoles_AdvancedStrategyTimeout;
     int16_t secondaryRoles_AdvancedStrategySafetyMargin = Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
     secondary_role_triggering_event_t secondaryRoles_AdvancedStrategyTriggeringEvent = Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent;
@@ -188,7 +187,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
     if (DataModelVersion.major >= 7) {
         secondaryRoles_Strategy = ReadUInt8(buffer);
-        secondaryRoles_AdvancedStrategyDoubletapTimeout = ReadUInt16(buffer);
+        ATTR_UNUSED uint16_t secondaryRoles_AdvancedStrategyDoubletapTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategyTimeout = ReadUInt16(buffer);
         secondaryRoles_AdvancedStrategySafetyMargin = ReadInt16(buffer);
         secondaryRoles_AdvancedStrategyTriggeringEvent = ReadBool(buffer) ? SecondaryRoleTriggeringEvent_Release : SecondaryRoleTriggeringEvent_Press;
@@ -346,7 +345,6 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
         if (DataModelVersion.major >= 7) {
             Cfg.SecondaryRoles_Strategy = secondaryRoles_Strategy;
-            Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout = secondaryRoles_AdvancedStrategyDoubletapTimeout;
             Cfg.SecondaryRoles_AdvancedStrategyTimeout = secondaryRoles_AdvancedStrategyTimeout;
             Cfg.SecondaryRoles_AdvancedStrategySafetyMargin = secondaryRoles_AdvancedStrategySafetyMargin;
             Cfg.SecondaryRoles_AdvancedStrategyTriggeringEvent = secondaryRoles_AdvancedStrategyTriggeringEvent;

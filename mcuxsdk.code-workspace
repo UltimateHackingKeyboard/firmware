@@ -1,0 +1,83 @@
+{
+	"folders": [
+		{
+			"name": "right",
+			"path": "right"
+		},
+		{
+			"name": "left",
+			"path": "left"
+		},
+		{
+			"name": "keycluster",
+			"path": "keycluster"
+		},
+		{
+			"name": "trackball",
+			"path": "trackball"
+		},
+		{
+			"name": "trackpoint",
+			"path": "trackpoint"
+		},
+		{
+			"path": "."
+		},
+		{
+			"name": "mcuxsdk",
+			"path": "../mcuxsdk"
+		},
+		{
+			"name": "c2usb",
+			"path": "../c2usb"
+		},
+		{
+			"name": "lib",
+			"path": "../modules/lib"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.h": "c",
+			"*.c": "c",
+			"*.hpp": "cpp",
+			"*.cpp": "cpp"
+		},
+		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+		"C_Cpp.workspaceParsingPriority": "high",
+		"C_Cpp.autoAddFileAssociations": false,
+		"cmake.useCMakePresets": "always",
+		"cmake.configureOnOpen": false,
+		"cmake.enableAutomaticKitScan": false,
+		"cmake.options.advanced": {
+			"build": {
+				"statusBarVisibility": "hidden"
+			},
+			"launch": {
+				"statusBarVisibility": "hidden"
+			},
+			"debug": {
+				"statusBarVisibility": "hidden"
+			}
+		},
+		"[json]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.formatOnSave": true
+		},
+		"[jsonc]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.formatOnSave": true
+		},
+		"task.allowAutomaticTasks": "on",
+		"firmware.startupSdk": "mcuxsdk"
+	},
+	"extensions": {
+		"recommendations": [
+			"NXPSemiconductors.mcuxpresso",
+			"ms-vscode.cpptools-extension-pack",
+			"ms-vscode.vscode-embedded-tools",
+			"mcu-debug.peripheral-viewer",
+			"marus25.cortex-debug"
+		]
+	}
+}

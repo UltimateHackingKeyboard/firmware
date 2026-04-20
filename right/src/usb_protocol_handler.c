@@ -39,7 +39,7 @@
 
 void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
-    bzero(GenericHidInBuffer, USB_GENERIC_HID_IN_BUFFER_LENGTH);
+    bzero(GenericHidInBuffer, USB_COMMAND_BUFFER_LENGTH);
 
     uint8_t command = GetUsbRxBufferUint8(0);
     switch (command) {
@@ -167,7 +167,7 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
         Macros_ReportErrorPrintf(NULL, "Usb protocol command %d failed with: %d\n", command, GenericHidInBuffer[0]);
     }
 
-    bzero(GenericHidOutBuffer, USB_GENERIC_HID_OUT_BUFFER_LENGTH);
+    bzero(GenericHidOutBuffer, USB_COMMAND_BUFFER_LENGTH);
 }
 
 #ifdef __ZEPHYR__

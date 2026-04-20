@@ -1,9 +1,10 @@
 #include "bt_manager.h"
 #include "bt_pair.h"
 #include "connections.h"
+#include "device.h"
 #include "device_state.h"
 #include "event_scheduler.h"
-#include "usb/usb.h"
+#include "hid/transport.h"
 #include "bt_advertise.h"
 #include "nus_client.h"
 #include "nus_server.h"
@@ -111,7 +112,7 @@ void BtManager_StopBt() {
 void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
     uint32_t maxDelay = 5000;
-    uint32_t minDelay = 100;
+    uint32_t minDelay = DEVICE_IS_UHK_DONGLE ? 150 : 100;
     uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 

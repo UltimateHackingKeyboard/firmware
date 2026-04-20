@@ -1,26 +1,26 @@
 #include "input_interceptor.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include "keyboard/oled/screens/pairing_screen.h"
+#include "usb_report_updater.h"
 
 static void(*recipient)(uint8_t) = NULL;
 
 static void registerScancode(uint8_t scancode)
 {
-    usb_basic_keyboard_report_t* inactiveReport = GetInactiveUsbBasicKeyboardReport();
-    if (!UsbBasicKeyboard_ContainsScancode(inactiveReport, scancode) && recipient != NULL)
+    hid_keyboard_report_t* inactiveReport = GetInactiveKeyboardReport();
+    if (!KeyboardReport_ContainsScancode(inactiveReport, scancode) && recipient != NULL)
     {
         recipient(scancode);
     }
 }
 
-bool InputInterceptor_RegisterReport(usb_basic_keyboard_report_t* activeReport)
+bool InputInterceptor_RegisterReport(hid_keyboard_report_t* activeReport)
 {
-    switch (ActiveScreen) {
-        case ScreenId_Pairing:
+    if (InteractivePairingInProgress) {
             recipient = &PairingScreen_RegisterScancode;
-            UsbBasicKeyboard_ForeachScancode(activeReport, &registerScancode);
+            KeyboardReport_ForeachScancode(activeReport, &registerScancode);
             return true;
-        default:
+    } else {
             return false;
     }
 }

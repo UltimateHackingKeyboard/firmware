@@ -3,10 +3,6 @@
 #include "config_parser/parse_keymap.h"
 #include "str_utils.h"
 #include "macros/typedefs.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
-#include "usb_interfaces/usb_interface_media_keyboard.h"
-#include "usb_interfaces/usb_interface_mouse.h"
-#include "usb_interfaces/usb_interface_system_keyboard.h"
 #include "key_action.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
@@ -22,20 +18,14 @@ typedef struct {
 
 static void addBasicScancode(uint8_t scancode, macro_usb_keyboard_reports_t* reports)
 {
-    if (!scancode) {
-        return;
-    }
-    if (!UsbBasicKeyboard_ContainsScancode(&reports->macroBasicKeyboardReport, scancode)) {
-        UsbBasicKeyboard_AddScancode(&reports->macroBasicKeyboardReport, scancode);
+    if (!KeyboardReport_ContainsScancode(&reports->macroBasicKeyboardReport, scancode)) {
+        KeyboardReport_AddScancode(&reports->macroBasicKeyboardReport, scancode);
     }
 }
 
 static void deleteBasicScancode(uint8_t scancode, macro_usb_keyboard_reports_t* reports)
 {
-    if (!scancode) {
-        return;
-    }
-    UsbBasicKeyboard_RemoveScancode(&reports->macroBasicKeyboardReport, scancode);
+    KeyboardReport_RemoveScancode(&reports->macroBasicKeyboardReport, scancode);
 }
 
 static void addModifiers(uint8_t inputModifiers, uint8_t outputModifiers, macro_usb_keyboard_reports_t* reports)
@@ -52,49 +42,22 @@ static void deleteModifiers(uint8_t inputModifiers, uint8_t outputModifiers, mac
 
 static void addMediaScancode(uint16_t scancode, macro_usb_keyboard_reports_t* reports)
 {
-    if (!scancode) {
-        return;
-    }
-    for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
-        if (reports->macroMediaKeyboardReport.scancodes[i] == scancode) {
-            return;
-        }
-    }
-    for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
-        if (!reports->macroMediaKeyboardReport.scancodes[i]) {
-            reports->macroMediaKeyboardReport.scancodes[i] = scancode;
-            break;
-        }
-    }
+    ControlsReport_AddConsumerUsage(&reports->macroControlsReport, scancode);
 }
 
 static void deleteMediaScancode(uint16_t scancode, macro_usb_keyboard_reports_t* reports)
 {
-    if (!scancode) {
-        return;
-    }
-    for (uint8_t i = 0; i < USB_MEDIA_KEYBOARD_MAX_KEYS; i++) {
-        if (reports->macroMediaKeyboardReport.scancodes[i] == scancode) {
-            reports->macroMediaKeyboardReport.scancodes[i] = 0;
-            return;
-        }
-    }
+    ControlsReport_RemoveConsumerUsage(&reports->macroControlsReport, scancode);
 }
 
 static void addSystemScancode(uint8_t scancode, macro_usb_keyboard_reports_t* reports)
 {
-    if (!scancode) {
-        return;
-    }
-    UsbSystemKeyboard_AddScancode(&reports->macroSystemKeyboardReport, scancode);
+    ControlsReport_AddSystemUsage(&reports->macroControlsReport, scancode);
 }
 
 static void deleteSystemScancode(uint8_t scancode, macro_usb_keyboard_reports_t* reports)
 {
-    if (!scancode) {
-        return;
-    }
-    UsbSystemKeyboard_RemoveScancode(&reports->macroSystemKeyboardReport, scancode);
+    ControlsReport_RemoveSystemUsage(&reports->macroControlsReport, scancode);
 }
 
 static void addScancode(uint16_t scancode, keystroke_type_t type, macro_usb_keyboard_reports_t* reports)
@@ -131,11 +94,11 @@ static bool containsScancode(uint16_t scancode, keystroke_type_t type, macro_usb
 {
     switch (type) {
         case KeystrokeType_Basic:
-            return UsbBasicKeyboard_ContainsScancode(&reports->macroBasicKeyboardReport, scancode);
+            return KeyboardReport_ContainsScancode(&reports->macroBasicKeyboardReport, scancode);
         case KeystrokeType_Media:
-            return UsbMediaKeyboard_ContainsScancode(&reports->macroMediaKeyboardReport, scancode);
+            return ControlsReport_ContainsConsumerUsage(&reports->macroControlsReport, scancode);
         case KeystrokeType_System:
-            return UsbSystemKeyboard_ContainsScancode(&reports->macroSystemKeyboardReport, scancode);
+            return ControlsReport_ContainsSystemUsage(&reports->macroControlsReport, scancode);
     }
     return false;
 }
@@ -451,13 +414,13 @@ macro_result_t Macros_DispatchText(const char* text, uint16_t textLen, parser_co
     // If current character is already contained in the report, we need to
     // release it first. We do so by artificially marking the report
     // full. Next call will do rest of the work for us.
-    if (UsbBasicKeyboard_ContainsScancode(&S->ms.reports.macroBasicKeyboardReport, scancode)) {
+    if (KeyboardReport_ContainsScancode(&S->ms.reports.macroBasicKeyboardReport, scancode)) {
         S->as.dispatchData.reportState = REPORT_FULL;
         return MacroResult_Blocking;
     }
 
     // Send the scancode.
-    UsbBasicKeyboard_AddScancode(&S->ms.reports.macroBasicKeyboardReport, scancode);
+    KeyboardReport_AddScancode(&S->ms.reports.macroBasicKeyboardReport, scancode);
     S->as.dispatchData.reportState = ++currentReportSize >= maxGroupSize ? REPORT_FULL : REPORT_PARTIAL;
     if (ctx == NULL) {
         ++S->as.dispatchData.textIdx;

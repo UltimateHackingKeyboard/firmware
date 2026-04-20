@@ -20,7 +20,6 @@
 
     void LayerSwitcher_HoldLayer(layer_id_t layer, bool forceSwap);
     void LayerSwitcher_DoubleTapToggle(layer_id_t layer, key_state_t* keyState);
-    void LayerSwitcher_DoubleTapInterrupt(key_state_t* keyState);
     void LayerSwitcher_ToggleLayer(layer_id_t layer);
     void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer);
 

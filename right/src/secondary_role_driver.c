@@ -1,3 +1,4 @@
+#include "key_history.h"
 #include "secondary_role_driver.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
@@ -143,9 +144,9 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
     }
 
     // handle positive safety margin part 1: is action key allowed to trigger secondary yet
-    const bool safetyWaitForRelease = dualRoleRelease == NULL && actionEvent != NULL
+    const bool safetyBlockSecondary = actionEvent != NULL 
         && (int32_t)(Timer_GetCurrentTime() - actionEvent->time) < Cfg.SecondaryRoles_AdvancedStrategySafetyMargin;
-    if (safetyWaitForRelease) {
+    if (safetyBlockSecondary) {
         // prevent the action from triggering secondary
         actionEvent = NULL;
     }
@@ -179,6 +180,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // now we want to trigger secondary, but are we allowed?
     // handle safety margin part 2: wait for the safety margin?
+    const bool safetyWaitForRelease = safetyBlockSecondary && dualRoleRelease == NULL;
     uint32_t waitUntil = safetyWaitForRelease ? activeTime + Cfg.SecondaryRoles_AdvancedStrategySafetyMargin : 0;
     // wait for being allowed to trigger secondary?
     if (heldTooShortForSecondary) {
@@ -204,7 +206,7 @@ static secondary_role_state_t resolveCurrentKeyRoleIfDontKnowTimeout()
 
     // see if we should set a timer to wake up to actively time out
     if (isActiveTimeout || isDoubletap) {
-        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout);
+        AWAITEVENT(Cfg.SecondaryRoles_AdvancedStrategyTimeout);
     }
 
     // otherwise, keep postponing until key action
@@ -246,12 +248,9 @@ static void startResolution(
     bool isMacroResolution,
     secondary_role_same_half_t actionFromSameHalf)
 {
-    // stored state is last resolution.  detect doubletap here
-    isDoubletap = keyState == resolutionKey 
-        && CurrentPostponedTime - resolutionStartTime < Cfg.SecondaryRoles_AdvancedStrategyDoubletapTimeout;
-
     // store current state
     currentlyResolving = true;
+    isDoubletap = KeyHistory_WasLastMultitap();
     resolutionKey = keyState;
     resolutionStartTime = CurrentPostponedTime;
     resolutionCallerIsMacroEngine = isMacroResolution;

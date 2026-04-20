@@ -1,5 +1,6 @@
 #include "attributes.h"
 #include "keyboard/oled/framebuffer.h"
+#include "timer.h"
 #include "zephyr/bluetooth/hci_types.h"
 #include <stdio.h>
 #include <sys/types.h>
@@ -22,11 +23,11 @@
 #include "device.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "keyboard/oled/screens/screen_manager.h"
-#include "usb/usb.h"
 #include "keyboard/oled/widgets/widgets.h"
 #include <zephyr/settings/settings.h>
 #include "bt_pair.h"
 #include "bt_manager.h"
+#include "hid/transport.h"
 #include <zephyr/bluetooth/addr.h>
 #include "config_manager.h"
 #include "zephyr/kernel.h"
@@ -46,6 +47,8 @@ struct bt_conn *auth_conn;
 
 #define BLE_KEY_LEN 16
 #define BLE_ADDR_LEN 6
+
+uint32_t Bt_LastConnectedTime = 0;
 
 /*
  * Reason codes are named from the perspective of the party that receives them.
@@ -175,8 +178,8 @@ static void safeDisconnect(struct bt_conn *conn, int reason) {
         unsetAuthConn(true);
 
         #if DEVICE_HAS_OLED
-        if (ActiveScreen == ScreenId_Pairing) {
-            PairingScreen_Cancel();
+        if (InteractivePairingInProgress) {
+            PairingScreen_Feedback("Pairing cancelled!");
         }
         #endif
     } else {
@@ -551,6 +554,8 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
     LOG_INF("Established HID connection with %s", GetPeerStringByConn(conn));
     Connections_SetState(connectionId, ConnectionState_Ready);
     BtManager_StartScanningAndAdvertisingAsync(false, "connectHid");
+
+    EventScheduler_Reschedule(Timer_GetCurrentTime() + 10*1000, EventSchedulerEvent_KickHid, "HID health kick");
 }
 
 #define BT_UUID_NUS_VAL BT_UUID_128_ENCODE(0x6e400001, 0xb5a3, 0xf393, 0xe0a9, 0xe50e24dcca9e)
@@ -615,15 +620,18 @@ static void connected(struct bt_conn *conn, uint8_t err) {
     BT_TRACE_AND_ASSERT("bc1");
 
     LOG_DBG("Connected cb");
+    Bt_LastConnectedTime = Timer_GetCurrentTime();
 
     // Without this, linux pairing fails, because tiny 27 byte packets
     // exhaust acl buffers easily
     enableDataLengthExtension(conn);
-    requestMtuExchange(conn);
+    if (!DEBUG_STRESS_GATT) {
+        requestMtuExchange(conn);
+    }
 
     if (err) {
-        LOG_WRN("Failed to connect to %s, err %u", GetPeerStringByConn(conn), err);
-        BtManager_StartScanningAndAdvertising();
+        LOG_WRN("Failed to connect (in connected cb) to %s, err %u", GetPeerStringByConn(conn), err);
+        BtManager_StartScanningAndAdvertisingAsync(true, "connected with error");
         return;
     }
 
@@ -839,7 +847,7 @@ static void auth_cancel(struct bt_conn *conn) {
         unsetAuthConn(false);
     }
 
-    PairingScreen_Feedback(false);
+    PairingScreen_Feedback("Pairing canceled!");
 }
 
 static void auth_oob_data_request(struct bt_conn *conn, struct bt_conn_oob_info *oob_info) {
@@ -878,6 +886,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     LOG_WRN("Pairing completed: %s, bonded %d", GetPeerStringByConn(conn), bonded);
 
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
+    Bt_LastConnectedTime = Timer_GetCurrentTime();
 
     if (BtPair_PairingMode == PairingMode_Oob) {
         BtPair_EndPairing(true, "Successfuly bonded!");
@@ -914,7 +923,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     if (auth_conn) {
         Trace_Printc("bu6");
         unsetAuthConn(false);
-        PairingScreen_Feedback(true);
+        PairingScreen_Feedback("Pairing succeeded!");
     }
 
     BtManager_StartScanningAndAdvertisingAsync(false, "pairing_complete");
@@ -942,6 +951,18 @@ void BtConn_DisconnectOne(connection_id_t connectionId) {
     safeDisconnect(conn, BT_REASON_NOT_SELECTED);
 }
 
+void BtConn_KickHid(void) {
+#if DEVICE_IS_UHK80_RIGHT
+     LOG_INF("Kicking HID connections to check if HOGP is healthy.");
+    if (HOGP_HealthCheck()) {
+        LOG_ERR("BtConn_KickHid: HOGP health check failed. Please, remove the connection and try pairing again?\n");
+        // disconnectAllHids();
+    } else {
+        LOG_INF("BtConn_KickHid: the connection looks fine.\n");
+    }
+#endif
+}
+
 static void bt_foreach_conn_cb_disconnect_unidentified(struct bt_conn *conn, void *user_data) {
     peer_t* peer = getPeerByConn(conn);
     if (!peer) {
@@ -965,7 +986,7 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         Trace_Printc("bu7");
         LOG_WRN("Pairing of auth conn failed because of %d", reason);
         unsetAuthConn(true);
-        PairingScreen_Feedback(false);
+        PairingScreen_Feedback("Pairing failed!");
     }
 
     // TODO: should we here?
@@ -1017,12 +1038,12 @@ void num_comp_reply(int passkey) {
         bt_conn_auth_passkey_entry(conn, passkey);
         LOG_INF("Sending passkey to conn %s", GetPeerStringByConn(conn));
 #if DEVICE_HAS_OLED
-        NotificationScreen_NotifyFor("Pairing...", 10000);
+        PairingScreen_Feedback("Pairing...");
 #endif
     } else {
         conn = unsetAuthConn(true);
 #if DEVICE_HAS_OLED
-        PairingScreen_Feedback(false);
+        PairingScreen_Feedback("Pairing failed!");
 #endif
     }
 }
