@@ -74,7 +74,8 @@ uint32_t UsbReportUpdater_LastActivityTime;
 
 uint32_t UsbReportWindowEstimate = 0;
 
-// This is how much time we leave for report construction.
+// This is how much time we leave for report construction. Most of the time is
+// (probably) consumed inside the transport layers.
 //
 // If too low, we will be missing transports. If too high, we will be introducing
 // latency.
@@ -1036,18 +1037,20 @@ static void sendActiveReports(bool resending) {
     }
 }
 
-static bool blockedByKeystrokeDelay() {
+static bool blockedByReportThrottle() {
     static uint32_t postponedMasks = 0;
     uint32_t currentTime = Timer_GetCurrentTime();
     uint32_t blockedUntil = 0;
     bool blocked = false;
+
+    // Configured delay - prevent firmware (macros and similar) from sending reports too fast -
+    // some applications (esp. games) don't expect that.
     if (currentTime < lastBasicReportTime + Cfg.KeystrokeDelay) {
         blockedUntil = lastBasicReportTime + Cfg.KeystrokeDelay;
         blocked = true;
     }
-    // Throttle on slow transports (BLE HID, dongle): if the estimated next
-    // transport window is further than the lookahead in the future, postpone
-    // report construction so that further keystroke state can accumulate.
+
+    // To reduce mouse latency, don't construct report until we are close enough to transport window.
     if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
         uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
         if (!blocked || throttleUntil > blockedUntil) {
@@ -1078,7 +1081,7 @@ static bool blockedByKeystrokeDelay() {
 void UpdateUsbReports(void)
 {
     Trace_Printc("u1");
-    if (blockedByKeystrokeDelay()) {
+    if (blockedByReportThrottle()) {
         return;
     }
 

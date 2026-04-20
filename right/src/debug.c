@@ -252,6 +252,14 @@ void WatchSemaforeTake(struct k_sem* sem, char const * label, uint8_t n) {
 
 #endif
 
+/**
+ * We observe whether a HID send was successful or not.
+ *
+ * If we compute reports too early we will see fails because of busy transports.
+ * If we compute reports too late, we will see no fails, but we will see lower number of successes (/attempts) and higher latency.
+ *
+ * Latency is measured per transport as an average of the time between the report is dispatched and its "sent state" callback is called.
+ * */
 void Debug_RecordBleSendResult(int ret)
 {
     if (DEBUG_BLE_LATENCY_STATS) {
