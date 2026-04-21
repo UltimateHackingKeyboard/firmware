@@ -8,7 +8,7 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 ## Macro documentation
 
-- Agent smart macro pane - covers commands that configure your UHK. 
+- [Agent smart macro pane](https://ultimatehackingkeyboard.github.io/firmware/doc/index.html) - covers commands that configure your UHK.
 - [user guide](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/user-guide.md) tries to give a a basic understanding of how macro commands can be combined, and describe common usecases.
 - [reference manual](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/reference-manual.md) is a dry and rather formal list of all the commands and features.
 
