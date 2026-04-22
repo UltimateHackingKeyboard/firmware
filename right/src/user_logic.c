@@ -16,6 +16,7 @@
 #include "trace.h"
 
 #ifdef __ZEPHYR__
+#include "state_sync.h"
 #else
 #include "stubs.h"
 #endif
@@ -31,12 +32,6 @@ void RunUserLogic(void) {
         Trace_Printc("l2");
         SwitchKeymapById(CurrentKeymapIndex, true);
     }
-#ifndef __ZEPHYR__
-    if (EventVector_IsSet(EventVector_ProtocolChanged)) {
-        Trace_Printc("l3");
-        UsbBasicKeyboard_HandleProtocolChange();
-    }
-#endif
     if (EventVector_IsSet(EventVector_UsbMacroCommandWaitingForExecution)) {
         Trace_Printc("l4");
         UsbMacroCommand_ExecuteSynchronously();
@@ -71,6 +66,28 @@ void RunUserLogic(void) {
         EventVector_ReportMask("=== ", EventScheduler_Vector)
     );
 }
+
+void RunDongleLogic() {
+#if DEVICE_IS_UHK_DONGLE
+    if (DongleScrollMultipliers.vertical != VerticalScrollMultiplier()) {
+        // This is for the https://github.com/UltimateHackingKeyboard/firmware/commit/f66708e09ee5de70ba332d547e77bfbacdcf1f04 workaround.
+        // Otherwise, this is handled via the Hid_MouseScrollResolutionsChanged callback.
+        DongleScrollMultipliers.vertical = VerticalScrollMultiplier();
+        DongleScrollMultipliers.horizontal = HorizontalScrollMultiplier();
+        StateSync_UpdateProperty(StateSyncPropertyId_DongleScrollMultipliers, NULL);
+    }
+#endif
+
+    EventVector_Unset(EventVector_KeyboardLedState);
+
+    LOG_SCHEDULE(
+            EventVector_ReportMask("=== ", EventScheduler_Vector)
+            );
+    if (EventScheduler_Vector & EventVector_UserLogicUpdateMask & (~EventVector_NewMessage)) {
+        EventVector_ReportMask("Warning: following event hasn't been unset: ", EventScheduler_Vector & EventVector_UserLogicUpdateMask);
+    }
+}
+
 
 void RunUhk80LeftHalfLogic() {
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {

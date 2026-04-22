@@ -8,9 +8,9 @@
 #include "device.h"
 
 #ifdef __ZEPHYR__
-#include "proxy_log_backend.h"
+#include "shell/sinks.h"
 #else
-#define ProxyLog_IsInPanicMode false
+#define ShellConfig_IsInPanicMode false
 #endif
 
 bool Trace_Enabled = true;
@@ -34,7 +34,7 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     device_id_t targetDeviceId = DEVICE_ID;
     log_target_t targetInterface = 0;
 
-    if (ProxyLog_IsInPanicMode) {
+    if (ShellConfig_IsInPanicMode) {
         targetInterface = LogTarget_Uart;
     } else {
         targetInterface = LogTarget_Uart | additionalLogTargets;

@@ -164,7 +164,7 @@ void LayerSwitcher_UnToggleLayerOnly(layer_id_t layer) {
 
 static bool heldLayers[LayerId_Count];
 
-static bool mappingsChanged = false;
+static uint8_t mappingsChangedCounter = 0;
 
 // Called by pressed hold-layer keys during every cycle
 void LayerSwitcher_HoldLayer(layer_id_t layer, bool forceSwap) {
@@ -223,10 +223,12 @@ void LayerSwitcher_UpdateHeldLayer() {
         updateActiveLayer();
     }
 
-    if (mappingsChanged) {
-        // this runs before a native action update, so update native actions, and in next cycle, update layer holds again
+    if (mappingsChangedCounter > 0) {
+        // Keep re-running native actions + layer holds for a couple of cycles so that
+        // the refreshed cached actions get a chance to repopulate heldLayers and
+        // then have the hold-layer update reflect that fresh state.
+        mappingsChangedCounter--;
         EventVector_Set(EventVector_NativeActions | EventVector_LayerHolds);
-        mappingsChanged = false;
     }
 }
 
@@ -237,8 +239,8 @@ void LayerSwitcher_ResetHolds() {
 }
 
 void LayerSwitcher_MarkMappingsChanged() {
-    EventVector_Unset(EventVector_LayerHolds);
-    mappingsChanged = true;
+    mappingsChangedCounter = 2;
+    EventVector_Set(EventVector_NativeActions | EventVector_LayerHolds);
 }
 
 /**

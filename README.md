@@ -8,9 +8,9 @@ If you want to use the latest firmware version for your UHK, then instead of goi
 
 ## Macro documentation
 
-- Agent smart macro pane - covers commands that configure your UHK. 
-- [user guide](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/user-guide.md) tries to give a a basic understanding of how macro commands can be combined, and describe common usecases.
-- [reference manual](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/reference-manual.md) is a dry and rather formal list of all the commands and features.
+- [Agent smart macro pane](https://ultimatehackingkeyboard.github.io/firmware/doc/index.html) - covers commands that configure your UHK. Note that the standalone web version is missing interactive widgets.
+- [Dev doc: user-guide.md](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/user-guide.md) tries to give a a basic understanding of how macro commands can be combined, and describe common usecases.
+- [Dev doc: reference-manual.md](https://github.com/UltimateHackingKeyboard/firmware/blob/master/doc-dev/reference-manual.md) is a dry and rather formal list of all the commands and features.
 
 ## Developing
 
@@ -194,7 +194,7 @@ BUILD_DIR=device/build/uhk-80-right; west flash --build-dir $BUILD_DIR
 
 It is recommended to start development in the IDE once a successful build is available, as the build parameters
 aren't trivial to pass to the IDE, but it does pick up existing build configurations.
-To get started, choose *Open Workspace from File...*, then select the `firmware.code-workspace` file.
+To get started, choose *Open Workspace from File...*, then select either the `mcuxsdk.code-workspace` (for UHK60 and modules) or the `nrfsdk.code-workspace` (for UHK80 and dongle) file.
 Install the recommended extensions or pick the one for your single device depending on the SDK.
 
 > Note that using *MCUXpresso for VS Code* extension currently overwrites the `mcux_includes.json` file,
@@ -217,12 +217,10 @@ On a first try, this error might manifest:
 > Could not start GDB. Check that the file exists, and it can be manually started.
 Error: Error: spawn $env{ARM_GCC_DIR}/bin/arm-none-eabi-gdb ENOENT
 
-There are two problems to solve:
-1. The arm-none-eabi package doesn't ship with gdb by default.
+This is due to the arm-none-eabi apt package not shipping with gdb by default.
 You can follow [this guide](https://interrupt.memfault.com/blog/installing-gdb#binaries-from-arm)
 to get a full toolchain installed.
-2. The extension doesn't expand the environment variable, so you'll need to modify the `.vscode/mcuxpresso-tools.json` file,
-to have a hardcoded `toolchainPath` variable. (Don't push this change into the repository, obviously.)
+
 
 ### Releasing
 

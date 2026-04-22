@@ -1,6 +1,5 @@
 #include <math.h>
 #include "key_action.h"
-#include "usb_interfaces/usb_interface_mouse.h"
 #include "timer.h"
 #include "config_parser/parse_keymap.h"
 #include "mouse_keys.h"
@@ -17,7 +16,7 @@ uint8_t ActiveMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 uint8_t ToggledMouseStates[ACTIVE_MOUSE_STATES_COUNT];
 
 
-usb_mouse_report_t MouseKeysMouseReport;
+hid_mouse_report_t MouseKeysMouseReport;
 
 static void updateOneDirectionSign(int8_t* sign, int8_t expectedSign, uint8_t expectedState, uint8_t otherState) {
     if (*sign == expectedSign && !ActiveMouseStates[expectedState]) {

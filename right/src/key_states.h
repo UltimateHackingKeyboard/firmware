@@ -43,7 +43,7 @@
         bool debouncing : 1;
         secondary_role_state_t secondaryState : 2;
         bool padding : 1; // This allows the KEY_INACTIVE() macro to not trigger false because of sequence
-        uint8_t activationId: 3;
+        uint8_t activationId: 4;
     } key_state_t;
 
 // Variables:

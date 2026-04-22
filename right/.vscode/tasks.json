@@ -37,6 +37,36 @@
         "$gcc"
       ],
       "detail": "CMake template configure task"
+    },
+    {
+      "label": "Merge UHK 60 right HEX with bootloader",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/../scripts/merge_hex.py",
+        "--first",
+        "${workspaceFolder}/build/uhk60v2-bootloader-1.0.1.hex",
+        "--second",
+        "${workspaceFolder}/build/v2-release/uhk-60-right.hex",
+        "--out",
+        "${workspaceFolder}/build/v2-release/uhk-60-right-merged.hex",
+        "--app-start-address",
+        "0xC000"
+      ],
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "Build + Merge UHK 60 right (v2-release)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "Build UHK 60 right",
+        "Merge UHK 60 right HEX with bootloader"
+      ],
+      "problemMatcher": [
+        "$gcc"
+      ]
     }
   ]
 }

@@ -10,7 +10,7 @@
 
 
 #ifdef __ZEPHYR__
-    #include "shell.h"
+    #include "shell/shell_uhk.h"
     #include "nus_client.h"
     #include "nus_server.h"
     #include "messenger.h"

@@ -20,7 +20,7 @@ static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
     CommandUserData *data = (CommandUserData *)user_data;
     uint8_t *GenericHidInBuffer = data->InBuffer;
 
-    if ((data->writeOffset + BLE_ADDR_LEN + 1) >= USB_GENERIC_HID_IN_BUFFER_LENGTH) {
+    if ((data->writeOffset + BLE_ADDR_LEN + 1) >= USB_COMMAND_BUFFER_LENGTH) {
         return;
     }
 

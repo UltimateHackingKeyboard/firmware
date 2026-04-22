@@ -3,16 +3,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     usb
 )
 
-set(usb_cpp_sources
-    usb/app_base.cpp
-    usb/command_app.cpp
-    usb/controls_app.cpp
-    usb/gamepad_app.cpp
-    usb/keyboard_app.cpp
-    usb/mouse_app.cpp
-    usb/usb_compatibility.cpp
-    usb/usb.cpp
-)
 file(GLOB_RECURSE keyboard_sources keyboard/*.c)
 file(GLOB lvgl_dummy lvgl/*.c)
 
@@ -25,7 +15,6 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
     target_link_libraries(app PRIVATE zephyr_interface)
 
     target_sources(${PROJECT_NAME} PRIVATE
-        ${usb_cpp_sources}
         bt_conn.c
         bt_manager.c
         bt_pair.c
@@ -38,12 +27,15 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         messenger_queue.c
         messenger.c
         pin_wiring.c
-        proxy_log_backend.c
+        shell/shell_log_backend.c
         resend.c
         round_trip_test.c
         settings.c
-        shell.c
-        shell_backend_usb.c
+        shell/shell_backend_usb.c
+        shell/shell_transport_uhk.c
+        shell/shell_uhk.c
+        shell/shell_commands.c
+        shell/sinks.c
         state_sync.c
         thread_stats.c
     )

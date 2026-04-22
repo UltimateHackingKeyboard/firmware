@@ -1,6 +1,5 @@
 #include "test_output_machine.h"
 #include "test_suite.h"
-#include "usb_interfaces/usb_interface_basic_keyboard.h"
 #include "macros/shortcut_parser.h"
 #include "key_action.h"
 #include "logger.h"
@@ -94,6 +93,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
             case TestAction_SetLayerHold:
             case TestAction_SetLayerAction:
             case TestAction_SetSecondaryRole:
+            case TestAction_SetGenericAction:
             case TestAction_SetConfig:
                 OutputMachine_ActionIndex++;
                 break;

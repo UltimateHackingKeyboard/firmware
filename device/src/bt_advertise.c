@@ -36,8 +36,8 @@ pairing_mode_t AdvertisingHid = false;
         BT_DATA_BYTES(BT_DATA_UUID16_ALL, BT_UUID_16_ENCODE(BT_UUID_HIDS_VAL),                     \
             BT_UUID_16_ENCODE(BT_UUID_BAS_VAL)),
 
-ATTR_UNUSED static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK 80 Left NUS")};
-ATTR_UNUSED static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK 80 Right NUS")};
+ATTR_UNUSED static const struct bt_data adNusLeft[] = {AD_NUS_DATA("UHK 80 Left BLE")};
+ATTR_UNUSED static const struct bt_data adNusRight[] = {AD_NUS_DATA("UHK 80 BLE")};
 static const struct bt_data adHid[] = {AD_HID_DATA};
 
 // Helpers

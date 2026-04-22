@@ -323,7 +323,7 @@ static macro_variable_t secondaryRoleAdvanced(parser_context_t* ctx, set_command
         ASSIGN_BOOL(Cfg.SecondaryRoles_AdvancedStrategyDoubletapToPrimary);
     }
     else if (ConsumeToken(ctx, "doubletapTime")) {
-        Macros_ReportErrorPos(ctx, "Configuration variable has been merged with general doubletapTimeout, please use that variable again");
+        Macros_ReportErrorPos(ctx, "Configuration variable has been merged with general doubletapTimeout, please use that variable instead");
         uint16_t dummy = Cfg.DoubletapTimeout;
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(dummy);
@@ -840,7 +840,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
         return noneVar();
     }
 
-    key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx];
+    key_action_t* actionSlot = &CurrentKeymap[layerId][slotIdx][inSlotIdx].action;
 
 #ifdef __ZEPHYR__
     StateSync_UpdateLayer(layerId, true);

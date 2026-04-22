@@ -462,9 +462,9 @@ static void updateLedsByConstantRgbStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
-            if (keyAction->colorOverridden) {
-                setPerKeyColor(&keyAction->color, colorMode, slotId, keyId);
+            key_definition_t *keyDefinition = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            if (keyDefinition->colorOverridden) {
+                setPerKeyColor(&keyDefinition->color, colorMode, slotId, keyId);
             } else {
                 setPerKeyColor(&Cfg.LedMap_ConstantRGB, colorMode, slotId, keyId);
             }
@@ -527,24 +527,24 @@ static const rgb_t* determineFunctionalColor(key_action_t* keyAction, color_mode
     }
 }
 
-static key_action_t* getEffectiveActionColor(uint8_t slotId, uint8_t keyId) {
-    key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
-    if (keyAction->type == KeyActionType_None && IS_MODIFIER_LAYER(ActiveLayer)) {
-        keyAction = &CurrentKeymap[LayerId_Base][slotId][keyId];
+static key_definition_t* getEffectiveActionColor(uint8_t slotId, uint8_t keyId) {
+    key_definition_t *keyDefinition = &CurrentKeymap[ActiveLayer][slotId][keyId];
+    if (keyDefinition->action.type == KeyActionType_None && IS_MODIFIER_LAYER(ActiveLayer)) {
+        keyDefinition = &CurrentKeymap[LayerId_Base][slotId][keyId];
     }
-    return keyAction;
+    return keyDefinition;
 }
 
 static void updateLedsByFunctionalStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_action_t *keyAction = getEffectiveActionColor(slotId, keyId);
+            key_definition_t *keyDefinition = getEffectiveActionColor(slotId, keyId);
 
-            const rgb_t* keyActionColor = determineFunctionalColor(keyAction, colorMode);
+            const rgb_t* keyActionColor = determineFunctionalColor(&keyDefinition->action, colorMode);
 
-            if (keyAction->colorOverridden) {
-                setPerKeyColor(&keyAction->color, colorMode, slotId, keyId);
+            if (keyDefinition->colorOverridden) {
+                setPerKeyColor(&keyDefinition->color, colorMode, slotId, keyId);
             } else {
                 setPerKeyColor(keyActionColor, colorMode, slotId, keyId);
             }
@@ -557,8 +557,8 @@ static void updateLedsByNumpadStrategy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_action_t *keyAction = getEffectiveActionColor(slotId, keyId);
-            const rgb_t* keyActionColor = PairingScreen_ActionColor(keyAction);
+            key_definition_t *keyDefinition = getEffectiveActionColor(slotId, keyId);
+            const rgb_t* keyActionColor = PairingScreen_ActionColor(&keyDefinition->action);
 
             setPerKeyColor(keyActionColor, colorMode, slotId, keyId);
         }
@@ -570,8 +570,8 @@ static void updateLedsByPerKeyKeyStragegy() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         color_mode_t colorMode = determineMode(slotId);
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_action_t *keyAction = &CurrentKeymap[ActiveLayer][slotId][keyId];
-            setPerKeyColor(&keyAction->color, colorMode, slotId, keyId);
+            key_definition_t *keyDefinition = &CurrentKeymap[ActiveLayer][slotId][keyId];
+            setPerKeyColor(&keyDefinition->color, colorMode, slotId, keyId);
         }
     }
 }
