@@ -271,12 +271,16 @@ char *GetPeerStringByConnId(uint8_t connectionId) {
 static struct bt_conn_le_data_len_param *data_len;
 
 static void enableDataLengthExtension(struct bt_conn *conn) {
+#if CONFIG_BT_USER_DATA_LEN_UPDATE
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
     int err = bt_conn_le_data_len_update(conn, data_len);
     if (err) {
         LOG_INF("LE data length update failed: %d", err);
     }
+#else
+    (void)conn;
+#endif
 }
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -630,7 +634,6 @@ static void connected(struct bt_conn *conn, uint8_t err) {
 
     // Without this, linux pairing fails, because tiny 27 byte packets
     // exhaust acl buffers easily
-    enableDataLengthExtension(conn);
     if (!DEBUG_STRESS_GATT) {
         requestMtuExchange(conn);
     }
