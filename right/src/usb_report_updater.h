@@ -62,6 +62,7 @@
     void ActivateKey(key_state_t *keyState, bool debounce);
     void ActivateStickyMods(key_state_t *keyState, uint8_t mods);
     void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, key_action_t *actionBase, usb_keyboard_reports_t* reports);
+    void StickyMods_ResetLater(key_action_cached_t *cachedAction);
 
     void UsbReportUpdater_ResetKeyboardReports(usb_keyboard_reports_t* reports);
     void RecordKeyTiming_ReportKeystroke(key_state_t *keyState, bool active, uint32_t pressTime, uint32_t activationTime);
