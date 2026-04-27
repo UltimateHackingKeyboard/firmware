@@ -11,7 +11,7 @@
 #define WATCH_INTERVAL 500
 
 #define DEBUG_EVENTLOOP_TIMING false
-#define DEBUG_THREAD_STATS true
+#define DEBUG_THREAD_STATS false
 
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
