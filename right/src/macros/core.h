@@ -144,6 +144,8 @@
             macro_action_t currentMacroAction;
             key_state_t *currentMacroKey;
             uint32_t currentMacroStartTime;
+            uint8_t previousKeyId;
+            uint32_t previousKeyPressTime;
             uint16_t currentMacroActionIndex;
             uint16_t currentMacroArgumentOffset;
             uint16_t bufferOffset;
@@ -154,9 +156,10 @@
             uint8_t nextSlot;
             uint8_t oneShot : 2;
             bool macroInterrupted : 1;
-            uint8_t keyActivationId: 4;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
+            uint8_t keyActivationId: 4;
+
             bool macroBroken : 1;
             bool macroPlaying : 1;
             bool macroScheduled : 1;
@@ -165,7 +168,8 @@
             bool wakeMeOnKeystateChange: 1;
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
-            bool isDoubletap: 1;
+
+            uint8_t multitapCount : 6;
             secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
 
@@ -276,7 +280,7 @@
     macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
     uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationId, uint8_t queueAfterSlot);
-    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationId, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationId, bool runFirstAction, const char *inlineText);
     uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     void Macros_ContinueMacro(void);
