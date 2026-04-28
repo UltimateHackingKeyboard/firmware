@@ -277,6 +277,20 @@ static void resetStickyMods(key_action_cached_t *cachedAction)
     EventVector_Set(EventVector_SendUsbReports);
 }
 
+void StickyMods_ResetLater(key_action_cached_t *cachedAction)
+{
+    static uint8_t negativeMods;
+
+    if (cachedAction != NULL) {
+        negativeMods = cachedAction->modifierLayerMask;
+    } else {
+        StickyModifiers = 0;
+        StickyModifiersNegative = negativeMods;
+        EventVector_Set(EventVector_SendUsbReports);
+    }
+}
+
+
 static void activateStickyMods(key_state_t *keyState, key_action_cached_t *action)
 {
     StickyModifiersNegative = action->modifierLayerMask;
@@ -519,13 +533,13 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
-                resetStickyMods(cachedAction);
+                StickyMods_ResetLater(cachedAction);
                 Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationId, 255, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
             if (KeyState_ActivatedNow(keyState)) {
-                resetStickyMods(cachedAction);
+                StickyMods_ResetLater(cachedAction);
                 Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationId);
             }
             break;

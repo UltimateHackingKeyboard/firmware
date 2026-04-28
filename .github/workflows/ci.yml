@@ -19,10 +19,11 @@ jobs:
       ARM_GCC_DIR: /usr
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           path: firmware
           submodules: recursive
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Install build dependencies
         run: |
@@ -65,7 +66,7 @@ jobs:
           west patch
 
       - name: Use Node.js (.nvmrc)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version-file: firmware/scripts/.nvmrc
 
@@ -80,11 +81,11 @@ jobs:
           scripts/make-release.mjs --allowSha
 
       - name: Upload firmware artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: firmware
           path: firmware/scripts/uhk-firmware-*.tar.gz
-          compression-level: 0
+          archive: false
           retention-days: 90
 
       - name: Run build-archiver
@@ -118,7 +119,7 @@ jobs:
           echo "$DELIMITER" >> $GITHUB_OUTPUT
 
       - name: Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         if: github.ref_type == 'tag'
         with:
           body: ${{ steps.changelog.outputs.content }}

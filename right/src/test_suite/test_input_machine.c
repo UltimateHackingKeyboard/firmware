@@ -229,8 +229,8 @@ void InputMachine_Tick(void) {
                     }
                 };
 
-                CurrentKeymap[LayerId_Base][slotId][keyId].action = keyAction;
-                LOG_VERBOSE("[TEST] > SetMacro [%s] = '%s'\n", action->keyId, action->macroText);
+                CurrentKeymap[action->layerId][slotId][keyId].action = keyAction;
+                LOG_VERBOSE("[TEST] > SetMacro layer %d [%s] = '%s'\n", action->layerId, action->keyId, action->macroText);
                 InputMachine_ActionIndex++;
                 break;
             }

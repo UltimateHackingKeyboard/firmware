@@ -17,12 +17,10 @@
 
 // Functions:
 
-#if DEBUG_THREAD_STATS
     void ThreadStats_Init(void);
     void ThreadStats_Switch(void);
     void ThreadStats_Print(void);
     void ThreadStats_Snap(void);
-#endif
 
 #endif
 

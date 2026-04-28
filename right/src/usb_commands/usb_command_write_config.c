@@ -4,6 +4,8 @@
 #endif
 #include "usb_commands/usb_command_write_config.h"
 #include "usb_protocol_handler.h"
+#include "config_parser/config_globals.h"
+#include "module_flash.h"
 #include "eeprom.h"
 
 void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
@@ -27,5 +29,8 @@ void UsbCommand_WriteConfig(config_buffer_id_t configBufferId, const uint8_t *Ge
     }
 
     bufferHead->isValid = false;
+    if (configBufferId == ConfigBufferId_ModuleFirmware) {
+        ModuleFirmwareValidatedSize = 0;
+    }
     memcpy(buffer + offset, GenericHidOutBuffer + paramsSize, length);
 }
