@@ -166,6 +166,7 @@
             bool autoRepeatInitialDelayPassed: 1;
             macro_autorepeat_state_t autoRepeatPhase: 1;
             bool isDoubletap: 1;
+            bool isFirstCommand : 1;
             secondary_role_state_t secondaryRoleState: 2;
             // ---- 4-aligned ----
 
