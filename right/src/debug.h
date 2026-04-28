@@ -25,6 +25,9 @@
 
 #define DEBUG_ROLL_STATUS_BUFFER false
 
+#define DEBUG_BLE_LATENCY_STATS false
+
+
 #ifdef __ZEPHYR__
     #include "logger.h"
     #include <zephyr/kernel.h>
@@ -32,6 +35,7 @@
 
 #include <stdint.h>
 #include "key_states.h"
+#include "hid/keyboard_report.h"
 
 #if WATCHES
 
@@ -111,7 +115,6 @@
     bool WatchCondition(uint8_t n);
     void ShowValue(int v, uint8_t n);
     void ShowString(char const * v, uint8_t n);
-    struct hid_keyboard_report_t;
     void AddReportToStatusBuffer(char* dbgTag, hid_keyboard_report_t *report);
 
     #ifdef __ZEPHYR__
@@ -173,5 +176,7 @@
 #else
 #define EVENTLOOP_TIMING(CODE)
 #endif
+
+void Debug_RecordBleSendResult(int ret);
 
 #endif // __DEBUG_H__

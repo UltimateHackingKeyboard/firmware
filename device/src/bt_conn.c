@@ -50,6 +50,12 @@ struct bt_conn *auth_conn;
 
 uint32_t Bt_LastConnectedTime = 0;
 
+// Last negotiated BLE HID connection interval in milliseconds. Updated by
+// infoLatencyParamsUpdated when the active peer is a BLE HID host. Used by the
+// report-throttling logic to size the next-window estimate; otherwise on hosts
+// that negotiate below our default we would systematically miss send slots.
+uint32_t BleHidReportIntervalMs = 11;
+
 /*
  * Reason codes are named from the perspective of the party that receives them.
  *
@@ -785,7 +791,16 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
 {
     LOG_DBG("%s conn params: interval=%u ms, latency=%u, timeout=%u ms", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
-    bool isUhkPeer = isUhkDeviceConnection(Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId));
+    connection_type_t connectionType = Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId);
+    bool isUhkPeer = isUhkDeviceConnection(connectionType);
+
+    if (connectionType == ConnectionType_BtHid) {
+        uint32_t intervalMs = (interval * 5 + 3) / 4;
+        if (intervalMs < 1) {
+            intervalMs = 1;
+        }
+        BleHidReportIntervalMs = intervalMs;
+    }
 
     if (interval > 10) {
         configureLatency(conn, isUhkPeer ? LatencyMode_NUS : LatencyMode_BleHid);

@@ -57,6 +57,7 @@ typedef enum {
     extern peer_t Peers[];
     extern bool Bt_NewPairedDevice;
     extern uint32_t Bt_LastConnectedTime;
+    extern uint32_t BleHidReportIntervalMs;
 
 // Functions:
 
