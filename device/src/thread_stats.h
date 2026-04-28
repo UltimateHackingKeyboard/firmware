@@ -22,6 +22,11 @@
     void ThreadStats_Switch(void);
     void ThreadStats_Print(void);
     void ThreadStats_Snap(void);
+#else
+    #define ThreadStats_Init()
+    #define ThreadStats_Switch()
+    #define ThreadStats_Print()
+    #define ThreadStats_Snap()
 #endif
 
 #endif
