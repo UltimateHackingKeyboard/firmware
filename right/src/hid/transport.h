@@ -24,6 +24,9 @@ typedef enum
     ROLLOVER_6_KEY = 1,
 } rollover_t;
 
+
+extern float HidReportBleLatencyAvgMs;
+
 void Hid_TransportStateChanged(hid_transport_t transport, bool enabled);
 
 // report sending
@@ -34,6 +37,11 @@ errno_t Hid_SendControlsReport(const hid_controls_report_t* report);
 void Hid_KeyboardReportSentCallback(hid_transport_t transport);
 void Hid_MouseReportSentCallback(hid_transport_t transport);
 void Hid_ControlsReportSentCallback(hid_transport_t transport);
+
+// Called from NUS server 'sent' callback on UHK80 right half to feed
+// dongle-bound reports into the same latency EMA as BLE HID. Assumes any
+// right-half NUS send corresponds to a USB report being relayed to the dongle.
+void HidTransport_NoteNusReportSent(void);
 
 void Hid_MouseScrollResolutionsChanged(
     hid_transport_t transport, float verticalMultiplier, float horizontalMultiplier);
@@ -53,6 +61,8 @@ void USB_Enable(void);
 bool USB_RemoteWakeup(void);
 void USB_Reconfigure(void);
 bool USB_IsMsHost(void);
+
+
 
 // HOGP (BLE HID) management
 void HOGP_Enable(void);

@@ -29,5 +29,6 @@ extern const test_module_t TestModule_IfShortcutGesture;
 extern const test_module_t TestModule_Doubletap;
 extern const test_module_t TestModule_CurrentMacroKeyIsActive;
 extern const test_module_t TestModule_ParserBenevolence;
+extern const test_module_t TestModule_Sticky;
 
 #endif

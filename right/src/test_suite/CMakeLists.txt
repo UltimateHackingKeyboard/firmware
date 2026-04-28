@@ -16,4 +16,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_doubletap.c
     tests/test_current_macro_key_is_active.c
     tests/test_parser_benevolence.c
+    tests/test_sticky.c
 )

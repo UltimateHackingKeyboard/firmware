@@ -33,9 +33,13 @@
 #define TEST_SET_ACTION(key_id, shortcut) \
     { .type = TestAction_SetAction, .keyId = (key_id), .shortcutStr = (shortcut) }
 
-// SetMacro: assign an inline macro to a key
+// SetMacro: assign an inline macro to a key on the base layer
 #define TEST_SET_MACRO(key_id, macro_text) \
     { .type = TestAction_SetMacro, .keyId = (key_id), .macroText = (macro_text) }
+
+// SetLayerMacro: assign an inline macro to a key on a specific layer
+#define TEST_SET_LAYER_MACRO(layer_id, key_id, macro_text) \
+    { .type = TestAction_SetMacro, .keyId = (key_id), .layerId = (layer_id), .macroText = (macro_text) }
 
 // SetLayerHold: assign a layer hold action to a key
 // SwitchLayerMode_Hold = 2

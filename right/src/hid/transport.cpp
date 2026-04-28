@@ -12,6 +12,8 @@ extern "C" {
 #include "key_states.h"
 #include "logger.h"
 #include "macro_events.h"
+#include "timer.h"
+#include "trace.h"
 #include "usb_report_updater.h"
 }
 #include "command_app.hpp"
@@ -30,6 +32,76 @@ typedef enum {
     ReportSink_BleHid,
     ReportSink_Dongle,
 } report_sink_t;
+
+// Exponential moving average (alpha=1/8) of the measured delay between a
+// BLE HID report being handed to the stack and the corresponding sent callback
+// firing. Populated when DEBUG_BLE_LATENCY_STATS is enabled; useful for
+// observing whether the send pipeline is saturated.
+extern "C" {
+float HidReportBleLatencyAvgMs = 0;
+}
+static uint32_t dispatchTimeMs = 0;
+
+// Approximate transport window intervals (ms) used by the report-construction
+// throttle. After dispatch we estimate the next free window at "now + 2 *
+// interval" (worst case: we just missed a window). The send-completion
+// callback then reduces the estimate to "now + interval".
+static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
+static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 7;
+
+#if DEVICE_IS_UHK80_RIGHT
+extern "C" uint32_t BleHidReportIntervalMs;
+static inline uint32_t bleHidReportIntervalMs() { return BleHidReportIntervalMs; }
+#else
+static inline uint32_t bleHidReportIntervalMs() { return 11; }
+#endif
+
+static uint32_t reportIntervalForSink(report_sink_t sink)
+{
+    switch (sink) {
+    case ReportSink_Usb:
+        return USB_REPORT_INTERVAL_MS;
+    case ReportSink_BleHid:
+        return bleHidReportIntervalMs();
+    case ReportSink_Dongle:
+        return DONGLE_REPORT_INTERVAL_MS;
+    default:
+        return 0;
+    }
+}
+
+static uint32_t reportIntervalForTransport(hid_transport_t transport)
+{
+    return (transport == HID_TRANSPORT_USB) ? USB_REPORT_INTERVAL_MS : bleHidReportIntervalMs();
+}
+
+static void noteReportDispatched(report_sink_t sink)
+{
+    if (DEBUG_BLE_LATENCY_STATS) {
+        if (dispatchTimeMs == 0) {
+            dispatchTimeMs = Timer_GetCurrentTime();
+        }
+    }
+    UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
+}
+
+static void noteReportSent(hid_transport_t transport)
+{
+    if (DEBUG_BLE_LATENCY_STATS) {
+        if (dispatchTimeMs != 0) {
+            uint32_t delta = Timer_GetCurrentTime() - dispatchTimeMs;
+            HidReportBleLatencyAvgMs = (HidReportBleLatencyAvgMs * 7 + delta) / 8;
+            dispatchTimeMs = 0;
+        }
+    }
+    UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForTransport(transport);
+    EventVector_WakeMain();
+}
+
+extern "C" void HidTransport_NoteNusReportSent(void)
+{
+    noteReportSent(HID_TRANSPORT_BLE);
+}
 
 static report_sink_t determineSink()
 {
@@ -88,31 +160,42 @@ extern "C" void Hid_TransportStateChanged(
 
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
-    switch (determineSink()) {
+    report_sink_t sink = determineSink();
+    noteReportDispatched(sink);
+    Trace_Printf("z11,%d", sink);
+    errno_t err;
+    switch (sink) {
     case ReportSink_Usb:
-        return keyboard_app::usb_handle().send_report(*report);
+        err = keyboard_app::usb_handle().send_report(*report);
+        break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid:
-        return keyboard_app::ble_handle().send_report(*report);
+        err = keyboard_app::ble_handle().send_report(*report);
+        break;
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
         // TODO: propagate underlying error up the stack
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
-        return 0;
+        err = 0;
+        break;
 #endif
     default:
 #ifdef __ZEPHYR__
         printk("Unhandled and unexpected switch state!\n");
 #endif
-        return -EHOSTUNREACH;
+        err = -EHOSTUNREACH;
+        break;
     }
+    Trace_Printf("z12,%d", err);
+    return err;
 }
 
 extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+    // noteReportSent(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -120,31 +203,42 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 {
-    switch (determineSink()) {
+    report_sink_t sink = determineSink();
+    noteReportDispatched(sink);
+    Trace_Printf("z21,%d", sink);
+    errno_t err;
+    switch (sink) {
     case ReportSink_Usb:
-        return mouse_app::usb_handle().send_report(*report);
+        err = mouse_app::usb_handle().send_report(*report);
+        break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid:
-        return mouse_app::ble_handle().send_report(*report);
+        err = mouse_app::ble_handle().send_report(*report);
+        break;
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
         // TODO: propagate underlying error up the stack
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
-        return 0;
+        err = 0;
+        break;
 #endif
     default:
 #ifdef __ZEPHYR__
         printk("Unhandled and unexpected switch state!\n");
 #endif
-        return -EHOSTUNREACH;
+        err = -EHOSTUNREACH;
+        break;
     }
+    Trace_Printf("z22,%d", err);
+    return err;
 }
 
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+    noteReportSent(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -152,31 +246,42 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 
 extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 {
-    switch (determineSink()) {
+    report_sink_t sink = determineSink();
+    noteReportDispatched(sink);
+    Trace_Printf("z31,%d", sink);
+    errno_t err;
+    switch (sink) {
     case ReportSink_Usb:
-        return controls_app::usb_handle().send_report(*report);
+        err = controls_app::usb_handle().send_report(*report);
+        break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid:
-        return controls_app::ble_handle().send_report(*report);
+        err = controls_app::ble_handle().send_report(*report);
+        break;
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
         // TODO: propagate underlying error up the stack
         Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
-        return 0;
+        err = 0;
+        break;
 #endif
     default:
 #ifdef __ZEPHYR__
         printk("Unhandled and unexpected switch state!\n");
 #endif
-        return -EHOSTUNREACH;
+        err = -EHOSTUNREACH;
+        break;
     }
+    Trace_Printf("z32,%d", err);
+    return err;
 }
 
 extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+    // noteReportSent(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif

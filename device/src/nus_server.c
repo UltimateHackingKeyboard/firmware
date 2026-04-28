@@ -12,6 +12,7 @@
 #include "resend.h"
 #include <zephyr/logging/log.h>
 #include "bt_manager.h"
+#include "hid/transport.h"
 
 LOG_MODULE_REGISTER(NusServer, LOG_LEVEL_INF);
 
@@ -45,6 +46,9 @@ static void sent(struct bt_conn *conn) {
     k_sem_give(&nusBusy);
     char addr[BT_ADDR_LE_STR_LEN] = {0};
     bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
+#if DEVICE_IS_UHK80_RIGHT
+    HidTransport_NoteNusReportSent();
+#endif
 }
 
 static void send_enabled(enum bt_nus_send_status status)

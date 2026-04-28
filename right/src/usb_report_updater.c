@@ -72,6 +72,15 @@ static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 uint32_t UsbReportUpdater_LastActivityTime;
 
+uint32_t UsbReportWindowEstimate = 0;
+
+// This is how much time we leave for report construction. Most of the time is
+// (probably) consumed inside the transport layers.
+//
+// If too low, we will be missing transports. If too high, we will be introducing
+// latency.
+#define USB_REPORT_WINDOW_LOOKAHEAD_MS 6
+
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
 // Modifiers can be applied as one of the following classes
@@ -267,6 +276,20 @@ static void resetStickyMods(key_action_cached_t *cachedAction)
     StickyModifiersNegative = cachedAction->modifierLayerMask;
     EventVector_Set(EventVector_SendUsbReports);
 }
+
+void StickyMods_ResetLater(key_action_cached_t *cachedAction)
+{
+    static uint8_t negativeMods;
+
+    if (cachedAction != NULL) {
+        negativeMods = cachedAction->modifierLayerMask;
+    } else {
+        StickyModifiers = 0;
+        StickyModifiersNegative = negativeMods;
+        EventVector_Set(EventVector_SendUsbReports);
+    }
+}
+
 
 static void activateStickyMods(key_state_t *keyState, key_action_cached_t *action)
 {
@@ -510,13 +533,13 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
             break;
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
-                resetStickyMods(cachedAction);
+                StickyMods_ResetLater(cachedAction);
                 Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationId, 255, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
             if (KeyState_ActivatedNow(keyState)) {
-                resetStickyMods(cachedAction);
+                StickyMods_ResetLater(cachedAction);
                 Macros_StartInlineMacro(action->inlineMacro.text, keyState, keyState->activationId);
             }
             break;
@@ -1013,6 +1036,9 @@ static void sendActiveReports(bool resending) {
             mouseNeedsResending = false;
             switchActiveMouseReport();
         }
+
+        Debug_RecordBleSendResult(ret);
+
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
@@ -1025,16 +1051,35 @@ static void sendActiveReports(bool resending) {
     }
 }
 
-static bool blockedByKeystrokeDelay() {
+static bool blockedByReportThrottle() {
     static uint32_t postponedMasks = 0;
-    if (Timer_GetCurrentTime() < lastBasicReportTime + Cfg.KeystrokeDelay) {
+    uint32_t currentTime = Timer_GetCurrentTime();
+    uint32_t blockedUntil = 0;
+    bool blocked = false;
+
+    // Configured delay - prevent firmware (macros and similar) from sending reports too fast -
+    // some applications (esp. games) don't expect that.
+    if (currentTime < lastBasicReportTime + Cfg.KeystrokeDelay) {
+        blockedUntil = lastBasicReportTime + Cfg.KeystrokeDelay;
+        blocked = true;
+    }
+
+    // To reduce mouse latency, don't construct report until we are close enough to transport window.
+    if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
+        uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
+        if (!blocked || throttleUntil > blockedUntil) {
+            blockedUntil = throttleUntil;
+        }
+        blocked = true;
+    }
+    if (blocked) {
         DISABLE_IRQ();
         postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
         EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_MainTriggers) | EventVector_KeystrokeDelayPostponing;
         ENABLE_IRQ();
 
         // Make sure to wake up postponer so that it can process the events.
-        EventScheduler_Reschedule(lastBasicReportTime + Cfg.KeystrokeDelay, EventSchedulerEvent_Postponer, "keystroke delay");
+        EventScheduler_Reschedule(blockedUntil, EventSchedulerEvent_Postponer, "report throttle");
 
         justPreprocessInput();
         return true;
@@ -1050,7 +1095,7 @@ static bool blockedByKeystrokeDelay() {
 void UpdateUsbReports(void)
 {
     Trace_Printc("u1");
-    if (blockedByKeystrokeDelay()) {
+    if (blockedByReportThrottle()) {
         return;
     }
 

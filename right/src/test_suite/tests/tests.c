@@ -15,6 +15,7 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_Doubletap,
     &TestModule_CurrentMacroKeyIsActive,
     &TestModule_ParserBenevolence,
+    &TestModule_Sticky,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);

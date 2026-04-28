@@ -30,7 +30,7 @@ bool ParserRunDry;
 
 bool IsConfigBufferIdValid(config_buffer_id_t configBufferId)
 {
-    return ConfigBufferId_HardwareConfig <= configBufferId && configBufferId <= ConfigBufferId_ValidatedUserConfig;
+    return ConfigBufferId_HardwareConfig <= configBufferId && configBufferId <= ConfigBufferId_ModuleFirmware;
 }
 
 config_buffer_t* ConfigBufferIdToConfigBuffer(config_buffer_id_t configBufferId)
@@ -42,6 +42,8 @@ config_buffer_t* ConfigBufferIdToConfigBuffer(config_buffer_id_t configBufferId)
             return &StagingUserConfigBuffer;
         case ConfigBufferId_ValidatedUserConfig:
             return &ValidatedUserConfigBuffer;
+        case ConfigBufferId_ModuleFirmware:
+            return &StagingUserConfigBuffer;
         default:
             return NULL;
     }
@@ -54,6 +56,7 @@ uint16_t ConfigBufferIdToBufferSize(config_buffer_id_t configBufferId)
             return HARDWARE_CONFIG_SIZE;
         case ConfigBufferId_StagingUserConfig:
         case ConfigBufferId_ValidatedUserConfig:
+        case ConfigBufferId_ModuleFirmware:
             return USER_CONFIG_SIZE;
         default:
             return 0;

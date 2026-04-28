@@ -6,6 +6,36 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [17.0.0] - 2026-04-28
+
+Device Protocol: 4.18.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.2
+
+- Move new Typing Behavior configurations into the native UserConfig section. `USERCONFIG:MAJOR`
+- Schedule usb report dispatch - lowers bluetooth latency.
+- Implement module-flashing for uhk80. (Agent support is yet needed.) `DEVICEPROTOCOL:MINOR`
+- Don't report battery levels over bluetooth when the keyboard is sleeping. It tends to wake up MacOs hosts.
+- Fix module unbricking procedure for modules listening on the default address. (Agent support is yet needed.)
+- Fix sticky key integration with macros - macros would break sticky key sequences by a brief release before first macro command is executed. `SMARTMACROS:PATCH`
+- Fix stuck layer hold when replaceLayer is triggered from macro after layer release. `SMARTMACROS:PATCH`
+
+## [16.3.0] - 2026-04-13
+
+Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.1
+
+Features:
+
+- Second tap on a host switch action cancels it.
+
+Fixes and maintenance:
+
+- Refactor: port uhk60 onto c2usb in order to increase codebase maintainability.
+- Refactor: rewrite usb stack integration.
+- Fix: rework usb-report send failure handling.
+- Fix: increase bluetooth reliability - bluetooth hid interfaces should no longer stop functioning randomly.
+- Fix: implement workaround for slow scrolling on microsoft hosts.
+- Fix: preprocess input during usb report send retries.
+- Fix: don't accumulate mouse coordinates during usb report send retries to prevent cursor jumps.
+
 ## [16.2.1] - 2026-04-07
 
 Device Protocol: 4.17.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 13.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.1

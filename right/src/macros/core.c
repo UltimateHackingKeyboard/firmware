@@ -467,6 +467,7 @@ uint8_t initMacro(
     S->ms.currentMacroArgumentOffset = argumentOffset;
     S->ms.parentMacroSlot = parentMacroSlot;
     S->ms.isDoubletap = keyState != NULL && KeyHistory_WasLastDoubletap();
+    S->ms.isFirstCommand = true;
 
     // If inline text is provided, set up the action before resetToAddressZero
     if (inlineText != NULL) {
@@ -642,6 +643,11 @@ macro_result_t continueMacro(void)
     if (S->ms.postponeNextNCommands > 0) {
         S->ls->as.modifierPostpone = true;
         //PostponerCore_PostponeNCycles(1);
+    }
+
+    if (S->ms.isFirstCommand) {
+        S->ms.isFirstCommand = false;
+        StickyMods_ResetLater(NULL);
     }
 
     macro_result_t res = MacroResult_YieldFlag;
