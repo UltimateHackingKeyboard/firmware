@@ -6,6 +6,19 @@
 
 #include <zephyr/init.h>
 #include <hal/nrf_power.h>
+#include <zephyr/pm/pm.h>
+
+__weak void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
+{
+	ARG_UNUSED(state);
+	ARG_UNUSED(substate_id);
+}
+
+__weak void pm_state_set(enum pm_state state, uint8_t substate_id)
+{
+	ARG_UNUSED(state);
+	ARG_UNUSED(substate_id);
+}
 
 #ifdef CONFIG_BOARD_UHK_DONGLE_NRF52840
 static int board_uhk_dongle_nrf52840_init(void)
