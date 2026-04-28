@@ -19,6 +19,7 @@
         ConfigBufferId_HardwareConfig,
         ConfigBufferId_StagingUserConfig,
         ConfigBufferId_ValidatedUserConfig,
+        ConfigBufferId_ModuleFirmware,
     } config_buffer_id_t;
 
     typedef struct {

@@ -22,6 +22,8 @@
 #include "sinks.h"
 #include "wormhole.h"
 #include "stubs.h"
+#include "slave_drivers/kboot_driver.h"
+#include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
@@ -106,6 +108,25 @@ static int cmd_uhk_testled(const struct shell *shell, size_t argc, char *argv[])
     }
     return 0;
 }
+
+static int cmd_uhk_kboot_reset(const struct shell *shell, size_t argc, char *argv[])
+{
+    KbootDriverState.i2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
+    KbootDriverState.phase = 0;
+    KbootDriverState.command = KbootCommand_Reset;
+    shell_fprintf(shell, SHELL_NORMAL, "Kboot reset sent to right module (0x%02x)\n",
+                  I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER);
+    return 0;
+}
+
+static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *argv[])
+{
+    KbootDriverState.phase = 0;
+    KbootDriverState.command = KbootCommand_Flash;
+    shell_fprintf(shell, SHELL_NORMAL, "Kboot flash sequence started for right module\n");
+    return 0;
+}
+
 #endif
 
 #if DEVICE_HAS_OLED
@@ -412,6 +433,13 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(useShellSinks, NULL, "get/set shell sinks mode", cmd_uhk_useShellSinks, 1, 1),
         SHELL_SUBCMD_SET_END);
 
+#if DEVICE_IS_UHK80_RIGHT
+    SHELL_STATIC_SUBCMD_SET_CREATE(uhk_kboot_cmds,
+        SHELL_CMD_ARG(flash, NULL, "flash firmware uploaded to the module-firmware buffer", cmd_uhk_kboot_flash, 1, 0),
+        SHELL_CMD_ARG(reset, NULL, "send kboot reset to right module", cmd_uhk_kboot_reset, 1, 0),
+        SHELL_SUBCMD_SET_END);
+#endif
+
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
         SHELL_CMD_ARG(keylog, NULL, "get/set key logging", cmd_uhk_keylog, 1, 1),
 #if !DEVICE_IS_UHK_DONGLE
@@ -421,6 +449,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(charger, NULL, "get/set CHARGER_EN pin", cmd_uhk_charger, 1, 1),
 #endif // !DEVICE_IS_UHK_DONGLE
 #if DEVICE_IS_UHK80_RIGHT
+        SHELL_CMD(kboot, &uhk_kboot_cmds, "kboot module flashing commands", NULL),
         SHELL_CMD_ARG(testled, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
         SHELL_CMD_ARG(ledtest, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
 #endif

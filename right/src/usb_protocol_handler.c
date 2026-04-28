@@ -16,6 +16,10 @@
 #include "usb_commands/usb_command_launch_storage_transfer.h"
 #include "usb_commands/usb_command_get_module_property.h"
 #include "usb_commands/usb_command_exec_shell_command.h"
+#include "usb_commands/usb_command_write_module_firmware.h"
+#include "usb_commands/usb_command_flash_module.h"
+#include "usb_commands/usb_command_get_module_flash_state.h"
+#include "usb_commands/usb_command_validate_buffer_crc.h"
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_draw_oled.h"
@@ -85,6 +89,18 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
             break;
         case UsbCommandId_GetModuleProperty:
             UsbCommand_GetModuleProperty(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_WriteModuleFirmware:
+            UsbCommand_WriteModuleFirmware(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_FlashModule:
+            UsbCommand_FlashModule(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_GetModuleFlashState:
+            UsbCommand_GetModuleFlashState(GenericHidOutBuffer, GenericHidInBuffer);
+            break;
+        case UsbCommandId_ValidateBufferCrc:
+            UsbCommand_ValidateBufferCrc(GenericHidOutBuffer, GenericHidInBuffer);
             break;
 #ifdef __ZEPHYR__
         case UsbCommandId_ExecShellCommand:

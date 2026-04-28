@@ -8,11 +8,15 @@
 // Typedefs:
 
 typedef enum {
+    GetDeviceStateByte1_EepromBusy      = 1 << 0,
+    GetDeviceStateByte1_ModuleFlashBusy = 1 << 1,
+} usb_command_get_device_state_byte1_mask_t;
+
+typedef enum {
     GetDeviceStateByte2_HalvesMerged = 1 << 0,
     GetDeviceStateByte2_PairingInProgress = 1 << 1,
     GetDeviceStateByte2_NewPairedDevice = 1 << 2,
     GetDeviceStateByte2_ZephyrLog = 1 << 3,
-
 } usb_command_get_device_state_byte2_mask_t;
 
     typedef enum {
