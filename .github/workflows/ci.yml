@@ -23,7 +23,7 @@ jobs:
         with:
           path: firmware
           submodules: recursive
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Install build dependencies
         run: |
