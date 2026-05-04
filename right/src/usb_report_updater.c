@@ -886,6 +886,16 @@ static bool controlsNeedsResending = false;
 static uint8_t mouseRetries = 0;
 static bool mouseNeedsResending = false;
 
+// Delay between consecutive resend attempts when a Hid_Send*Report() call
+// fails (e.g. because of a transient USB hub stall).  Without this throttle
+// the resend would re-fire on every main-loop iteration (sub-100us cadence),
+// which saturates the hub upstream and disturbs other HID devices on the
+// same hub.  4 ms is short enough to feel responsive (a single key event
+// missing the 1 ms USB SOF four times in a row is still well under the
+// keystroke-perception threshold) and long enough to free the bus between
+// attempts.
+#define USB_RESEND_DELAY_MS 4
+
 // Try resending a report for 512ms. Give up if it doesn't succeed by then.
 bool ShouldResendReport(bool statusOk, uint8_t* counter) {
 
@@ -990,7 +1000,11 @@ static void sendActiveReports(bool resending) {
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
-                    EventVector_Set(EventVector_ResendUsbReports);
+                    // Throttle the retry: schedule it instead of re-arming the flag
+                    // immediately. Re-arming immediately would call sendActiveReports()
+                    // every main-loop iteration and saturate the hub upstream.
+                    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
+                                            EventSchedulerEvent_UsbResend, "usb-resend");
                 } else {
                     ShouldResendReport(true, &keyboardRetries); // reset retry counter
                     keyboardNeedsResending = false;
@@ -1016,7 +1030,8 @@ static void sendActiveReports(bool resending) {
             }
             controlsNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
-            EventVector_Set(EventVector_ResendUsbReports);
+            EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
+                                    EventSchedulerEvent_UsbResend, "usb-resend");
         } else {
             ShouldResendReport(true, &controlsRetries);
             controlsNeedsResending = false;
@@ -1044,7 +1059,8 @@ static void sendActiveReports(bool resending) {
             }
             mouseNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
-            EventVector_Set(EventVector_ResendUsbReports);
+            EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
+                                    EventSchedulerEvent_UsbResend, "usb-resend");
         } else {
             ShouldResendReport(true, &mouseRetries);
             mouseNeedsResending = false;
