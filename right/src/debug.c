@@ -1,8 +1,8 @@
 #include <string.h>
 #include "debug.h"
+#include "logger.h"
 
 #ifdef __ZEPHYR__
-#include "logger.h"
 #include "keyboard/oled/screens/screen_manager.h"
 #include <zephyr/kernel.h>
 #else
