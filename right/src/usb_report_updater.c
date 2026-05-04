@@ -974,17 +974,25 @@ static void sendActiveReports(bool resending) {
                 //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
                 UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
-                if (ShouldResendReport(ret == 0, &keyboardRetries)) {
-                    reportRetry(ret);
+                if (ret != 0) {
+                    // Send failed (likely a transient USB hub stall or busy endpoint).
+                    // Do NOT switch the buffer: that would lose this report's state and
+                    // make it impossible to recover (e.g. release reports get dropped,
+                    // causing the OS to keep auto-repeating until the next key press).
+                    // The next merge cycle will rebuild the active buffer from the
+                    // latest cached state, and CheckReportReady will retry the send.
+                    if (ShouldResendReport(false, &keyboardRetries)) {
+                        reportRetry(ret);
+                    } else {
+                        handleFail(ret);
+                    }
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
                     EventVector_Set(EventVector_ResendUsbReports);
                 } else {
-                    if (ret != 0) {
-                        handleFail(ret);
-                    }
+                    ShouldResendReport(true, &keyboardRetries); // reset retry counter
                     keyboardNeedsResending = false;
                     switchActiveKeyboardReport();
                 }
@@ -999,15 +1007,18 @@ static void sendActiveReports(bool resending) {
     if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsNeedsResending)) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
         ret = Hid_SendControlsReport(ActiveControlsReport);
-        if (ShouldResendReport(ret == 0, &controlsRetries)) {
-            reportRetry(ret);
+        if (ret != 0) {
+            // See keyboard send path comment.
+            if (ShouldResendReport(false, &controlsRetries)) {
+                reportRetry(ret);
+            } else {
+                handleFail(ret);
+            }
             controlsNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
-            if (ret != 0) {
-                handleFail(ret);
-            }
+            ShouldResendReport(true, &controlsRetries);
             controlsNeedsResending = false;
             switchActiveControlsReport();
         }
@@ -1023,16 +1034,19 @@ static void sendActiveReports(bool resending) {
 
         UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
         ret = Hid_SendMouseReport(ActiveMouseReport);
-        if (ShouldResendReport(ret == 0, &mouseRetries)) {
-            reportRetry(ret);
+        if (ret != 0) {
+            // See keyboard send path comment.
+            if (ShouldResendReport(false, &mouseRetries)) {
+                reportRetry(ret);
+            } else {
+                handleFail(ret);
+                clearMouseMovement(); // Don't make cursor jump if we have connection issues.
+            }
             mouseNeedsResending = true;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
-            if (ret != 0) {
-                handleFail(ret);
-                clearMouseMovement(); // Don't make cursor jump if we have connection issues.
-            }
+            ShouldResendReport(true, &mouseRetries);
             mouseNeedsResending = false;
             switchActiveMouseReport();
         }
