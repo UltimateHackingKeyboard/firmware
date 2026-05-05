@@ -88,6 +88,7 @@ ifRegEq, CommandId_ifRegEq
 ifNotRegEq, CommandId_ifNotRegEq
 ifRegGt, CommandId_ifRegGt
 ifRegLt, CommandId_ifRegLt
+macroArg, CommandId_macroArg
 mulReg, CommandId_mulReg
 noOp, CommandId_noOp
 notify, CommandId_notify

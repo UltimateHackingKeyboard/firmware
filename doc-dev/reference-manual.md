@@ -41,7 +41,7 @@ $onJoin
 $onSplit
 ```
 
-i.e., if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR`, with content e.g.:
+For example, if you want to customize the acceleration driver for your trackball module on keymap QWR, create a macro named `$onKeymapChange QWR` containing:
 
 ```
 set module.trackball.baseSpeed 0.5
@@ -195,6 +195,8 @@ COMMAND = set bluetooth.enabled BOOL
 COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 COMMAND = &macroArg.<macro argument index (INT)>
+COMMAND = macroArg <argument name (IDENTIFIER)> [: MACROARG_TYPE] <argument description (STRING)>
+MACROARG_TYPE = { int | float | bool | string | keyid | scancode | any }
 CONDITION = <condition>
 CONDITION = if (EXPRESSION)
 CONDITION = else
@@ -233,7 +235,7 @@ KEYMAPID = <short keymap abbreviation(IDENTIFIER)>|last|current
 MACROID = last | <single char slot identifier(CHAR)> | <single number slot identifier(INT)>
 OPERATOR = + | - | * | / | % | < | > | <= | >= | == | != | && | ||
 VARIABLE_EXPANSION = $<variable name(IDENTIFIER)> | $<config value name>
-VARIABLE_EXPANSION = $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV | $uhk.name | $macroArg.<macro argument index (INT)>
+VARIABLE_EXPANSION = $currentAddress | $currentTime | $thisKeyId | $queuedKeyId.<queue index (INT)> | $keyId.KEYID_ABBREV | $uhk.name | $macroArg.<macro argument index (INT)> | $macroArg.<macro argument name (IDENTIFIER)>
 EXPRESSION = <expression> | (EXPRESSION) | INT | BOOL | FLOAT | VARIABLE_EXPANSION | EXPRESSION OPERATOR EXPRESSION | !EXPRESSION | min(EXPRESSION [, EXPRESSION]+) | max(EXPRESSION [, EXPRESSION]+)
 EXPRESSION = STRING == STRING | STRING != STRING
 PARENTHESSED_EXPRESSION = (EXPRESSION)
@@ -608,6 +610,12 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
 - `&macroArg.<idx>` - injects the argument directly into current parser context. These allow substituing any string, including full commands or their parts. This is an experimental feature and might be unsafe in some contexts. Following limitations apply:
   - the argument bounds must correspond to token bounds in the fully expanded string
   - the argument cannot span multiple lines
+
+### Named Arguments
+
+Macro arguments can also be named and typed by declaring them using the `macroArg` command at the beginning of the macro.
+
+Such named arguments can also be accessed using `$macroArg.<name>`, and the value provided by Agent will be parsed according to the argument type.
 
 ### Configuration options
 
