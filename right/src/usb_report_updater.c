@@ -896,8 +896,10 @@ static bool mouseNeedsResending = false;
 // attempts.
 #define USB_RESEND_DELAY_MS 4
 
-// Try resending a report for 512ms. Give up if it doesn't succeed by then.
-bool ShouldResendReport(bool statusOk, uint8_t* counter) {
+// Tracks a 128ms retry window per counter. Returns true while a failed call
+// is still within the window; returns false (and resets the counter) on
+// success or after the window expires.
+bool IsWithinResendWindow(bool statusOk, uint8_t* counter) {
 
     if (statusOk) {
         *counter = 0;
@@ -991,7 +993,7 @@ static void sendActiveReports(bool resending) {
                     // causing the OS to keep auto-repeating until the next key press).
                     // The next merge cycle will rebuild the active buffer from the
                     // latest cached state, and CheckReportReady will retry the send.
-                    if (ShouldResendReport(false, &keyboardRetries)) {
+                    if (IsWithinResendWindow(false, &keyboardRetries)) {
                         reportRetry(ret);
                     } else {
                         handleFail(ret);
@@ -1006,7 +1008,7 @@ static void sendActiveReports(bool resending) {
                     EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
                                             EventSchedulerEvent_UsbResend, "usb-resend");
                 } else {
-                    ShouldResendReport(true, &keyboardRetries); // reset retry counter
+                    IsWithinResendWindow(true, &keyboardRetries); // reset retry counter
                     keyboardNeedsResending = false;
                     switchActiveKeyboardReport();
                 }
@@ -1023,7 +1025,7 @@ static void sendActiveReports(bool resending) {
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
             // See keyboard send path comment.
-            if (ShouldResendReport(false, &controlsRetries)) {
+            if (IsWithinResendWindow(false, &controlsRetries)) {
                 reportRetry(ret);
             } else {
                 handleFail(ret);
@@ -1033,7 +1035,7 @@ static void sendActiveReports(bool resending) {
             EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
                                     EventSchedulerEvent_UsbResend, "usb-resend");
         } else {
-            ShouldResendReport(true, &controlsRetries);
+            IsWithinResendWindow(true, &controlsRetries);
             controlsNeedsResending = false;
             switchActiveControlsReport();
         }
@@ -1051,7 +1053,7 @@ static void sendActiveReports(bool resending) {
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
             // See keyboard send path comment.
-            if (ShouldResendReport(false, &mouseRetries)) {
+            if (IsWithinResendWindow(false, &mouseRetries)) {
                 reportRetry(ret);
             } else {
                 handleFail(ret);
@@ -1062,7 +1064,7 @@ static void sendActiveReports(bool resending) {
             EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
                                     EventSchedulerEvent_UsbResend, "usb-resend");
         } else {
-            ShouldResendReport(true, &mouseRetries);
+            IsWithinResendWindow(true, &mouseRetries);
             mouseNeedsResending = false;
             switchActiveMouseReport();
         }
