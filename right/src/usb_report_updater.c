@@ -879,6 +879,7 @@ uint32_t UsbReportUpdateCounter;
 
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
+uint32_t retryThrottleTime = 0;
 static uint8_t keyboardRetries = 0;
 static bool keyboardNeedsResending = false;
 static uint8_t controlsRetries = 0;
@@ -947,6 +948,11 @@ static void handleFail(errno_t errorCode) {
 #endif
 }
 
+static void setRetryThrottle() {
+    retryThrottleTime = Timer_GetCurrentTime() + MAX(10, Cfg.KeystrokeDelay);
+}
+
+
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
@@ -979,6 +985,7 @@ static void sendActiveReports(bool resending) {
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
+                    setRetryThrottle();
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
                     EventVector_Set(EventVector_ResendUsbReports);
                 } else {
@@ -1002,6 +1009,7 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &controlsRetries)) {
             reportRetry(ret);
             controlsNeedsResending = true;
+            setRetryThrottle();
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
@@ -1026,6 +1034,7 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &mouseRetries)) {
             reportRetry(ret);
             mouseNeedsResending = true;
+            setRetryThrottle();
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
@@ -1064,12 +1073,16 @@ static bool blockedByReportThrottle() {
         blocked = true;
     }
 
+    // If we are retrying too agressively, we may clog some USB hubs, so add a throttle in that case as well.
+    if (currentTime < retryThrottleTime) {
+        blockedUntil = MAX(retryThrottleTime, blockedUntil);;
+        blocked = true;
+    }
+
     // To reduce mouse latency, don't construct report until we are close enough to transport window.
     if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
         uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
-        if (!blocked || throttleUntil > blockedUntil) {
-            blockedUntil = throttleUntil;
-        }
+        blockedUntil = MAX(throttleUntil, blockedUntil);;
         blocked = true;
     }
     if (blocked) {
