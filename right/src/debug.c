@@ -17,6 +17,7 @@
 #include "macros/status_buffer.h"
 #include "hid/transport.h"
 #include "segment_display.h"
+#include "logger.h"
 
 uint8_t CurrentWatch = 0;
 
