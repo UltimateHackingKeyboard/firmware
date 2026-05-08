@@ -66,6 +66,7 @@ LOG_MODULE_REGISTER(UsbReports, LOG_LEVEL_INF);
 #include "stubs.h"
 #endif
 
+
 bool TestUsbStack = false;
 
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -80,6 +81,8 @@ uint32_t UsbReportWindowEstimate = 0;
 // If too low, we will be missing transports. If too high, we will be introducing
 // latency.
 #define USB_REPORT_WINDOW_LOOKAHEAD_MS 6
+
+#define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -932,6 +935,10 @@ static void reportRetry(errno_t err) {
 }
 
 static void handleFail(errno_t errorCode) {
+    // In any case, make the keyboard wake up, compare the usb reports, and possibly send them (those that are up-to-date at that time)
+    // This way, we loose some reports along the way, but at least don't produce stuck keys
+    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
+
 #ifdef __ZEPHYR__
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
         LOG_WRN("Send failed: no connection selected: %s\n", ErrToStr(errorCode));
@@ -946,10 +953,6 @@ static void handleFail(errno_t errorCode) {
         }
     }
 #endif
-}
-
-static void setRetryThrottle() {
-    retryThrottleTime = Timer_GetCurrentTime() + MAX(10, Cfg.KeystrokeDelay);
 }
 
 
@@ -985,15 +988,16 @@ static void sendActiveReports(bool resending) {
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
-                    setRetryThrottle();
+                    retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
                     EventVector_Set(EventVector_ResendUsbReports);
                 } else {
                     if (ret != 0) {
                         handleFail(ret);
+                    } else {
+                        switchActiveKeyboardReport();
                     }
                     keyboardNeedsResending = false;
-                    switchActiveKeyboardReport();
                 }
             }
             usbReportsChangedByAction = true;
@@ -1009,15 +1013,16 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &controlsRetries)) {
             reportRetry(ret);
             controlsNeedsResending = true;
-            setRetryThrottle();
+            retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
             if (ret != 0) {
                 handleFail(ret);
+            } else {
+                switchActiveControlsReport();
             }
             controlsNeedsResending = false;
-            switchActiveControlsReport();
         }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
@@ -1034,16 +1039,17 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &mouseRetries)) {
             reportRetry(ret);
             mouseNeedsResending = true;
-            setRetryThrottle();
+            retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
             if (ret != 0) {
                 handleFail(ret);
                 clearMouseMovement(); // Don't make cursor jump if we have connection issues.
+            } else {
+                switchActiveMouseReport();
             }
             mouseNeedsResending = false;
-            switchActiveMouseReport();
         }
 
         Debug_RecordBleSendResult(ret);
