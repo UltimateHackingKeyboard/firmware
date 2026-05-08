@@ -890,17 +890,23 @@ static bool controlsNeedsResending = false;
 static uint8_t mouseRetries = 0;
 static bool mouseNeedsResending = false;
 
-// Try resending a report for 512ms. Give up if it doesn't succeed by then.
+// Try resending a report for maxDelay ms. Give up if it doesn't succeed by then.
+// Once given up, stay given up until some statusOk is seen, so a full queue doesn't
+// freeze for queueLength * maxDelay on replay.
 bool ShouldResendReport(bool statusOk, uint8_t* counter) {
+    static bool givenUp = false;
 
     if (statusOk) {
         *counter = 0;
+        givenUp = false;
         return false;
     }
 
-    // keep this low, since the actual delay this causes with a full queue is
-    // queueLength * maxDelay
-    const uint16_t maxDelay = 128; //ms
+    if (givenUp) {
+        return false;
+    }
+
+    const uint16_t maxDelay = 1024; //ms
     const uint8_t granularity = 16; //ms
     uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
 
@@ -911,6 +917,7 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
         return true;
     } else {
         *counter = 0;
+        givenUp = true;
         return false;
     }
 }
@@ -995,6 +1002,8 @@ static void sendActiveReports(bool resending) {
                     if (ret != 0) {
                         handleFail(ret);
                     } else {
+                        // don't throw out the state. This way even if we drop reports, we keep in-line with what we have actually sent, so
+                        // once the connection is alive again, we report the new state if needed.
                         switchActiveKeyboardReport();
                     }
                     keyboardNeedsResending = false;
