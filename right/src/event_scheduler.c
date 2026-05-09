@@ -246,6 +246,9 @@ static void processEvt(event_scheduler_event_t evt)
             BtConn_KickHid();
 #endif
             break;
+        case EventSchedulerEvent_UsbResend:
+            EventVector_Set(EventVector_ResendUsbReports);
+            break;
         default:
             return;
     }

@@ -886,8 +886,20 @@ static bool controlsNeedsResending = false;
 static uint8_t mouseRetries = 0;
 static bool mouseNeedsResending = false;
 
-// Try resending a report for 512ms. Give up if it doesn't succeed by then.
-bool ShouldResendReport(bool statusOk, uint8_t* counter) {
+// Delay between consecutive resend attempts when a Hid_Send*Report() call
+// fails (e.g. because of a transient USB hub stall).  Without this throttle
+// the resend would re-fire on every main-loop iteration (sub-100us cadence),
+// which saturates the hub upstream and disturbs other HID devices on the
+// same hub.  4 ms is short enough to feel responsive (a single key event
+// missing the 1 ms USB SOF four times in a row is still well under the
+// keystroke-perception threshold) and long enough to free the bus between
+// attempts.
+#define USB_RESEND_DELAY_MS 4
+
+// Tracks a 128ms retry window per counter. Returns true while a failed call
+// is still within the window; returns false (and resets the counter) on
+// success or after the window expires.
+bool IsWithinResendWindow(bool statusOk, uint8_t* counter) {
 
     if (statusOk) {
         *counter = 0;
@@ -974,17 +986,29 @@ static void sendActiveReports(bool resending) {
                 //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
                 UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
-                if (ShouldResendReport(ret == 0, &keyboardRetries)) {
-                    reportRetry(ret);
+                if (ret != 0) {
+                    // Send failed (likely a transient USB hub stall or busy endpoint).
+                    // Do NOT switch the buffer: that would lose this report's state and
+                    // make it impossible to recover (e.g. release reports get dropped,
+                    // causing the OS to keep auto-repeating until the next key press).
+                    // The next merge cycle will rebuild the active buffer from the
+                    // latest cached state, and CheckReportReady will retry the send.
+                    if (IsWithinResendWindow(false, &keyboardRetries)) {
+                        reportRetry(ret);
+                    } else {
+                        handleFail(ret);
+                    }
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
-                    EventVector_Set(EventVector_ResendUsbReports);
+                    // Throttle the retry: schedule it instead of re-arming the flag
+                    // immediately. Re-arming immediately would call sendActiveReports()
+                    // every main-loop iteration and saturate the hub upstream.
+                    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
+                                            EventSchedulerEvent_UsbResend, "usb-resend");
                 } else {
-                    if (ret != 0) {
-                        handleFail(ret);
-                    }
+                    IsWithinResendWindow(true, &keyboardRetries); // reset retry counter
                     keyboardNeedsResending = false;
                     switchActiveKeyboardReport();
                 }
@@ -999,15 +1023,19 @@ static void sendActiveReports(bool resending) {
     if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsNeedsResending)) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
         ret = Hid_SendControlsReport(ActiveControlsReport);
-        if (ShouldResendReport(ret == 0, &controlsRetries)) {
-            reportRetry(ret);
-            controlsNeedsResending = true;
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
-            EventVector_Set(EventVector_ResendUsbReports);
-        } else {
-            if (ret != 0) {
+        if (ret != 0) {
+            // See keyboard send path comment.
+            if (IsWithinResendWindow(false, &controlsRetries)) {
+                reportRetry(ret);
+            } else {
                 handleFail(ret);
             }
+            controlsNeedsResending = true;
+            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+            EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
+                                    EventSchedulerEvent_UsbResend, "usb-resend");
+        } else {
+            IsWithinResendWindow(true, &controlsRetries);
             controlsNeedsResending = false;
             switchActiveControlsReport();
         }
@@ -1023,16 +1051,20 @@ static void sendActiveReports(bool resending) {
 
         UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
         ret = Hid_SendMouseReport(ActiveMouseReport);
-        if (ShouldResendReport(ret == 0, &mouseRetries)) {
-            reportRetry(ret);
-            mouseNeedsResending = true;
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
-            EventVector_Set(EventVector_ResendUsbReports);
-        } else {
-            if (ret != 0) {
+        if (ret != 0) {
+            // See keyboard send path comment.
+            if (IsWithinResendWindow(false, &mouseRetries)) {
+                reportRetry(ret);
+            } else {
                 handleFail(ret);
                 clearMouseMovement(); // Don't make cursor jump if we have connection issues.
             }
+            mouseNeedsResending = true;
+            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+            EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS,
+                                    EventSchedulerEvent_UsbResend, "usb-resend");
+        } else {
+            IsWithinResendWindow(true, &mouseRetries);
             mouseNeedsResending = false;
             switchActiveMouseReport();
         }
