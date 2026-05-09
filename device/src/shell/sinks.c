@@ -8,6 +8,8 @@ bool ShellConfig_IsInPanicMode = false;
 
 bool ShellConfig_UseShellSinks = true;
 
+bool ShellConfig_StripVt100 = true;
+
 static shell_sinks_t emptyConfig() {
     return (shell_sinks_t){
         .toUsbBuffer = false,
