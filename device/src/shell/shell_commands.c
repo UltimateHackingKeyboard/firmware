@@ -384,6 +384,16 @@ static int cmd_uhk_useShellSinks(const struct shell *shell, size_t argc, char *a
     return 0;
 }
 
+static int cmd_uhk_stripVt100(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", ShellConfig_StripVt100 ? 1 : 0);
+    } else {
+        ShellConfig_StripVt100 = argv[1][0] == '1';
+    }
+    return 0;
+}
+
 static int cmd_uhk_logStatus(const struct shell *shell, size_t argc, char *argv[])
 {
     uint16_t usbBufferFill, usbBufferSize;
@@ -393,6 +403,7 @@ static int cmd_uhk_logStatus(const struct shell *shell, size_t argc, char *argv[
     printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
     printk("UseShellSinks: %d\n", ShellConfig_UseShellSinks ? 1 : 0);
+    printk("StripVt100: %d\n", ShellConfig_StripVt100 ? 1 : 0);
     return 0;
 }
 
@@ -431,6 +442,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(snapshot, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(status, NULL, "print log status overview", cmd_uhk_logStatus, 1, 0),
         SHELL_CMD_ARG(useShellSinks, NULL, "get/set shell sinks mode", cmd_uhk_useShellSinks, 1, 1),
+        SHELL_CMD_ARG(stripVt100, NULL, "get/set vt100 stripping for USB log buffer", cmd_uhk_stripVt100, 1, 1),
         SHELL_SUBCMD_SET_END);
 
 #if DEVICE_IS_UHK80_RIGHT
