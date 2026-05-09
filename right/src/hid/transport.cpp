@@ -311,6 +311,7 @@ static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
     }
     if (changed) {
         EventVector_Set(EventVector_KeyboardLedState);
+        EventVector_WakeMain();
     }
 
 #ifdef __ZEPHYR__
