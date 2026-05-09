@@ -149,7 +149,7 @@
 #define WATCH_SEMAPHORE_TAKE(SEM, FILENAME, N) if(CurrentWatch == N) { WatchSemaforeTake(SEM, FILENAME, N); } else { k_sem_take(SEM, K_FOREVER); }
 #define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
 #else
-#define SEM_TAKE(SEM) k_sem_take(SEM, K_FOREVER)
+#define SEM_TAKE(SEM) if (k_sem_take(SEM, K_MSEC(128)) != 0) { LogTo(DEVICE_ID, Cfg.DevMode ? LogTarget_Uart | LogTarget_ErrorBuffer : LogTarget_Uart, "Failed to take semaphore " #SEM " in file %s. This shouldn't have happened. Please report it!\n", __FILE__); }
 #define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
 #endif
 
