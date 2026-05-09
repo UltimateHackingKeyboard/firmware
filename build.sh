@@ -322,16 +322,18 @@ function performZephyrAction() {
     case $ACTION in
         build)
             # reference version of the build process is to be found in scripts/make-release.mjs
-            $NICE ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+            ZEPHYR_TOOLCHAIN_VARIANT=zephyr \
+                $NICE \
+                west build \
                 --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
                 --pristine \
                 -- \
-                --preset $DEVICE
+                --preset $DEVICE 
             exitOnFail $?
             createCentralCompileCommands
             ;;
         make)
-            $NICE west build --build-dir $ROOT/device/build/$DEVICE device
+            $NICE west build --build-dir $ROOT/device/build/$DEVICE device 
             exitOnFail $?
             ;;
         flash)
