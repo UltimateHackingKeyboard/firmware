@@ -150,22 +150,32 @@ static void outputToSinks(const shell_sinks_t *sinks, struct uart_transport_data
         return;
     }
 
-    uint8_t stripped[48];
-    size_t strippedLen = stripVt100(td, data, length, stripped, sizeof(stripped));
+    bool stripForUsb = ShellConfig_StripVt100;
 
-    if (strippedLen == 0) {
-        return;
+    // OLED and status buffer always need stripping; USB buffer is optionally raw.
+    bool needStripped = sinks->toOled || sinks->toStatusBuffer || (sinks->toUsbBuffer && stripForUsb);
+
+    uint8_t stripped[48];
+    size_t strippedLen = 0;
+    if (needStripped) {
+        strippedLen = stripVt100(td, data, length, stripped, sizeof(stripped));
     }
 
     if (sinks->toUsbBuffer) {
-        UsbLogBuffer_Print(stripped, strippedLen);
+        if (stripForUsb) {
+            if (strippedLen > 0) {
+                UsbLogBuffer_Print(stripped, strippedLen);
+            }
+        } else {
+            UsbLogBuffer_Print((uint8_t *)data, length);
+        }
     }
 
-    if (sinks->toOled) {
+    if (sinks->toOled && strippedLen > 0) {
         LogO("%.*s", (int)strippedLen, stripped);
     }
 
-    if (sinks->toStatusBuffer) {
+    if (sinks->toStatusBuffer && strippedLen > 0) {
         Macros_SanitizedPut((const char *)stripped, (const char *)stripped + strippedLen);
     }
 }
