@@ -5,6 +5,7 @@
 #include "messenger.h"
 #include "messenger_queue.h"
 #include "device.h"
+#include "bt_manager.h"
 #include "debug.h"
 #include "connections.h"
 #include "resend.h"
@@ -210,6 +211,13 @@ static void updateConnectionState(uart_state_t *uartState) {
         Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
         k_sem_give(&uartState->txBufferBusy);
         k_sem_give(&uartState->core.txControlBusy);
+        if (DEVICE_IS_UHK80_LEFT) {
+            if (newIsConnected) {
+                EventScheduler_Reschedule( Timer_GetCurrentTime() + 10000, EventSchedulerEvent_CheckLeftBleVsUart, "Left UART up — schedule BLE vs UART check");
+            } else {
+                BtManager_CheckLeftBleVsUart();
+            }
+        }
     }
 }
 

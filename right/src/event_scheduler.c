@@ -246,6 +246,11 @@ static void processEvt(event_scheduler_event_t evt)
             BtConn_KickHid();
 #endif
             break;
+        case EventSchedulerEvent_CheckLeftBleVsUart:
+#if DEVICE_IS_UHK80_LEFT
+            BtManager_CheckLeftBleVsUart();
+#endif
+            break;
         default:
             return;
     }
