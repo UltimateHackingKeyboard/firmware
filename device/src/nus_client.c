@@ -22,6 +22,7 @@
 #include "resend.h"
 #include "trace.h"
 #include <zephyr/logging/log.h>
+#include "config_manager.h"
 
 LOG_MODULE_REGISTER(NusClient, LOG_LEVEL_INF);
 

@@ -2,6 +2,7 @@
 #include "event_scheduler.h"
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
+#include "config_manager.h"
 
 #define UART_RESET_DELAY 10
 

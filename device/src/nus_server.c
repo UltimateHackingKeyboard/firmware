@@ -13,6 +13,7 @@
 #include <zephyr/logging/log.h>
 #include "bt_manager.h"
 #include "hid/transport.h"
+#include "config_manager.h"
 
 LOG_MODULE_REGISTER(NusServer, LOG_LEVEL_INF);
 
