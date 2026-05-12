@@ -1,13 +1,16 @@
 boards:
   - name: uhk-80-left
+    full_name: Ultimate Hacking Keyboard 80 Left
     vendor: ugl
     socs:
       - name: nrf52840
   - name: uhk-80-right
+    full_name: Ultimate Hacking Keyboard 80 Right
     vendor: ugl
     socs:
       - name: nrf52840
   - name: uhk-dongle
+    full_name: Ultimate Hacking Keyboard Dongle
     vendor: ugl
     socs:
       - name: nrf52840

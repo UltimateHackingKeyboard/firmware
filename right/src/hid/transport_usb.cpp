@@ -175,8 +175,9 @@ extern "C" void USB_Enable()
 
 extern "C" void USB_Reconfigure()
 {
-    assert(usb_manager::active());
-    usb_manager::instance().select_config(HID_GetGamepadActive());
+    if (usb_manager::active()) {
+        usb_manager::instance().select_config(HID_GetGamepadActive());
+    }
 }
 
 extern "C" bool USB_RemoteWakeup()
