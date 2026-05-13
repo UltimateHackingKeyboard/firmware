@@ -66,6 +66,7 @@ LOG_MODULE_REGISTER(UsbReports, LOG_LEVEL_INF);
 #include "stubs.h"
 #endif
 
+
 bool TestUsbStack = false;
 
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
@@ -80,6 +81,8 @@ uint32_t UsbReportWindowEstimate = 0;
 // If too low, we will be missing transports. If too high, we will be introducing
 // latency.
 #define USB_REPORT_WINDOW_LOOKAHEAD_MS 6
+
+#define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
 
@@ -879,6 +882,7 @@ uint32_t UsbReportUpdateCounter;
 
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
+uint32_t retryThrottleTime = 0;
 static uint8_t keyboardRetries = 0;
 static bool keyboardNeedsResending = false;
 static uint8_t controlsRetries = 0;
@@ -886,17 +890,23 @@ static bool controlsNeedsResending = false;
 static uint8_t mouseRetries = 0;
 static bool mouseNeedsResending = false;
 
-// Try resending a report for 512ms. Give up if it doesn't succeed by then.
+// Try resending a report for maxDelay ms. Give up if it doesn't succeed by then.
+// Once given up, stay given up until some statusOk is seen, so a full queue doesn't
+// freeze for queueLength * maxDelay on replay.
 bool ShouldResendReport(bool statusOk, uint8_t* counter) {
+    static bool givenUp = false;
 
     if (statusOk) {
         *counter = 0;
+        givenUp = false;
         return false;
     }
 
-    // keep this low, since the actual delay this causes with a full queue is
-    // queueLength * maxDelay
-    const uint16_t maxDelay = 128; //ms
+    if (givenUp) {
+        return false;
+    }
+
+    const uint16_t maxDelay = 1024; //ms
     const uint8_t granularity = 16; //ms
     uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
 
@@ -907,6 +917,7 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
         return true;
     } else {
         *counter = 0;
+        givenUp = true;
         return false;
     }
 }
@@ -931,6 +942,10 @@ static void reportRetry(errno_t err) {
 }
 
 static void handleFail(errno_t errorCode) {
+    // In any case, make the keyboard wake up, compare the usb reports, and possibly send them (those that are up-to-date at that time)
+    // This way, we loose some reports along the way, but at least don't produce stuck keys
+    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
+
 #ifdef __ZEPHYR__
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
         LOG_WRN("Send failed: no connection selected: %s\n", ErrToStr(errorCode));
@@ -946,6 +961,7 @@ static void handleFail(errno_t errorCode) {
     }
 #endif
 }
+
 
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
@@ -979,14 +995,18 @@ static void sendActiveReports(bool resending) {
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
+                    retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
                     EventVector_Set(EventVector_ResendUsbReports);
                 } else {
                     if (ret != 0) {
                         handleFail(ret);
+                    } else {
+                        // don't throw out the state. This way even if we drop reports, we keep in-line with what we have actually sent, so
+                        // once the connection is alive again, we report the new state if needed.
+                        switchActiveKeyboardReport();
                     }
                     keyboardNeedsResending = false;
-                    switchActiveKeyboardReport();
                 }
             }
             usbReportsChangedByAction = true;
@@ -1002,14 +1022,16 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &controlsRetries)) {
             reportRetry(ret);
             controlsNeedsResending = true;
+            retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
             if (ret != 0) {
                 handleFail(ret);
+            } else {
+                switchActiveControlsReport();
             }
             controlsNeedsResending = false;
-            switchActiveControlsReport();
         }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
@@ -1026,15 +1048,17 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &mouseRetries)) {
             reportRetry(ret);
             mouseNeedsResending = true;
+            retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
             if (ret != 0) {
                 handleFail(ret);
                 clearMouseMovement(); // Don't make cursor jump if we have connection issues.
+            } else {
+                switchActiveMouseReport();
             }
             mouseNeedsResending = false;
-            switchActiveMouseReport();
         }
 
         Debug_RecordBleSendResult(ret);
@@ -1064,12 +1088,16 @@ static bool blockedByReportThrottle() {
         blocked = true;
     }
 
+    // If we are retrying too agressively, we may clog some USB hubs, so add a throttle in that case as well.
+    if (currentTime < retryThrottleTime) {
+        blockedUntil = MAX(retryThrottleTime, blockedUntil);;
+        blocked = true;
+    }
+
     // To reduce mouse latency, don't construct report until we are close enough to transport window.
     if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
         uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
-        if (!blocked || throttleUntil > blockedUntil) {
-            blockedUntil = throttleUntil;
-        }
+        blockedUntil = MAX(throttleUntil, blockedUntil);;
         blocked = true;
     }
     if (blocked) {

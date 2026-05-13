@@ -145,11 +145,11 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
     }
 }
 
-void UartBridge_SendMessage(message_t* msg) {
+int UartBridge_SendMessage(message_t* msg) {
     uart_state_t *uartState = &bridgeState;
 
     if (uartState == NULL || uartState->core.device == NULL) {
-        return;
+        return -1;
     }
 
     int err;
@@ -171,10 +171,12 @@ void UartBridge_SendMessage(message_t* msg) {
 
     UartParser_FinalizeMessage(&uartState->parser);
 
-    UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+    err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
 
     uartState->lastMessageSentTime = k_uptime_get();
     uartState->txState = UartTxState_WaitingForAck;
+
+    return err;
 }
 
 static void sendControl(uart_state_t *uartState, uint8_t byte) {
