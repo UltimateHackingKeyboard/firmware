@@ -111,12 +111,10 @@ static report_sink_t determineSink()
     connection_type_t connectionType = Connections_Type(ActiveHostConnectionId);
 
     if (!Connections_IsReady(ActiveHostConnectionId)) {
-        printk("Can't send report - selected connection is not ready!\n");
-        Connections_HandleSwitchover(ConnectionId_Invalid, false);
-        if (!Connections_IsReady(ActiveHostConnectionId)) {
-            // printk("Giving report to c2usb anyways!\n");
-            return ReportSink_Usb;
-        }
+        printk("Can't send report - active connection is not ready!\n");
+        // Issue #1471: no auto-fallback; just hand the report to USB so it
+        // isn't lost (USB backup is always present).
+        return ReportSink_Invalid;
     }
 
     switch (connectionType) {

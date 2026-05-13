@@ -86,8 +86,6 @@
 
     extern connection_id_t ActiveHostConnectionId;
     extern connection_id_t LastActiveHostConnectionId;
-    extern connection_id_t SelectedHostConnectionId;
-    extern connection_id_t LastSelectedHostConnectionId;
     extern connection_t Connections[ConnectionId_Count];
 
 // Functions:
@@ -109,8 +107,11 @@
     bool Connections_IsHostConnection(connection_id_t connectionId);
     bool Connections_IsReady(connection_id_t connectionId);
     bool Connections_IsActiveHostConnection(connection_id_t connectionId);
+    bool Connections_ActiveHostIsReady(void);
 
-    void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
+    void Connections_HandleConnectionStateChange(connection_id_t connectionId);
+    void Connections_SwitchToHost(connection_id_t connectionId);
+    void Connections_InitDefaultActive(void);
 
     const char* Connections_GetStaticName(connection_id_t connectionId);
 

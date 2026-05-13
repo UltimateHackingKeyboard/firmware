@@ -148,18 +148,13 @@ static string_segment_t getTargetText() {
     if ( Macros_DisplayStringsBuffs.host[0] != 0) {
         return (string_segment_t){ .start = Macros_DisplayStringsBuffs.host, .end = NULL };
     } else {
-        bool shortNames = SelectedHostConnectionId != ConnectionId_Invalid;
-        size_t offset = 0;
-
-        string_segment_t currentConnection = getTargetText_(ActiveHostConnectionId, shortNames);
-        offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
-
-        if (SelectedHostConnectionId != ConnectionId_Invalid) {
-            string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
-            selectedConnection = getTargetText_(SelectedHostConnectionId, true);
-            if (selectedConnection.start) {
-                snprintf(buffer+offset, sizeof(buffer)-1-offset, " -> %.*s", SegmentLen(selectedConnection), selectedConnection.start);
-            }
+        // Issue #1471: no more "Selected" intermediate state; always show Active,
+        // annotated with "(not connected)" when the host isn't reachable.
+        string_segment_t currentConnection = getTargetText_(ActiveHostConnectionId, false);
+        if (Connections_ActiveHostIsReady()) {
+            snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
+        } else {
+            snprintf(buffer, sizeof(buffer)-1, "%.*s: not connected", SegmentLen(currentConnection), currentConnection.start);
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };

@@ -234,15 +234,16 @@ adv_config_t BtAdvertise_Config() {
                     // struct bt_le_oob* oob = BtPair_GetRemoteOob();
                     // return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
                 }
-                else if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
-                    /* we need to reserve last peripheral slot for a specific target */
-                    connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
-                    if (selectedConnectionType == ConnectionType_NusDongle) {
-                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
-                    } else if (selectedConnectionType == ConnectionType_BtHid) {
+                else if (freeSlots == 1 && !Connections_ActiveHostIsReady()) {
+                    /* Reserve last peripheral slot for the user's active host
+                     * (issue #1471: was gated on Selected; now gated on Active not ready). */
+                    connection_type_t activeConnectionType = Connections_Type(ActiveHostConnectionId);
+                    if (activeConnectionType == ConnectionType_NusDongle) {
+                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(ActiveHostConnectionId)->bleAddress);
+                    } else if (activeConnectionType == ConnectionType_BtHid) {
                         return ADVERTISEMENT(ADVERTISE_HID);
                     } else {
-                        LOG_INF("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
+                        LOG_INF("Adv: Active connection is neither BLE HID nor NUS. Can't direct-advertise!");
                         return ADVERTISEMENT( 0 );
                     }
                 }

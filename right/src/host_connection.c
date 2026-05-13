@@ -16,18 +16,14 @@
 #include "bt_manager.h"
 
 
-#define HOST_CONNECTION_SELECT_TIMEOUT 30000
-
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
         .type = HostConnectionType_NewBtHid,
         .name = (string_segment_t){ .start = "Unregistered Ble", .end = NULL },
-        .switchover = true,
     },
     [HOST_CONNECTION_COUNT_MAX - 1] = {
         .type = HostConnectionType_UsbHidRight,
         .name = (string_segment_t){ .start = "USB Device (Backup)", .end = NULL },
-        .switchover = true,
     },
 };
 
@@ -74,32 +70,19 @@ host_connection_t* HostConnection(uint8_t connectionId) {
     return &HostConnections[connectionId - ConnectionId_HostConnectionFirst];
 }
 
-void HostConnection_SetSelectedConnection(uint8_t connectionId) {
-    if (SelectedHostConnectionId != connectionId) {
-        SelectedHostConnectionId = connectionId;
-        WIDGET_REFRESH(&TargetWidget);
-    }
-}
-
-void HostConnection_Unselect() {
-    HostConnection_SetSelectedConnection(ConnectionId_Invalid);
-    BtManager_StartScanningAndAdvertisingAsync(false, "HostConnection_Unselect");
-}
-
 static void selectConnection(uint8_t connectionId) {
-    if (Connections_IsReady(connectionId)) {
-        printk("Selecting ready host connection %d\n", connectionId);
-        Connections_HandleSwitchover(connectionId, true);
-        HostConnection_Unselect();
-    } else {
-        printk("Selecting not ready host connection %d\n", connectionId);
-        HostConnection_SetSelectedConnection(connectionId);
+    if (!Connections_IsHostConnection(connectionId)) {
+        return;
+    }
+    printk("Selecting host connection %d (ready=%d)\n", connectionId, Connections_IsReady(connectionId));
+    Connections_SwitchToHost(connectionId);
+    // If the chosen host isn't currently reachable, kick the BT layer so it
+    // tries to reach it (advertise / scan).
+    if (!Connections_ActiveHostIsReady()) {
         BtConn_ReserveConnections();
-        EventScheduler_Reschedule(Timer_GetCurrentTime() + HOST_CONNECTION_SELECT_TIMEOUT, EventSchedulerEvent_UnselectHostConnection, "Unselect host connection timeout");
-
     }
     Connections_ReportState(connectionId);
-    LastSelectedHostConnectionId = connectionId;
+    WIDGET_REFRESH(&TargetWidget);
 }
 
 static void selectNextConnection(int8_t direction) {
@@ -112,13 +95,10 @@ static void selectNextConnection(int8_t direction) {
         }
 
         if (Connections_IsReady(i)) {
-            LastSelectedHostConnectionId = i;
-            Connections_HandleSwitchover(i, true);
+            selectConnection(i);
             break;
         }
     }
-
-    HostConnection_SetSelectedConnection(ConnectionId_Invalid);
 }
 
 void HostConnections_SelectNextConnection(void) {
@@ -132,12 +112,6 @@ void HostConnections_SelectPreviousConnection(void) {
 void HostConnections_SelectLastConnection(void) {
     if (LastActiveHostConnectionId != ConnectionId_Invalid) {
         selectConnection(LastActiveHostConnectionId);
-    }
-}
-
-void HostConnections_SelectLastSelectedConnection(void) {
-    if (LastSelectedHostConnectionId != ConnectionId_Invalid) {
-        selectConnection(LastSelectedHostConnectionId);
     }
 }
 
@@ -214,7 +188,6 @@ static void allocateUnregisteredHidId(const bt_addr_le_t *addr, connection_id_t 
     Bt_NewPairedDevice = true;
     hostConnection->type = HostConnectionType_UnregisteredBtHid;
     hostConnection->bleAddress = *addr;
-    hostConnection->switchover = newConnectionTemplate->switchover;
     hostConnection->name = newConnectionTemplate->name;
 }
 
@@ -253,7 +226,6 @@ void HostConnections_ClearConnectionByConnId(uint8_t connectionId) {
         hostConnection->type = HostConnectionType_Empty;
         memset(&hostConnection->bleAddress, 0, sizeof(bt_addr_le_t));
         hostConnection->name = (string_segment_t){ .start = NULL, .end = NULL };
-        hostConnection->switchover = false;
     }
     else if (hostConnection->type == HostConnectionType_BtHid) {
         BtPair_Unpair(hostConnection->bleAddress);

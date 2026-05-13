@@ -346,10 +346,10 @@ static void youAreNotWanted(struct bt_conn *conn) {
     uint32_t currentTime = k_uptime_get_32();
 
     if (currentTime - lastAttemptTime < 1000 && BtAddrEq(bt_conn_get_dst(conn), &lastAddr)) {
-        LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)", GetPeerStringByConn(conn));
+        LOG_WRN("Refusing connenction %s (this is not the active connection)(this is repeated attempt!)", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_REASON_HID_GIVE_US_BREAK);
     } else {
-        LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))", GetPeerStringByConn(conn), SelectedHostConnectionId);
+        LOG_WRN("Refusing connenction %s (this is not the active connection (%d))", GetPeerStringByConn(conn), ActiveHostConnectionId);
         safeDisconnect(conn, BT_REASON_TEMPORARY);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
@@ -476,51 +476,36 @@ static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthentic
 static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
 
-    bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
+    // We need to "reserve" the last slot for the user's active host only while
+    // that host isn't already connected. Once it is connected/ready, we
+    // happily accept other peripheral connections in spare slots (issue #1471).
+    bool weAreSeekingActive = !Connections_ActiveHostIsReady()
+        && Connections_IsHostConnection(ActiveHostConnectionId);
+    bool activeConnectionIsBleHid = weAreSeekingActive
+        && Connections_Type(ActiveHostConnectionId) == ConnectionType_BtHid;
 
     bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
-    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(SelectedHostConnectionId)->bleAddress);
-    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || SelectedHostConnectionId == ConnectionId_Invalid;
+    bool isActiveConnection = weAreSeekingActive
+        && BtAddrEq(addr, &HostConnection(ActiveHostConnectionId)->bleAddress);
+    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !weAreSeekingActive;
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
 
 
     if (isHidCollision) {
-    /**
-     * TODO: uncomment and test this code if we want to allow inplace hid switchover initiated by the remote.
-     *       I predict this is not workable due to aggressive connection policies of third parties.
-        if (SelectedHostConnectionId == ConnectionId_Invalid) {
-            host_connection_t *hostConnection = HostConnection(connectionId);
-            bool wantSwitch = hostConnection != NULL && hostConnection->switchover;
-            if (wantSwitch) {
-                disconnectAllHids();
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            if (isSelectedConnection) {
-                disconnectAllHids();
-                return true;
-            } else {
-                return false;
-            }
-        }
-    */
-
         // We can get here during pairing where the connection collides with itself.
         LOG_INF("    Not wanted: this is HID collision");
         return false;
-    } else if (selectedConnectionIsBleHid) {
-        if (!isSelectedConnection) {
-            LOG_INF("    Not wanted: selected connection is BLE HID, this is not it: %d != %d (%d)", SelectedHostConnectionId, connectionId, connectionType);
+    } else if (activeConnectionIsBleHid) {
+        if (!isActiveConnection) {
+            LOG_INF("    Not wanted: active connection is BLE HID, this is not it: %d != %d (%d)", ActiveHostConnectionId, connectionId, connectionType);
         }
-        return isSelectedConnection;
+        return isActiveConnection;
     }
     else {
-        bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+        bool result = weHaveSlotToSpare || isActiveConnection || isLeftConnection;
         if (!result) {
-            LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (%d != %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
-                SelectedHostConnectionId, connectionId, connectionType, isLeftConnection);
+            LOG_INF("    Not wanted: haveSlot: %d, isActive: %d (%d != %d (%d)), isLeft: %d", weHaveSlotToSpare, isActiveConnection,
+                ActiveHostConnectionId, connectionId, connectionType, isLeftConnection);
         }
         return result;
     }
@@ -732,7 +717,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, true, connectionId, connectionType)) {
-        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection(%d))", connectionId, SelectedHostConnectionId);
+        LOG_WRN("Refusing authenticated connenction %d (this is not the active connection(%d))", connectionId, ActiveHostConnectionId);
         youAreNotWanted(conn);
         return;
     }
@@ -927,9 +912,10 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
             }
         }
 
-        HostConnection_SetSelectedConnection(connectionId);
+        // Issue #1471: newly paired host becomes the user's active host.
+        Connections_SwitchToHost(connectionId);
 
-        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d", connectionId, SelectedHostConnectionId);
+        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Active conn is %d", connectionId, ActiveHostConnectionId);
 
         // we have to connect from here, because central changes its address *after* setting security
         connectAuthenticatedConnection(conn, connectionId, connectionType);
@@ -1104,21 +1090,22 @@ ATTR_UNUSED static void disconnectAllHids() {
 
 void BtConn_ReserveConnections() {
 #if DEVICE_IS_UHK80_RIGHT
-    bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
-    uint8_t hostState = hostSelected ? Connections_GetState(SelectedHostConnectionId) : ConnectionState_Disconnected;
-    bool hostActive = hostSelected && hostState >= ConnectionState_Connected;
-    bool selectionIsSatisfied = !hostSelected || hostActive;
+    // Issue #1471: was gated on SelectedHostConnectionId. Now: when the user's
+    // active host is a BT host and isn't currently reachable, free a slot for it.
+    bool needToReachActive = !Connections_ActiveHostIsReady()
+        && Connections_IsHostConnection(ActiveHostConnectionId)
+        && Connections_Type(ActiveHostConnectionId) != ConnectionType_UsbHidRight;
 
-    if (!selectionIsSatisfied) {
+    if (needToReachActive) {
         // clear filters and restart advertising
         BtAdvertise_Stop();
 
         BtConn_DisconnectAllUnidentified();
 
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
-        bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
+        bool activeConnectionIsBleHid = Connections_Type(ActiveHostConnectionId) == ConnectionType_BtHid;
 
-        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
+        if (activeConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
             disconnectAllHids();
             // Advertising will get started when the host actually gets disconnected
         } else if (unusedConnectionCount == 0) {
@@ -1128,13 +1115,10 @@ void BtConn_ReserveConnections() {
             BtManager_StartScanningAndAdvertisingAsync(false, "ReserveConnections");
         }
         WIDGET_REFRESH(&TargetWidget);
-    } else {
-        // TODO: what should we do if the selected connection is connected but not ready?
-        // Is this even a legal code path?
-        // Just log for now.
-        if (hostState == ConnectionState_Connected) {
-            LOG_WRN("Selected host is connected but not yet ready in ReserveConnections. Waiting...");
-        }
+    } else if (Connections_IsHostConnection(ActiveHostConnectionId)
+        && Connections_GetState(ActiveHostConnectionId) == ConnectionState_Connected) {
+        // Active host connected but not yet ready. Just log.
+        LOG_WRN("Active host is connected but not yet ready in ReserveConnections. Waiting...");
     }
 #endif
 }

@@ -1965,7 +1965,8 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
     }
     else if (ConsumeToken(ctx, "lastSelected")) {
         DRY_RUN_FINISH();
-        HostConnections_SelectLastSelectedConnection();
+        // Selected/LastSelected state was removed (issue #1471); treat as "last".
+        HostConnections_SelectLastConnection();
     }
     else {
         if (!Macros_DryRun) {

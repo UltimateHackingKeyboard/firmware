@@ -11,6 +11,7 @@
 
 #ifdef __ZEPHYR__
 #include "bt_conn.h"
+#include "connections.h"
 #endif
 
 static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connection_t* hostConnection) {
@@ -117,6 +118,13 @@ parser_error_t ParseHostConnections(config_buffer_t *buffer) {
     }
 
     deduplicateUnregisteredConnections();
+
+#ifdef __ZEPHYR__
+    if (!ParserRunDry) {
+        // Issue #1471: first non-Empty host slot becomes the default Active host.
+        Connections_InitDefaultActive();
+    }
+#endif
 
     return ParserError_Success;
 }

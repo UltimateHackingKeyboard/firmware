@@ -27,8 +27,6 @@ connection_t Connections[ConnectionId_Count] = {
 
 connection_id_t LastActiveHostConnectionId = ConnectionId_Invalid;
 connection_id_t ActiveHostConnectionId = ConnectionId_Invalid;
-connection_id_t SelectedHostConnectionId = ConnectionId_Invalid;
-connection_id_t LastSelectedHostConnectionId = ConnectionId_Invalid;
 
 static connection_id_t resolveAliases(connection_id_t connectionId) {
     if (!Connections[connectionId].isAlias) {
@@ -116,13 +114,12 @@ static void reportConnectionState(connection_id_t connectionId) {
     }
 
     const char* activeLabel = connectionId == ActiveHostConnectionId ? ", Active" : "";
-    const char* selectedLabel = connectionId == SelectedHostConnectionId ? ", Selected" : "";
 
     if (isHostConnection) {
         host_connection_t* hc = HostConnection(connectionId);
-        LOG_INF("%s: %d(%.*s, %s)%s%s%s%s", name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LOG_INF("%s: %d(%.*s, %s)%s%s%s", name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel);
     } else {
-        LOG_INF("%s: (%s)%s%s%s%s", name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LOG_INF("%s: (%s)%s%s%s", name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel);
     }
 }
 
@@ -152,8 +149,8 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
         Connections_ResetWatermarks(connectionId);
 
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
-            Connections_HandleSwitchover(connectionId, false);
-            // Connections_HandleSwitchover calls DeviceState_Update for us
+            Connections_HandleConnectionStateChange(connectionId);
+            // Connections_HandleConnectionStateChange calls DeviceState_Update for us
         } else {
             DeviceState_Update(Connections_Target(connectionId));
         }
@@ -324,9 +321,7 @@ connection_id_t Connections_GetNewBtHidConnectionId() {
 
 void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId, connection_id_t newConnectionId) {
     bool isOldActive = oldConnectionId == ActiveHostConnectionId;
-    bool isOldSelected = oldConnectionId == SelectedHostConnectionId;
     bool isNewActive = newConnectionId == ActiveHostConnectionId;
-    bool isNewSelected = newConnectionId == SelectedHostConnectionId;
 
     // Save both connection states
     uint8_t oldPeerId = Connections[oldConnectionId].peerId;
@@ -360,13 +355,6 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
         ActiveHostConnectionId = oldConnectionId;
     }
 
-    // Update selected connection ID
-    if (isOldSelected) {
-        SelectedHostConnectionId = newConnectionId;
-    } else if (isNewSelected) {
-        SelectedHostConnectionId = oldConnectionId;
-    }
-
     if (isOldActive || isNewActive) {
         WIDGET_REFRESH(&TargetWidget);
     }
@@ -383,6 +371,11 @@ bool Connections_IsReady(connection_id_t connectionId) {
 
 bool Connections_IsActiveHostConnection(connection_id_t connectionId) {
     return resolveAliases(connectionId) == ActiveHostConnectionId;
+}
+
+bool Connections_ActiveHostIsReady(void) {
+    return ActiveHostConnectionId != ConnectionId_Invalid
+        && Connections[ActiveHostConnectionId].state == ConnectionState_Ready;
 }
 
 static void setDongleToStandby(connection_id_t connectionId) {
@@ -402,56 +395,57 @@ static void updateLastConnection(connection_id_t lastConnId, connection_id_t new
     }
 }
 
-static void switchOver(connection_id_t connectionId) {
+// Switch the keyboard's active host to `connectionId`. This is the only path that
+// mutates ActiveHostConnectionId. It is invoked exclusively from explicit user
+// actions (key/macro switch, pairing complete, boot default). Automatic switchover
+// based on connection events was removed (issue #1471).
+void Connections_SwitchToHost(connection_id_t connectionId) {
+    connectionId = resolveAliases(connectionId);
+    if (!Connections_IsHostConnection(connectionId)) {
+        return;
+    }
+    if (connectionId == ActiveHostConnectionId) {
+        return;
+    }
+
+    setDongleToStandby(ActiveHostConnectionId);
     updateLastConnection(ActiveHostConnectionId, connectionId);
 
     ActiveHostConnectionId = connectionId;
-    Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
-
-    if (connectionId == SelectedHostConnectionId) {
-        HostConnection_SetSelectedConnection(ConnectionId_Invalid);
+    if (Connections[connectionId].peerId != PeerIdUnknown) {
+        Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
     }
 
     Hid_UpdateKeyboardLedsState();
+    reportConnectionState(connectionId);
+    DeviceState_Update(Connections_Target(connectionId));
 }
 
-void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
+// Called on connection state changes. Active is sticky (never reset on disconnect),
+// so we just propagate the state change for reporting and HID gating.
+void Connections_HandleConnectionStateChange(connection_id_t connectionId) {
     connectionId = resolveAliases(connectionId);
-    bool isReady = Connections_IsReady(connectionId);
-
-    // Unset if disconnected
-    if (connectionId == ActiveHostConnectionId && !isReady) {
-        updateLastConnection(ActiveHostConnectionId, ConnectionId_Invalid);
-        ActiveHostConnectionId = ConnectionId_Invalid;
+    reportConnectionState(connectionId);
+    if (connectionId == ActiveHostConnectionId) {
+        // Refresh OLED so the "not connected" suffix on the Active host updates.
+        WIDGET_REFRESH(&TargetWidget);
     }
-
-    // Decide whether to switch to the supplied connection
-    if (isReady && Connections_IsHostConnection(connectionId)) {
-        host_connection_t *hostConnection = HostConnection(connectionId);
-        bool connectionIsSelected = SelectedHostConnectionId == connectionId;
-        bool noHostIsConnected = ActiveHostConnectionId == ConnectionId_Invalid;
-        if (hostConnection->switchover || noHostIsConnected || forceSwitch || connectionIsSelected) {
-            if (connectionId != ActiveHostConnectionId) {
-                setDongleToStandby(ActiveHostConnectionId);
-            }
-            switchOver(connectionId);
-            reportConnectionState(connectionId);
-        }
-    }
-
-    // If current target is not usable
-    if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        // Find the first ready host connection
-        for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
-            if (Connections[i].state == ConnectionState_Ready) {
-                switchOver(i);
-                reportConnectionState(i);
-                break;
-            }
-        }
-    }
-
     DeviceState_Update(Connections_Target(connectionId));
+}
+
+// Pick the first non-Empty host slot as Active. Called once after the config has
+// been parsed. No-op if Active was already set (e.g. config reload at runtime).
+void Connections_InitDefaultActive(void) {
+    if (ActiveHostConnectionId != ConnectionId_Invalid) {
+        return;
+    }
+    for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
+        if (HostConnection(i)->type != HostConnectionType_Empty) {
+            ActiveHostConnectionId = i;
+            reportConnectionState(i);
+            return;
+        }
+    }
 }
 
 connection_target_t Connections_DeviceToTarget(device_id_t deviceId) {

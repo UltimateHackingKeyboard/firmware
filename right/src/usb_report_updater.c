@@ -424,12 +424,7 @@ static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionId
     if (KeyState_DeactivatedNow(keyState)) {
         if (inProgress == keyState && currentTime - startTime < unpairTimeout) {
             inProgress = NULL;
-            uint8_t connId = hostConnectionIdx + ConnectionId_HostConnectionFirst;
-            if (connId == SelectedHostConnectionId) {
-                HostConnection_Unselect();
-            } else {
-                HostConnections_SelectByHostConnIndex(hostConnectionIdx);
-            }
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
         }
     }
 
@@ -458,7 +453,8 @@ static void applyConnectionActionPress(connection_action_t command, uint8_t host
             HostConnections_SelectPreviousConnection();
             break;
         case ConnectionAction_LastSelected:
-            HostConnections_SelectLastSelectedConnection();
+            // Selected/LastSelected state was removed (issue #1471); treat as "Last".
+            HostConnections_SelectLastConnection();
             break;
         case ConnectionAction_SwitchByHostConnectionId:
             //handled elsewhere
@@ -932,8 +928,8 @@ static void reportRetry(errno_t err) {
 
 static void handleFail(errno_t errorCode) {
 #ifdef __ZEPHYR__
-    if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        LOG_WRN("Send failed: no connection selected: %s\n", ErrToStr(errorCode));
+    if (!Connections_ActiveHostIsReady()) {
+        LOG_WRN("Send failed: active host not ready: %s\n", ErrToStr(errorCode));
     } else {
         LOG_WRN("Send failed: %s\n", ErrToStr(errorCode));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {

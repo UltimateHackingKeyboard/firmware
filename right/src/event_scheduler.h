@@ -46,7 +46,6 @@
         EventSchedulerEvent_CheckDongleProtocolVersion,
         EventSchedulerEvent_PutBackToShutDown,
         EventSchedulerEvent_BlinkStatusIcons,
-        EventSchedulerEvent_UnselectHostConnection,
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_CheckLeftBleVsUart,

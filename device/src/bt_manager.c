@@ -136,7 +136,9 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     }
 
     bool weArePairing = BtPair_PairingMode == PairingMode_PairHid;
-    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
+    // We're "switching" whenever the user's active host isn't reachable yet
+    // (was: SelectedHostConnectionId != Invalid). Issue #1471.
+    bool weAreSwitching = !Connections_ActiveHostIsReady();
 
     if (weArePairing || weAreSwitching) {
         expDelay = minDelay;

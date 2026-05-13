@@ -39,4 +39,3 @@
     ATTRS void PowerMode_PutBackToSleepMaybe(void) {};
     ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
     ATTRS void NotificationScreen_NotifyFor(const char* message, uint16_t duration) {};
-    ATTRS void HostConnection_Unselect() {};
