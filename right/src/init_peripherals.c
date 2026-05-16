@@ -123,6 +123,11 @@ static void initI2cBus(i2c_bus_t *i2cBus)
     i2c_master_config_t masterConfig;
     I2C_MasterGetDefaultConfig(&masterConfig);
     masterConfig.baudRate_Bps = i2cBus == &i2cMainBus ? I2cMainBusRequestedBaudRateBps : I2C_EEPROM_BUS_BAUD_RATE;
+    // Glitch filter is only enabled on the main bus, where the inter-half cable
+    // is exposed to external EMI. The EEPROM bus runs at 1 MHz on short on-PCB
+    // traces, so the filter is left disabled there to keep the SCL high time
+    // within Fast-mode Plus margins.
+    masterConfig.glitchFilterWidth = i2cBus == &i2cMainBus ? 15U : 0U;
     uint32_t sourceClock = CLOCK_GetFreq(i2cBus->clockSrc);
     uint32_t baudrate = I2C_MasterInit(i2cBus->baseAddr, &masterConfig, sourceClock);
 
