@@ -470,55 +470,63 @@ void Messenger_ProcessQueue() {
     }
 }
 
-void Messenger_SendMessage(message_t* message) {
+int Messenger_SendMessage(message_t* message) {
     connection_id_t connectionId = message->connectionId;
     device_id_t dst = message->dst;
 
+    int err = 0;
 
     switch (connectionId) {
         case ConnectionId_UartLeft:
         case ConnectionId_UartRight:
 #if DEVICE_IS_KEYBOARD
-            UartBridge_SendMessage(message);
+            err = UartBridge_SendMessage(message);
 #endif
             break;
         case ConnectionId_NusClientRight:
 #if defined(CONFIG_BT_NUS) && defined(CONFIG_BT_PERIPHERAL)
-            NusServer_SendMessage(message);
+            err = NusServer_SendMessage(message);
 #endif
             break;
         case ConnectionId_HostConnectionFirst ... ConnectionId_HostConnectionLast:
             if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
 #if defined(CONFIG_BT_NUS) && defined(CONFIG_BT_PERIPHERAL)
-                NusServer_SendMessageTo(message, Peers[Connections[connectionId].peerId].conn);
+                err = NusServer_SendMessageTo(message, Peers[Connections[connectionId].peerId].conn);
+                if (err) {
+                    printk("Failed to send message from %s to %s over NUS Server connection; err %d\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst), err);
+                }
 #endif
             } else {
                 printk("Failed to send message from %s to %s; incompatible connection type\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
+                err = -1;
             }
             break;
         case ConnectionId_NusServerRight:
         case ConnectionId_NusServerLeft:
 #ifdef CONFIG_BT_NUS_CLIENT
-            NusClient_SendMessage(message);
+            err = NusClient_SendMessage(message);
 #endif
             break;
         default:
             printk("Failed to send message from %s to %s\n", Utils_DeviceIdToString(DEVICE_ID), Utils_DeviceIdToString(dst));
+            err = -1;
             break;
     }
 
-    const char *desc1, *desc2;
-    getMessageDescription(message->messageId[0], message->messageId[1], &desc1, &desc2);
-    desc1 = desc1 == NULL ? "" : desc1;
-    desc2 = desc2 == NULL ? "" : desc2;
     if (DEBUG_LOG_MESSAGES) {
+        const char *desc1, *desc2;
+        getMessageDescription(message->messageId[0], message->messageId[1], &desc1, &desc2);
+        desc1 = desc1 == NULL ? "" : desc1;
+        desc2 = desc2 == NULL ? "" : desc2;
         LogU("Sen %d        %d %s %s\n", connectionId, message->wm, desc1, desc2);
     }
 
     Trace('O');
+
+    return err;
 }
 
-void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {
+int Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len) {
     message_t msg = {
         .data = data,
         .len = len,
@@ -528,10 +536,10 @@ void Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uin
         .dst = dst,
         .connectionId = determineChannel(dst),
     };
-    Messenger_SendMessage(&msg);
+    return Messenger_SendMessage(&msg);
 }
 
-void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
+int Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
     message_t msg = {
         .data = data,
         .len = len,
@@ -542,10 +550,10 @@ void Messenger_Send2(device_id_t dst, uint8_t messageId, uint8_t messageId2, con
         .dst = dst,
         .connectionId = determineChannel(dst),
     };
-    Messenger_SendMessage(&msg);
+    return Messenger_SendMessage(&msg);
 }
 
-void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
+int Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t messageId, uint8_t messageId2, const uint8_t* data, uint16_t len) {
     message_t msg = {
         .data = data,
         .len = len,
@@ -556,7 +564,7 @@ void Messenger_Send2Via(device_id_t dst, connection_id_t connectionId, uint8_t m
         .dst = dst,
         .connectionId = connectionId,
     };
-    Messenger_SendMessage(&msg);
+    return Messenger_SendMessage(&msg);
 }
 
 void Messenger_Init() {

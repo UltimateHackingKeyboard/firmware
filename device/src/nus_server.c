@@ -13,6 +13,7 @@
 #include <zephyr/logging/log.h>
 #include "bt_manager.h"
 #include "hid/transport.h"
+#include "config_manager.h"
 
 LOG_MODULE_REGISTER(NusServer, LOG_LEVEL_INF);
 
@@ -85,12 +86,13 @@ void NusServer_Disconnected() {
     }
 }
 
-static void send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {
+static int send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {
     int err = bt_nus_send(conn, data, len);
     if (err) {
         k_sem_give(&nusBusy);
         LOG_WRN("Failed to send data over BLE connection (err: %d)", err);
     }
+    return err;
 }
 
 bool NusServer_Availability(messenger_availability_op_t operation) {
@@ -108,8 +110,12 @@ bool NusServer_Availability(messenger_availability_op_t operation) {
     }
 }
 
-void NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
+int NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
+    int err = 0;
+
+    Trace_Printc("c1");
     SEM_TAKE(&nusBusy);
+    Trace_Printc("c2");
 
     // Call this only after we have taken the semaphore.
     Resend_RegisterMessageAndUpdateWatermarks(msg);
@@ -127,15 +133,19 @@ void NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
 
     if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
         LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", buffer[0], buffer[1]);
-        return;
+        return -1;
     }
 
     memcpy(&buffer[bufferIdx], msg->data, msg->len);
     bufferIdx += msg->len;
 
-    send_raw_buffer(buffer, bufferIdx, conn);
+    Trace_Printc("c3");
+    err = send_raw_buffer(buffer, bufferIdx, conn);
+    Trace_Printc("c4");
+
+    return err;
 }
 
-void NusServer_SendMessage(message_t* msg) {
-    NusServer_SendMessageTo(msg, NULL);
+int NusServer_SendMessage(message_t* msg) {
+    return NusServer_SendMessageTo(msg, NULL);
 }

@@ -2,6 +2,7 @@
 
 NCS_VERSION=v2.8.0
 
+NICE="nice -n 15"
 ROOT_HASH=`realpath . | md5sum | sed 's/ .*//g'`
 BUILD_SESSION_NAME="buildsession_$ROOT_HASH"
 UART_SESSION_NAME="uartsession_$ROOT_HASH"
@@ -278,13 +279,13 @@ function performMcuxAction() {
     case $ACTION in
         build)
             rm -rf $BUILD_DIR
-            west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" --pristine -- --preset "$VARIANT"
+            $NICE west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" --pristine -- --preset "$VARIANT"
             exitOnFail $?
 
             createCentralCompileCommands
             ;;
         make)
-            west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" -- --preset "$VARIANT"
+            $NICE west build --build-dir "$BUILD_DIR" "$DEVICE_DIR" -- --preset "$VARIANT"
             exitOnFail $?
             ;;
 
@@ -321,16 +322,18 @@ function performZephyrAction() {
     case $ACTION in
         build)
             # reference version of the build process is to be found in scripts/make-release.mjs
-            ZEPHYR_TOOLCHAIN_VARIANT=zephyr west build \
+            ZEPHYR_TOOLCHAIN_VARIANT=zephyr \
+                $NICE \
+                west build \
                 --build-dir "$ROOT/device/build/$DEVICE" "$ROOT/device" \
                 --pristine \
                 -- \
-                --preset $DEVICE
+                --preset $DEVICE 
             exitOnFail $?
             createCentralCompileCommands
             ;;
         make)
-            west build --build-dir $ROOT/device/build/$DEVICE device
+            $NICE west build --build-dir $ROOT/device/build/$DEVICE device
             exitOnFail $?
             ;;
         flash)

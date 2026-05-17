@@ -175,10 +175,10 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
-        // TODO: propagate underlying error up the stack
-        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
-            SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
-        err = 0;
+        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
+        if (err != 0) {
+            printk("Failed to send keyboard report to dongle: %d\n", err);
+        }
         break;
 #endif
     default:
@@ -218,10 +218,10 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
-        // TODO: propagate underlying error up the stack
-        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
-            SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
-        err = 0;
+        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
+        if (err != 0) {
+            printk("Failed to send mouse report to dongle: %d\n", err);
+        }
         break;
 #endif
     default:
@@ -261,10 +261,10 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
-        // TODO: propagate underlying error up the stack
-        Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
-            SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
-        err = 0;
+        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
+        if (err != 0) {
+            printk("Failed to send controls report to dongle: %d\n", err);
+        }
         break;
 #endif
     default:
@@ -311,6 +311,7 @@ static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
     }
     if (changed) {
         EventVector_Set(EventVector_KeyboardLedState);
+        EventVector_WakeMain();
     }
 
 #ifdef __ZEPHYR__

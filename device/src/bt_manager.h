@@ -27,4 +27,6 @@
     void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel);
     void BtManager_EnterMode(pairing_mode_t mode, bool toggle);
 
+    void BtManager_CheckLeftBleVsUart();
+
 #endif // __BT_MANAGER_H__

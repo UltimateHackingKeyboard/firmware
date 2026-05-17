@@ -5,6 +5,7 @@
 #include "messenger.h"
 #include "messenger_queue.h"
 #include "device.h"
+#include "bt_manager.h"
 #include "debug.h"
 #include "connections.h"
 #include "resend.h"
@@ -144,11 +145,11 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
     }
 }
 
-void UartBridge_SendMessage(message_t* msg) {
+int UartBridge_SendMessage(message_t* msg) {
     uart_state_t *uartState = &bridgeState;
 
     if (uartState == NULL || uartState->core.device == NULL) {
-        return;
+        return -1;
     }
 
     int err;
@@ -170,10 +171,12 @@ void UartBridge_SendMessage(message_t* msg) {
 
     UartParser_FinalizeMessage(&uartState->parser);
 
-    UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+    err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
 
     uartState->lastMessageSentTime = k_uptime_get();
     uartState->txState = UartTxState_WaitingForAck;
+
+    return err;
 }
 
 static void sendControl(uart_state_t *uartState, uint8_t byte) {
@@ -210,6 +213,13 @@ static void updateConnectionState(uart_state_t *uartState) {
         Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
         k_sem_give(&uartState->txBufferBusy);
         k_sem_give(&uartState->core.txControlBusy);
+        if (DEVICE_IS_UHK80_LEFT) {
+            if (newIsConnected) {
+                EventScheduler_Reschedule( Timer_GetCurrentTime() + 10000, EventSchedulerEvent_CheckLeftBleVsUart, "Left UART up — schedule BLE vs UART check");
+            } else {
+                BtManager_CheckLeftBleVsUart();
+            }
+        }
     }
 }
 

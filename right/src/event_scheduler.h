@@ -50,6 +50,7 @@
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
+        EventSchedulerEvent_CheckLeftBleVsUart,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
