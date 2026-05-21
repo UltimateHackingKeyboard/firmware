@@ -242,6 +242,8 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
 #if DEVICE_IS_UHK_DONGLE
     uint8_t retryCounter = 0;
     while (ShouldResendReport(ret == 0, &retryCounter)) {
+        uint16_t delay = GetResendThrottleDelay(retryCounter);
+        k_sleep(K_MSEC(delay));
         k_sem_take(&dongleUsbSem, K_MSEC(128));
         ret = sendDongleReport(propertyId, message);
     }
