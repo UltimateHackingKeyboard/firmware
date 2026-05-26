@@ -372,7 +372,7 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_cached_t *
     if ( IS_SECONDARY_ROLE_LAYER_SWITCHER(secondaryRole) ) {
         // If the cached action is the current base role, then hold, otherwise keymap was changed. In that case do nothing just
         // as a well behaved hold action should.
-        if(KeyState_Active(keyState) && cachedAction->originKeymap == CurrentKeymapIndex) {
+        if(KeyState_Active(keyState)) {
             LayerSwitcher_HoldLayer(SECONDARY_ROLE_LAYER_TO_LAYER_ID(secondaryRole), false);
         }
         if (KeyState_ActivatedNow(keyState) || KeyState_DeactivatedNow(keyState)) {
@@ -642,6 +642,7 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
         keyState->current = active;
+        EventVector_Set(EventVector_NativeActionsPostponing);
     }
     Macros_WakeBecauseOfKeystateChange();
 }
@@ -740,13 +741,24 @@ static void updateActionStates() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
+            //key_action_cached_t *cachedAction;
+
+            if(KEYSTATE_KEYINACTIVE(keyState)) {
+                continue;
+            }
+             
+            preprocessKeyState(keyState);
+        }
+    }
+
+    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_cached_t *cachedAction;
 
             if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
             }
-
-            preprocessKeyState(keyState, false);
 
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
@@ -760,14 +772,10 @@ static void updateActionStates() {
                     actionCache[slotId][keyId].action = (key_action_t){.type = KeyActionType_None};
                     EventVector_Set(EventVector_NativeActionsPostponing);
                 }
-                else if (chordRes == ChordResolution_Resolved) {
-
-                }
                 if (chordRes == ChordResolution_Failed && KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;
-                    actionCache[slotId][keyId].originKeymap = CurrentKeymapIndex;
                     ++keyState->activationId;
                     KeyHistory_RecordPress(keyState);
 

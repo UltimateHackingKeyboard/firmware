@@ -853,7 +853,9 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
 
 static macro_variable_t chordAction(parser_context_t* ctx, set_command_action_t action)
 {
-    uint8_t layerId = Macros_ConsumeLayerId(ctx);
+    bool hasLayer = TryConsumeDot(ctx);
+
+    uint8_t layerId = hasLayer ? Macros_ConsumeLayerId(ctx) : LayerId_None;
 
     uint8_t keyCount = 0;
     uint8_t keys[MAX_CHORD_KEYS];
@@ -1061,7 +1063,6 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         return keymapAction(ctx, action);
     }
     else if (ConsumeToken(ctx, "chord")) {
-        ConsumeUntilDot(ctx);
         return chordAction(ctx, action);
     }
     else if (ConsumeToken(ctx, "navigationModeAction")) {

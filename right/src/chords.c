@@ -45,11 +45,10 @@ uint8_t findUsedKeys(chord_keys_t unusedKeys, uint8_t keyCount, const chord_def_
     return keyCount;
 }
 
-void handleUpdateKeysOfDeletedChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount) {
-    // Now figure out what keys should be marked as now unused
+void handleUpdateKeysOfDeletedChordOnLayer(uint8_t layer, chord_keys_t keys, uint8_t keyCount) {
     for (int i = 0; i < ChordCount; ++i) {
         if (Chords[i].layer < layer) continue;
-        if (Chords[i].layer > layer) break;
+        if (Chords[i].layer > layer && Chords[i].layer != LayerId_None) continue;
         if ((keyCount = findUsedKeys(keys, keyCount, &Chords[i])) == 0) break;
     }
 
@@ -58,20 +57,44 @@ void handleUpdateKeysOfDeletedChord(uint8_t layer, chord_keys_t keys, uint8_t ke
     }
 }
 
+void handleUpdateKeysOfDeletedChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount) {
+    if (layer == LayerId_None) {
+        for (layer_id_t laier = LayerId_Base; laier < LayerId_Count; ++laier) {
+            handleUpdateKeysOfDeletedChordOnLayer(laier, keys, keyCount);
+        }
+    }
+    else {
+        handleUpdateKeysOfDeletedChordOnLayer(layer, keys, keyCount);
+    }
+}
+
+void markKeysAsPartsOfChord(chord_def_t *chord) {
+    for (uint8_t i = 0; i < chord->keyCount; ++i) {
+        if (chord->layer != LayerId_None) {
+            CurrentKeymap[chord->layer][chord->keys[i]/64][chord->keys[i]%64].isPartOfChord = true;
+        }
+        else {
+            for (layer_id_t j = 0; j < LayerId_Count; ++j) {
+                CurrentKeymap[j][chord->keys[i]/64][chord->keys[i]%64].isPartOfChord = true;
+            }
+        }
+    }
+}
+
 
 /*
 Chords are stored sorted as follows:
-First by layer, direction doesn't matter, to group by layer
+First by layer, ascending to put the any layer (255) last
 Then ascending by key count - ascending, this matters
 Then by key id list, direction doesn't matter, only that they're sorted consistently
 */
-static inline int8_t compareToChord(const chord_def_t *left, uint8_t layer, uint8_t keyCount, const chord_keys_t keys) {
+static inline int16_t compareToChord(const chord_def_t *left, layer_id_t layer, uint8_t keyCount, const chord_keys_t keys) {
     // These could be collapsed and optimized more if we're willing to do union with a bitfield, but that's hacky
     if (left->layer != layer) {
-        return left->layer - layer;
+        return (int16_t)left->layer - layer;
     }
     if (left->keyCount != keyCount) {
-        return left->keyCount - keyCount;
+        return (int16_t)left->keyCount - keyCount;
     }
     return memcmp(left->keys, keys, keyCount);
 }
@@ -82,7 +105,7 @@ bool Chords_TryAddChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount, key_
 
     // Find a spot
     uint8_t i = 0;
-    int8_t chordCmp = 1; // Initialize to not zero to not overwrite first on empty list
+    int16_t chordCmp = 1; // Initialize to not zero to not overwrite first on empty list
     while (i < ChordCount && (chordCmp = compareToChord(&Chords[i], layer, keyCount, keys)) < 0) {++i;}
 
     if (chordCmp == 0) {
@@ -90,7 +113,6 @@ bool Chords_TryAddChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount, key_
         if (action->type == KeyActionType_None) {
             // Erase the chord
             memmove(&Chords[i], &Chords[i + 1], sizeof(chord_def_t) * (--ChordCount - i));
-            memset(&Chords[ChordCount], 0, sizeof(chord_def_t));
             handleUpdateKeysOfDeletedChord(layer, keys, keyCount);
             return true;
         }
@@ -118,9 +140,7 @@ bool Chords_TryAddChord(uint8_t layer, chord_keys_t keys, uint8_t keyCount, key_
     chord->keyCount = keyCount;
     chord->layer = layer;
     chord->action = *action;
-    for (i = 0; i < keyCount; ++i) {
-        CurrentKeymap[layer][keys[i]/64][keys[i]%64].isPartOfChord = true;
-    }
+    markKeysAsPartsOfChord(chord);
     return true;
 }
 
@@ -143,51 +163,58 @@ static bool isPartialOfChord(const chord_def_t *large, chord_keys_t keys, uint8_
     return true;
 }
 
-chord_search_result_t Chords_TryGetChordAction(key_action_t *outAction, uint8_t layer, chord_keys_t keys, uint8_t keyCount)
+chord_search_result_t searchForChordAction(key_action_t *outAction, uint8_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
 {
     sortKeys(keys, keyCount);
 
     uint8_t i = 0;
     bool matched = false;
-    bool partial = false;
-
-    // First maybe find the chord
-    for (; i < ChordCount; ++i) {
-        int8_t chordCmp = compareToChord(&Chords[i], layer, keyCount, keys);
-        if (chordCmp < 0) continue;
-        if (chordCmp == 0) {
-            // We found the longest completed chord so far
-            *outAction = Chords[i].action;
-            matched = true;
+    
+    while (true) {
+        // First maybe find the chord
+        if ( !matched ) {
+            for (; i < ChordCount; ++i) {
+                int16_t chordCmp = compareToChord(&Chords[i], layer, keyCount, keys);
+                if (chordCmp < 0) continue;
+                if (chordCmp == 0) {
+                    // We found the longest completed chord so far
+                    *outAction = Chords[i].action;
+                    matched = true;
+                    ++i;
+                }
+                break;
+            }
         }
-        break;
-    }
-    
-    // We now may have a match, but we can't return it yet.
-    // We need to check if we have a potential for a longer chord
-    // Because of the sort order of the chord list, all chords after this slot
-    // with the same layer are same length or longer than the desired chord.
-    
-    // Now iterate until we get to the longer chords in the layer because
-    // we want to see if there are potential matches in them
-    while (i < ChordCount && Chords[i].layer == layer && Chords[i].keyCount == keyCount) {++i;}
+        
+        // We now may have a match, but we can't return it yet.
+        // We need to check if we have a potential for a longer chord
+        // Because of the sort order of the chord list, all chords after this slot
+        // with the same layer are same length or longer than the desired chord.
+        
+        // Now iterate until we get to the longer chords in the layer because
+        // we want to see if there are potential matches in them
+        if ( !noPartial ) {
+            while (i < ChordCount && Chords[i].layer == layer && Chords[i].keyCount == keyCount) {++i;}
 
-    // i is now at the first longer chord in the layer, or the first key in another layer, on at list's end
-    // Now we look for potential matches with more keys
-    while (i < ChordCount && Chords[i].layer == layer) {
-        if (isPartialOfChord(&Chords[i++], keys, keyCount)) {
-            // If we have a partial chord
-            partial = true;
+            // i is now at the first longer chord in the layer, or the first key in another layer, on at list's end
+            // Now we look for potential matches with more keys
+            while (i < ChordCount && Chords[i].layer == layer) {
+                if (isPartialOfChord(&Chords[i++], keys, keyCount)) {
+                    // If we have a partial chord
+                    return ChordSearch_NonConclusive;
+                }
+            }
+        }
+
+        if (layer == LayerId_None) {
             break;
         }
+        layer = LayerId_None;
     }
 
     if (matched) {
         // We have found an exact match
-        return partial ? ChordSearch_MatchAndPartial : ChordSearch_FinalMatch;
-    }
-    if (partial) {
-        return ChordSearch_PartialOnly;
+        return ChordSearch_FinalMatch;
     }
     return ChordSearch_Nothing;
 }
@@ -198,71 +225,72 @@ void Chords_ResetChords() {
 
 static struct {
     key_state_t *initialKey;
-    uint32_t initialTime;
-} ResolutionState;
+    volatile uint32_t initialTime;
+} volatile ResolutionState;
 
 static inline void finishResolution() {
+    // Fake activation of the key now.
     ResolutionState.initialKey->current = true;
     ResolutionState.initialKey->previous = false;
+    // Then clear the resolution state.
     memset(&ResolutionState, 0, sizeof(ResolutionState));
 }
 
 #define DOWAIT(start) EventScheduler_Schedule(start + Cfg.ChordTimeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord");\
     return ChordResolution_Wait;
+
 #define DOFAIL         finishResolution();\
         return ChordResolution_Failed;
+
 #define RESOLVED         PostponerExtended_ConsumePendingKeypresses(keyCount, true);\
         finishResolution();\
         return ChordResolution_Resolved;
-#define MUSTCHOOSE ((ResolutionState.initialTime + Cfg.ChordTimeout <= Timer_GetCurrentTime()) || PostponerQuery_IsKeyReleased(keyState))
 
 chord_resolution_t Chords_Driver(key_state_t *keyState, uint8_t layer, key_action_t *resolvedAction)
 {
+    uint32_t start = Timer_GetCurrentTimeMicros();
     if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
         ResolutionState.initialKey = keyState;
         ResolutionState.initialTime = CurrentPostponedTime;
-        DOWAIT(CurrentPostponedTime)
     }
     else if (ResolutionState.initialKey != keyState) {
         return ChordResolution_Failed;
     }
 
     chord_keys_t pressedKeys;
-    uint8_t keyCount = PostponerQuery_GetPendingKeypresses(pressedKeys, MAX_CHORD_KEYS);
+    uint8_t keyCount = PostponerQuery_GetPendingKeypresses(pressedKeys, MAX_CHORD_KEYS, ResolutionState.initialTime + Cfg.ChordTimeout);
     if(keyCount == MAX_CHORD_KEYS) {
+        // We have mashed more keys than we support in chords.
+        // Note that next key in line might trigger chord with the rest, this one just doesn't.
         DOFAIL
     }
  
     pressedKeys[keyCount] = Utils_KeyStateToKeyId(keyState);
 
-    //Macros_SetStatusString("KeyCount: ", NULL);
-    //Macros_SetStatusNum(keyCount + 1);
+    const bool isFinalChoice = 
+        (ResolutionState.initialTime + Cfg.ChordTimeout <= Timer_GetCurrentTime()) 
+        || PostponerQuery_IsKeyReleased(keyState);
+
+
+    chord_search_result_t searchRes = searchForChordAction(resolvedAction, layer, pressedKeys, keyCount + 1, isFinalChoice);
+
+    uint32_t elapsed = Timer_GetCurrentTimeMicros() - start;
+    //Macros_SetStatusString("Processing micros: ", NULL);
+    //Macros_SetStatusNum(elapsed);
     //Macros_SetStatusChar('\n');
 
-    chord_search_result_t searchRes = Chords_TryGetChordAction(resolvedAction, layer, pressedKeys, keyCount + 1);
-
-    //Macros_SetStatusString("SearchRes: ", NULL);
-    //Macros_SetStatusNum(searchRes);
-    //Macros_SetStatusNum(MUSTCHOOSE);
-    //Macros_SetStatusNum(ResolutionState.initialTime);
-    //Macros_SetStatusNum(Timer_GetCurrentTime());
-    //Macros_SetStatusNum(KeyState_DeactivatedNow(keyState));
-    //Macros_SetStatusChar('\n');
 
     switch (searchRes) {
     case ChordSearch_FinalMatch:
+        //Macros_SetStatusNum(Timer_GetCurrentTime() - ResolutionState.initialTime);
+        //Macros_SetStatusChar('\n');
+        //Macros_SetStatusString("Matched\n", NULL);
         RESOLVED
     case ChordSearch_Nothing:
+        //Macros_SetStatusString("Failed\n", NULL);
         DOFAIL
-    case ChordSearch_PartialOnly:
-        if (MUSTCHOOSE) {
-            DOFAIL
-        }
-        DOWAIT(ResolutionState.initialTime)
-    case ChordSearch_MatchAndPartial:
-        if (MUSTCHOOSE) {
-            RESOLVED
-        }
+    case ChordSearch_NonConclusive:
+        //Macros_SetStatusString("Partial\n", NULL);
         DOWAIT(ResolutionState.initialTime)
     } 
     return ChordResolution_Failed;

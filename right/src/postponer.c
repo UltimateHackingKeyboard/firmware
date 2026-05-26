@@ -442,12 +442,12 @@ void PostponerQuery_FindFirstReleased(const postponer_buffer_record_type_t** rel
     return;
 }
 
-uint8_t PostponerQuery_GetPendingKeypresses(uint8_t keyIds[], uint8_t maxCount) {
+uint8_t PostponerQuery_GetPendingKeypresses(uint8_t keyIds[], uint8_t maxCount, uint32_t cutoffTime) {
     uint8_t pos = 0;
     uint8_t i = 0;
     while (pos < maxCount) {
         while (i < bufferSize && buffer[POS(i)].event.type != PostponerEventType_PressKey) { ++i; }
-        if (i == bufferSize) break;
+        if (i == bufferSize || buffer[POS(i)].time > cutoffTime) break;
         keyIds[pos++] = Utils_KeyStateToKeyId(buffer[POS(i++)].event.key.keyState);
     }
     return pos;
