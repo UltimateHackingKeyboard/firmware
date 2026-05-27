@@ -70,5 +70,6 @@
 
     hid_keyboard_report_t* GetInactiveKeyboardReport(void);
     bool ShouldResendReport(bool statusOk, uint8_t* counter);
+    uint16_t GetResendThrottleDelay(uint8_t counter);
 
 #endif

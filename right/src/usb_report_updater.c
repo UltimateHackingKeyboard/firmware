@@ -890,9 +890,14 @@ static bool controlsNeedsResending = false;
 static uint8_t mouseRetries = 0;
 static bool mouseNeedsResending = false;
 
-// Try resending a report for maxDelay ms. Give up if it doesn't succeed by then.
-// Once given up, stay given up until some statusOk is seen, so a full queue doesn't
-// freeze for queueLength * maxDelay on replay.
+// Counts retry attempts and decides whether to keep trying. On success, resets
+// the counter and clears the give-up latch. On failure, increments the counter
+// and gives up once MAX_RETRIES is exceeded. Once given up, stay given up until
+// some statusOk is seen, so a full queue doesn't replay one report at a time.
+//
+// Pair with GetResendThrottleDelay() to compute the wait before the next retry.
+// MAX_RETRIES is sized so that the cumulative wait from GetResendThrottleDelay()
+// is ~1024 ms (1+2+4+8+16+32 + 30*32 = 1023).
 bool ShouldResendReport(bool statusOk, uint8_t* counter) {
     static bool givenUp = false;
 
@@ -906,20 +911,30 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
         return false;
     }
 
-    const uint16_t maxDelay = 1024; //ms
-    const uint8_t granularity = 16; //ms
-    uint8_t minimizedTime = Timer_GetCurrentTime() / granularity;
+    const uint8_t MAX_RETRIES = 36;
 
-    if (*counter == 0) {
-        *counter = minimizedTime;
-        return true;
-    } else if ((uint8_t)(minimizedTime - *counter) < (maxDelay / granularity)) {
-        return true;
-    } else {
+    (*counter)++;
+    if (*counter > MAX_RETRIES) {
         *counter = 0;
         givenUp = true;
         return false;
     }
+    return true;
+}
+
+// Exponential backoff for retry throttling: 1, 2, 4, 8, 16, 32 ms, then
+// capped at 32 ms. Keeps initial retries snappy (mouse keys don't stutter on
+// transient USB-busy) while still backing off on sustained failure.
+uint16_t GetResendThrottleDelay(uint8_t counter) {
+    if (counter == 0) {
+        return 0;
+    }
+    const uint8_t MAX_SHIFT = 5; // 1 << 5 == 32 ms
+    uint8_t shift = counter - 1;
+    if (shift > MAX_SHIFT) {
+        shift = MAX_SHIFT;
+    }
+    return (uint16_t)1 << shift;
 }
 
 static void clearMouseMovement(void) {
@@ -995,7 +1010,7 @@ static void sendActiveReports(bool resending) {
                     //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
                     //TODO: consider making it atomic, or lowering semaphore reset delay
                     keyboardNeedsResending = true;
-                    retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
+                    retryThrottleTime = Timer_GetCurrentTime() + GetResendThrottleDelay(keyboardRetries);
                     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
                     EventVector_Set(EventVector_ResendUsbReports);
                 } else {
@@ -1022,7 +1037,7 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &controlsRetries)) {
             reportRetry(ret);
             controlsNeedsResending = true;
-            retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
+            retryThrottleTime = Timer_GetCurrentTime() + GetResendThrottleDelay(controlsRetries);
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
@@ -1048,7 +1063,7 @@ static void sendActiveReports(bool resending) {
         if (ShouldResendReport(ret == 0, &mouseRetries)) {
             reportRetry(ret);
             mouseNeedsResending = true;
-            retryThrottleTime = Timer_GetCurrentTime() + USB_RESEND_DELAY_MS;
+            retryThrottleTime = Timer_GetCurrentTime() + GetResendThrottleDelay(mouseRetries);
             UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
             EventVector_Set(EventVector_ResendUsbReports);
         } else {
