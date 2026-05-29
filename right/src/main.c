@@ -26,6 +26,7 @@
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
 #include "ledmap.h"
+#include "test_suite/test_hooks.h"
 #include "debug.h"
 #include "event_scheduler.h"
 #include "config_parser/config_globals.h"
@@ -247,7 +248,11 @@ int main(void)
 
         while (1) {
             Trace_Printc("{");
-            CopyRightKeystateMatrix();
+            if (TestHooks_Active) {
+                TestHooks_Tick();
+            } else {
+                CopyRightKeystateMatrix();
+            }
 
             if (CurrentPowerMode >= PowerMode_Lock) {
                 checkSleepMode();
