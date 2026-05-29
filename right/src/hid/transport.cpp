@@ -15,6 +15,7 @@ extern "C" {
 #include "timer.h"
 #include "trace.h"
 #include "usb_report_updater.h"
+#include "led_display.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -316,6 +317,10 @@ static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
 
 #ifdef __ZEPHYR__
     StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
+#endif
+
+#if DEVICE_IS_UHK60
+    LedDisplay_SetIcon(LedDisplayIcon_CapsLock, KeyboardLedsState.capsLock);
 #endif
 }
 
