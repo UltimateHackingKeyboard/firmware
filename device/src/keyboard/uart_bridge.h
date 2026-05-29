@@ -20,7 +20,7 @@
 // Functions:
 
     int Uart_SendModuleMessage(i2c_message_t* msg);
-    void UartBridge_SendMessage(message_t* msg);
+    int UartBridge_SendMessage(message_t* msg);
     void UartBridge_Enable();
     void InitUartBridge(void);
 

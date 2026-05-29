@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [17.1.0] - 2026-05-27
+
+Device Protocol: 4.18.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0
+
+- Fix: update numlock/capslock/scrolllock immediately on change. 
+- Fix: don't clog usb hubs by too fast usb retries.
+- Fix: change resending logic to allow up to 1024ms long usb hub stalls without loosing reports, and make usb retries back off exponentially.
+- Fix: in case of failed report sends, always send up-to-date state once the connection is alive again. Should fix remaining stuck key issues present since v12.0.0 firmware.
+- Fix: enable I2C glitch filter to reject EMI above 2 MHz.
+- Fix: bit-shift typo in UHK60v2 led backlight driver configuration.
+- Fix: make uhk80 not freeze on deadlocked semaphores - just report these conditions.
+- Fix: deduplicate Hid vs Dongle connections - prevent issues with dongle getting treated as a ble hid device (and consequently not working), getting written into host config multiple times, etc.
+- Ble: disconnect bluetooth between halves when bridge cable is connected.
+- Macros: add `ifAlreadyRunning/ifNotAlreadyRunning` to simplify reentry guarding. `SMARTMACROS:MINOR`
+- Macros: validate macro event names. `SMARTMACROS:PATCH`
+
 ## [17.0.0] - 2026-04-28
 
 Device Protocol: 4.18.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.13.2

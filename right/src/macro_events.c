@@ -5,6 +5,7 @@
 #include "macro_events.h"
 #include "config_parser/parse_macro.h"
 #include "macros/core.h"
+#include "macros/status_buffer.h"
 #include "keymap.h"
 #include "led_display.h"
 #include "debug.h"
@@ -255,4 +256,93 @@ void MacroEvent_ProcessJoinSplitEvents(merge_sensor_state_t currentlyJoined)
         }
         previousEventMacroSlot = 255;
     }
+}
+
+static void validateLayerToken(const char* tokStart, const char* end) {
+    Macros_ConsumeLayerId(&(parser_context_t){.at = tokStart, .end = end});
+}
+
+static void validateOneEventName(const char* name, const char* nameEnd)
+{
+    const char* arg1 = NextTok(name, nameEnd);
+
+    bool noArgs = TokenMatches(name, nameEnd, "$onInit")
+        || TokenMatches(name, nameEnd, "$onCapsLockStateChange")
+        || TokenMatches(name, nameEnd, "$onNumLockStateChange")
+        || TokenMatches(name, nameEnd, "$onScrollLockStateChange")
+        || TokenMatches(name, nameEnd, "$onJoin")
+        || TokenMatches(name, nameEnd, "$onSplit")
+        || TokenMatches(name, nameEnd, "$onError");
+    if (noArgs) {
+        if (arg1 != nameEnd) {
+            Macros_ReportError("Macro event takes no arguments:", name, nameEnd);
+        }
+        return;
+    }
+
+    if (TokenMatches(name, nameEnd, "$onKeymapChange")) {
+        if (arg1 == nameEnd) {
+            Macros_ReportError("$onKeymapChange requires <keymap-abbreviation> or 'any':", name, nameEnd);
+            return;
+        }
+        return;
+    }
+
+    if (TokenMatches(name, nameEnd, "$onKeymapLayerChange")) {
+        if (arg1 == nameEnd) {
+            Macros_ReportError("$onKeymapLayerChange requires <keymap-abbreviation> <layer>:", name, nameEnd);
+            return;
+        }
+        const char* arg2 = NextTok(arg1, nameEnd);
+        if (arg2 == nameEnd) {
+            Macros_ReportError("$onKeymapLayerChange requires a layer argument:", name, nameEnd);
+            return;
+        }
+        validateLayerToken(arg2, nameEnd);
+        if (Macros_ParserError) {
+            return;
+        }
+        if (NextTok(arg2, nameEnd) != nameEnd) {
+            Macros_ReportError("$onKeymapLayerChange takes exactly two arguments:", name, nameEnd);
+        }
+        return;
+    }
+
+    if (TokenMatches(name, nameEnd, "$onLayerChange")) {
+        if (arg1 == nameEnd) {
+            Macros_ReportError("$onLayerChange requires 'any' or a layer:", name, nameEnd);
+            return;
+        }
+        if (!TokenMatches(arg1, nameEnd, "any")) {
+            validateLayerToken(arg1, nameEnd);
+            if (Macros_ParserError) {
+                return;
+            }
+        }
+        if (NextTok(arg1, nameEnd) != nameEnd) {
+            Macros_ReportError("$onLayerChange takes a single argument:", name, nameEnd);
+        }
+        return;
+    }
+
+    Macros_ReportError("Unknown smart macro event:", name, nameEnd);
+}
+
+void MacroEvent_ValidateEventNames(void)
+{
+    bool oldParserStatus = Macros_ParserError;
+
+    for (int i = 0; i < AllMacrosCount; i++) {
+        const char *thisName, *thisNameEnd;
+        FindMacroName(&AllMacros[i], &thisName, &thisNameEnd);
+
+        if (thisName == thisNameEnd || *thisName != '$') {
+            continue;
+        }
+
+        Macros_ParserError = false;
+        validateOneEventName(thisName, thisNameEnd);
+    }
+
+    Macros_ParserError = oldParserStatus;
 }

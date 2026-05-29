@@ -2,6 +2,7 @@
 #include "config_parser/parse_macro.h"
 #include "debug.h"
 #include "event_scheduler.h"
+#include "macro_events.h"
 #include "key_history.h"
 #include "keymap.h"
 #include "layer_stack.h"
@@ -599,6 +600,8 @@ void Macros_ValidateAllMacros()
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
         Macros_ValidateMacro(macroIndex, 0, 255, 255, 255, 255);
     }
+
+    MacroEvent_ValidateEventNames();
 
     uint32_t t2 = Timer_GetCurrentTime();
     LogU("Validation completed in %d ms!\n", t2 - t1);

@@ -108,6 +108,21 @@ void BtManager_StopBt() {
     LOG_INF("OOB: Bluetooth stopped");
 }
 
+void BtManager_CheckLeftBleVsUart() {
+    if (DEVICE_IS_UHK80_LEFT) {
+        bool uartReady = Connections_IsReady(ConnectionId_UartRight);
+
+        if (uartReady) {
+            bool nusConnected = Peers[PeerIdRight].conn != NULL;
+            if (nusConnected) {
+                LOG_INF("Left: UART healthy and NUS up — disconnecting NUS to right");
+                bt_conn_disconnect(Peers[PeerIdRight].conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
+            }
+        } else {
+            BtManager_StartScanningAndAdvertisingAsync(false, "Left UART not ready — resume BLE");
+        }
+    }
+}
 
 void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
@@ -168,7 +183,7 @@ void BtManager_StartScanningAndAdvertising() {
         }
     }
 
-    bool leftShouldAdvertise = DEVICE_IS_UHK80_LEFT && Peers[PeerIdRight].conn == NULL;
+    bool leftShouldAdvertise = DEVICE_IS_UHK80_LEFT && Peers[PeerIdRight].conn == NULL && !DeviceState_IsTargetConnected(ConnectionTarget_Right);
     bool rightShouldAdvertise = DEVICE_IS_UHK80_RIGHT && true;
     bool shouldAdvertise = leftShouldAdvertise || rightShouldAdvertise;
 

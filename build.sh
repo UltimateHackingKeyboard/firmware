@@ -333,7 +333,7 @@ function performZephyrAction() {
             createCentralCompileCommands
             ;;
         make)
-            $NICE west build --build-dir $ROOT/device/build/$DEVICE device 
+            $NICE west build --build-dir $ROOT/device/build/$DEVICE device
             exitOnFail $?
             ;;
         flash)

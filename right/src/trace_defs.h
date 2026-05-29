@@ -5,6 +5,7 @@
 
     #include <inttypes.h>
     #include "debug.h"
+    #include "logger.h"
 
 // Macros:
 
@@ -17,5 +18,7 @@
         uint32_t eventVector;
         uint16_t position;
     } ATTR_PACKED trace_buffer_t;
+
+    void Trace_Print(log_target_t additionalLogTargets, const char* reason);
 
 #endif

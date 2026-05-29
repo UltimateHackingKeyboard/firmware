@@ -76,6 +76,8 @@ ifKeyDefined, CommandId_ifKeyDefined
 ifNotKeyDefined, CommandId_ifNotKeyDefined
 ifModuleConnected, CommandId_ifModuleConnected
 ifNotModuleConnected, CommandId_ifNotModuleConnected
+ifAlreadyRunning, CommandId_ifAlreadyRunning
+ifNotAlreadyRunning, CommandId_ifNotAlreadyRunning
 ifHold, CommandId_ifHold
 ifTap, CommandId_ifTap
 ifSecondary, CommandId_ifSecondary

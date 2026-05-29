@@ -219,6 +219,7 @@ CONDITION = {ifLayerToggled | ifNotLayerToggled}
 CONDITION = {ifRecording | ifNotRecording}
 CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
 CONDITION = {ifModuleConnected | ifNotModuleConnected} MODULEID
+CONDITION = {ifAlreadyRunning | ifNotAlreadyRunning}
 MODIFIER = <modifier>
 MODIFIER = suppressMods
 MODIFIER = postponeKeys
@@ -558,6 +559,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument.
 - `{ifLayerToggled|ifNotLayerToggled}` will return true if current layer is toggled. It will return true if the toggled layer is on top of the stack, or anywhere else as long as only the same (currently active) layers are above it in the layer stack.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
+- `ifAlreadyRunning/ifNotAlreadyRunning` is true if another macro slot is currently playing the same macro index as the current one. Useful to prevent re-entering a macro that is already in progress.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
 - `ifPrimary/ifSecondary [ simpleStrategy | advancedStrategy | ignoreTriggersFromSameHalf | acceptTriggersFromSameHalf ] ... COMMAND` will wait until the firmware can distinguish whether primary or secondary action should be activated and then either execute `COMMAND` or skip it.

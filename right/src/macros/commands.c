@@ -591,6 +591,26 @@ static bool processIfRecordingIdCommand(parser_context_t* ctx, bool negate)
     return res != negate;
 }
 
+static bool processIfAlreadyRunningCommand(bool negate)
+{
+    if (Macros_DryRun) {
+        return true;
+    }
+    uint8_t myIndex = S->ms.currentMacroIndex;
+    uint8_t mySlot = S - MacroState;
+    bool found = false;
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (i == mySlot) {
+            continue;
+        }
+        if (MacroState[i].ms.macroPlaying && MacroState[i].ms.currentMacroIndex == myIndex) {
+            found = true;
+            break;
+        }
+    }
+    return found != negate;
+}
+
 static bool processIfPendingCommand(parser_context_t* ctx, bool negate)
 {
     uint32_t cnt = Macros_ConsumeInt(ctx);
@@ -2183,6 +2203,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             PROCESS_CONDITION(processIfModuleConnected(ctx, false))
         case CommandId_ifNotModuleConnected:
             PROCESS_CONDITION(processIfModuleConnected(ctx, true))
+        case CommandId_ifAlreadyRunning:
+            PROCESS_CONDITION(processIfAlreadyRunningCommand(false))
+        case CommandId_ifNotAlreadyRunning:
+            PROCESS_CONDITION(processIfAlreadyRunningCommand(true))
         case CommandId_ifHold:
             return processIfHoldCommand(ctx, false);
         case CommandId_ifTap:
