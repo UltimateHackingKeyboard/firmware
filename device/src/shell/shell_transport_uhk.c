@@ -403,8 +403,12 @@ void ShellUartTransport_InjectInput(const char *cmd)
     }
 
     memcpy(data->injectBuf, cmd, len);
-    data->injectBuf[len] = '\n';
-    data->injectLen = len + 1;
+    if (ShellConfig_StripVt100) {
+        data->injectBuf[len] = '\n';
+        data->injectLen = len + 1;
+    } else {
+        data->injectLen = len;
+    }
     data->injectPos = 0;
 
     data->handler(SHELL_TRANSPORT_EVT_RX_RDY, data->context);
