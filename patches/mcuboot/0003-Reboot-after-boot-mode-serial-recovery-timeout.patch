@@ -1,0 +1,44 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Mon, 1 Jun 2026 15:07:53 +0200
+Subject: [PATCH] Reboot after boot-mode serial recovery timeout
+
+When the device is rebooted into the bootloader via the BOOT_MODE
+retention flag (i.e. Agent's reenumerate command) and the serial
+recovery window expires without any SMP traffic, MCUboot would
+fall through to the post-recovery flow. Because USB CDC ACM was
+already enumerated by the bootloader, the host stays attached to
+the bootloader USB device and never sees the application
+re-enumerate, making the keyboard appear stuck in the bootloader.
+
+Force a cold reboot when boot_serial_enter() returns from the
+boot-mode path. On the subsequent boot the BOOT_MODE flag is
+already cleared, so MCUboot proceeds directly to chainload the
+application with a fresh USB stack.
+---
+ boot/zephyr/main.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/boot/zephyr/main.c b/boot/zephyr/main.c
+index 865fd7b6..790d00f1 100644
+--- a/boot/zephyr/main.c
++++ b/boot/zephyr/main.c
+@@ -28,6 +28,7 @@
+ #include <zephyr/usb/usb_device.h>
+ #include <soc.h>
+ #include <zephyr/linker/linker-defs.h>
++#include <zephyr/sys/reboot.h>
+
+ #if defined(CONFIG_BOOT_DISABLE_CACHES)
+ #include <zephyr/cache.h>
+@@ -884,6 +885,7 @@ int main(void)
+          */
+         BOOT_LOG_DBG("Staying in serial recovery");
+         boot_serial_enter();
++        sys_reboot(SYS_REBOOT_COLD);
+     }
+ #endif
+
+--
+2.43.0
+
