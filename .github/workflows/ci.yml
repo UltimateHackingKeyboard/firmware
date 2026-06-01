@@ -72,13 +72,13 @@ jobs:
 
       - name: Install node dependencies in scripts folder
         run: |
-          cd firmware/scripts
-          npm install -g npm@10.8.2
+          working-directory: firmware/scripts
+          run: npm ci
 
       - name: Create firmware tarball
         run: |
-          cd firmware
-          scripts/make-release.mjs --allowSha
+          working-directory: firmware
+          run: node scripts/make-release.mjs --allowSha
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v7
