@@ -4,18 +4,18 @@
 #include <zephyr/kernel.h>
 #endif
 
-#define JITTER_TEST_SAMPLE_COUNT 50
+#define JITTER_TEST_SAMPLE_COUNT 20
 #define JITTER_TEST_WINDOW_MS 1000
 
 bool JitterTest_Active = false;
 
 typedef struct {
-    uint32_t dt;
-    int16_t x;
+    uint8_t dt;
+    uint8_t x;
 } jitter_sample_t;
 
 static jitter_sample_t samples[JITTER_TEST_SAMPLE_COUNT];
-static uint32_t count;
+static uint16_t count;
 static uint32_t lastSampleTime;
 static uint32_t windowStart;
 static uint32_t nextWindowStart;

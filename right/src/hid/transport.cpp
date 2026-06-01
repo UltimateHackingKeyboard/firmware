@@ -235,8 +235,6 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     }
     Trace_Printf("z22,%d", err);
     if (err == 0) {
-        // Record once per logical report: a retrying caller keeps re-invoking
-        // this until a send is accepted, so only the accepted attempt counts.
         JitterTest_RecordMouseX(report->x);
     }
     return err;
