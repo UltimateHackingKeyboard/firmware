@@ -22,6 +22,7 @@
 #include "resend.h"
 #include "trace.h"
 #include <zephyr/logging/log.h>
+#include "config_manager.h"
 
 LOG_MODULE_REGISTER(NusClient, LOG_LEVEL_INF);
 
@@ -180,15 +181,17 @@ bool NusClient_Availability(messenger_availability_op_t operation) {
     }
 }
 
-static void send_raw_buffer(const uint8_t *data, uint16_t len) {
+static int send_raw_buffer(const uint8_t *data, uint16_t len) {
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
         k_sem_give(&nusBusy);
         LOG_WRN("Client failed to send data over BLE connection (err %d)", err);
     }
+    return err;
 }
 
-void NusClient_SendMessage(message_t* msg) {
+int NusClient_SendMessage(message_t* msg) {
+    int err = 0;
     Trace_Printc("s2");
     SEM_TAKE(&nusBusy);
 
@@ -210,13 +213,15 @@ void NusClient_SendMessage(message_t* msg) {
         LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", buffer[0], buffer[1]);
         Trace_Printc("E1");
         Trace_Printc("r2");
-        return;
+        return -1;
     }
 
     memcpy(&buffer[bufferIdx], msg->data, msg->len);
 
     bufferIdx += msg->len;
 
-    send_raw_buffer(buffer, bufferIdx);
+    err = send_raw_buffer(buffer, bufferIdx);
     Trace_Printc("r2");
+
+    return err;
 }

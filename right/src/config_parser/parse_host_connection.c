@@ -61,6 +61,13 @@ static parser_error_t parseHostConnection(config_buffer_t* buffer, host_connecti
     return ParserError_Success;
 }
 
+/*
+ * For every unregistered hid, try to look up registered connection.
+ * If found, empty it.
+ *
+ * For every registered hid, look up a dongle with the same address.
+ * If found, empty it.
+ */
 static void deduplicateUnregisteredConnections(void) {
 #ifdef __ZEPHYR__
     if (ParserRunDry) {
@@ -70,7 +77,7 @@ static void deduplicateUnregisteredConnections(void) {
     for (uint8_t i = 0; i < SERIALIZED_HOST_CONNECTION_COUNT_MAX; i++) {
         host_connection_t* conn = &HostConnections[i];
 
-        if (conn->type != HostConnectionType_UnregisteredBtHid) {
+        if (conn->type != HostConnectionType_UnregisteredBtHid && conn->type != HostConnectionType_BtHid) {
             continue;
         }
 
@@ -84,6 +91,10 @@ static void deduplicateUnregisteredConnections(void) {
             if (other->type != HostConnectionType_BtHid &&
                 other->type != HostConnectionType_Dongle &&
                 other->type != HostConnectionType_UnregisteredBtHid) {
+                continue;
+            }
+
+            if (conn->type != HostConnectionType_BtHid && other->type != HostConnectionType_Dongle) {
                 continue;
             }
 

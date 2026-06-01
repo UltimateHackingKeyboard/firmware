@@ -115,6 +115,7 @@ I have read this Agreement, and fully agree to it by signing it with my GitHub u
 - @nathanph
 - @rightaditya
 - @santiagogf89
+- @semnil
 - @soraxas
 - @steamraven
 - @stephengroat

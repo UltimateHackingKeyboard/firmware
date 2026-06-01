@@ -36,5 +36,6 @@
     void MacroEvent_ProcessStateKeyEvents();
     void MacroEvent_ProcessJoinSplitEvents(merge_sensor_state_t currentlyJoined);
     void MacroEvent_TriggerGenericEvent(generic_macro_event_t eventId);
+    void MacroEvent_ValidateEventNames(void);
 
 #endif

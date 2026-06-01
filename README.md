@@ -209,6 +209,10 @@ Places to reference if build fails:
 - `.github/workflows/ci.yml` - github actions script that builds the firmware on every push, so contains a working dev environment setup
 - `build.sh` - a linux helper script that tries to automate above steps 
 
+### Node version troubleshooting notes
+
+- `scripts/.nvmrc` contains node version used by the CI.
+
 ### Debugging with VS Code
 
 For UHK60 and modules, the McuXpresso SDK extention is the starting point for a debugging session.
