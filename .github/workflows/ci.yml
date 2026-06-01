@@ -73,7 +73,7 @@ jobs:
       - name: Install node dependencies in scripts folder
         run: |
           cd firmware/scripts
-          npm install
+          npm install -g npm@10.8.2
 
       - name: Create firmware tarball
         run: |
