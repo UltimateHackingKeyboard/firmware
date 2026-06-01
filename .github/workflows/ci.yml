@@ -71,14 +71,12 @@ jobs:
           node-version-file: firmware/scripts/.nvmrc
 
       - name: Install node dependencies in scripts folder
-        run: |
-          working-directory: firmware/scripts
-          run: npm ci
+        working-directory: firmware/scripts
+        run: npm ci
 
       - name: Create firmware tarball
-        run: |
-          working-directory: firmware
-          run: node scripts/make-release.mjs --allowSha
+        working-directory: firmware
+        run: node scripts/make-release.mjs --allowSha
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v7
