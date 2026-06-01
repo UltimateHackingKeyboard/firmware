@@ -72,7 +72,7 @@ jobs:
 
       - name: Install node dependencies in scripts folder
         working-directory: firmware/scripts
-        run: npm ci
+        run: npm install
 
       - name: Create firmware tarball
         working-directory: firmware
