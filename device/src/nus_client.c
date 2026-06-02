@@ -166,21 +166,6 @@ void NusClient_Init(void) {
     LOG_INF("NUS Client module initialized");
 }
 
-bool NusClient_Availability(messenger_availability_op_t operation) {
-    switch (operation) {
-        case MessengerAvailabilityOp_InquireOneEmpty:
-            return k_sem_count_get(&nusBusy) > 0;
-        case MessengerAvailabilityOp_InquireAllEmpty:
-            return k_sem_count_get(&nusBusy) == NUS_SLOTS;
-        case MessengerAvailabilityOp_BlockTillOneEmpty:
-            k_sem_take(&nusBusy, K_FOREVER);
-            k_sem_give(&nusBusy);
-            return true;
-        default:
-            return false;
-    }
-}
-
 static int send_raw_buffer(const uint8_t *data, uint16_t len) {
     int err = bt_nus_client_send(&nus_client, data, len);
     if (err) {
@@ -193,7 +178,22 @@ static int send_raw_buffer(const uint8_t *data, uint16_t len) {
 int NusClient_SendMessage(message_t* msg) {
     int err = 0;
     Trace_Printc("s2");
+
+    // Validate the length before taking the semaphore. Otherwise the early
+    // return below would leak a slot and eventually deadlock the semaphore.
+    // Header layout: src, dst, wm, then one byte per message id.
+    uint8_t headerLen = 3 + msg->idsUsed;
+    if (headerLen + msg->len > MAX_LINK_PACKET_LENGTH) {
+        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", msg->src, msg->dst);
+        Trace_Printc("E1");
+        Trace_Printc("r2");
+        return -1;
+    }
+
     SEM_TAKE(&nusBusy);
+
+    // From here on every exit path must release the semaphore: send_raw_buffer
+    // gives it back on error, and the `sent` callback gives it back on success.
 
     // Call this only after we have taken the semaphore.
     Resend_RegisterMessageAndUpdateWatermarks(msg);
@@ -207,13 +207,6 @@ int NusClient_SendMessage(message_t* msg) {
 
     for (uint8_t id = 0; id < msg->idsUsed; id++) {
         buffer[bufferIdx++] = msg->messageId[id];
-    }
-
-    if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
-        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", buffer[0], buffer[1]);
-        Trace_Printc("E1");
-        Trace_Printc("r2");
-        return -1;
     }
 
     memcpy(&buffer[bufferIdx], msg->data, msg->len);

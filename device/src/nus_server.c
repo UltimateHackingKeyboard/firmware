@@ -95,27 +95,24 @@ static int send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* co
     return err;
 }
 
-bool NusServer_Availability(messenger_availability_op_t operation) {
-    switch (operation) {
-        case MessengerAvailabilityOp_InquireOneEmpty:
-            return k_sem_count_get(&nusBusy) > 0;
-        case MessengerAvailabilityOp_InquireAllEmpty:
-            return k_sem_count_get(&nusBusy) == NUS_SLOTS;
-        case MessengerAvailabilityOp_BlockTillOneEmpty:
-            k_sem_take(&nusBusy, K_FOREVER);
-            k_sem_give(&nusBusy);
-            return true;
-        default:
-            return false;
-    }
-}
-
 int NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
     int err = 0;
+
+    // Validate the length before taking the semaphore. Otherwise the early
+    // return below would leak a slot and eventually deadlock the semaphore.
+    // Header layout: src, dst, wm, then one byte per message id.
+    uint8_t headerLen = 3 + msg->idsUsed;
+    if (headerLen + msg->len > MAX_LINK_PACKET_LENGTH) {
+        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", msg->src, msg->dst);
+        return -1;
+    }
 
     Trace_Printc("c1");
     SEM_TAKE(&nusBusy);
     Trace_Printc("c2");
+
+    // From here on every exit path must release the semaphore: send_raw_buffer
+    // gives it back on error, and the `sent` callback gives it back on success.
 
     // Call this only after we have taken the semaphore.
     Resend_RegisterMessageAndUpdateWatermarks(msg);
@@ -129,11 +126,6 @@ int NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
 
     for (uint8_t id = 0; id < msg->idsUsed; id++) {
         buffer[bufferIdx++] = msg->messageId[id];
-    }
-
-    if (bufferIdx + msg->len > MAX_LINK_PACKET_LENGTH) {
-        LOG_WRN("Message is too long for NUS packets! [%i, %i, ...]", buffer[0], buffer[1]);
-        return -1;
     }
 
     memcpy(&buffer[bufferIdx], msg->data, msg->len);

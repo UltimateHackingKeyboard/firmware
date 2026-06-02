@@ -963,9 +963,9 @@ static void handleFail(errno_t errorCode) {
 
 #ifdef __ZEPHYR__
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        LOG_WRN("Send failed: no connection selected: %s\n", ErrToStr(errorCode));
+        LOG_WRN("Send failed: no connection selected: %d (%s)\n", errorCode, ErrToStr(errorCode));
     } else {
-        LOG_WRN("Send failed: %s\n", ErrToStr(errorCode));
+        LOG_WRN("Send failed: %d (%s)\n", errorCode, ErrToStr(errorCode));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
             // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
             if (!WormCfg->devMode) {
