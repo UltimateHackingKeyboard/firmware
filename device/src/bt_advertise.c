@@ -60,6 +60,19 @@ static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80 BLE")};
 #define BY_SIDE(LEFT, RIGHT) LEFT
 #endif
 
+// Fast advertisement makes mouse key movement jittery as it makes us miss transports
+static void applyAdvInterval(struct bt_le_adv_param* param) {
+    bool fast = BtConn_UnusedPeripheralConnectionCount() == ACTUAL_PERIPHERAL_CONNECTION_COUNT
+        || SelectedHostConnectionId != ConnectionId_Invalid;
+    if (fast) {
+        param->interval_min = BT_GAP_ADV_FAST_INT_MIN_1;
+        param->interval_max = BT_GAP_ADV_FAST_INT_MAX_1;
+    } else {
+        param->interval_min = BT_GAP_ADV_SLOW_INT_MIN;
+        param->interval_max = BT_GAP_ADV_SLOW_INT_MAX;
+    }
+}
+
 #define BT_LE_ADV_START(PARAM, AD, SD) bt_le_adv_start(PARAM, AD, ARRAY_SIZE(AD), SD, ARRAY_SIZE(SD));
 
 static const char * advertisingString(uint8_t advType) {
@@ -144,6 +157,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             LOG_DBG("Adv: advertise nus+hid.");
             /* our devices don't check service uuids, so hid advertisement effectively advertises nus too */
             advParam = *BT_LE_ADV_CONN_FAST_1;
+            applyAdvInterval(&advParam);
             err = BT_LE_ADV_START(&advParam, adHid, sdHid);
 
             break;
@@ -155,10 +169,12 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
                 advParam = *BT_LE_ADV_CONN_FAST_1;
                 advParam.options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
 
+                applyAdvInterval(&advParam);
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
                 LOG_DBG("Adv: advertise nus, without allow list.");
                 advParam = *BT_LE_ADV_CONN_FAST_1;
+                applyAdvInterval(&advParam);
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             }
             break;
@@ -170,10 +186,12 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
                 advParam = *BT_LE_ADV_CONN_FAST_1;
                 advParam.options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
 
+                applyAdvInterval(&advParam);
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
                 LOG_DBG("Adv: direct advertise nus, without allow list.");
                 advParam = *BT_LE_ADV_CONN_FAST_1;
+                applyAdvInterval(&advParam);
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             }
             break;

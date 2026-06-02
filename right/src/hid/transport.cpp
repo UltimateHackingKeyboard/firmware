@@ -16,6 +16,7 @@ extern "C" {
 #include "trace.h"
 #include "usb_report_updater.h"
 #include "led_display.h"
+#include "jitter_test.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -233,6 +234,9 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         break;
     }
     Trace_Printf("z22,%d", err);
+    if (err == 0) {
+        JitterTest_RecordMouseX(report->x);
+    }
     return err;
 }
 
