@@ -111,7 +111,8 @@ std::span<const uint8_t> keyboard_app::move_to_buffer(const hid_keyboard_report_
         auto &keys_nkro = keys_[buf_idx].nkro;
 
         ::memcpy(&keys_nkro.modifiers, &report.modifiers, sizeof(report.modifiers));
-        ::memcpy(static_cast<void *>(&keys_nkro.scancodes), &report.bitfield, sizeof(report.bitfield));
+        ::memcpy(
+            static_cast<void *>(&keys_nkro.scancodes), &report.bitfield, sizeof(report.bitfield));
 
         return std::span<const uint8_t>(
             reinterpret_cast<const uint8_t *>(&keys_nkro), sizeof(keys_nkro));
@@ -157,8 +158,11 @@ keyboard_app::leds_boot_report keyboard_app::get_leds() const
 
 void keyboard_app::set_report(hid::report::type type, const std::span<const uint8_t> &data)
 {
-    if ((prot_ == hid::protocol::REPORT) &&
-        ((type != hid::report::type::OUTPUT) || (data.front() != LEDS_REPORT_ID))) {
+    if (type != hid::report::type::OUTPUT) {
+        return;
+    }
+    if ((prot_ == hid::protocol::REPORT) && (LEDS_REPORT_ID != 0) &&
+        (data.front() != LEDS_REPORT_ID)) {
         return;
     }
     // only one report is receivable, the LEDs
