@@ -114,7 +114,7 @@ static int cmd_uhk_kboot_reset(const struct shell *shell, size_t argc, char *arg
 {
     KbootDriverState.i2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
     KbootDriverState.phase = 0;
-    KbootDriverState.command = KbootCommand_Reset;
+    KbootDriverState.command = KbootCommand_ResetAndJump;
     shell_fprintf(shell, SHELL_NORMAL, "Kboot reset sent to right module (0x%02x)\n",
                   I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER);
     return 0;

@@ -475,37 +475,68 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
             break;
 
         case KbootCommand_Reset:
-            if (handlePing(&res, KbootResetPhase_SendPing, KbootResetPhase_SendReset, abortReset)) {
-                if (KbootDriverState.phase == KbootResetPhase_SendReset) {
+            // Legacy buspal / UHK60 path: transmit the raw reset frame to the
+            // caller-supplied i2cAddress. The caller has already put the target
+            // module into its bootloader and pinged it, so no jump/ping is done
+            // here - doing so (and overwriting i2cAddress) would prevent the
+            // module from rebooting. Use KbootCommand_ResetAndJump for the
+            // self-contained variant.
+            switch (KbootDriverState.phase) {
+                case KbootResetPhase_SendReset: {
+                    uint8_t len = buildResetCommand();
+                    res.status = i2cTx(txBuffer, len);
+                    KbootDriverState.phase = KbootResetPhase_ReceiveResetAck;
+                    break;
+                }
+                case KbootResetPhase_ReceiveResetAck:
+                    res.status = i2cRx(KBOOT_PACKAGE_LENGTH_ACK);
+                    KbootDriverState.phase = KbootResetPhase_ReceiveResetGenericResponse;
+                    break;
+                case KbootResetPhase_ReceiveResetGenericResponse:
+                    res.status = i2cRx(KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE);
+                    KbootDriverState.phase = KbootResetPhase_CheckResetSendAck;
+                    break;
+                case KbootResetPhase_CheckResetSendAck:
+                    res.status = i2cTx(ackMessage, sizeof(ackMessage));
+                    KbootDriverState.command = KbootCommand_Idle;
+                    break;
+            }
+            break;
+
+        case KbootCommand_ResetAndJump:
+            // Self-contained reset (UHK80 native path / shell command): jump the
+            // right module into its bootloader, ping until it answers, then reset.
+            if (handlePing(&res, KbootResetAndJumpPhase_SendPing, KbootResetAndJumpPhase_SendReset, abortReset)) {
+                if (KbootDriverState.phase == KbootResetAndJumpPhase_SendReset) {
                     LogU("Kboot: Sending reset\n");
                     buildResetCommand();
-                    startCmdTransaction(KbootCmdId_Reset, KbootResetPhase_Done, KBOOT_CMD_TIMEOUT_MS);
+                    startCmdTransaction(KbootCmdId_Reset, KbootResetAndJumpPhase_Done, KBOOT_CMD_TIMEOUT_MS);
                 }
                 break;
             }
 
             switch (KbootDriverState.phase) {
-                case KbootResetPhase_JumpToBootloader:
+                case KbootResetAndJumpPhase_JumpToBootloader:
                     LogU("Kboot: Jumping to bootloader for Reset\n");
                     Slaves[SlaveId_RightModule].isConnected = true;
                     UhkModuleStates[UhkModuleDriverId_RightModule].phase = UhkModulePhase_JumpToBootloader;
                     KbootDriverState.i2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
                     KbootDriverState.startTime = Timer_GetCurrentTime();
-                    KbootDriverState.phase = KbootResetPhase_WaitForBootloader;
+                    KbootDriverState.phase = KbootResetAndJumpPhase_WaitForBootloader;
                     pingAttemptCount = 0;
                     break;
 
-                case KbootResetPhase_WaitForBootloader:
+                case KbootResetAndJumpPhase_WaitForBootloader:
                     if (elapsedMs() < KBOOT_WAIT_AFTER_JUMP_MS) {
                         break;
                     }
                     LogU("Kboot: Wait done (%dms), pinging at 0x%02x/0x%02x\n",
                          KBOOT_WAIT_AFTER_JUMP_MS,
                          I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER, KBOOT_DEFAULT_I2C_ADDRESS);
-                    KbootDriverState.phase = KbootResetPhase_SendPing;
+                    KbootDriverState.phase = KbootResetAndJumpPhase_SendPing;
                     break;
 
-                case KbootResetPhase_Done:
+                case KbootResetAndJumpPhase_Done:
                     LogU("Kboot: Reset complete (%ums)\n", elapsedMs());
                     KbootDriverState.command = KbootCommand_Idle;
                     break;
