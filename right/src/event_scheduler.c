@@ -328,7 +328,9 @@ uint32_t EventScheduler_Process()
         );
         heapRemove(0);
         updateEventVector();
+        Trace_Printf("<F%d", entry.event);
         processEvt(entry.event);
+        Trace_Printc(">");
     }
     return heapIsEmpty() ? UINT32_MAX : heap[0].time;
 }
