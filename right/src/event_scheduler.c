@@ -11,6 +11,7 @@
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
 #include "oneshot.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "round_trip_test.h"
@@ -268,12 +269,17 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
         printk("    !!! Replan: %s\n", label);
     )
 
+    // The heap is mutated from multiple contexts, including ISRs (e.g. the
+    // charger STAT GPIO callback). Heap operations are multi-step, so they must
+    // run atomically or a mid-sift interrupt corrupts the structure.
+    DISABLE_IRQ();
     uint8_t idx = heapIndex[evt];
     if (idx != HEAP_INDEX_NONE) {
         heapUpdate(idx, at, label);
     } else {
         heapInsert(evt, at, label);
     }
+    ENABLE_IRQ();
     updateEventVector();
 
 #ifdef __ZEPHYR__
@@ -289,6 +295,7 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
         printk("    !!! Plan: %s\n", label);
     );
 
+    DISABLE_IRQ();
     uint8_t idx = heapIndex[evt];
     if (idx != HEAP_INDEX_NONE) {
         // Only update if the new time is earlier
@@ -298,6 +305,7 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
     } else {
         heapInsert(evt, at, label);
     }
+    ENABLE_IRQ();
     updateEventVector();
 
 #ifdef __ZEPHYR__
@@ -309,30 +317,47 @@ void EventScheduler_Unschedule(event_scheduler_event_t evt)
 {
     RETURN_IF_SPAM(evt);
 
+    DISABLE_IRQ();
     uint8_t idx = heapIndex[evt];
     if (idx != HEAP_INDEX_NONE) {
         heapRemove(idx);
     }
+    ENABLE_IRQ();
     updateEventVector();
 }
 
 uint32_t EventScheduler_Process()
 {
-    while (!heapIsEmpty() && heap[0].time <= Timer_GetCurrentTime()) {
+    while (true) {
+        // Pop the due event atomically: the heap can be mutated from an ISR, so
+        // the peek + remove must not be interrupted mid-sift. processEvt() runs
+        // outside the lock because it does heavy work and re-enters the scheduler.
+        DISABLE_IRQ();
+        if (heapIsEmpty() || heap[0].time > Timer_GetCurrentTime()) {
+            ENABLE_IRQ();
+            break;
+        }
         heap_entry_t entry = heap[0];
+        heapRemove(0);
+        ENABLE_IRQ();
+
+        updateEventVector();
+
         LOG_SCHEDULE(
             if (entry.label != NULL) {
                 printk("%c", PostponerCore_EventsShouldBeQueued() ? 'P' : ' ');
                 printk("!!! Scheduled event: %s\n", entry.label);
             }
         );
-        heapRemove(0);
-        updateEventVector();
         Trace_Printf("<F%d", entry.event);
         processEvt(entry.event);
         Trace_Printc(">");
     }
-    return heapIsEmpty() ? UINT32_MAX : heap[0].time;
+
+    DISABLE_IRQ();
+    uint32_t next = heapIsEmpty() ? UINT32_MAX : heap[0].time;
+    ENABLE_IRQ();
+    return next;
 }
 
 void EventVector_ReportMask(const char* prefix, uint32_t mask) {
