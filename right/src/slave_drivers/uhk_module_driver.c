@@ -462,6 +462,14 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
                 StateSync_UpdateProperty(StateSyncPropertyId_ModuleStateLeftModule, NULL);
             }
 #endif
+            LogU("Module %d initialized: protocol version %d.%d.%d, firmware version %d.%d.%d, git tag %s, git repo %s, firmware checksum %s\n",
+                 uhkModuleDriverId,
+                 uhkModuleState->moduleProtocolVersion.major, uhkModuleState->moduleProtocolVersion.minor, uhkModuleState->moduleProtocolVersion.patch,
+                 uhkModuleState->firmwareVersion.major, uhkModuleState->firmwareVersion.minor, uhkModuleState->firmwareVersion.patch,
+                 uhkModuleState->gitTag,
+                 uhkModuleState->gitRepo,
+                 uhkModuleState->firmwareChecksum
+            );
             break;
         }
 
