@@ -446,6 +446,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
             break;
 
         case KbootCommand_Ping:
+            LogU("Kboot: Ping command, target addr=0x%02x, phase=%d\n", KbootDriverState.i2cAddress, KbootDriverState.phase);
             switch (KbootDriverState.phase) {
                 case KbootPhase_SendPing:
                     res.status = i2cTx(pingCommand, sizeof(pingCommand));
@@ -481,6 +482,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
             // here - doing so (and overwriting i2cAddress) would prevent the
             // module from rebooting. Use KbootCommand_ResetAndJump for the
             // self-contained variant.
+            LogU("Kboot: Reset command, target addr=0x%02x, phase=%d\n", KbootDriverState.i2cAddress, KbootDriverState.phase);
             switch (KbootDriverState.phase) {
                 case KbootResetPhase_SendReset: {
                     uint8_t len = buildResetCommand();
