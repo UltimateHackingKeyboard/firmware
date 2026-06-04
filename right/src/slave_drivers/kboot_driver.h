@@ -106,7 +106,12 @@
 
     typedef struct {
         kboot_command_t command;
+        // i2c address we are actually talking to. Alternates between default and moduleBootloaderAddress.
         uint8_t i2cAddress;
+        // slotId to target - specified by Agent
+        uint8_t slotId;
+        // expected module bootloader i2c address - specified by Agent
+        uint8_t moduleBootloaderAddress;
         uint8_t phase;
         uint32_t status;
         uint32_t startTime;

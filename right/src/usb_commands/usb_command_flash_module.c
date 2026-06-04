@@ -12,6 +12,7 @@ typedef enum {
 void UsbCommand_FlashModule(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
     uint8_t slotId = GetUsbRxBufferUint8(1);
+    uint8_t bootloaderI2cAddress = GetUsbRxBufferUint8(2);
 
     if (!IS_VALID_MODULE_SLOT(slotId)) {
         SetUsbTxBufferUint8(0, UsbStatusCode_FlashModule_InvalidSlotId);
@@ -26,6 +27,8 @@ void UsbCommand_FlashModule(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
     ModuleFlashBusy = true;
     ModuleFlashErrorCode = 0;
     ModuleFlashState = ModuleFlashState_Erasing;
+    KbootDriverState.slotId = slotId;
+    KbootDriverState.moduleBootloaderAddress = bootloaderI2cAddress;
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_Flash;
 }

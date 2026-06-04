@@ -169,9 +169,9 @@ static bool verifyRxCrc(uint8_t totalLen)
 
 static void togglePingAddress(void)
 {
-    KbootDriverState.i2cAddress = KbootDriverState.i2cAddress == I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER
+    KbootDriverState.i2cAddress = KbootDriverState.i2cAddress == KbootDriverState.moduleBootloaderAddress
         ? KBOOT_DEFAULT_I2C_ADDRESS
-        : I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
+        : KbootDriverState.moduleBootloaderAddress;
 }
 
 typedef void (*abort_fn_t)(const char *);
@@ -504,8 +504,9 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
             break;
 
         case KbootCommand_ResetAndJump:
-            // Self-contained reset (UHK80 native path / shell command): jump the
-            // right module into its bootloader, ping until it answers, then reset.
+            // Testing code: just jump into bootloader, talk to it, and reset back.
+            //
+            // TODO: remove it once we are sure everything works and we don't need this
             if (handlePing(&res, KbootResetAndJumpPhase_SendPing, KbootResetAndJumpPhase_SendReset, abortReset)) {
                 if (KbootDriverState.phase == KbootResetAndJumpPhase_SendReset) {
                     LogU("Kboot: Sending reset\n");
@@ -516,15 +517,17 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
             }
 
             switch (KbootDriverState.phase) {
-                case KbootResetAndJumpPhase_JumpToBootloader:
-                    LogU("Kboot: Jumping to bootloader for Reset\n");
-                    Slaves[SlaveId_RightModule].isConnected = true;
-                    UhkModuleStates[UhkModuleDriverId_RightModule].phase = UhkModulePhase_JumpToBootloader;
-                    KbootDriverState.i2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
+                case KbootResetAndJumpPhase_JumpToBootloader: {
+                    uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(KbootDriverState.slotId);
+                    LogU("Kboot: Jumping to bootloader for Reset (slot %u)\n", KbootDriverState.slotId);
+                    Slaves[driverId].isConnected = true;
+                    UhkModuleStates[driverId].phase = UhkModulePhase_JumpToBootloader;
+                    KbootDriverState.i2cAddress = KbootDriverState.moduleBootloaderAddress;
                     KbootDriverState.startTime = Timer_GetCurrentTime();
                     KbootDriverState.phase = KbootResetAndJumpPhase_WaitForBootloader;
                     pingAttemptCount = 0;
                     break;
+                }
 
                 case KbootResetAndJumpPhase_WaitForBootloader:
                     if (elapsedMs() < KBOOT_WAIT_AFTER_JUMP_MS) {
@@ -532,7 +535,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     }
                     LogU("Kboot: Wait done (%dms), pinging at 0x%02x/0x%02x\n",
                          KBOOT_WAIT_AFTER_JUMP_MS,
-                         I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER, KBOOT_DEFAULT_I2C_ADDRESS);
+                         KbootDriverState.moduleBootloaderAddress, KBOOT_DEFAULT_I2C_ADDRESS);
                     KbootDriverState.phase = KbootResetAndJumpPhase_SendPing;
                     break;
 
@@ -574,12 +577,13 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     }
                     LogU("Kboot: Firmware ready, %u bytes. Jumping to bootloader\n",
                          KbootDriverState.firmwareSize);
-                    // Force RightModule connected so the scheduler doesn't call
-                    // UhkModuleSlaveDriver_Init (which would reset the phase we
-                    // are about to set back to RequestSync).
-                    Slaves[SlaveId_RightModule].isConnected = true;
-                    UhkModuleStates[UhkModuleDriverId_RightModule].phase = UhkModulePhase_JumpToBootloader;
-                    KbootDriverState.i2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
+                    // Force the target module connected so the scheduler doesn't
+                    // call UhkModuleSlaveDriver_Init (which would reset the phase
+                    // we are about to set back to RequestSync).
+                    uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(KbootDriverState.slotId);
+                    Slaves[driverId].isConnected = true;
+                    UhkModuleStates[driverId].phase = UhkModulePhase_JumpToBootloader;
+                    KbootDriverState.i2cAddress = KbootDriverState.moduleBootloaderAddress;
                     KbootDriverState.startTime = Timer_GetCurrentTime();
                     KbootDriverState.phase = KbootFlashPhase_WaitForBootloader;
                     pingAttemptCount = 0;
@@ -592,7 +596,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     }
                     LogU("Kboot: Wait done (%dms), pinging at 0x%02x/0x%02x\n",
                          KBOOT_WAIT_AFTER_JUMP_MS,
-                         I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER, KBOOT_DEFAULT_I2C_ADDRESS);
+                         KbootDriverState.moduleBootloaderAddress, KBOOT_DEFAULT_I2C_ADDRESS);
                     KbootDriverState.phase = KbootFlashPhase_SendPing;
                     break;
 

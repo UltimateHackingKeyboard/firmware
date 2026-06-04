@@ -23,6 +23,7 @@
 #include "wormhole.h"
 #include "stubs.h"
 #include "slave_drivers/kboot_driver.h"
+#include "slot.h"
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
 #include "jitter_test.h"
@@ -112,7 +113,8 @@ static int cmd_uhk_testled(const struct shell *shell, size_t argc, char *argv[])
 
 static int cmd_uhk_kboot_reset(const struct shell *shell, size_t argc, char *argv[])
 {
-    KbootDriverState.i2cAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
+    KbootDriverState.slotId = SlotId_RightModule;
+    KbootDriverState.moduleBootloaderAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_ResetAndJump;
     shell_fprintf(shell, SHELL_NORMAL, "Kboot reset sent to right module (0x%02x)\n",
@@ -122,6 +124,8 @@ static int cmd_uhk_kboot_reset(const struct shell *shell, size_t argc, char *arg
 
 static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *argv[])
 {
+    KbootDriverState.slotId = SlotId_RightModule;
+    KbootDriverState.moduleBootloaderAddress = I2C_ADDRESS_RIGHT_MODULE_BOOTLOADER;
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_Flash;
     shell_fprintf(shell, SHELL_NORMAL, "Kboot flash sequence started for right module\n");
