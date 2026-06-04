@@ -30,6 +30,7 @@ void Trace_Init(void) {
 void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     uint16_t iter;
     Trace_Enabled = false;
+    uint32_t currentTime = Timer_GetCurrentTime();
 
     device_id_t targetDeviceId = DEVICE_ID;
     log_target_t targetInterface = 0;
@@ -41,7 +42,7 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     }
 
     LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);
-    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag);
+    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s, Time: %d\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag, currentTime);
 
 #ifndef __ZEPHYR__
     Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);
