@@ -11,6 +11,7 @@
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
 #include "oneshot.h"
+#include "trace.h"
 
 #ifdef __ZEPHYR__
 #include "round_trip_test.h"
