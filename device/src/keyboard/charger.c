@@ -21,6 +21,7 @@
 #include "battery_percent_calculator.h"
 #include "battery_unloaded_calculator.h"
 #include <zephyr/logging/log_ctrl.h>
+#include "trace.h"
 
 LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
 
@@ -257,12 +258,18 @@ static uint16_t correctVoltage(uint16_t previousVoltage, bool previousCharging, 
 void Charger_UpdateBatteryCharging() {
     bool stateChanged = false;
     if (!stabilizationPause) {
+        Trace_Printc("f31");
         bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
+        Trace_Printc("f32");
         stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
+        Trace_Printc("f33");
     }
     if (stateChanged) {
+        Trace_Printc("f34");
         updateMaxCharge();
+        Trace_Printc("f35");
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
+        Trace_Printc("f36");
     }
 }
 

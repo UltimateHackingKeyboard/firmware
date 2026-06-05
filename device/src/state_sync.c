@@ -37,6 +37,7 @@
 #include "event_scheduler.h"
 #include "macro_events.h"
 #include <zephyr/logging/log.h>
+#include "trace.h"
 
 LOG_MODULE_REGISTER(StateSync, LOG_LEVEL_INF);
 
@@ -427,8 +428,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         EventVector_Set(EventVector_LedMapUpdateNeeded);
         break;
     case StateSyncPropertyId_Battery:
+        Trace_Printc("f1");
         WIDGET_REFRESH(&StatusWidget);
+        Trace_Printc("f21");
         {
+            Trace_Printc("f2");
             LOG_INF("Batteries: %d%% %d%% (%d / %d mV; %d / %d mV)"
                 , SyncLeftHalfState.battery.batteryPercentage, SyncRightHalfState.battery.batteryPercentage
                 , SyncLeftHalfState.battery.batteryVoltage, SyncLeftHalfState.battery.maxCharge
@@ -437,19 +441,27 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             bool newRunningOnBattery = !SyncLeftHalfState.battery.powered || !SyncRightHalfState.battery.powered;
             bool newRightRunningOnBattery = !SyncRightHalfState.battery.powered;
             if (RunningOnBattery != newRunningOnBattery) {
+                Trace_Printc("f3");
                 RunningOnBattery = newRunningOnBattery;
                 RightRunningOnBattery = newRightRunningOnBattery;
                 EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+                Trace_Printc("f4");
             } else if (RightRunningOnBattery != newRightRunningOnBattery) {
                 RightRunningOnBattery = newRightRunningOnBattery;
+                Trace_Printc("f5");
                 LedManager_UpdateSleepModes();
+                Trace_Printc("f6");
             }
             bool newCharging = (SyncLeftHalfState.battery.batteryPresent && SyncLeftHalfState.battery.batteryCharging) || (SyncRightHalfState.battery.batteryPresent && SyncRightHalfState.battery.batteryCharging);
             if (BatteryIsCharging != newCharging) {
                 BatteryIsCharging = newCharging;
+                Trace_Printc("f22");
                 EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+                Trace_Printc("f23");
             }
+            Trace_Printc("f7");
             StateSync_CheckChargeMe();
+            Trace_Printc("f8");
         }
         break;
     case StateSyncPropertyId_ActiveKeymap:
@@ -559,13 +571,17 @@ void StateSync_CheckChargeMe(void) {
     StateSync_BlinkBatteryIcon =  StateSync_BlinkLeftBatteryPercentage || StateSync_BlinkRightBatteryPercentage;
 
     if (StateSync_BlinkBatteryIcon) {
+        Trace_Printc("f10");
         WIDGET_REFRESH(&StatusWidget);
+        Trace_Printc("f11");
     }
 
     bool newPowersaving = SyncLeftHalfState.battery.powersaving || SyncRightHalfState.battery.powersaving;
     if (newPowersaving != StateSync_BatteryBacklightPowersavingMode) {
+        Trace_Printc("f12");
         StateSync_BatteryBacklightPowersavingMode = newPowersaving;
         EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+        Trace_Printc("f13");
     }
 #endif
 }

@@ -149,7 +149,9 @@ static void processEvt(event_scheduler_event_t evt)
             Charger_UpdateBatteryState();
             break;
         case EventSchedulerEvent_UpdateBatteryCharging:
+            Trace_Printc("f41");
             Charger_UpdateBatteryCharging();
+            Trace_Printc("f42");
             break;
         case EventSchedulerEvent_ShiftScreen:
             Oled_ShiftScreen();
