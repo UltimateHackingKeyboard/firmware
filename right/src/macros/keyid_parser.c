@@ -166,12 +166,15 @@ static const lookup_record_t* lookup(uint8_t begin, uint8_t end, const char* str
     }
 }
 
+// this attempts to consume a KEYID_ABBREV (textual key id)).
+// returns the key id, or 255 if not found (invalid key id).
 uint8_t MacroKeyIdParser_TryConsumeKeyId(parser_context_t* ctx)
 {
     // this gets identifier till the next dot only
     const char* end1 = IdentifierEnd(ctx);
     const lookup_record_t* record = lookup(0, lookup_size-1, ctx->at, end1);
 
+    // TODO: WHY this second attempt with dot??
     // if failed, try consume with dot
     if (record == NULL && *end1 == '.' && end1+1 < ctx->end) {
         CTX_COPY(ctx2, *ctx);

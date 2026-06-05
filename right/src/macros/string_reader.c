@@ -12,12 +12,287 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
-typedef enum {
-   StringType_Raw,
-   StringType_DoubleQuote,
-   StringType_SingleQuote,
-} string_type_t;
+// new code:
 
+static char consumeExpressionCharOfInt(const macro_variable_t* variable, uint16_t* idx);
+static char consumeExpressionCharOfFloat(const macro_variable_t* variable, uint16_t* idx);
+static char consumeExpressionCharOfBool(const macro_variable_t* variable, uint16_t* idx);
+static char consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx);
+static char consumeCharOfTemplate(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
+static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index);
+
+static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_reader_context_t* stringCtx);
+static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx);
+
+void StrRead_InitContext(parser_context_t* ctx, string_reader_context_t* stringCtx, string_reader_mode_t mode)
+{
+    stringCtx->at = ctx->at;
+    stringCtx->stringOffset = 0;
+    stringCtx->index = 0;
+    stringCtx->subIndex = 0;
+    if (mode == StrReadMode_Verbatim) {
+        stringCtx->stringType = StringType_Verbatim;
+    } else {
+        stringCtx->stringType = StringType_Undetermined;
+    }
+}
+
+static char StrRead_tryConsumeAnotherStringLiteral(parser_context_t *ctx, string_reader_context_t *stringCtx)
+{
+    const char* at = ctx->at + stringCtx->stringOffset + stringCtx->index;
+
+    if (at >= ctx->end) {
+        ctx->at = ctx->end;
+        return '\0';
+    }
+
+    switch (*at) {
+        case '\'':
+        case '"':
+            // advance the string reader context to the beginning quote of the next literal
+            stringCtx->stringOffset += stringCtx->index;
+            stringCtx->index = 0;
+            return StrRead_ConsumeCharOfString(ctx, stringCtx);
+        default:
+            // advance the main context to the end of the current string
+            ctx->at = at;
+            ConsumeWhite(ctx);
+            // we probably don't need to reset the string reader context here,
+            // any new string reading should call InitContext() again.
+            stringCtx->stringOffset = 0;
+            stringCtx->index = 0;
+            stringCtx->subIndex = 0;
+            return '\0';
+    }
+}
+
+static char StrRead_ConsumeCharInString(parser_context_t* ctx, string_reader_context_t* stringCtx)
+{
+    const char* at = stringCtx->at;
+    if (at >= ctx->end) {
+        return '\0';
+    }
+
+    if(stringCtx->stringType == StringType_Verbatim) {
+        char res = *at;
+        stringCtx->index++;
+        return res;
+    }
+
+    switch(*at) {
+        case '\\':
+            if (stringCtx->stringType == StringType_SingleQuote || at+1 >= ctx->end) {
+                goto normalChar;
+            } else {
+                stringCtx->index++;
+                at++;
+                switch (*at) {
+                    case 'n':
+                        stringCtx->index++;
+                        return '\n';
+                    default:
+                        stringCtx->index++;
+                        return *at;
+                }
+            }
+        case '"':
+            if (stringCtx->stringType == StringType_DoubleQuote) {
+                at++;
+                stringCtx->index++;
+                return '\0';
+            } else {
+                goto normalChar;
+            }
+        case '\'':
+            if (stringCtx->stringType == StringType_SingleQuote) {
+                at++;
+                stringCtx->index++;
+                return '\0';
+            } else {
+                goto normalChar;
+            }
+        case '\n':
+            return '\0';
+        case '$':
+            if (stringCtx->stringType == StringType_SingleQuote) {
+                goto normalChar;
+            } else {
+                // new context at $ (e.g. $macroArg.1 blah blah)
+                parser_context_t ctx2 = {
+                    .macroState = ctx->macroState,
+                    .begin = ctx->begin,
+                    .at = at,
+                    .end = ctx->end,
+                    .nestingLevel = ctx->nestingLevel,
+                    .nestingBound = ctx->nestingLevel,
+                };
+
+                ConsumeCommentsAsWhite(false); // a bit of a hack, turn off comments processing
+                char res = StrRead_consumeExpressionChar(&ctx2, stringCtx);
+                ConsumeCommentsAsWhite(true);  // turn it back on
+
+                if (ctx2.nestingLevel != ctx->nestingLevel) {
+                    Macros_ReportError("Macro template has overflown expression boundary! Undefined behavior coming!", ctx2.at, ctx2.end);
+                    while (ctx2.nestingLevel > ctx->nestingLevel && PopParserContext(&ctx2)) {
+                    }
+                    stringCtx->subIndex += 1;
+                    return '$';
+                }
+
+                if (stringCtx->subIndex == 0) {
+                    stringCtx->index += ctx2.at - at;
+                }
+                return res;
+            }
+        default:
+        normalChar:
+            stringCtx->index++;
+            return *at;
+    }
+}
+
+// A string can be either a verbatim string (without quotes, with no support for escapes and expansions), 
+// a raw string (without quotes, with support for escapes and expansions), or a series of string literals. 
+// Each literal is either a double-quoted string (with support for escapes and expansions), or
+// a single-quoted string (with support for only a single-quote-escape but no expansions). 
+// Literals are concatenated without any interventing characters.
+
+// For example, the following are all valid strings:
+// hello $worldname world         => raw string with expansions, so $worldname is expanded.
+// "hello"' $worldname '"world"   => three literals: double-quoted string, single-quoted string, double-quoted string
+//                                   the single-quoted part prevents expansions in that part, so $worldname is not expanded.
+// "hello \"$worldname\" world"   => double-quoted string with escapes and expansions, so $worldname is expanded, and remains double-quoted due to the escapes.
+
+// If any of these examples are read as a verbatim string, all the characters will be read 
+// verbatim (as-is) until the end of the context, including all $ signs and quotes (no expansions, no escapes).
+
+char StrRead_ConsumeCharOfString(parser_context_t* ctx, string_reader_context_t* stringCtx)
+{
+    const char* at = ctx->at;
+
+    at += stringCtx->stringOffset;  // point to the current literal of the string.
+
+    if (stringCtx->stringType == StringType_Verbatim) {
+        stringCtx->at = at + stringCtx->index;
+        char res = StrRead_ConsumeCharInString(ctx, stringCtx);
+
+        if (res == '\0') {
+            ctx->at += stringCtx->stringOffset + stringCtx->index;
+            stringCtx->stringOffset += stringCtx->index;
+            stringCtx->index = 0;
+        }
+        return res;
+    }
+
+    switch (*at) {
+        case '\'':
+            stringCtx->stringType = StringType_SingleQuote;
+            break;
+        case '"':
+            stringCtx->stringType = StringType_DoubleQuote;
+            break;
+        default:
+            stringCtx->stringType = StringType_Raw;
+            break;
+    }
+
+    if (stringCtx->index == 0 && stringCtx->stringType != StringType_Raw) {
+        stringCtx->index++;
+    }
+
+    at += stringCtx->index;
+
+    // (This is correct, we don't want a context pop here.)
+    if (at >= ctx->end) {
+        ctx->at = ctx->end;
+        return '\0';
+    }
+
+    stringCtx->at = at;
+    char res = StrRead_ConsumeCharInString(ctx, stringCtx);
+
+    if (res == '\0' && stringCtx->stringType != StringType_Verbatim) {
+        return StrRead_tryConsumeAnotherStringLiteral(ctx, stringCtx);
+    } else {
+        return res;
+    }
+}
+
+extern string_segment_t StringRefToSegment(string_ref_t ref);
+
+static char StrRead_consumeExpressionCharOfString(const macro_variable_t* variable, uint16_t* idx)
+{
+    // read the nth character of the string variable, where n is the value of *idx. 
+    // If n exceeds the string length, return '\0' and reset *idx to 0.
+
+    string_segment_t str = StringRefToSegment(variable->asStringRef);
+    uint8_t len = str.end - str.start;
+
+    if (*idx < len) {
+        char c = str.start[*idx];
+        if (c != '\0') {
+            (*idx)++;
+        } else {
+            *idx = 0;
+        }
+        return c;
+    } else {
+        *idx = 0;    
+        return '\0';
+    }
+}
+
+static char StrRead_consumeExpressionChar(parser_context_t* ctx, string_reader_context_t* stringCtx)
+{
+    char c;
+
+    // TODO: this TRY_EXPAND_TEMPLATE won't be needed if we expand $macroArg:any correctly.
+    //       It will be handled automatically in Macros_ConsumeAnyValue() below.
+    if (TRY_EXPAND_TEMPLATE(ctx)) {
+        // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
+        // (If there is an expansion, it is handled within a new context copy.)
+        c = consumeCharOfTemplate(ctx, stringCtx->stringType, &stringCtx->subIndex);
+        PopParserContext(ctx);
+
+        if (stringCtx->subIndex == 0) {
+            UnconsumeWhite(ctx);
+        }
+        return c;
+    } else {
+        macro_variable_t res = Macros_ConsumeAnyValue(ctx);
+        UnconsumeWhite(ctx);
+
+        switch (res.type) {
+            case MacroVariableType_Int:
+                c = consumeExpressionCharOfInt(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_Float:
+                c = consumeExpressionCharOfFloat(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_Bool:
+                c = consumeExpressionCharOfBool(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_String:
+                c = StrRead_consumeExpressionCharOfString(&res, &stringCtx->subIndex);
+                break;
+            case MacroVariableType_None:
+                c = '?';
+                break;
+            default:
+                Macros_ReportErrorNum("Unrecognized variable type", res.type, ctx->at);
+                return '\0';
+        }
+    }
+
+    if (Macros_ParserError) {
+        ctx->at++;
+        stringCtx->subIndex = 0;
+    }
+    return c;
+}
+
+
+// existing code:a  
 
 static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex);
 
@@ -148,6 +423,9 @@ static char consumeExpressionCharOfString(const macro_variable_t* variable, uint
 static char consumeExpressionChar(parser_context_t* ctx, string_type_t stringType, uint16_t* index)
 {
     char c;
+
+    // TODO: this TRY_EXPAND_TEMPLATE won't be needed if we expand $macroArg:any correctly.
+    //       It will be handled automatically in Macros_ConsumeAnyValue() below.
     if (TRY_EXPAND_TEMPLATE(ctx)) {
         // Call tree of this never expands or unexpands this context, so we can safely perform a pop after.
         // (If there is an expansion, it is handled within a new context copy.)
@@ -331,7 +609,6 @@ char Macros_ConsumeCharOfString(parser_context_t* ctx, uint16_t* stringOffset, u
     }
 }
 
-
 static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stringType, const char* at, uint16_t* index, uint16_t* subIndex)
 {
     if (at >= ctx->end) {
@@ -407,4 +684,3 @@ static char Macros_ConsumeCharInString(parser_context_t* ctx, string_type_t stri
             return *at;
     }
 }
-

@@ -109,6 +109,7 @@ typedef enum {
     CommandId_ifRegLt,      // deprecated
 
     // 'm' commands
+    CommandId_macroArg,
     CommandId_mulReg,  // deprecated
 
     // 'n' commands
