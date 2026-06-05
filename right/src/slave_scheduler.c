@@ -81,7 +81,11 @@ static uint8_t getNextSlaveId(uint8_t slaveId)
     }
     return slaveId;
 #elif DEVICE_IS_UHK80_LEFT
-    return slaveId == SlaveId_LeftModule ? SlaveId_ModuleLeftLedDriver : SlaveId_LeftModule;
+    switch (slaveId) {
+        case SlaveId_LeftModule:          return SlaveId_ModuleLeftLedDriver;
+        case SlaveId_ModuleLeftLedDriver: return SlaveId_KbootDriver;
+        default:                          return SlaveId_LeftModule;
+    }
 #elif DEVICE_IS_UHK80_RIGHT
     switch (slaveId) {
         case SlaveId_RightModule:   return SlaveId_RightTouchpad;

@@ -134,7 +134,7 @@ static void process(const struct log_backend *const backend, union log_msg_gener
 
     if (sinks.toStatusBuffer || sinks.toUsbBuffer || sinks.toOled) {
         log_output_ctx_set(&sinkLogOutput, &sinks);
-        uint8_t flags = LOG_OUTPUT_FLAG_CRLF_LFONLY;
+        uint8_t flags = ShellConfig_StripVt100 ? LOG_OUTPUT_FLAG_CRLF_LFONLY : 0;
         log_output_msg_process(&sinkLogOutput, &msg->log, flags);
     }
 }

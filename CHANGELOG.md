@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [17.1.1] - 2026-06-02
+
+Device Protocol: 4.18.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0
+
+- Fix: caps lock led on uhk60
+- Fix: make uhk80 respect reenumeration type, and consequently not die during pairing procedures that request reboot.
+- Fix: decrease the dongle interval to actual 7.5ms, instead of scheduling-forced 11ms
+- Fix: increase advertising interval when not actively connecting, to reduce dongle mouse jitter
+
 ## [17.1.0] - 2026-05-27
 
 Device Protocol: 4.18.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0

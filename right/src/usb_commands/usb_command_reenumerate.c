@@ -1,3 +1,4 @@
+#include "lib/bootloader/src/bootloader/wormhole.h"
 #ifdef __ZEPHYR__
 #include <zephyr/retention/bootmode.h>
 #include <zephyr/sys/reboot.h>
@@ -58,10 +59,11 @@ void UsbCommand_Reenumerate(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
     StateWormhole_Open();
     StateWormhole.wasReboot = true;
     Trace_Printc("Reenumerating...");
+    LogU("Reenumerating...");
 #ifdef __ZEPHYR__
-    printk("Reenumerating...");
+    uint8_t enumerationMode = GetUsbRxBufferUint8(1);
     k_sleep (K_MSEC(100)); //let it flush logs
-    bootmode_set(BOOT_MODE_TYPE_BOOTLOADER);
+    bootmode_set(enumerationMode == EnumerationMode_Bootloader ? BOOT_MODE_TYPE_BOOTLOADER : BOOT_MODE_TYPE_NORMAL);
     sys_reboot(SYS_REBOOT_COLD);
 #else
     Wormhole.magicNumber = WORMHOLE_MAGIC_NUMBER;

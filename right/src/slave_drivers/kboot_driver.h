@@ -26,6 +26,7 @@
         KbootCommand_Ping,
         KbootCommand_Reset,
         KbootCommand_Flash,
+        KbootCommand_ResetAndJump,
     } kboot_command_t;
 
     typedef enum {
@@ -35,16 +36,32 @@
         KbootPhase_CheckPingResponseStatus,
     } kboot_ping_phase_t;
 
+    // Legacy reset (buspal / UHK60 path): the caller (agent) has already jumped
+    // the target module into its bootloader and pinged it, and supplies the
+    // target i2cAddress. We just transmit the raw reset frame to that address.
     typedef enum {
-        KbootResetPhase_JumpToBootloader,
-        KbootResetPhase_WaitForBootloader,
-        KbootResetPhase_SendPing,
-        KbootResetPhase_CheckPingStatus,
-        KbootResetPhase_ReceivePingResponse,
-        KbootResetPhase_CheckPingResponseStatus,
         KbootResetPhase_SendReset,
-        KbootResetPhase_Done,
+        KbootResetPhase_ReceiveResetAck,
+        KbootResetPhase_ReceiveResetGenericResponse,
+        KbootResetPhase_CheckResetSendAck,
     } kboot_reset_phase_t;
+
+    // Self-contained reset (UHK80 native path / shell command): jump the right
+    // module into its bootloader, ping until it answers, then reset it. The
+    // target i2cAddress is set internally, not by the caller.
+    // SendPing..CheckPingResponseStatus are not handled by name in the switch -
+    // handlePing() walks them by offset from SendPing, so they must stay
+    // contiguous and in this order.
+    typedef enum {
+        KbootResetAndJumpPhase_JumpToBootloader,
+        KbootResetAndJumpPhase_WaitForBootloader,
+        KbootResetAndJumpPhase_SendPing,
+        KbootResetAndJumpPhase_CheckPingStatus,
+        KbootResetAndJumpPhase_ReceivePingResponse,
+        KbootResetAndJumpPhase_CheckPingResponseStatus,
+        KbootResetAndJumpPhase_SendReset,
+        KbootResetAndJumpPhase_Done,
+    } kboot_reset_and_jump_phase_t;
 
     // Shared command transaction phases (reused by Flash and Reset).
     // Values 240-249 so they don't collide with command-specific phases.
@@ -89,7 +106,12 @@
 
     typedef struct {
         kboot_command_t command;
+        // i2c address we are actually talking to. Alternates between default and moduleBootloaderAddress.
         uint8_t i2cAddress;
+        // slotId to target - specified by Agent
+        uint8_t slotId;
+        // expected module bootloader i2c address - specified by Agent
+        uint8_t moduleBootloaderAddress;
         uint8_t phase;
         uint32_t status;
         uint32_t startTime;

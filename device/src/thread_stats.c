@@ -96,9 +96,9 @@ void ThreadStats_Snap(void) {
 
 void ThreadStats_Print(void) {
     ThreadStats_Snap();
-    LogUS("Threads (%d), interval %d ms:\n", threadCount, MONITOR_INTERVAL_MS);
+    LogU("Threads (%d), interval %d ms:\n", threadCount, MONITOR_INTERVAL_MS);
     for (uint8_t i = 0; i < threadCount; i++) {
-        LogUS("    - %s (id %d): %d\n", threadStats[i].name, shortId(threadStats[i].threadId), (uint32_t)(threadStats[i].time*100/timeTotal));
+        LogU("    - %s (id %d): %d\n", threadStats[i].name, shortId(threadStats[i].threadId), (uint32_t)(threadStats[i].time*100/timeTotal));
     }
     enabled = true;
 }

@@ -28,6 +28,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     host_connection.c
     i2c.c
     i2c_error_logger.c
+    jitter_test.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/i2c_watchdog.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_clock.c>
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/init_peripherals.c>

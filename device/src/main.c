@@ -96,7 +96,9 @@ static void scheduleNextRun() {
     uint32_t nextEventTime = 0;
     bool eventIsValid = false;
     if (EventScheduler_Vector & EventVector_EventScheduler) {
+        Trace_Printc("d6");
         nextEventTime = EventScheduler_Process();
+        Trace_Printc("d7");
         eventIsValid = true;
     }
     int32_t diff = nextEventTime - Timer_GetCurrentTime();
@@ -297,14 +299,19 @@ void mainRuntime(void) {
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
+        Trace_Printc("d1");
         Messenger_ProcessQueue();
+        Trace_Printc("d2");
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EventloopTiming_Start());
             RunUserLogic();
             EVENTLOOP_TIMING(EventloopTiming_End());
         }
+        Trace_Printc("d3");
         scheduleNextRun();
+        Trace_Printc("d4");
         detectSpinningEventLoop();
+        Trace_Printc("d5");
         UserLogic_LastEventloopTime = Timer_GetCurrentTime();
     }
 #elif DEVICE_IS_UHK_DONGLE

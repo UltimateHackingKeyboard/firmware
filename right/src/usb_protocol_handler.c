@@ -2,6 +2,7 @@
 #include "config_parser/config_globals.h"
 #include "macros/status_buffer.h"
 #include "usb_protocol_handler.h"
+#include "trace.h"
 #include "usb_commands/usb_command_get_device_state.h"
 #include "usb_commands/usb_command_read_config.h"
 #include "usb_commands/usb_command_reenumerate.h"
@@ -42,6 +43,9 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
     bzero(GenericHidInBuffer, USB_COMMAND_BUFFER_LENGTH);
 
     uint8_t command = GetUsbRxBufferUint8(0);
+
+    Trace_Printf("<U%d", command);
+
     switch (command) {
         case UsbCommandId_GetDeviceProperty:
             UsbCommand_GetDeviceProperty(GenericHidOutBuffer, GenericHidInBuffer);
@@ -168,6 +172,8 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
     }
 
     bzero(GenericHidOutBuffer, USB_COMMAND_BUFFER_LENGTH);
+
+    Trace_Printc(">");
 }
 
 #ifdef __ZEPHYR__

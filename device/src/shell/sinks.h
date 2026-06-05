@@ -17,6 +17,7 @@
 
     extern bool ShellConfig_IsInPanicMode;
     extern bool ShellConfig_UseShellSinks;
+    extern bool ShellConfig_StripVt100;
 
 // Functions:
 

@@ -3,6 +3,12 @@
 #include "wormhole.h"
 #include "macros/status_buffer.h"
 
+#ifdef __ZEPHYR__
+#include "shell/sinks.h"
+#else
+#define ShellConfig_StripVt100 false
+#endif
+
 static char buffer[USB_LOG_BUFFER_SIZE];
 static uint16_t bufferPosition = 0;
 static uint16_t bufferLength = 0;
@@ -16,7 +22,7 @@ static void updateNonemptyFlag() {
 }
 
 static void addChar(char c) {
-    if (CHAR_IS_VALID(c)) {
+    if (CHAR_IS_VALID(c) || !ShellConfig_StripVt100) {
         if (bufferLength < USB_LOG_BUFFER_SIZE) {
             buffer[POS(bufferLength)] = c;
             bufferLength++;
