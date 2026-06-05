@@ -1,5 +1,11 @@
 # Debugging UHK80 with VSCode
 
+Enable this KConfig:
+
+```
+CONFIG_DEBUG_THREAD_INFO=y
+```
+
 In terminal:
 
 ```
