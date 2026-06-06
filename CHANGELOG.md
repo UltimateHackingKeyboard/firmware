@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [17.1.2] - 2026-06-06
+
+Device Protocol: 4.18.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0
+
+- Fix: make modules restart after a firmware update correctly. This was broken between 17.0.0 to 17.1.1, and made uhk60 need manual restart after firmware upgrade.
+- Fix: one possible cause of event scheduler freezes.
+- Fix: generalize native kboot implementation to correctly handle all modules. `DEVICEPROTOCOL:PATCH`
+- Fix: add full vt100 zephyr shell support. (Needs Agent support.) `DEVICEPROTOCOL:PATCH`
+
 ## [17.1.1] - 2026-06-02
 
 Device Protocol: 4.18.0 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0
