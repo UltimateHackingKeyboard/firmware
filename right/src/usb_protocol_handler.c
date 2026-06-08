@@ -106,10 +106,10 @@ void UsbProtocolHandler(uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffe
         case UsbCommandId_ValidateBufferCrc:
             UsbCommand_ValidateBufferCrc(GenericHidOutBuffer, GenericHidInBuffer);
             break;
-#ifdef __ZEPHYR__
         case UsbCommandId_ExecShellCommand:
             UsbCommand_ExecShellCommand(GenericHidOutBuffer, GenericHidInBuffer);
             break;
+#ifdef __ZEPHYR__
         case UsbCommandId_DrawOled:
             UsbCommand_DrawOled(GenericHidOutBuffer, GenericHidInBuffer);
             break;
