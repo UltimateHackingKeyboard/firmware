@@ -1,0 +1,43 @@
+From 22ee92b67977706a2592c2539d82bd9a3b1bbefb Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Mon, 8 Jun 2026 10:57:49 +0200
+Subject: [PATCH] nrfx: saadc: clear stale sampling events before enabling
+ interrupts
+
+In simple non-blocking mode a leftover STARTED event from a previous
+cycle could fire the high-priority SAADC ISR while the driver state was
+still SIMPLE_MODE (idle). saadc_event_started_handle() then drops it via
+its default branch and the real conversion's SAMPLE task is never issued,
+so no END event arrives and adc_read() blocks forever on ctx->sync.
+
+Clear EVENTS_STARTED/END/STOPPED before (re)enabling their interrupts in
+saadc_generic_mode_set() so only the genuine event of the armed cycle is
+delivered.
+---
+ nrfx/drivers/src/nrfx_saadc.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/nrfx/drivers/src/nrfx_saadc.c b/nrfx/drivers/src/nrfx_saadc.c
+index f44e5f2..f4803d8 100644
+--- a/nrfx/drivers/src/nrfx_saadc.c
++++ b/nrfx/drivers/src/nrfx_saadc.c
+@@ -326,6 +326,16 @@ static void saadc_generic_mode_set(uint32_t                   ch_to_activate_mas
+     nrfy_saadc_periph_configure(NRF_SAADC, &config);
+     if (event_handler)
+     {
++        /* Clear any stale sampling events left over from a previous mode/cycle
++         * before (re)enabling their interrupts. Otherwise a leftover STARTED can
++         * fire the high-priority SAADC ISR while the driver state is still
++         * SIMPLE_MODE (idle), get dropped by the default branch in
++         * saadc_event_started_handle(), and cause the real conversion's SAMPLE
++         * task to never be issued -> no END -> caller blocks forever on ctx->sync.
++         */
++        nrfy_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_STARTED);
++        nrfy_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_END);
++        nrfy_saadc_event_clear(NRF_SAADC, NRF_SAADC_EVENT_STOPPED);
+         nrfy_saadc_int_set(NRF_SAADC,
+                            NRF_SAADC_INT_STARTED |
+                            NRF_SAADC_INT_STOPPED |
+-- 
+2.51.0
+
