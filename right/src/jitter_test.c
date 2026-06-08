@@ -4,7 +4,7 @@
 #include <zephyr/kernel.h>
 #endif
 
-#define JITTER_TEST_SAMPLE_COUNT 20
+#define JITTER_TEST_SAMPLE_COUNT 50
 #define JITTER_TEST_WINDOW_MS 1000
 
 bool JitterTest_Active = false;
