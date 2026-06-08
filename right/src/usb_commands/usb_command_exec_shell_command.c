@@ -22,7 +22,7 @@ void UsbCommand_ExecShellCommand(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     uint32_t currentTime = Timer_GetCurrentTime();
     if (currentTime - lastTime > 1000) {
         currentTime = 0;
-        LogU("uhk60$: only output is supported for uhk60.");
+        LogU("uhk60$: only output is supported for uhk60.\n");
     }
 #endif
 }
