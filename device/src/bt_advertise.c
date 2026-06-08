@@ -165,10 +165,8 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
             if (Cfg.Bt_DirectedAdvertisingAllowed) {
                 LOG_DBG("Adv: advertise nus, with allow list.");
                 setFilters(advConfig);
-
                 advParam = *BT_LE_ADV_CONN_FAST_1;
                 advParam.options = BT_LE_ADV_OPT_CONN | BT_LE_ADV_OPT_FILTER_CONN | BT_LE_ADV_OPT_USE_IDENTITY;
-
                 applyAdvInterval(&advParam);
                 err = BT_LE_ADV_START(&advParam, BY_SIDE(adNusLeft, adNusRight), sdNus);
             } else {
