@@ -812,8 +812,13 @@ static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id
     ENABLE_IRQ();
 
     if (!accepted) {
-        LOG_ERR("BT deferred work slot busy, dropping action %d for %s", action, GetPeerStringByConn(conn));
-        return;
+        if (action == btDeferredAction && BtAddrEq(bt_conn_get_dst(conn), bt_conn_get_dst(btDeferredConn))) {
+            LOG_DBG("Already scheduled equivalent action %d for %s, ignoring", action, GetPeerStringByConn(conn));
+            return;
+        } else {
+            LOG_ERR("BT deferred work slot busy, dropping action %d for %s", action, GetPeerStringByConn(conn));
+            return;
+        }
     }
 
     bt_conn_ref(conn);
