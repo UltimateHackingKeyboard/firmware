@@ -44,7 +44,7 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
     auto err = send_report(&in);
     if (err == hid::result::ok) {
         in_buffer_.swap_sides();
-    } else {
+    } else if (err != hid::result::BUSY) {
 #if __has_include(<zephyr/sys/printk.h>)
         printk("Command app failed to send report with: %d\n", std::bit_cast<int>(err));
 #endif
