@@ -53,9 +53,10 @@ struct hogp_manager {
         hogp_nopad_{multi_hid_nopad::handle(), security, features};
 };
 
-extern "C" void HOGP_Enable()
+extern "C" bool HOGP_Enable()
 {
-    hogp_manager::instance().main_service().start();
+    bool started = hogp_manager::instance().main_service().start();
+    return started;
 }
 
 extern "C" void HOGP_Disable()
