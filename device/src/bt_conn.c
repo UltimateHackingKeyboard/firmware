@@ -295,6 +295,14 @@ static struct bt_conn_le_data_len_param *data_len;
 static void enableDataLengthExtension(struct bt_conn *conn) {
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
+    /**
+     * This configures actual transmission length.
+     *
+     * We don't want it too high in order to prevent scheduling conflicts between multiple links.
+     * */
+    data_len->tx_max_len = 64;
+    data_len->tx_max_time = 1065;
+
     int err = bt_conn_le_data_len_update(conn, data_len);
     if (err) {
         LOG_INF("LE data length update failed: %d", err);

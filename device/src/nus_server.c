@@ -17,7 +17,7 @@
 
 LOG_MODULE_REGISTER(NusServer, LOG_LEVEL_INF);
 
-#define NUS_SLOTS 2
+#define NUS_SLOTS 1
 
 static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 

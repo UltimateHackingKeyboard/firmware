@@ -79,7 +79,7 @@ static void noteReportDispatched(report_sink_t sink)
             dispatchTimeMs = Timer_GetCurrentTime();
         }
     }
-    UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
+    UsbReportWindowEstimate = UsbReportWindowEstimateLast + 2 * reportIntervalForSink(sink);
 }
 
 static void noteReportSent(report_sink_t transport)
@@ -91,7 +91,9 @@ static void noteReportSent(report_sink_t transport)
             dispatchTimeMs = 0;
         }
     }
-    UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForSink(transport);
+    uint32_t currentTime = Timer_GetCurrentTime();
+    UsbReportWindowEstimateLast = currentTime;
+    UsbReportWindowEstimate = currentTime + reportIntervalForSink(transport);
     EventVector_WakeMain();
 }
 
