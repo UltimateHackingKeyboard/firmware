@@ -1,0 +1,107 @@
+From 3eb54d25071ae8bc712264d39fcae9e9a753f20d Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Wed, 10 Jun 2026 12:53:26 +0200
+Subject: [PATCH] DEBUG: SAADC hang instrumentation (register/state traces)
+
+Temporary diagnostics: SAADC_DBG() dumps driver state + ENABLE/STATUS/
+EVENTS/INTEN at GMS/mode-trigger/ISR/handlers to chase the simple
+non-blocking hang. Not for upstream.
+---
+ nrfx/drivers/src/nrfx_saadc.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/nrfx/drivers/src/nrfx_saadc.c b/nrfx/drivers/src/nrfx_saadc.c
+index d5942ed..db5d5af 100644
+--- a/nrfx/drivers/src/nrfx_saadc.c
++++ b/nrfx/drivers/src/nrfx_saadc.c
+@@ -33,6 +33,15 @@
+ #include <nrfx.h>
+ #include <nrfx_saadc.h>
+ #include "nrfx_saadc_common.h"
++#include <zephyr/sys/printk.h> /* DEBUG: SAADC hang instrumentation */
++
++/* DEBUG: dump driver state + key SAADC HW registers at a labelled point. */
++#define SAADC_DBG(tag) \
++    printk("SAADC %-9s st=%u EN=%lu STATUS=%lu eSTART=%lu eEND=%lu eSTOP=%lu INTEN=0x%03lx\n", \
++           (tag), (unsigned)m_cb.saadc_state, \
++           (unsigned long)NRF_SAADC->ENABLE,  (unsigned long)NRF_SAADC->STATUS, \
++           (unsigned long)NRF_SAADC->EVENTS_STARTED, (unsigned long)NRF_SAADC->EVENTS_END, \
++           (unsigned long)NRF_SAADC->EVENTS_STOPPED, (unsigned long)NRF_SAADC->INTEN)
+ 
+ #define NRFX_LOG_MODULE SAADC
+ #include <nrfx_log.h>
+@@ -679,6 +688,7 @@ int nrfx_saadc_mode_trigger(void)
+     {
+         case NRF_SAADC_STATE_SIMPLE_MODE:
+         {
++            SAADC_DBG("MT-enter"); /* DEBUG */
+             if (m_cb.event_handler)
+             {
+                 // Defer servicing of the SAADC interrupt until the sampling state
+@@ -691,6 +701,7 @@ int nrfx_saadc_mode_trigger(void)
+                 // peripheral INTEN, which the enable path can clobber) to hold any
+                 // STARTED pending until setup is finished.
+                 NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_SAADC));
++                SAADC_DBG("MT-dis"); /* DEBUG: NVIC SAADC IRQ masked for setup window */
+             }
+ 
+             nrfy_saadc_enable(NRF_SAADC);
+@@ -702,7 +713,9 @@ int nrfx_saadc_mode_trigger(void)
+             {
+                 m_cb.saadc_state = NRF_SAADC_STATE_SIMPLE_MODE_SAMPLE;
+                 nrfy_saadc_buffer_set(NRF_SAADC, &m_cb.buffer_primary, true, false);
++                SAADC_DBG("MT-latch"); /* DEBUG */
+                 NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_SAADC));
++                SAADC_DBG("MT-unmask"); /* DEBUG: NVIC re-enabled; pending STARTED should fire at st=3 */
+             }
+             else
+             {
+@@ -897,6 +910,7 @@ static void saadc_event_started_handle(void)
+ {
+     nrfx_saadc_evt_t evt_data;
+ 
++    SAADC_DBG("STARTED-H"); /* DEBUG */
+     switch (m_cb.saadc_state)
+     {
+         case NRF_SAADC_STATE_ADV_MODE_SAMPLE:
+@@ -928,6 +942,7 @@ static void saadc_event_started_handle(void)
+ 
+         case NRF_SAADC_STATE_SIMPLE_MODE_SAMPLE:
+             nrfy_saadc_sample_start(NRF_SAADC, NULL);
++            SAADC_DBG("SAMPLED"); /* DEBUG */
+             break;
+ 
+         case NRF_SAADC_STATE_CALIBRATION:
+@@ -950,6 +965,8 @@ static void saadc_disable(void)
+ static void saadc_event_end_handle(void)
+ {
+     nrfx_saadc_evt_t evt_data;
++
++    SAADC_DBG("END-H"); /* DEBUG */
+     evt_data.type = NRFX_SAADC_EVT_DONE;
+     evt_data.data.done.p_buffer = m_cb.buffer_primary.p_buffer;
+     evt_data.data.done.size = (uint16_t)m_cb.buffer_primary.length;
+@@ -1026,12 +1043,20 @@ static void saadc_event_limits_handle(void)
+ 
+ void nrfx_saadc_irq_handler(void)
+ {
++    SAADC_DBG("ISR-enter"); /* DEBUG */
+     uint32_t evt_mask = NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_STARTED) |
+                         NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_STOPPED) |
+                         NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_END) |
+                         NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_CALIBRATEDONE);
+     evt_mask = nrfy_saadc_events_process(NRF_SAADC, evt_mask, &m_cb.buffer_primary);
+ 
++    /* DEBUG: which events this ISR is dispatching */
++    printk("SAADC ISR-disp st=%u %s%s%s%s\n", (unsigned)m_cb.saadc_state,
++           (evt_mask & NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_STARTED)) ? "STARTED " : "",
++           (evt_mask & NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_END)) ? "END " : "",
++           (evt_mask & NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_STOPPED)) ? "STOPPED " : "",
++           (evt_mask & NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_CALIBRATEDONE)) ? "CALIB " : "");
++
+     if (evt_mask & NRFY_EVENT_TO_INT_BITMASK(NRF_SAADC_EVENT_CALIBRATEDONE))
+     {
+         nrfy_saadc_int_disable(NRF_SAADC, NRF_SAADC_INT_CALIBRATEDONE);
+-- 
+2.51.0
+

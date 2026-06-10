@@ -299,6 +299,9 @@ void mainRuntime(void) {
 #if DEVICE_IS_UHK80_RIGHT
     while (true)
     {
+        if (Timer_GetCurrentTime() > 10000) {
+            // Battery_ReadTest();
+        }
         Trace_Printc("d1");
         Messenger_ProcessQueue();
         Trace_Printc("d2");

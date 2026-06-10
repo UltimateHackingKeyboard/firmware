@@ -53,6 +53,8 @@
 
     bool Charger_EnableCharging(bool enabled);
 
+    uint16_t Battery_ReadTest(void);
+
     bool Charger_ShouldRemainInDepletedMode(bool checkVoltage);
     bool Charger_ShouldEnterDepletedMode();
 

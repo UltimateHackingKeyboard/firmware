@@ -1,6 +1,6 @@
-From fbd9d835162429ba9907b98dd68e669cabc502b3 Mon Sep 17 00:00:00 2001
+From 4d7612dfa889d0f1ddf037dec8676d62778a4f78 Mon Sep 17 00:00:00 2001
 From: Karel Tucek <kareltucek@centrum.cz>
-Date: Tue, 9 Jun 2026 13:33:27 +0200
+Date: Wed, 10 Jun 2026 12:52:04 +0200
 Subject: [PATCH] nrfx_saadc: avoid lost STARTED event in simple non-blocking
  mode
 
@@ -13,10 +13,12 @@ branch and the SAMPLE task is never triggered. No END event is generated,
 the conversion never completes, and a blocking caller (e.g. the Zephyr
 adc_read() driver) waits forever.
 
-Mask NRF_SAADC_INT_STARTED while enabling the SAADC, updating the state and
-latching the buffer, then re-enable it. A STARTED raised during setup stays
-pending and is serviced once the state is SIMPLE_MODE_SAMPLE and the buffer
-is programmed, so the SAMPLE task is correctly triggered.
+Mask the SAADC interrupt at the NVIC while enabling the SAADC, updating the
+state and latching the buffer, then re-enable it. A STARTED raised during
+setup stays pending and is serviced once the state is SIMPLE_MODE_SAMPLE and
+the buffer is programmed, so the SAMPLE task is correctly triggered. The
+mask is applied at the NVIC rather than the peripheral INTEN because the
+enable path can leave INTEN re-asserted within the critical window.
 
 Signed-off-by: Karel Tucek <kareltucek@centrum.cz>
 ---
@@ -24,7 +26,7 @@ Signed-off-by: Karel Tucek <kareltucek@centrum.cz>
  1 file changed, 15 insertions(+)
 
 diff --git a/nrfx/drivers/src/nrfx_saadc.c b/nrfx/drivers/src/nrfx_saadc.c
-index f44e5f2..5d5e2e1 100644
+index f44e5f2..d5942ed 100644
 --- a/nrfx/drivers/src/nrfx_saadc.c
 +++ b/nrfx/drivers/src/nrfx_saadc.c
 @@ -679,6 +679,20 @@ int nrfx_saadc_mode_trigger(void)
@@ -33,16 +35,16 @@ index f44e5f2..5d5e2e1 100644
          {
 +            if (m_cb.event_handler)
 +            {
-+                // Defer servicing of the STARTED event until the sampling state and
-+                // the result buffer are both set up below. Enabling the SAADC (and
-+                // the buffer latch) can raise STARTED before m_cb.saadc_state is
-+                // advanced to SIMPLE_MODE_SAMPLE; if the SAADC interrupt is serviced
-+                // in that window, saadc_event_started_handle() takes its default
-+                // branch and the SAMPLE task is never triggered, so no END event
-+                // arrives and the conversion never completes. Re-enabling STARTED
-+                // after the setup lets the pending event be handled in the correct
-+                // state and trigger the SAMPLE task.
-+                nrfy_saadc_int_disable(NRF_SAADC, NRF_SAADC_INT_STARTED);
++                // Defer servicing of the SAADC interrupt until the sampling state
++                // and the result buffer are both set up below. Enabling the SAADC
++                // (and the buffer latch) can raise STARTED before m_cb.saadc_state
++                // is advanced to SIMPLE_MODE_SAMPLE; if the SAADC ISR runs in that
++                // window, saadc_event_started_handle() takes its default branch and
++                // the SAMPLE task is never triggered, so no END event arrives and
++                // the conversion never completes. Mask at the NVIC (not the
++                // peripheral INTEN, which the enable path can clobber) to hold any
++                // STARTED pending until setup is finished.
++                NRFX_IRQ_DISABLE(nrfx_get_irq_number(NRF_SAADC));
 +            }
 +
              nrfy_saadc_enable(NRF_SAADC);
@@ -52,7 +54,7 @@ index f44e5f2..5d5e2e1 100644
              {
                  m_cb.saadc_state = NRF_SAADC_STATE_SIMPLE_MODE_SAMPLE;
                  nrfy_saadc_buffer_set(NRF_SAADC, &m_cb.buffer_primary, true, false);
-+                nrfy_saadc_int_enable(NRF_SAADC, NRF_SAADC_INT_STARTED);
++                NRFX_IRQ_ENABLE(nrfx_get_irq_number(NRF_SAADC));
              }
              else
              {

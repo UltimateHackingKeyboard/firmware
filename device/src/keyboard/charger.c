@@ -137,6 +137,10 @@ static uint16_t getVoltage() {
     return (uint16_t)(VOLTAGE_DIVIDER_MULTIPLIER*val_mv);
 }
 
+uint16_t Battery_ReadTest(void) {
+    return getVoltage();
+}
+
 static void printState(battery_state_t* state) {
     LOG_INF("Battery is present: %i, charging: %i, charger enabled: %i, powered: %d, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->powered, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
 }
