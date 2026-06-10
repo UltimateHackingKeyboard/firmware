@@ -80,8 +80,7 @@ uint32_t UsbReportWindowEstimate = 0;
 //
 // If too low, we will be missing transports. If too high, we will be introducing
 // latency.
-#define USB_REPORT_WINDOW_LOOKAHEAD_MS 6
-
+#define USB_REPORT_WINDOW_LOOKAHEAD_MS 3
 #define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
