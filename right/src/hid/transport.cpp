@@ -49,7 +49,7 @@ static uint32_t dispatchTimeMs = 0;
 // interval" (worst case: we just missed a window). The send-completion
 // callback then reduces the estimate to "now + interval".
 static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
-static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 7;
+static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 8;
 
 #if DEVICE_IS_UHK80_RIGHT
 extern "C" uint32_t BleHidReportIntervalMs;
@@ -57,6 +57,13 @@ static inline uint32_t bleHidReportIntervalMs() { return BleHidReportIntervalMs;
 #else
 static inline uint32_t bleHidReportIntervalMs() { return 11; }
 #endif
+
+typedef struct {
+    uint32_t nextFreeSlotAt;
+    uint32_t lastSentAt;
+} ATTR_PACKED dispatch_scheduler_state_t;
+
+static dispatch_scheduler_state_t dispatchSchedulerState;
 
 static uint32_t reportIntervalForSink(report_sink_t sink)
 {
@@ -79,7 +86,23 @@ static void noteReportDispatched(report_sink_t sink)
             dispatchTimeMs = Timer_GetCurrentTime();
         }
     }
-    UsbReportWindowEstimate = UsbReportWindowEstimateLast + 2 * reportIntervalForSink(sink);
+
+    uint32_t currentTime = Timer_GetCurrentTime();
+    uint32_t reportInterval = reportIntervalForSink(sink);
+
+
+    uint32_t dispatchedForSlotAt;
+    dispatchedForSlotAt = dispatchSchedulerState.lastSentAt + reportInterval;
+    if (dispatchedForSlotAt < currentTime) {
+        printk("Realigning %d\n", currentTime % 1024);
+        dispatchedForSlotAt += reportInterval;
+    } 
+    if (dispatchedForSlotAt < currentTime) {
+        printk("Realigning 2\n");
+        dispatchedForSlotAt = currentTime;
+    }
+    dispatchSchedulerState.nextFreeSlotAt = dispatchedForSlotAt+reportInterval;
+    UsbReportWindowEstimate = dispatchSchedulerState.nextFreeSlotAt;
 }
 
 static void noteReportSent(report_sink_t transport)
@@ -92,8 +115,12 @@ static void noteReportSent(report_sink_t transport)
         }
     }
     uint32_t currentTime = Timer_GetCurrentTime();
-    UsbReportWindowEstimateLast = currentTime;
-    UsbReportWindowEstimate = currentTime + reportIntervalForSink(transport);
+    uint16_t reportInterval = reportIntervalForSink(transport);
+
+    dispatchSchedulerState.lastSentAt = currentTime;
+    dispatchSchedulerState.nextFreeSlotAt = MAX(currentTime + reportInterval, dispatchSchedulerState.nextFreeSlotAt);
+
+    UsbReportWindowEstimate = dispatchSchedulerState.nextFreeSlotAt;
     EventVector_WakeMain();
 }
 
