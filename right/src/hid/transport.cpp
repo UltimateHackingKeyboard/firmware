@@ -2,10 +2,12 @@ extern "C" {
 #include "transport.h"
 #ifdef __ZEPHYR__
     #include "connections.h"
+    #include "bt_conn.h"
     #include "link_protocol.h"
     #include "messenger.h"
     #include "nus_server.h"
     #include "state_sync.h"
+    #include <bluetooth/radio_notification_cb.h>
 #endif
 #include "debug.h"
 #include "event_scheduler.h"
@@ -44,69 +46,26 @@ float HidReportBleLatencyAvgMs = 0;
 }
 static uint32_t dispatchTimeMs = 0;
 
-// Approximate transport window intervals (ms) used by the report-construction
-// throttle. After dispatch we estimate the next free window at "now + 2 *
-// interval" (worst case: we just missed a window). The send-completion
-// callback then reduces the estimate to "now + interval".
-static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
-static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 8;
-
-#if DEVICE_IS_UHK80_RIGHT
-extern "C" uint32_t BleHidReportIntervalMs;
-static inline uint32_t bleHidReportIntervalMs() { return BleHidReportIntervalMs; }
-#else
-static inline uint32_t bleHidReportIntervalMs() { return 11; }
-#endif
-
-typedef struct {
-    uint32_t nextFreeSlotAt;
-    uint32_t lastSentAt;
-} ATTR_PACKED dispatch_scheduler_state_t;
-
-static dispatch_scheduler_state_t dispatchSchedulerState;
-
-static uint32_t reportIntervalForSink(report_sink_t sink)
-{
-    switch (sink) {
-    case ReportSink_Usb:
-        return USB_REPORT_INTERVAL_MS;
-    case ReportSink_BleHid:
-        return bleHidReportIntervalMs();
-    case ReportSink_Dongle:
-        return DONGLE_REPORT_INTERVAL_MS;
-    default:
-        return 0;
-    }
-}
+// Report-construction timing is no longer estimated from the report-sent
+// callback. Instead, on UHK80 right we build exactly one report per BLE
+// connection event, triggered by the radio-notification "prepare" callback a
+// fixed time before each connection-event anchor point (see the report-anchor
+// section below). noteReportDispatched/noteReportSent now only maintain the
+// optional BLE latency EMA.
 
 static void noteReportDispatched(report_sink_t sink)
 {
+    (void)sink;
     if (DEBUG_BLE_LATENCY_STATS) {
         if (dispatchTimeMs == 0) {
             dispatchTimeMs = Timer_GetCurrentTime();
         }
     }
-
-    uint32_t currentTime = Timer_GetCurrentTime();
-    uint32_t reportInterval = reportIntervalForSink(sink);
-
-
-    uint32_t dispatchedForSlotAt;
-    dispatchedForSlotAt = dispatchSchedulerState.lastSentAt + reportInterval;
-    if (dispatchedForSlotAt < currentTime) {
-        printk("Realigning %d\n", currentTime % 1024);
-        dispatchedForSlotAt += reportInterval;
-    } 
-    if (dispatchedForSlotAt < currentTime) {
-        printk("Realigning 2\n");
-        dispatchedForSlotAt = currentTime;
-    }
-    dispatchSchedulerState.nextFreeSlotAt = dispatchedForSlotAt+reportInterval;
-    UsbReportWindowEstimate = dispatchSchedulerState.nextFreeSlotAt;
 }
 
 static void noteReportSent(report_sink_t transport)
 {
+    (void)transport;
     if (DEBUG_BLE_LATENCY_STATS) {
         if (dispatchTimeMs != 0) {
             uint32_t delta = Timer_GetCurrentTime() - dispatchTimeMs;
@@ -114,13 +73,6 @@ static void noteReportSent(report_sink_t transport)
             dispatchTimeMs = 0;
         }
     }
-    uint32_t currentTime = Timer_GetCurrentTime();
-    uint16_t reportInterval = reportIntervalForSink(transport);
-
-    dispatchSchedulerState.lastSentAt = currentTime;
-    dispatchSchedulerState.nextFreeSlotAt = MAX(currentTime + reportInterval, dispatchSchedulerState.nextFreeSlotAt);
-
-    UsbReportWindowEstimate = dispatchSchedulerState.nextFreeSlotAt;
     EventVector_WakeMain();
 }
 
@@ -128,6 +80,96 @@ extern "C" void HidTransport_NoteNusReportSent(void)
 {
     noteReportSent(ReportSink_Dongle);
 }
+
+// ---------------------------------------------------------------------------
+// Report anchor (UHK80 right)
+//
+// The radio-notification library invokes reportAnchorPrepare() from the system
+// workqueue a fixed distance (BT_RADIO..._PREPARE_DISTANCE_US) before each
+// connection-event anchor point. We use it to open a one-shot "window" that
+// allows the report updater to build and submit a single report for the
+// upcoming event. The window is consumed by the updater (see
+// blockedByReportThrottle), so at most one report is produced per event.
+// ---------------------------------------------------------------------------
+#if DEVICE_IS_UHK80_RIGHT
+extern "C" {
+// Set by the anchor prepare callback (system workqueue), consumed by the report
+// updater (main loop). Single-writer each direction; a lost/duplicated update
+// only costs/gains one event, so a plain volatile flag is sufficient.
+volatile bool ReportAnchorWindowOpen = false;
+
+// Set by the report updater when it blocks waiting for the next anchor window
+// (it cannot rely on the prepare callback observing EventVector_SendUsbReports
+// directly, because the throttle postpones that bit out of the live vector).
+// Tells the prepare callback whether a pending report is waiting on the window.
+volatile bool ReportAnchorWaiting = false;
+}
+
+// True when reports for the active host go out over a BLE link (and therefore
+// have anchor-driven connection events). USB sinks have no anchor and are not
+// gated.
+extern "C" bool ReportAnchor_IsActive(void)
+{
+    switch (Connections_Type(ActiveHostConnectionId)) {
+    case ConnectionType_BtHid:
+    case ConnectionType_NusDongle:
+        return true;
+    default:
+        return false;
+    }
+}
+
+static void reportAnchorPrepare(struct bt_conn *conn)
+{
+    int8_t peerId = GetPeerIdByConn(conn);
+    if (peerId == PeerIdUnknown) {
+        return;
+    }
+    connection_id_t connectionId = (connection_id_t)Peers[peerId].connectionId;
+
+    // Only the connection we actually send reports to should drive the window.
+    if (!Connections_IsActiveHostConnection(connectionId)) {
+        return;
+    }
+
+    // TEMP DEBUG: record this anchor fire into the jitter timeline so its cadence
+    // can be seen interleaved with report builds. windowWasOpen flags a fire that
+    // found the previous window still unconsumed (a missed/late build).
+    if (JitterTest_Active) {
+        JitterTest_RecordAnchor(ReportAnchorWindowOpen);
+    }
+
+    ReportAnchorWindowOpen = true;
+    if (ReportAnchorWaiting) {
+        // Hand main a *live* work bit (not just a semaphore poke): while waiting
+        // for the window the throttle has postponed the report bits out of the
+        // live vector, so RunUserLogic would otherwise see no work and sleep
+        // again. Setting SendUsbReports live makes RunUserLogic run
+        // UpdateUsbReports, and because it is live at the gate the window is
+        // consumed on the first pass (no double build).
+        EventVector_Set(EventVector_SendUsbReports);
+        EventVector_WakeMain();
+    }
+}
+
+static const struct bt_radio_notification_conn_cb reportAnchorCb = {
+    .prepare = reportAnchorPrepare,
+};
+
+// Distance from the prepare callback to the connection-event anchor. Must cover
+// system-workqueue scheduling + main wakeup + report build + submit-to-LL, plus
+// peripheral clock drift. (Recommended default is 3000us.)
+#define REPORT_ANCHOR_PREPARE_DISTANCE_US 5000
+
+extern "C" void HidTransport_InitReportAnchor(void)
+{
+    int err = bt_radio_notification_conn_cb_register(
+        &reportAnchorCb, REPORT_ANCHOR_PREPARE_DISTANCE_US);
+    if (err) {
+        printk("Failed to register report anchor notification callback: %d\n", err);
+    }
+}
+#endif
 
 static report_sink_t determineSink()
 {

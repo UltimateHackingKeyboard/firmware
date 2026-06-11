@@ -35,6 +35,11 @@ static void bt_ready(int err)
         Bt_HandleError("bt_ready", err);
     } else {
         LOG_INF("Bluetooth initialized successfully");
+#if DEVICE_IS_UHK80_RIGHT
+        // The radio-notification registration is dropped by bt_disable(), so
+        // re-register after the stack has been brought back up on restart.
+        HidTransport_InitReportAnchor();
+#endif
     }
 }
 
@@ -49,6 +54,12 @@ void BtManager_InitBt() {
             Bt_HandleError("NusServer_Init", err);
         }
     }
+
+#if DEVICE_IS_UHK80_RIGHT
+    // bt_enable() has already completed (synchronously, from main) and there are
+    // no connections yet, so it is safe to register the anchor callback here.
+    HidTransport_InitReportAnchor();
+#endif
 
     if (DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK_DONGLE) {
         BtScan_Init();
