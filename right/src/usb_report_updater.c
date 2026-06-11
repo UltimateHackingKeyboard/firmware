@@ -73,14 +73,11 @@ static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 uint32_t UsbReportUpdater_LastActivityTime;
 
-uint32_t UsbReportWindowEstimate = 0;
-
-// This is how much time we leave for report construction. Most of the time is
-// (probably) consumed inside the transport layers.
-//
-// If too low, we will be missing transports. If too high, we will be introducing
-// latency.
-#define USB_REPORT_WINDOW_LOOKAHEAD_MS 3
+// Safety net: if the BLE anchor stops opening report windows (e.g. a missed
+// connection event), flush anyway after this long so input is never stuck.
+// Larger than one connection interval so it never pre-empts a healthy anchor.
+// TEMP: set high (64) so watchdog-driven builds are obvious in the jitter trace.
+#define REPORT_ANCHOR_WATCHDOG_MS 64
 #define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
 
 volatile uint8_t UsbReportUpdateSemaphore = 0;
@@ -1108,13 +1105,37 @@ static bool blockedByReportThrottle() {
         blocked = true;
     }
 
-    // To reduce mouse latency, don't construct report until we are close enough to transport window.
-    if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
-        uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
-        blockedUntil = MAX(throttleUntil, blockedUntil);;
-        blocked = true;
+    // Build exactly one report per BLE connection event. The radio-notification
+    // anchor callback opens a window a fixed time before each connection-event
+    // anchor point; we consume it here so at most one report is produced per
+    // event. Only applies when the active host is a BLE link; USB sinks have no
+    // anchor and are not gated.
+#if DEVICE_IS_UHK80_RIGHT
+    bool anchorWaiting = false;
+    ReportAnchorWaiting = false;
+    // Only gate when there is actually a report to send; otherwise the gate is
+    // irrelevant and we must not ask the anchor callback to wake us.
+    if (!blocked && ReportAnchor_IsActive()
+            && EventVector_IsSet(EventVector_SendUsbReports | EventVector_ResendUsbReports)) {
+        if (ReportAnchorWindowOpen) {
+            ReportAnchorWindowOpen = false;   // consume the window: one report per event
+        } else {
+            // Wait for the next anchor window. The prepare callback can't see the
+            // (postponed) SendUsbReports bit, so flag that we're waiting on it.
+            ReportAnchorWaiting = true;
+            anchorWaiting = true;
+            blocked = true;
+        }
     }
+#endif
     if (blocked) {
+#if DEVICE_IS_UHK80_RIGHT
+        // When only waiting for the anchor, the prepare callback wakes main;
+        // schedule a watchdog as a safety net in case anchors stop arriving.
+        if (anchorWaiting && blockedUntil == 0) {
+            blockedUntil = currentTime + REPORT_ANCHOR_WATCHDOG_MS;
+        }
+#endif
         DISABLE_IRQ();
         postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
         EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_MainTriggers) | EventVector_KeystrokeDelayPostponing;

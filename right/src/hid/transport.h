@@ -2,6 +2,7 @@
 #define __HID_TRANSPORT_H__
 
 #include <string.h>
+#include "device.h"
 #include "hid/keyboard_report.h"
 #include "hid/mouse_report.h"
 #include "hid/controls_report.h"
@@ -42,6 +43,24 @@ void Hid_ControlsReportSentCallback(hid_transport_t transport);
 // dongle-bound reports into the same latency EMA as BLE HID. Assumes any
 // right-half NUS send corresponds to a USB report being relayed to the dongle.
 void HidTransport_NoteNusReportSent(void);
+
+#if DEVICE_IS_UHK80_RIGHT
+// Register the radio-notification connection callback that opens a report
+// window before each connection-event anchor point. Must be called after
+// bt_enable() and re-called after bt_disable(); unsafe to call while connected.
+void HidTransport_InitReportAnchor(void);
+
+// True when the active host connection sends over a BLE link (anchor-driven).
+bool ReportAnchor_IsActive(void);
+
+// Opened by the anchor prepare callback, consumed by the report updater so that
+// at most one report is built per connection event.
+extern volatile bool ReportAnchorWindowOpen;
+
+// Set by the report updater while a pending report waits for the next anchor
+// window; tells the prepare callback to wake main when the window opens.
+extern volatile bool ReportAnchorWaiting;
+#endif
 
 void Hid_MouseScrollResolutionsChanged(
     hid_transport_t transport, float verticalMultiplier, float horizontalMultiplier);

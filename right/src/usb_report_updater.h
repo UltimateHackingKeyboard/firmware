@@ -52,7 +52,6 @@
     extern usb_keyboard_reports_t NativeKeyboardReports;
     extern uint32_t LastUsbGetKeyboardStateRequestTimestamp;
     extern uint32_t UsbReportUpdater_LastActivityTime;
-    extern uint32_t UsbReportWindowEstimate;
 
 // Functions:
 
