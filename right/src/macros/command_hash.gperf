@@ -1,5 +1,10 @@
 %{
 #include "command_ids.h"
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#endif
 %}
 %readonly-tables
 %compare-strncmp
@@ -167,3 +172,7 @@ zephyr, CommandId_zephyr
 "{", CommandId_openBrace
 "}", CommandId_closeBrace
 %%
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif

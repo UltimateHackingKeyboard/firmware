@@ -65,7 +65,7 @@ bool USB_IsMsHost(void);
 
 
 // HOGP (BLE HID) management
-void HOGP_Enable(void);
+bool HOGP_Enable(void);
 void HOGP_Disable(void);
 int HOGP_HealthCheck(void);
 
