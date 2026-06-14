@@ -72,11 +72,6 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
     }
 }
 
-static uint32_t reportIntervalForTransport(hid_transport_t transport)
-{
-    return (transport == HID_TRANSPORT_USB) ? USB_REPORT_INTERVAL_MS : bleHidReportIntervalMs();
-}
-
 static void noteReportDispatched(report_sink_t sink)
 {
     if (DEBUG_BLE_LATENCY_STATS) {
@@ -87,7 +82,7 @@ static void noteReportDispatched(report_sink_t sink)
     UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
 }
 
-static void noteReportSent(hid_transport_t transport)
+static void noteReportSent(report_sink_t transport)
 {
     if (DEBUG_BLE_LATENCY_STATS) {
         if (dispatchTimeMs != 0) {
@@ -96,13 +91,13 @@ static void noteReportSent(hid_transport_t transport)
             dispatchTimeMs = 0;
         }
     }
-    UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForTransport(transport);
+    UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForSink(transport);
     EventVector_WakeMain();
 }
 
 extern "C" void HidTransport_NoteNusReportSent(void)
 {
-    noteReportSent(HID_TRANSPORT_BLE);
+    noteReportSent(ReportSink_Dongle);
 }
 
 static report_sink_t determineSink()
@@ -197,7 +192,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
-    // noteReportSent(transport);
+    noteReportSent(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -243,7 +238,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
-    noteReportSent(transport);
+    noteReportSent( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -286,7 +281,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
-    // noteReportSent(transport);
+    noteReportSent( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif

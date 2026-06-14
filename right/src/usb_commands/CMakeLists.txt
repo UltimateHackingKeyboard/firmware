@@ -4,7 +4,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_read_oled.c>
     $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_erase_ble_settings.c>
     usb_command_exec_macro_command.c
-    $<$<BOOL:${IS_NRF_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_exec_shell_command.c>
+    usb_command_exec_shell_command.c
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/usb_command_get_adc_value.c>
     usb_command_get_debug_buffer.c
     usb_command_get_device_property.c
