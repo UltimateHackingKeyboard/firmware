@@ -65,7 +65,11 @@ void BtManager_StartBt() {
     }
 
     if (DEVICE_IS_UHK80_RIGHT) {
-        HOGP_Enable();
+        if (HOGP_Enable()) {
+            LOG_INF("HOGP service enabled successfully");
+        } else {
+            LOG_ERR("Failed to enable HOGP service");
+        }
     }
 
     BtManager_StartScanningAndAdvertising();
@@ -100,6 +104,7 @@ void BtManager_StopBt() {
 
 
     if (DEVICE_IS_UHK80_RIGHT) {
+        LOG_WRN("Disabling HOGP service.");
         HOGP_Disable();
     }
 
