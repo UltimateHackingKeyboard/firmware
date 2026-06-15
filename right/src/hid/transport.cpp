@@ -1,6 +1,7 @@
 extern "C" {
 #include "transport.h"
 #ifdef __ZEPHYR__
+    #include "bt_conn.h"
     #include "connections.h"
     #include "link_protocol.h"
     #include "messenger.h"
@@ -49,14 +50,6 @@ static uint32_t dispatchTimeMs = 0;
 // interval" (worst case: we just missed a window). The send-completion
 // callback then reduces the estimate to "now + interval".
 static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
-static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 7;
-
-#if DEVICE_IS_UHK80_RIGHT
-extern "C" uint32_t BleHidReportIntervalMs;
-static inline uint32_t bleHidReportIntervalMs() { return BleHidReportIntervalMs; }
-#else
-static inline uint32_t bleHidReportIntervalMs() { return 11; }
-#endif
 
 static uint32_t reportIntervalForSink(report_sink_t sink)
 {
@@ -64,9 +57,12 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
     case ReportSink_Usb:
         return USB_REPORT_INTERVAL_MS;
     case ReportSink_BleHid:
-        return bleHidReportIntervalMs();
     case ReportSink_Dongle:
-        return DONGLE_REPORT_INTERVAL_MS;
+#if DEVICE_IS_UHK80_RIGHT
+        return BtConn_GetReportIntervalMs(ActiveHostConnectionId);
+#else
+        return 11;
+#endif
     default:
         return 0;
     }
