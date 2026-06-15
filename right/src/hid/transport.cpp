@@ -79,7 +79,7 @@ static void noteReportDispatched(report_sink_t sink)
             dispatchTimeMs = Timer_GetCurrentTime();
         }
     }
-    UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
+    UsbReportWindowEstimate = UsbReportWindowEstimateLast + 2 * reportIntervalForSink(sink);
 }
 
 static void noteReportSent(report_sink_t transport)
@@ -91,8 +91,17 @@ static void noteReportSent(report_sink_t transport)
             dispatchTimeMs = 0;
         }
     }
-    UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForSink(transport);
-    EventVector_WakeMain();
+    uint32_t reportInterval = reportIntervalForSink(transport);
+    uint32_t currentTime = Timer_GetCurrentTime();
+    int16_t jitterGuess = (currentTime - UsbReportWindowEstimateLast - reportInterval + 1) / 2;
+    jitterGuess = MAX(0, jitterGuess);
+    UsbReportWindowEstimateLast = currentTime - jitterGuess;
+    UsbReportWindowEstimate = currentTime - jitterGuess + reportInterval;
+    uint32_t nextIn = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        EventScheduler_Schedule(nextIn, EventSchedulerEvent_Postponer, "Report sent. Recalculate report throttles");
+    }
 }
 
 extern "C" void HidTransport_NoteNusReportSent(void)
