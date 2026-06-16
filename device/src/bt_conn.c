@@ -711,7 +711,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 void Bt_SetConnectionConfigured(struct bt_conn* conn) {
     uint8_t peerId = GetPeerIdByConn(conn);
     if (Connections[Peers[peerId].connectionId].state != ConnectionState_Ready) {
-        Connections_SetState(Peers[peerId].connectionId, ConnectionState_Ready);
+        Connections_SetStateAsync(Peers[peerId].connectionId, ConnectionState_Ready);
         BtManager_StartScanningAndAdvertisingAsync(false, "SetConnectionConfigured");
     }
 }
