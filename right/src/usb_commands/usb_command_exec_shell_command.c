@@ -2,6 +2,7 @@
 #include <string.h>
 #include "logger.h"
 #include "timer.h"
+#include "usb_log_buffer.h"
 
 #define USB_SHELL_COMMAND_MAX_LEN (USB_COMMAND_BUFFER_LENGTH - 1)
 
@@ -21,8 +22,22 @@ void UsbCommand_ExecShellCommand(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     static uint32_t lastTime = 0;
     uint32_t currentTime = Timer_GetCurrentTime();
     if (currentTime - lastTime > 1000) {
-        currentTime = 0;
-        LogU("uhk60$: only output is supported for uhk60.\n");
+        lastTime = currentTime;
+        switch (GenericHidOutBuffer[1]) {
+            case '\r':
+            case '\n':
+                // new line to allow creating a visual separation
+                LogU("\n");
+                break;
+            case 'c':
+                // clear the screen
+                LogU("\033[2J");
+                // UsbLogBuffer_Print("\033[2J", 7);
+                break;
+            default:
+                LogU("uhk60$: only output is supported for uhk60.\n");
+                break;
+        }
     }
 #endif
 }
