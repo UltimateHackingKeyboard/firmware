@@ -45,6 +45,7 @@
         bt_addr_le_t addr;
         struct bt_conn* conn;
         uint32_t lastSwitchover;
+        uint32_t bleReportIntervalMs;
     } peer_t;
 
 typedef enum {
@@ -57,11 +58,11 @@ typedef enum {
     extern peer_t Peers[];
     extern bool Bt_NewPairedDevice;
     extern uint32_t Bt_LastConnectedTime;
-    extern uint32_t BleHidReportIntervalMs;
 
 // Functions:
 
     int8_t GetPeerIdByConn(const struct bt_conn *conn);
+    uint32_t BtConn_GetReportIntervalMs(connection_id_t connectionId);
     char *GetPeerStringByAddr(const bt_addr_le_t *addr);
     char *GetPeerStringByConn(const struct bt_conn *conn);
     char *GetPeerStringByConnId(uint8_t connectionId);

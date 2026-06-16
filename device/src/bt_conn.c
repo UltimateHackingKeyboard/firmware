@@ -50,12 +50,6 @@ struct bt_conn *auth_conn;
 
 uint32_t Bt_LastConnectedTime = 0;
 
-// Last negotiated BLE HID connection interval in milliseconds. Updated by
-// infoLatencyParamsUpdated when the active peer is a BLE HID host. Used by the
-// report-throttling logic to size the next-window estimate; otherwise on hosts
-// that negotiate below our default we would systematically miss send slots.
-uint32_t BleHidReportIntervalMs = 11;
-
 /*
  * Reason codes are named from the perspective of the party that receives them.
  *
@@ -273,6 +267,13 @@ static struct bt_conn_le_data_len_param *data_len;
 static void enableDataLengthExtension(struct bt_conn *conn) {
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
+    /**
+     * This configures actual transmission length.
+     *
+     * We don't want it too high in order to prevent scheduling conflicts between multiple links.
+     * */
+    data_len->tx_max_time = 2500;
+
     int err = bt_conn_le_data_len_update(conn, data_len);
     if (err) {
         LOG_INF("LE data length update failed: %d", err);
@@ -314,13 +315,10 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
 static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
     switch (latencyMode) {
         case LatencyMode_NUS: {
-                // https://developer.apple.com/library/archive/qa/qa1931/_index.html
-                // https://punchthrough.com/manage-ble-connection/
-                // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
-                    6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-                    0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                    100 // connection timeout (*10ms)
+                    6, 6,
+                    0,
+                    100
                 );
                 setLatency(conn, &conn_params);
              }
@@ -764,7 +762,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
-            bt_conn_auth_cancel(conn);
+            // bt_conn_auth_cancel(conn);
             // bt_conn_disconnect(conn, BT_REASON_PERMANENT);
         } else {
             // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
@@ -791,20 +789,27 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
 {
     LOG_DBG("%s conn params: interval=%u ms, latency=%u, timeout=%u ms", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
-    connection_type_t connectionType = Connections_Type(Peers[GetPeerIdByConn(conn)].connectionId);
+    int8_t peerId = GetPeerIdByConn(conn);
+    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
 
-    if (connectionType == ConnectionType_BtHid) {
+    if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NusDongle) {
         uint32_t intervalMs = (interval * 5 + 3) / 4;
         if (intervalMs < 1) {
             intervalMs = 1;
         }
-        BleHidReportIntervalMs = intervalMs;
+        Peers[peerId].bleReportIntervalMs = intervalMs;
     }
 
     if (interval > 10) {
         configureLatency(conn, isUhkPeer ? LatencyMode_NUS : LatencyMode_BleHid);
     }
+}
+
+uint32_t BtConn_GetReportIntervalMs(connection_id_t connectionId) {
+    uint8_t peerId = Connections[connectionId].peerId;
+    uint32_t intervalMs = Peers[peerId].bleReportIntervalMs;
+    return intervalMs != 0 ? intervalMs : 11;
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
