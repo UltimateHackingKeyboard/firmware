@@ -23,24 +23,21 @@ void UsbCommand_ExecShellCommand(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     // Shell_Execute((const char*)GenericHidOutBuffer + 1, NULL /* don't log this */);
     SetUsbTxBufferUint8(0, UsbStatusCode_Success);
 #else
-    static uint32_t lastTime = 0;
-    uint32_t currentTime = Timer_GetCurrentTime();
-    switch (GenericHidOutBuffer[1]) {
-        case '\r':
-        case '\n':
-            // new line to allow creating a visual separation
-            LogU("\n");
-            break;
-        case 'c':
-            // clear the screen
-            LogU(CLEAR);
-            break;
-        default:
-            if (currentTime - lastTime > 1000) {
-                lastTime = currentTime;
-                LogU(GREEN "uhk60$" UNGREEN ": only output is supported for uhk60.\n");
-            }
-            break;
+    for (int i = 0; i < USB_COMMAND_BUFFER_LENGTH && GenericHidOutBuffer[i+1] != '\0'; i++) {
+        switch (GenericHidOutBuffer[i+1]) {
+            case '\r':
+            case '\n':
+                // new line to allow creating a visual separation
+                LogU("\n");
+                break;
+            case 'c':
+                // clear the screen
+                LogU(CLEAR);
+                break;
+            default:
+                LogU(GREEN "uhk60$" UNGREEN " only output is supported for uhk60.\n");
+                break;
+        }
     }
 #endif
 }
