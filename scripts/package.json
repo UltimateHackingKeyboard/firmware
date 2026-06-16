@@ -18,11 +18,7 @@
     "serialport": "^12.0.0",
     "shelljs": "^0.8.4"
   },
-<<<<<<< HEAD
-  "firmwareVersion": "17.1.2",
-=======
   "firmwareVersion": "17.1.3",
->>>>>>> 2839e78e01230f385e8ef6c7af4a1d733854bb01
   "deviceProtocolVersion": "4.18.1",
   "moduleProtocolVersion": "4.3.0",
   "dongleProtocolVersion": "1.0.2",

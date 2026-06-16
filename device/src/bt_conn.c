@@ -316,15 +316,9 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
     switch (latencyMode) {
         case LatencyMode_NUS: {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
-<<<<<<< HEAD
-                    6, 6, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-                    0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                    100 // connection timeout (*10ms)
-=======
                     6, 6,
                     0,
                     100
->>>>>>> 2839e78e01230f385e8ef6c7af4a1d733854bb01
                 );
                 setLatency(conn, &conn_params);
              }
