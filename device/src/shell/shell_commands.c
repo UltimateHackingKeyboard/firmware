@@ -443,7 +443,11 @@ static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv
     if (argc == 1) {
         shell_fprintf(shell, SHELL_NORMAL, "%i\n", JitterTest_Active ? 1 : 0);
     } else {
-        JitterTest_SetActive(argv[1][0] == '1');
+        bool active = argv[1][0] == '1';
+        JitterTest_SetActive(active);
+        if (active) {
+            LogU("For jitter test, please make sure that your right half has keystrokeDelay set to 0.\n");
+        }
     }
     return 0;
 }

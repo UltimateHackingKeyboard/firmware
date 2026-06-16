@@ -16,6 +16,14 @@
 
     #define USB_SEMAPHORE_TIMEOUT 100 // ms
 
+    // This is how much time we leave for report construction. Most of the time is
+    // (probably) consumed inside the transport layers.
+    //
+    // If too low, we will be missing transports. If too high, we will be introducing
+    // latency.
+    #define USB_REPORT_WINDOW_LOOKAHEAD_MS 3
+    #define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
+
 // Typedefs:
 
     typedef struct {
@@ -53,6 +61,7 @@
     extern uint32_t LastUsbGetKeyboardStateRequestTimestamp;
     extern uint32_t UsbReportUpdater_LastActivityTime;
     extern uint32_t UsbReportWindowEstimate;
+    extern uint32_t UsbReportWindowEstimateLast;
 
 // Functions:
 
