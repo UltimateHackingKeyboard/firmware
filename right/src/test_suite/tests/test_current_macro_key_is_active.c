@@ -53,13 +53,13 @@ static const test_action_t test_postpone_loop_tapkey[] = {
     TEST_SET_MACRO("i", "postponeKeys while (1) {\n"
                         "    ifReleased break\n"
                         "    tapKey i\n"
-                        "    delayUntil 20\n"
+                        "    delayUntil 35\n"
                         "}"),
     TEST_SET_ACTION("u", "u"),
     TEST_EXPECT__________(""),
 
     TEST_PRESS______("i"),
-    TEST_DELAY__(30),
+    TEST_DELAY__(50),
     TEST_RELEASE__U("i"),
     TEST_DELAY__(50),
     TEST_PRESS______("u"),
