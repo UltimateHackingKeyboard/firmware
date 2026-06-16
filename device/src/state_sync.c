@@ -457,10 +457,6 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
         break;
     case StateSyncPropertyId_KeyboardLedsState:
         WIDGET_REFRESH(&StatusWidget);
-
-        if (!isLocalUpdate && RemoteDongleProtocolVersion.major == 0) {
-            LogUOS("Dongle protocol version doesn't seem to have been reported.\nIs your dongle firmware up to date?\n");
-        }
         break;
     case StateSyncPropertyId_ResetRightLeftLink:
         StateSync_ResetRightLeftLink(false);

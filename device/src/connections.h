@@ -78,6 +78,7 @@
     typedef struct {
         uint8_t peerId;
         connection_state_t state;
+        bool stateNotApplied;
         bool isAlias;
         connection_watermarks_t watermarks;
     } ATTR_PACKED connection_t;
@@ -94,6 +95,8 @@
 
     connection_state_t Connections_GetState(connection_id_t connectionId);
     void Connections_SetState(connection_id_t connectionId, connection_state_t state);
+    void Connections_SetStateAsync(connection_id_t connectionId, connection_state_t state);
+    void Connections_UpdateStates(void);
     void Connections_ReportState(connection_id_t connectionId);
     void Connections_SetPeerId(connection_id_t connectionId, uint8_t peerId);
     connection_type_t Connections_Type(connection_id_t connectionId);
