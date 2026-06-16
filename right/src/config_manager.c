@@ -311,10 +311,12 @@ void ConfigManager_ResetWormConfiguration(void) {
     memcpy(WormCfg, &DefaultWormCfg, sizeof(worm_config_t));
 }
 
-void ConfigManager_ResetConfiguration(bool updateLeds) {
+void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks) {
     memcpy(&Cfg, &DefaultCfg, sizeof(Cfg));
 #ifndef __ZEPHYR__
-    ChangeI2cBaudRate(Cfg.I2cBaudRate);
+    if (updateHooks) {
+        ChangeI2cBaudRate(Cfg.I2cBaudRate);
+    }
 #endif
     if (updateLeds) {
         Ledmap_SetLedBacklightingMode(Cfg.BacklightingMode);
