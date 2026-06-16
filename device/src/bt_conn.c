@@ -1,3 +1,4 @@
+#include "atomicity.h"
 #include "attributes.h"
 #include "keyboard/oled/framebuffer.h"
 #include "timer.h"
@@ -579,7 +580,9 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
 
     // Assume that HOGP is ready
     LOG_INF("Established HID connection with %s", GetPeerStringByConn(conn));
-    Connections_SetState(connectionId, ConnectionState_Ready);
+    if (Connections[connectionId].state == ConnectionState_Disconnected) {
+        Connections_SetState(connectionId, ConnectionState_Connected);
+    }
     BtManager_StartScanningAndAdvertisingAsync(false, "connectHid");
 
     EventScheduler_Reschedule(Timer_GetCurrentTime() + 10*1000, EventSchedulerEvent_KickHid, "HID health kick");
