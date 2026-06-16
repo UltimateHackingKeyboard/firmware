@@ -78,7 +78,7 @@
     typedef struct {
         uint8_t peerId;
         connection_state_t state;
-        connection_state_t pendingState;
+        bool stateNotApplied;
         bool isAlias;
         connection_watermarks_t watermarks;
     } ATTR_PACKED connection_t;
