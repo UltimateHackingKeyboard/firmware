@@ -317,7 +317,7 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
         case LatencyMode_NUS: {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 6,
-                    0,
+                    10,
                     100
                 );
                 setLatency(conn, &conn_params);
@@ -329,7 +329,8 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-                    0, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                    10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                        // with low values, schedules of multiple connections will clash, meaning high jitter and latency for mouse
                     100 // connection timeout (*10ms)
                 );
                 setLatency(conn, &conn_params);
