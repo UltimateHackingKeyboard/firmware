@@ -147,26 +147,22 @@ connection_state_t Connections_GetState(connection_id_t connectionId) {
 void Connections_SetState(connection_id_t connectionId, connection_state_t state) {
     connectionId = resolveAliases(connectionId);
 
-    connection_state_t oldState = Connections[connectionId].state;
-    connection_state_t newState = state;
+    // stateNotApplied lets Connections_SetStateAsync apply the state up front
+    // (so observers see it immediately) while deferring the side effects below;
+    // the deferred Connections_UpdateStates() then re-enters here to run them.
+    if ( Connections[connectionId].state != state || Connections[connectionId].stateNotApplied ) {
+        Connections[connectionId].state = state;
+        Connections[connectionId].stateNotApplied = false;
+        reportConnectionState(connectionId);
 
-    // Keep pendingState in sync so a pending async update doesn't re-trigger.
-    Connections[connectionId].pendingState = newState;
+        Connections_ResetWatermarks(connectionId);
 
-    if (oldState == newState) {
-        return;
-    }
-
-    Connections[connectionId].state = newState;
-    reportConnectionState(connectionId);
-
-    Connections_ResetWatermarks(connectionId);
-
-    if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
-        Connections_HandleSwitchover(connectionId, false);
-        // Connections_HandleSwitchover calls DeviceState_Update for us
-    } else {
-        DeviceState_Update(Connections_Target(connectionId));
+        if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
+            Connections_HandleSwitchover(connectionId, false);
+            // Connections_HandleSwitchover calls DeviceState_Update for us
+        } else {
+            DeviceState_Update(Connections_Target(connectionId));
+        }
     }
 }
 
@@ -174,17 +170,20 @@ void Connections_SetStateAsync(connection_id_t connectionId, connection_state_t 
     connectionId = resolveAliases(connectionId);
 
     // State changes can be triggered from various contexts (e.g. Bluetooth
-    // callbacks). The actual application of the new state runs heavy logic
-    // (switchover, device state updates), so we only record the pending state
-    // here and let the event loop apply it via Connections_UpdateStates().
-    Connections[connectionId].pendingState = state;
-    EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ConnectionsUpdateState, "Connections update state");
+    // callbacks). Apply the new state immediately so observers see the correct
+    // value right away, but defer the heavy side effects (switchover, device
+    // state updates) to the event loop via Connections_UpdateStates().
+    if ( Connections[connectionId].state != state ) {
+        Connections[connectionId].state = state;
+        Connections[connectionId].stateNotApplied = true;
+        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ConnectionsUpdateState, "Connections update state");
+    }
 }
 
 void Connections_UpdateStates(void) {
     for (connection_id_t connectionId = 0; connectionId < ConnectionId_Count; connectionId++) {
-        if (Connections[connectionId].state != Connections[connectionId].pendingState) {
-            Connections_SetState(connectionId, Connections[connectionId].pendingState);
+        if (Connections[connectionId].stateNotApplied) {
+            Connections_SetState(connectionId, Connections[connectionId].state);
         }
     }
 }
@@ -360,11 +359,11 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
     // Save both connection states
     uint8_t oldPeerId = Connections[oldConnectionId].peerId;
     connection_state_t oldState = Connections[oldConnectionId].state;
-    connection_state_t oldPendingState = Connections[oldConnectionId].pendingState;
+    bool oldStateNotApplied = Connections[oldConnectionId].stateNotApplied;
 
     uint8_t newPeerId = Connections[newConnectionId].peerId;
     connection_state_t newState = Connections[newConnectionId].state;
-    connection_state_t newPendingState = Connections[newConnectionId].pendingState;
+    bool newStateNotApplied = Connections[newConnectionId].stateNotApplied;
 
     ASSERT(oldPeerId == peerId);
     ASSERT(newPeerId == PeerIdUnknown || newPeerId > peerId);
@@ -372,11 +371,11 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
     // Exchange connection data
     Connections[newConnectionId].peerId = oldPeerId;
     Connections[newConnectionId].state = oldState;
-    Connections[newConnectionId].pendingState = oldPendingState;
+    Connections[newConnectionId].stateNotApplied = oldStateNotApplied;
 
     Connections[oldConnectionId].peerId = newPeerId;
     Connections[oldConnectionId].state = newState;
-    Connections[oldConnectionId].pendingState = newPendingState;
+    Connections[oldConnectionId].stateNotApplied = newStateNotApplied;
 
     // Update peer references for both connections
     if (oldPeerId != PeerIdUnknown) {
