@@ -1051,7 +1051,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    
+
     secondary_role_state_t res = S->ms.secondaryRoleState;
     if (res == SecondaryRoleState_DontKnowYet) {
         res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
@@ -1872,7 +1872,7 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    ConfigManager_ResetConfiguration(true);
+    ConfigManager_ResetConfiguration(true, true);
     return MacroResult_Finished;
 }
 
