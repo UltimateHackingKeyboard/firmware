@@ -12,6 +12,7 @@ Following is a list testing suggestions. Not all have to be tested each time.
 - Pair two ble hids using `bluetooth pair` while all devices are active.
 - Unregistered slot connections: try to add a ble hid without registering it in Agent. Change registered connection count and save the userconfig. Check that the ble hid remaind in the same slot (unless another host connection took that slot - in that case, it should be in the first availalbe slot). 
 - If moving currently connected device's host connection to another position, check that saving the UserConfig doesn't disconnect it - it should be remapped to the new slot by itself.
+- Connect dongle. Switch to it. Then disconnect it. Connect it again. Does it connect? (Repeat a couple of times.)
 
 Todos:
 - deduplicate and reorder these scenarios.

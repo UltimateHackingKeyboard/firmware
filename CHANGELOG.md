@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+<<<<<<< HEAD
+=======
+## [17.1.3] - 2026-06-16
+
+Device Protocol: 4.18.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0
+
+- Fix: upstream bug that made battery-included uhk80 freeze every few hours of operation.
+- Fix: more bt scheduling adjustments.
+- Fix: dongle connection, due to failing allow list.
+
+>>>>>>> 2839e78e01230f385e8ef6c7af4a1d733854bb01
 ## [17.1.2] - 2026-06-06
 
 Device Protocol: 4.18.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0

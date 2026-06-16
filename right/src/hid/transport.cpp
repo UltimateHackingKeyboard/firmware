@@ -1,6 +1,7 @@
 extern "C" {
 #include "transport.h"
 #ifdef __ZEPHYR__
+    #include "bt_conn.h"
     #include "connections.h"
     #include "link_protocol.h"
     #include "messenger.h"
@@ -49,14 +50,6 @@ static uint32_t dispatchTimeMs = 0;
 // interval" (worst case: we just missed a window). The send-completion
 // callback then reduces the estimate to "now + interval".
 static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
-static constexpr uint32_t DONGLE_REPORT_INTERVAL_MS = 7;
-
-#if DEVICE_IS_UHK80_RIGHT
-extern "C" uint32_t BleHidReportIntervalMs;
-static inline uint32_t bleHidReportIntervalMs() { return BleHidReportIntervalMs; }
-#else
-static inline uint32_t bleHidReportIntervalMs() { return 11; }
-#endif
 
 static uint32_t reportIntervalForSink(report_sink_t sink)
 {
@@ -64,9 +57,12 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
     case ReportSink_Usb:
         return USB_REPORT_INTERVAL_MS;
     case ReportSink_BleHid:
-        return bleHidReportIntervalMs();
     case ReportSink_Dongle:
-        return DONGLE_REPORT_INTERVAL_MS;
+#if DEVICE_IS_UHK80_RIGHT
+        return BtConn_GetReportIntervalMs(ActiveHostConnectionId);
+#else
+        return 11;
+#endif
     default:
         return 0;
     }
@@ -79,7 +75,7 @@ static void noteReportDispatched(report_sink_t sink)
             dispatchTimeMs = Timer_GetCurrentTime();
         }
     }
-    UsbReportWindowEstimate = Timer_GetCurrentTime() + 2 * reportIntervalForSink(sink);
+    UsbReportWindowEstimate = UsbReportWindowEstimateLast + 2 * reportIntervalForSink(sink);
 }
 
 static void noteReportSent(report_sink_t transport)
@@ -91,8 +87,22 @@ static void noteReportSent(report_sink_t transport)
             dispatchTimeMs = 0;
         }
     }
+<<<<<<< HEAD
     UsbReportWindowEstimate = Timer_GetCurrentTime() + reportIntervalForSink(transport);
     EventVector_WakeMain();
+=======
+    uint32_t reportInterval = reportIntervalForSink(transport);
+    uint32_t currentTime = Timer_GetCurrentTime();
+    int16_t jitterGuess = (currentTime - UsbReportWindowEstimateLast - reportInterval + 1) / 2;
+    jitterGuess = MAX(0, jitterGuess);
+    UsbReportWindowEstimateLast = currentTime - jitterGuess;
+    UsbReportWindowEstimate = currentTime - jitterGuess + reportInterval;
+    uint32_t nextIn = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
+
+    if (DEVICE_IS_UHK80_RIGHT) {
+        EventScheduler_Schedule(nextIn, EventSchedulerEvent_Postponer, "Report sent. Recalculate report throttles");
+    }
+>>>>>>> 2839e78e01230f385e8ef6c7af4a1d733854bb01
 }
 
 extern "C" void HidTransport_NoteNusReportSent(void)
