@@ -967,6 +967,8 @@ static void handleFail(errno_t errorCode) {
             }
         }
     }
+#else
+    LOG_ERR("Send failed: %d (%s)\n", errorCode, ErrToStr(errorCode));
 #endif
 }
 
