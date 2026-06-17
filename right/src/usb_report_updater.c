@@ -742,6 +742,7 @@ static void updateActionStates() {
             preprocessKeyState(keyState);
 
             if (KeyState_NonZero(keyState)) {
+                LOG_WRN("Key pressed %s\n", Utils_KeyStateToKeyAbbreviation(keyState));
                 Trace_Printc("w2");
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
@@ -967,6 +968,8 @@ static void handleFail(errno_t errorCode) {
             }
         }
     }
+#else
+    LOG_ERR("Send failed: %d (%s)\n", errorCode, ErrToStr(errorCode));
 #endif
 }
 
