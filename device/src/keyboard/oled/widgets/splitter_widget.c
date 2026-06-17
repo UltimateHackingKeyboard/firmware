@@ -1,5 +1,6 @@
 #include "splitter_widget.h"
 #include "widget.h"
+#include "logger.h"
 
 void SplitterWidget_LayOut(widget_t* self, uint8_t x, uint8_t y, uint8_t w, uint8_t h)
 {
@@ -23,10 +24,12 @@ void SplitterWidget_Draw(widget_t* self, framebuffer_t* buffer)
 {
     if (self->dirty) {
         self->dirty = false;
-        if (self->type == WidgetType_VSplitter) {
-            Framebuffer_DrawHLine(self, buffer, 0, self->w, self->splitterData.splitAt);
-        } else {
-            Framebuffer_DrawVLine(self, buffer, self->splitterData.splitAt, 0, self->h);
+        if (self->splitterData.splitLine) {
+            if (self->type == WidgetType_VSplitter) {
+                Framebuffer_DrawHLine(self, buffer, 0, self->w, self->splitterData.splitAt);
+            } else {
+                Framebuffer_DrawVLine(self, buffer, self->splitterData.splitAt, 0, self->h);
+            }
         }
     }
 
