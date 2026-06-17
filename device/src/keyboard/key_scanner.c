@@ -151,11 +151,17 @@ static bool scanSfjlWithBlinking(bool fullScan) {
     const uint16_t minPressLength = 0;
     const uint16_t scanInterval = PowerModeConfig[CurrentPowerMode].keyScanInterval;
 
+    static sfjl_scan_result_t previousResult = SfjlScanResult_NonePressed;
+
     sfjl_scan_result_t result = SfjlScanResult_NonePressed;
 
     result = scanKeysOnce(result, fullScan);
 
-    if (result == SfjlScanResult_NonePressed || !fullScan) {
+    /** Blink only when the key is pressed, but not when it continues to be depressed. */
+    bool shouldBlink = previousResult == SfjlScanResult_NonePressed;
+
+    if (result == SfjlScanResult_NonePressed || !fullScan || !shouldBlink) {
+        previousResult = result;
         return result == SfjlScanResult_FullMatch;
     }
 
@@ -170,6 +176,7 @@ static bool scanSfjlWithBlinking(bool fullScan) {
         }
 
         if ( CurrentPowerMode < PowerMode_LightSleep) {
+            previousResult = result;
             return true;
         }
 
@@ -181,16 +188,19 @@ static bool scanSfjlWithBlinking(bool fullScan) {
                 }
 
                 if ( CurrentPowerMode < PowerMode_LightSleep) {
+                    previousResult = result;
                     return true;
                 }
                 k_msleep(scanInterval);
             }
             if (result == SfjlScanResult_FullMatch) {
+                previousResult = result;
                 return true;
             }
         }
     }
 
+    previousResult = result;
     return false;
 }
 
