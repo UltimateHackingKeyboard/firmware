@@ -30,5 +30,6 @@ extern const test_module_t TestModule_Doubletap;
 extern const test_module_t TestModule_CurrentMacroKeyIsActive;
 extern const test_module_t TestModule_ParserBenevolence;
 extern const test_module_t TestModule_Sticky;
+extern const test_module_t TestModule_Playtime;
 
 #endif
