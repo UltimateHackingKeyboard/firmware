@@ -628,7 +628,7 @@ static bool processIfPlaytimeCommand(parser_context_t* ctx, bool negate)
         return true;
     }
     uint32_t delay = Timer_GetElapsedTime(&S->ms.currentMacroStartTime);
-    return (delay > timeout) != negate;
+    return (delay >= timeout) != negate;
 }
 
 static bool processIfInterruptedCommand(bool negate)
