@@ -317,7 +317,7 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
         case LatencyMode_NUS: {
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 6,
-                    10,
+                    4,
                     100
                 );
                 setLatency(conn, &conn_params);
@@ -329,8 +329,10 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 // https://devzone.nordicsemi.com/f/nordic-q-a/28058/what-is-connection-parameters
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     6, 9, // keep it low, lowest allowed is 6 (7.5ms), lowest supported widely is 9 (11.25ms)
-                    10, // keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
-                        // with low values, schedules of multiple connections will clash, meaning high jitter and latency for mouse
+                    4, // - keeping it higher allows power saving on peripheral when there's nothing to send (keep it under 30 though)
+                       // - with low values (0-ish), schedules of multiple connections will clash, meaning high jitter and latency for mouse
+                       // - too high values (10) will make the central-to-peripheral throughput low, to the point of tripping the 128ms semaphores,
+                       //   probably because a message is sent only once per 4*6 intervals, and one packet split across multiple events...
                     100 // connection timeout (*10ms)
                 );
                 setLatency(conn, &conn_params);
