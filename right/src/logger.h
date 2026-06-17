@@ -40,4 +40,16 @@ typedef enum {
     void LogUOS(const char *fmt, ...);
     void LogUSDO(const char *fmt, ...);
 
+
+    void LogWrn(const char *fmt, ...);
+    void LogErr(const char *fmt, ...);
+    void LogInf(const char *fmt, ...);
+    void LogDbg(const char *fmt, ...);
+
+#ifndef __ZEPHYR__
+#define LOG_WRN(fmt, ...) LogWrn(fmt, ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...) LogErr(fmt, ##__VA_ARGS__)
+#define LOG_INF(fmt, ...) LogInf(fmt, ##__VA_ARGS__)
+#endif
+
 #endif // __LOGGER_H__
