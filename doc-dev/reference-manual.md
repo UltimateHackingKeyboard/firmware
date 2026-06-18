@@ -400,6 +400,8 @@ COMMAND = setEmergencyKey KEYID
   - See the bluetooth section for more information.
 - `unpairHost { <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> }` unpairs the given host connection. If the slot is in User Configuration, it only unpairs the host, but keeps the connection information. If the slot is not in User Configuration, it removes the entire connection information and makes the slot available to pairing another device.
 - `reconnect` disconnects current active host, waits 100ms and then attempts to connect to it again (i.e., similar to calling switchHost).
+- `set bluetooth.alwaysAdvertiseHid BOOL` - if set to true (default), the device always advertises. If set to false, the device only advertises when a macro calls `bluetooth advertise` or `bluetooth pair` and will stop after 2 minutes.
+
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.)
 
