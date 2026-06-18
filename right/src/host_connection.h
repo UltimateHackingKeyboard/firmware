@@ -79,7 +79,7 @@
     void HostConnections_SelectByName(parser_context_t* ctx);
     void HostConnection_SetSelectedConnection(uint8_t connectionId);
 
-    void HostConnection_Unselect();
+    void HostConnection_Unselect(bool unselectedDueToTimeout);
 
     uint8_t HostConnections_NameToConnId(parser_context_t* ctx);
 

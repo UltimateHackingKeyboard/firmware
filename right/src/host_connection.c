@@ -81,7 +81,14 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
     }
 }
 
-void HostConnection_Unselect() {
+void HostConnection_Unselect(bool unselectedDueToTimeout) {
+#if DEVICE_HAS_OLED
+    if (unselectedDueToTimeout) {
+        string_segment_t name = WidgetStore_GetHostConnectionName(SelectedHostConnectionId, false);
+        NotifyPrintf("%.*s unavailable", EXPAND_SEGMENT(name));
+    }
+#endif
+
     HostConnection_SetSelectedConnection(ConnectionId_Invalid);
     BtManager_StartScanningAndAdvertisingAsync(false, "HostConnection_Unselect");
 }
@@ -90,7 +97,7 @@ static void selectConnection(uint8_t connectionId) {
     if (Connections_IsReady(connectionId)) {
         printk("Selecting ready host connection %d\n", connectionId);
         Connections_HandleSwitchover(connectionId, true);
-        HostConnection_Unselect();
+        HostConnection_Unselect(false);
     } else {
         printk("Selecting not ready host connection %d\n", connectionId);
         HostConnection_SetSelectedConnection(connectionId);
