@@ -56,5 +56,8 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
                 SetUsbTxBufferUint8(1, StateSync_VersionCheckEnabled);
             #endif
             break;
+        case UsbVariable_DevMode:
+            SetUsbTxBufferUint8(1, Cfg.DevMode);
+            break;
     }
 }
