@@ -422,7 +422,7 @@ static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionId
             inProgress = NULL;
             uint8_t connId = hostConnectionIdx + ConnectionId_HostConnectionFirst;
             if (connId == SelectedHostConnectionId) {
-                HostConnection_Unselect();
+                HostConnection_Unselect(false);
             } else {
                 HostConnections_SelectByHostConnIndex(hostConnectionIdx);
             }

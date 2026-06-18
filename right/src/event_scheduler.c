@@ -238,7 +238,7 @@ static void processEvt(event_scheduler_event_t evt)
             WIDGET_REFRESH(&StatusWidget);
             break;
         case EventSchedulerEvent_UnselectHostConnection:
-            HostConnection_Unselect();
+            HostConnection_Unselect(true);
             break;
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
