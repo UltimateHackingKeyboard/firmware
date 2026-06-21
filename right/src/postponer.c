@@ -453,6 +453,44 @@ uint8_t PostponerQuery_GetPendingKeypresses(uint8_t keyIds[], uint8_t maxCount, 
     return pos;
 }
 
+// The point of this function is to get the unbroken string of pending key presses from the first one which have not yet been released
+// This is used for chords activate on hold.  For example, a chord could be for a mod like shift, and then another key was tapped while the chord was held
+uint8_t PostponerQuery_GetPendingHeldKeys(uint8_t keyIds[], uint8_t maxCount) {
+    uint8_t pos = 0;
+    uint8_t i = 0;
+    while (pos < maxCount) {
+        while (i < bufferSize && buffer[POS(i)].event.type != PostponerEventType_PressKey) { ++i; }
+        if (i == bufferSize) break;
+        uint8_t j;
+        for (j = i + 1; j < bufferSize; ++j) {
+            if (buffer[POS(j)].event.type == PostponerEventType_ReleaseKey 
+                && buffer[POS(j)].event.key.keyState == buffer[POS(i)].event.key.keyState)
+            {
+                break;
+            }
+        }
+        if (j == bufferSize) keyIds[pos++] = Utils_KeyStateToKeyId(buffer[POS(i)].event.key.keyState);
+        ++i;
+    }
+    return pos;
+}
+
+uint8_t PostponerQuery_GetPendingReleaseCluster(uint8_t keyIds[], uint8_t maxCount, uint32_t startTime, uint8_t clusterTimespan) {
+    uint8_t pos = 0;
+    uint8_t i = 0;
+    uint32_t firstEventTime = startTime;
+    while (i < bufferSize && buffer[POS(i)].time < startTime) ++i;
+    while (pos < maxCount) {
+        while (i < bufferSize && buffer[POS(i)].event.type != PostponerEventType_ReleaseKey) ++i;
+        if (i == bufferSize
+            || buffer[POS(i)].time > firstEventTime + clusterTimespan)
+            break;
+        if (pos == 0) firstEventTime = buffer[POS(i)].time;
+        keyIds[pos++] = Utils_KeyStateToKeyId(buffer[POS(i++)].event.key.keyState);
+    }
+    return pos;
+}
+
 //##########################
 //### Extended Functions ###
 //##########################

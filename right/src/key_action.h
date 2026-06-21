@@ -123,7 +123,6 @@
     typedef struct {
         key_action_t action;
         uint8_t modifierLayerMask;
-        uint8_t originKeymap;
     } ATTR_PACKED key_action_cached_t;
 
 // Variables:

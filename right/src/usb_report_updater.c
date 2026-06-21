@@ -809,6 +809,11 @@ static void updateActionStates() {
                 cachedAction = &actionCache[slotId][keyId];
 
                 Trace_Printc("w3");
+                //apply base-layer holds
+                if (chordRes != ChordResolution_Wait && actionCache[slotId][keyId].action.type != KeyActionType_None) {
+                    applyLayerHolds(keyState, &CurrentKeymap[LayerId_Base][slotId][keyId].action);
+                }
+                Trace_Printc("w4");
 
                 //apply active-layer action
                 ApplyKeyAction(keyState, cachedAction, &NativeKeyboardReports);
