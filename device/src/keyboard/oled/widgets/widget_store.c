@@ -141,6 +141,10 @@ static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
     }
 }
 
+string_segment_t WidgetStore_GetHostConnectionName(uint8_t connId, bool shortVersion) {
+    return getTargetText_(connId, shortVersion);
+}
+
 static string_segment_t getTargetText() {
     static char buffer [64] = {};
     buffer[63] = 0;

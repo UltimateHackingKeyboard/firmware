@@ -628,7 +628,7 @@ static bool processIfPlaytimeCommand(parser_context_t* ctx, bool negate)
         return true;
     }
     uint32_t delay = Timer_GetElapsedTime(&S->ms.currentMacroStartTime);
-    return (delay > timeout) != negate;
+    return (delay >= timeout) != negate;
 }
 
 static bool processIfInterruptedCommand(bool negate)
@@ -1141,7 +1141,7 @@ static macro_result_t processIfSecondaryCommand(parser_context_t* ctx, bool nega
     }
 
     postponeCurrentCycle();
-    
+
     secondary_role_state_t res = S->ms.secondaryRoleState;
     if (res == SecondaryRoleState_DontKnowYet) {
         res = SecondaryRoles_ResolveState(S->ms.currentMacroKey, strategy, true, fromSameHalf);
@@ -1785,6 +1785,65 @@ static macro_result_t processRepeatForCommand(parser_context_t* ctx)
     return MacroResult_Finished;
 }
 
+
+#define SL_START_OFFSET 40
+static macro_result_t processSlCommand()
+{
+    static const char* const slTrain[2][5] = {
+        {
+            "    o o o O O      _____                                       ",
+            "  o      _________==|[ ] | .oOo.   .============.   .============.   .============.",
+            " .][__n_n_|DD[  ====|    |./   |   | []  []  [] |   | []  []  [] |   | []  []  [] |",
+            ">(________|__|_[_]_|____|-|____|-u-|____________|-u-|____________|-u-|____________|",
+            " _/oo OOOOO oo`  ooo  OOO oo  oo     OO       OO      OO       OO      OO       OO",
+        },
+        {
+            "   o o O o O O      _____                                       ",
+            "         _________==|[ ] | .oOo.   .============.   .============.   .============.",
+            " .][__n_n_|DD[  ====|    |./   |   | []  []  [] |   | []  []  [] |   | []  []  [] |",
+            ">(________|__|_[_]_|____|-|____|-u-|____________|-u-|____________|-u-|____________|",
+            " _/oo OOOOO oo`  ooo  OOO oo  oo     OO       OO      OO       OO      OO       OO",
+        },
+    };
+    uint8_t frame = S->as.actionPhase;
+
+    if (Macros_DryRun) {
+        return MacroResult_Finished;
+    }
+
+    // Train starts off the right edge and moves forward (leftward) as the
+    // offset decrements, then gradually disappears off the left edge.
+    int offset = SL_START_OFFSET - frame;
+
+    if (!S->as.actionActive) {
+        // Render a fresh frame: two blank lines plus the train.
+        LogO(" \n");
+        LogO(" \n");
+        const char* const* trainFrame = slTrain[frame & 1];
+        for (uint8_t i = 0; i < 5; i++) {
+            const char* line = trainFrame[i];
+            if (offset >= 0) {
+                LogO("%*s%s\n", offset, "", line);
+            } else if (-offset < (int)strlen(line)) {
+                LogO("%s\n", line - offset);
+            } else {
+                LogO(" \n");
+            }
+        }
+    }
+
+    if (processDelay(96) == MacroResult_Sleeping) {
+        return MacroResult_Sleeping;
+    }
+
+    S->as.actionPhase++;
+    if (frame >= SL_START_OFFSET + 83) {
+        S->as.actionPhase = 0;
+        return MacroResult_Finished;
+    }
+    return processSlCommand();
+}
+
 static macro_result_t processTrackpointCommand(parser_context_t* ctx)
 {
     module_specific_command_t command = 0;
@@ -1964,7 +2023,7 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    ConfigManager_ResetConfiguration(true);
+    ConfigManager_ResetConfiguration(true, true);
     return MacroResult_Finished;
 }
 
@@ -2108,6 +2167,7 @@ static macro_result_t processZephyrCommand(parser_context_t* ctx) {
         return CONDITION_FAILED_RESULT; \
     } \
     break;
+
 
 static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t commandId) {
     // Dispatch based on command ID
@@ -2377,6 +2437,8 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         return processReconnectCommand();
 
     // 's' commands
+    case CommandId_sl:
+        return processSlCommand();
     case CommandId_set:
         return Macro_ProcessSetCommand(ctx);
     case CommandId_setVar:

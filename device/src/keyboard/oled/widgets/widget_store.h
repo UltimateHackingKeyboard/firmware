@@ -6,6 +6,7 @@
     #include <inttypes.h>
     #include <stdbool.h>
     #include "widget.h"
+    #include "str_utils.h"
 
 // Macros:
 
@@ -25,6 +26,8 @@
 // Functions:
 
     void WidgetStore_Init();
+
+    string_segment_t WidgetStore_GetHostConnectionName(uint8_t connId, bool shortVersion);
 
 #endif
 

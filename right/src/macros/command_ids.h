@@ -148,6 +148,7 @@ typedef enum {
     CommandId_reconnect,
 
     // 's' commands
+    CommandId_sl,
     CommandId_set,
     CommandId_setVar,
     CommandId_setStatus,

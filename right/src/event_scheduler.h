@@ -51,6 +51,7 @@
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
         EventSchedulerEvent_CheckLeftBleVsUart,
+        EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

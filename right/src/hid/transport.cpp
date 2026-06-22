@@ -155,7 +155,7 @@ extern "C" void Hid_TransportStateChanged(
     [[maybe_unused]] hid_transport_t transport, [[maybe_unused]] bool enabled)
 {
 #ifdef __ZEPHYR__
-    Connections_SetState(
+    Connections_SetStateAsync(
         hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
 #endif
 }

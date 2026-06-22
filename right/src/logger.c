@@ -29,6 +29,10 @@
     #endif
 #endif
 
+#define GREEN "\033[1m\033[32m"
+#define YELLOW "\033[1m\033[33m"
+#define RED "\033[1m\033[31m"
+#define UNCOLOR "\033[0m"
 
 #define MAX_LOG_LENGTH 256
 
@@ -58,6 +62,27 @@ void Uart_Log(const char *fmt, ...) {
 void Log(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+}
+
+void LogErr(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, RED "WRN: " UNCOLOR);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+}
+
+void LogWrn(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, YELLOW "WRN: " UNCOLOR);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+}
+
+void LogInf(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, "INF: ");
     LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
 }
 

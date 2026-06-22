@@ -2,12 +2,17 @@
 #include <string.h>
 #include "logger.h"
 #include "timer.h"
+#include "usb_log_buffer.h"
 
 #define USB_SHELL_COMMAND_MAX_LEN (USB_COMMAND_BUFFER_LENGTH - 1)
 
 #ifdef __ZEPHYR__
 #include "shell/shell_uhk.h"
 #endif
+
+#define GREEN "\033[1m\033[32m"
+#define UNGREEN "\033[0m"
+#define CLEAR "\033[2J"
 
 void UsbCommand_ExecShellCommand(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
@@ -18,11 +23,21 @@ void UsbCommand_ExecShellCommand(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
     // Shell_Execute((const char*)GenericHidOutBuffer + 1, NULL /* don't log this */);
     SetUsbTxBufferUint8(0, UsbStatusCode_Success);
 #else
-    static uint32_t lastTime = 0;
-    uint32_t currentTime = Timer_GetCurrentTime();
-    if (currentTime - lastTime > 1000) {
-        currentTime = 0;
-        LogU("uhk60$: only output is supported for uhk60.\n");
+    for (int i = 0; i < USB_COMMAND_BUFFER_LENGTH && GenericHidOutBuffer[i+1] != '\0'; i++) {
+        switch (GenericHidOutBuffer[i+1]) {
+            case '\r':
+            case '\n':
+                // new line to allow creating a visual separation
+                LogU("\n");
+                break;
+            case 'c':
+                // clear the screen
+                LogU(CLEAR);
+                break;
+            default:
+                LogU(GREEN "uhk60$" UNGREEN " only output is supported for uhk60.\n");
+                break;
+        }
     }
 #endif
 }

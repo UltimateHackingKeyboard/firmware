@@ -65,7 +65,7 @@ extern hid_keyboard_report_t *ActiveKeyboardReport;
 
 static void startTest(const test_t *test, const test_module_t *module) {
     Macros_StopAllMacros();
-    ConfigManager_ResetConfiguration(false);
+    ConfigManager_ResetConfiguration(false, false);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
     if (TestSuite_Verbose) {
@@ -192,7 +192,7 @@ finish:
     LogU("[TEST] ----------------------\n");
     LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
     TestHooks_Active = false;
-    ConfigManager_ResetConfiguration(false);
+    ConfigManager_ResetConfiguration(false, false);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
 }

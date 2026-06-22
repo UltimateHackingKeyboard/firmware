@@ -35,6 +35,9 @@ static void addChar(char c) {
 
 void UsbLogBuffer_Print(uint8_t *data, uint16_t length) {
     for (uint16_t i = 0; i < length; i++) {
+        if (data[i] == '\n') {
+            addChar('\r');
+        }
         addChar(data[i]);
     }
     updateNonemptyFlag();

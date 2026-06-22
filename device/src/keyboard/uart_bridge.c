@@ -210,7 +210,7 @@ static void updateConnectionState(uart_state_t *uartState) {
     bool oldIsConnected = Connections_IsReady(connectionId);
     bool newIsConnected =  pingDiff < UART_BRIDGE_TIMEOUT;
     if (oldIsConnected != newIsConnected) {
-        Connections_SetState(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
+        Connections_SetStateAsync(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
         k_sem_give(&uartState->txBufferBusy);
         k_sem_give(&uartState->core.txControlBusy);
         if (DEVICE_IS_UHK80_LEFT) {

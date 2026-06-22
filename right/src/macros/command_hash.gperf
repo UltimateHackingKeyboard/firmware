@@ -119,6 +119,7 @@ resolveSecondary, CommandId_resolveSecondary
 resetConfiguration, CommandId_resetConfiguration
 reboot, CommandId_reboot
 reconnect, CommandId_reconnect
+sl, CommandId_sl
 set, CommandId_set
 setVar, CommandId_setVar
 setStatus, CommandId_setStatus

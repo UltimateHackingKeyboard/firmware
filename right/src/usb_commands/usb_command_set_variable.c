@@ -63,6 +63,10 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
 
             #endif
             break;
+        case UsbVariable_DevMode:
+            Cfg.DevMode = GetUsbRxBufferUint8(2);
+            WormCfg->devMode = Cfg.DevMode;
+            break;
         default:
             break;
     }
