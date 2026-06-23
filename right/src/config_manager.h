@@ -103,6 +103,7 @@
         bool DevMode;
         uint32_t I2cBaudRate;
         uint8_t Bt_MaxPeripheralConnections;
+        uint16_t Bt_MinAdvertisingDelay;
         ui_style_t UiStyle;
         string_ref_t DeviceName;
     } config_t;

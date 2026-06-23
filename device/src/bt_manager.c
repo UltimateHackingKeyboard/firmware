@@ -129,7 +129,7 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     BT_TRACE_AND_ASSERT("bm4");
     static uint32_t lastAggressiveTime = 0;
     uint32_t maxDelay = 5000;
-    uint32_t minDelay = 250 + (DEVICE_IS_UHK_DONGLE ? 30 : 0);
+    uint32_t minDelay = Cfg.Bt_MinAdvertisingDelay + (DEVICE_IS_UHK_DONGLE ? 30 : 0);
     uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 

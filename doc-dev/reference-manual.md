@@ -317,6 +317,7 @@ COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
+COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
 COMMAND = set devMode BOOL
 COMMAND = set maxVoltage INT
