@@ -6,6 +6,22 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [17.2.0] - 2026-06-23
+
+Device Protocol: 4.18.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.15.0
+
+- Update SDKs.
+- Don't blink leds in sfjl mode when keys are continually pressed.
+- Show ' unavailable' when giving up connection attempt to a host.
+- Make the test suite work on uhk60.
+- Finish basic uhk60 logging support.
+- Adjust bluetooth advertising behavior towards aggressive hosts.
+- Make bluetooth reconnection delay configurable via `set bluetooth.minAdvertisingDelay 500`. `SMARTMACROS:MINOR`
+- Fix: resolve hogp not working after dongle pairing.
+- Fix: resolve bluetooth schedule clashes with multiple dongles.
+- Fix: macro scheduler bug that would make uhk lock up on macros of a certain length. `SMARTMACROS:PATCH`
+- Fix: make ifPlaytime return true when the value exactly equals. `SMARTMACROS:PATCH`
+
 ## [17.1.3] - 2026-06-16
 
 Device Protocol: 4.18.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.14.0
