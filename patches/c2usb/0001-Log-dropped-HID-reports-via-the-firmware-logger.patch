@@ -1,0 +1,73 @@
+From 28ff59298b1419ea266346096eb43ed87f37cfa6 Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Tue, 23 Jun 2026 14:31:17 +0200
+Subject: [PATCH] Log dropped HID reports via the firmware logger
+
+Route USB transfer errors (Zephyr udc_mac) and cancelled transfers on data
+endpoints (NXP mcux_mac) to the firmware's LogErr() so dropped reports surface
+in the normal UHK logging pipeline. LogErr is forward-declared to avoid pulling
+firmware headers into c2usb.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+---
+ c2usb/port/nxp/mcux_mac.cpp   | 12 +++++++++++-
+ c2usb/port/zephyr/udc_mac.cpp |  6 ++++++
+ 2 files changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
+index 21c75ad..d375cbd 100644
+--- a/c2usb/port/nxp/mcux_mac.cpp
++++ b/c2usb/port/nxp/mcux_mac.cpp
+@@ -27,6 +27,11 @@
+ #include <usb_device_lpcip3511.h>
+ #endif
+ 
++// UHK patch: route transport errors through the firmware's own logger (see
++// right/src/logger.h) so dropped reports surface in the normal UHK logging
++// pipeline. Forward-declared to avoid pulling firmware headers into c2usb.
++extern "C" void LogErr(const char *fmt, ...);
++
+ namespace usb::df::nxp
+ {
+ struct controller_interface : public ::_usb_device_controller_interface_struct
+@@ -271,7 +276,12 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+     }
+     else if (message.length == UINT32_MAX)
+     {
+-        // callback due to ep_cancel()
++        // callback due to ep_cancel(); on a data endpoint this means a report that
++        // was handed to the controller never reached the host (dropped).
++        if (addr.number() != 0)
++        {
++            LogErr("HID report dropped: EP %02x transfer cancelled\n", message.code);
++        }
+     }
+     else if (addr.number() == 0)
+     {
+diff --git a/c2usb/port/zephyr/udc_mac.cpp b/c2usb/port/zephyr/udc_mac.cpp
+index 2e4b5b3..983afb2 100644
+--- a/c2usb/port/zephyr/udc_mac.cpp
++++ b/c2usb/port/zephyr/udc_mac.cpp
+@@ -18,6 +18,11 @@ extern "C"
+ #include <zephyr/drivers/usb/udc.h>
+ }
+ 
++// UHK patch: route transport errors through the firmware's own logger (see
++// right/src/logger.h) so dropped reports surface in the normal UHK logging
++// pipeline. Forward-declared to avoid pulling firmware headers into c2usb.
++extern "C" void LogErr(const char *fmt, ...);
++
+ #if defined(CONFIG_DEBUG) == defined(NDEBUG)
+ // for assert() to be active in debug configuration only, this is necessary
+ #error "Either CONFIG_DEBUG or NDEBUG must be defined"
+@@ -754,6 +759,7 @@ void udc_mac::process_ep_event(net_buf* buf)
+         else
+         {
+             LOG_ERR("EP %x error:%d", info.ep, info.err);
++            LogErr("HID report dropped: EP %02x transfer error %d\n", info.ep, info.err);
+         }
+     }
+ }
+-- 
+2.51.0
+
