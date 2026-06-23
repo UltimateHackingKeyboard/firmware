@@ -18,6 +18,7 @@
 #include "settings.h"
 #include "config_manager.h"
 #include <zephyr/logging/log.h>
+#include "timer.h"
 #include "trace.h"
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
@@ -126,8 +127,9 @@ void BtManager_CheckLeftBleVsUart() {
 
 void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel) {
     BT_TRACE_AND_ASSERT("bm4");
+    static uint32_t lastAggressiveTime = 0;
     uint32_t maxDelay = 5000;
-    uint32_t minDelay = DEVICE_IS_UHK_DONGLE ? 150 : 100;
+    uint32_t minDelay = 250 + (DEVICE_IS_UHK_DONGLE ? 30 : 0);
     uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 
@@ -143,12 +145,16 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     } else {
         if (wasAggresive) {
             aggressiveTries = aggressiveTries + 1;
+            lastAggressiveTime = Timer_GetCurrentTime();
+            aggressiveTries = MIN(aggressiveTries, 64);
+            expDelay = MIN(maxDelay, minDelay << (aggressiveTries/2));
+        } else if (Timer_GetCurrentTime() < lastAggressiveTime + maxDelay + 100 ) {
+            aggressiveTries = aggressiveTries + 0;
+            expDelay = minDelay;
         } else {
             aggressiveTries = 0;
+            expDelay = minDelay;
         }
-        aggressiveTries = MAX(0, aggressiveTries);
-        aggressiveTries = MIN(aggressiveTries, 64);
-        expDelay = MIN(maxDelay, minDelay << (aggressiveTries/2));
     }
 
     LOG_INF("BtManager: Scheduling scan/adv in %dms. (%s)", expDelay, eventLabel);
