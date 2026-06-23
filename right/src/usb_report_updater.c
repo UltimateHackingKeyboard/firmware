@@ -742,7 +742,6 @@ static void updateActionStates() {
             preprocessKeyState(keyState);
 
             if (KeyState_NonZero(keyState)) {
-                LOG_WRN("Key pressed %s\n", Utils_KeyStateToKeyAbbreviation(keyState));
                 Trace_Printc("w2");
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
