@@ -838,7 +838,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
-            // bt_conn_auth_cancel(conn);
+            bt_conn_auth_cancel(conn);
             // bt_conn_disconnect(conn, BT_REASON_PERMANENT);
         } else {
             // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
