@@ -262,6 +262,7 @@ const config_t DefaultCfg = (config_t){
         .DebounceTimePress = 50,
         .DebounceTimeRelease = 50,
         .DoubletapTimeout = 400,
+        .MouseActiveTimeout = 400,
         .DoubletapSwitchLayerReleaseTimeout = 200,
         .HoldTimeout = 200,
         .KeystrokeDelay = 0,
