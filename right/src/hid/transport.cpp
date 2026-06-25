@@ -18,6 +18,7 @@ extern "C" {
 #include "usb_report_updater.h"
 #include "led_display.h"
 #include "jitter_test.h"
+#include "usb_state.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -155,8 +156,14 @@ extern "C" void Hid_TransportStateChanged(
     [[maybe_unused]] hid_transport_t transport, [[maybe_unused]] bool enabled)
 {
 #ifdef __ZEPHYR__
-    Connections_SetStateAsync(
-        hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
+    connection_id_t connId = hidConnId(transport);
+    if (connId == ConnectionId_UsbHidRight) {
+        UsbState_SetUsbTransportUp(enabled);
+    } else {
+        Connections_SetStateAsync( hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
+    }
+#else
+    UsbState_SetUsbTransportUp(enabled);
 #endif
 }
 
