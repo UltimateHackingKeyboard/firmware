@@ -26,6 +26,7 @@
 #include "slot.h"
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
+#include "test_switches.h"
 #include "jitter_test.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
@@ -129,6 +130,19 @@ static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *arg
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_Flash;
     shell_fprintf(shell, SHELL_NORMAL, "Kboot flash sequence started for right module\n");
+    return 0;
+}
+
+
+static int cmd_uhk_testSwitches(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", TestSwitches ? 1 : 0);
+    } else if (argv[1][0] == '1') {
+        TestSwitches_Activate();
+    } else {
+        TestSwitches_Deactivate();
+    }
     return 0;
 }
 
@@ -483,6 +497,7 @@ void InitShellCommands(void)
         SHELL_CMD(kboot, &uhk_kboot_cmds, "kboot module flashing commands", NULL),
         SHELL_CMD_ARG(testled, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
         SHELL_CMD_ARG(ledtest, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
+        SHELL_CMD_ARG(testSwitches, NULL, "get/set switch test mode", cmd_uhk_testSwitches, 1, 1),
 #endif
 #if DEVICE_HAS_OLED
         SHELL_CMD_ARG(oled, NULL, "get/set OLED_EN pin", cmd_uhk_oled, 1, 1),
