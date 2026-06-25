@@ -1522,6 +1522,16 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static bool processIfMouseActiveCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        return true;
+    }
+
+    bool active = (CurrentPostponedTime - UsbReportUpdater_LastMouseActivityTime) < Cfg.MouseActiveTimeout;
+    return active != negate;
+}
+
 static macro_result_t processPanicCommand(parser_context_t* ctx) {
     if (Macros_DryRun) {
         return MacroResult_Finished;
@@ -2263,6 +2273,10 @@ static macro_result_t processCommand(parser_context_t* ctx)
             PROCESS_CONDITION(processIfModuleConnected(ctx, false))
         case CommandId_ifNotModuleConnected:
             PROCESS_CONDITION(processIfModuleConnected(ctx, true))
+        case CommandId_ifMouseActive:
+            PROCESS_CONDITION(processIfMouseActiveCommand(ctx, false))
+        case CommandId_ifNotMouseActive:
+            PROCESS_CONDITION(processIfMouseActiveCommand(ctx, true))
         case CommandId_ifAlreadyRunning:
             PROCESS_CONDITION(processIfAlreadyRunningCommand(false))
         case CommandId_ifNotAlreadyRunning:

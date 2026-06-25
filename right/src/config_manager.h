@@ -51,6 +51,7 @@
         uint16_t KeystrokeDelay;
         uint16_t DoubletapTimeout;
         uint16_t HoldTimeout; // not present in UserConfig atm.
+        uint16_t MouseActiveTimeout;
         uint16_t DoubletapSwitchLayerReleaseTimeout;
         sticky_strategy_t StickyModifierStrategy;
         uint8_t DebounceTimePress;

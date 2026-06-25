@@ -1042,6 +1042,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.HoldTimeout);
     }
+    else if ( ConsumeToken(ctx, "mouseActiveTimeout")) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(Cfg.MouseActiveTimeout);
+    }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.AutoRepeatInitialDelay);
