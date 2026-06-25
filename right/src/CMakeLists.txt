@@ -69,6 +69,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     usb_log_buffer.c
     usb_protocol_handler.c
     usb_report_updater.c
+    usb_state.c
     user_logic.c
     utils.c
     wormhole.c
