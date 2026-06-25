@@ -3,9 +3,11 @@ extern "C" {
 #include "key_states.h"
 #include "logger.h"
 #include "power_mode.h"
+#include "usb_state.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "user_logic.h"
+#include "logger.h"
 #ifdef __ZEPHYR__
     #include "device_state.h"
     #include <nrfx_power.h>
@@ -114,20 +116,17 @@ struct usb_manager {
                     // TODO: use a common API instead of device specific
 #if DEVICE_IS_UHK60
                     if (dev.configured()) {
-                        PowerMode_ActivateMode(
-                            PowerMode_Uhk60Sleep, false, false, "received device suspend event");
+                        LogUS("Setting usb asleep\n");
+                        UsbState_SetUsbAwake(false);
                     }
 #else
-                    PowerMode_SetUsbAwake(false);
+                    LogUS("Setting usb asleep\n");
+                    UsbState_SetUsbAwake(false);
 #endif
                     break;
                 case usb::power::state::L0_ON:
-#if DEVICE_IS_UHK60
-                    PowerMode_ActivateMode(
-                        PowerMode_Awake, false, false, "received device resume event");
-#else
-                    PowerMode_SetUsbAwake(true);
-#endif
+                    LogUS("Setting usb awake\n");
+                    UsbState_SetUsbAwake(true);
                     break;
                 default:
                     break;
@@ -183,11 +182,13 @@ extern "C" void USB_Reconfigure()
 extern "C" bool USB_RemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
-#ifdef __ZEPHYR__
     if (err != usb::result::ok) {
-        LogUO("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+        LogErr("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+        LogUS("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+    } else {
+        LogUO("USB: remote wakeup request succeeded\n");
+        LogUS("USB: remote wakeup request succeeded\n");
     }
-#endif
     return err == usb::result::ok;
 }
 

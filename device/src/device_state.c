@@ -143,6 +143,7 @@ bool DeviceState_IsTargetConnected(uint8_t target) {
         return true;
     } else {
         connection_id_t connectionId = findPreferredConnection(target);
+        printk("Testing connection %d\n", connectionId);
         return connectionId != ConnectionId_Invalid && Connections[connectionId].state == ConnectionState_Ready;
     }
 }
