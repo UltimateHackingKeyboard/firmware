@@ -21,7 +21,7 @@
 host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     [HOST_CONNECTION_COUNT_MAX - 2] = {
         .type = HostConnectionType_NewBtHid,
-        .name = (string_segment_t){ .start = "Unregistered Ble", .end = NULL },
+        .name = (string_segment_t){ .start = "Ble Template", .end = NULL },
         .switchover = true,
     },
     [HOST_CONNECTION_COUNT_MAX - 1] = {
