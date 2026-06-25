@@ -69,12 +69,10 @@ static bool isSomeoneAwake() {
 #else
     bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
 #endif
-    LogUS("someoneAwake: %d\n", someoneAwake);
     return someoneAwake;
 }
 
 void PowerMode_Update() {
-    LogUS("PowerMode_Update");
     bool someoneAwake = isSomeoneAwake();
 
     power_mode_t newPowerMode = someoneAwake ? PowerMode_Awake : PowerMode_LightSleep;
