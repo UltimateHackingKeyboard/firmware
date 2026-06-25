@@ -27,6 +27,9 @@
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
 #include "test_switches.h"
+#include "key_states.h"
+#include "utils.h"
+#include "postponer.h"
 #include "jitter_test.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
@@ -452,6 +455,25 @@ static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[
     return 0;
 }
 
+static int cmd_uhk_listActiveKeys(const struct shell *shell, size_t argc, char *argv[])
+{
+    uint8_t count = 0;
+    for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+            if (KeyState_Active(keyState)) {
+                printk("slot %d, key %d (%s): hw %d, debounced %d, postponer %s\n", slotId, keyId,
+                    Utils_KeyAbbreviation(keyState),
+                    keyState->hardwareSwitchState, keyState->debouncedSwitchState,
+                    PostponerQuery_IsActiveEventually(keyState) ? "active" : "inactive");
+                count++;
+            }
+        }
+    }
+    printk("%d active key(s)\n", count);
+    return 0;
+}
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -519,6 +541,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
+        SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
