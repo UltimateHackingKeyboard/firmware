@@ -16,6 +16,7 @@
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
 #define DEBUG_STRESS_GATT false
+#define DEBUG_STRESS_REPORTS false
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
@@ -150,7 +151,7 @@
 #define WATCH_SEMAPHORE_TAKE(SEM, FILENAME, N) if(CurrentWatch == N) { WatchSemaforeTake(SEM, FILENAME, N); } else { k_sem_take(SEM, K_FOREVER); }
 #define SEM_TAKE(SEM) WATCH_SEMAPHORE_TAKE(SEM, __FILE__, 0)
 #else
-#define SEM_TAKE(SEM) if (k_sem_take(SEM, K_MSEC(256)) != 0) { uint8_t tgt = Cfg.DevMode ? LogTarget_Uart | LogTarget_ErrorBuffer : LogTarget_Uart; LogTo(DEVICE_ID, tgt, "Failed to take semaphore " #SEM " in file %s. This shouldn't have happened. Please report it!\n", __FILE__); Trace_Print(tgt, "Failed semaphore");  }
+#define SEM_TAKE(SEM) if (k_sem_take(SEM, K_MSEC(256)) != 0) { uint8_t tgt = Cfg.DevMode ? LogTarget_Uart | LogTarget_ErrorBuffer : LogTarget_Uart; LogTo(DEVICE_ID, tgt, "Failed to take semaphore " #SEM " in file %s.!\n", __FILE__); Trace_Print(tgt, "Failed semaphore");  }
 #define WATCH_SEMAPHORE_TAKE(SEM, LABEL, N) k_sem_take(SEM, K_FOREVER);
 #endif
 

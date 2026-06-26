@@ -123,17 +123,6 @@ void CopyRightKeystateMatrix(void)
     }
 }
 
-bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && CurrentPowerMode > PowerMode_LastAwake) {
-        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
-            return false;
-        } else {
-            UsbReportUpdateSemaphore = 0;
-        }
-    }
-    return true;
-}
-
 static void initUsb() {
     while (!IsHardwareConfigInitialized) {
         __WFI();
@@ -258,7 +247,7 @@ int main(void)
                 checkSleepMode();
             }
 
-            if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+            if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
                 Trace('(');
                 RunUserLogic();
                 Trace(')');

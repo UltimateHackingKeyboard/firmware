@@ -14,7 +14,7 @@
 
 // Macros:
 
-    #define USB_SEMAPHORE_TIMEOUT 100 // ms
+    #define USB_SEMAPHORE_TIMEOUT 32 // ms
 
     // This is how much time we leave for report construction. Most of the time is
     // (probably) consumed inside the transport layers.
@@ -79,7 +79,14 @@
     void RecordKeyTiming_ReportKeystroke(key_state_t *keyState, bool active, uint32_t pressTime, uint32_t activationTime);
 
     hid_keyboard_report_t* GetInactiveKeyboardReport(void);
-    bool ShouldResendReport(bool statusOk, uint8_t* counter);
+
+    void UsbReportUpdater_ConfirmKeyboardReportSent(void);
+    void UsbReportUpdater_ConfirmMouseReportSent(void);
+    void UsbReportUpdater_ConfirmControlsReportSent(void);
+
+    bool ShouldResendReport(int err, uint8_t* counter);
     uint16_t GetResendThrottleDelay(uint8_t counter);
+
+    bool UsbReadyForTransfers(void);
 
 #endif

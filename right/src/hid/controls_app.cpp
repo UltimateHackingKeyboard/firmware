@@ -33,6 +33,14 @@ int controls_app::send_report(const hid_controls_report_t &report)
 
 void controls_app::in_report_sent(const std::span<const uint8_t> &data)
 {
+#if DEVICE_IS_UHK80_RIGHT
+    // On BLE all apps share one merged HOGP interface, so in_report_sent is broadcast
+    // to every app for every sent report. Act only on our own (controls) report ID.
+    // The USB handle is a standalone interface, so the filter must not be applied there.
+    if ((this == &ble_handle()) && (data.front() != report_ids::IN_CONTROLS)) {
+        return;
+    }
+#endif
     Hid_ControlsReportSentCallback((this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE);
 }
 

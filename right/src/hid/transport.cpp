@@ -19,6 +19,7 @@ extern "C" {
 #include "led_display.h"
 #include "jitter_test.h"
 #include "usb_state.h"
+#include "utils.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -173,6 +174,9 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     noteReportDispatched(sink);
     Trace_Printf("z11,%d", sink);
     errno_t err;
+    if (DEBUG_STRESS_REPORTS && Utils_Random() % 16 == 0) {
+        return 1;
+    }
     switch (sink) {
     case ReportSink_Usb:
         err = keyboard_app::usb_handle().send_report(*report);
@@ -187,6 +191,8 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
             printk("Failed to send keyboard report to dongle: %d\n", err);
+        } else {
+            UsbReportUpdater_ConfirmKeyboardReportSent();
         }
         break;
 #endif
@@ -203,7 +209,11 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 
 extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 {
-    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+    if (DEBUG_STRESS_REPORTS && Utils_Random() % 16 == 0) {
+        // 666
+        return;
+    }
+    UsbReportUpdater_ConfirmKeyboardReportSent();
     noteReportSent(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
@@ -230,6 +240,8 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
             printk("Failed to send mouse report to dongle: %d\n", err);
+        } else {
+            UsbReportUpdater_ConfirmMouseReportSent();
         }
         break;
 #endif
@@ -249,7 +261,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
-    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+    UsbReportUpdater_ConfirmMouseReportSent();
     noteReportSent( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
@@ -276,6 +288,8 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
             printk("Failed to send controls report to dongle: %d\n", err);
+        } else {
+            UsbReportUpdater_ConfirmControlsReportSent();
         }
         break;
 #endif
@@ -292,7 +306,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 
 extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
-    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+    UsbReportUpdater_ConfirmControlsReportSent();
     noteReportSent( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();

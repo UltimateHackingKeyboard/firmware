@@ -65,9 +65,19 @@ void command_app::get_report(hid::report::selector select, const std::span<uint8
 
 void command_app::in_report_sent(const std::span<const uint8_t> &data)
 {
+#if DEVICE_IS_UHK80_RIGHT
+    // On BLE all apps share one merged HOGP interface, so in_report_sent is broadcast
+    // to every app; act only on our own (command) report ID. The USB handle is a
+    // standalone interface (whose report may carry no report-ID byte), so the filter
+    // must not be applied there.
+    if ((this == &ble_handle()) && (data.front() != report_ids::IN_COMMAND)) {
+        return;
+    }
+#else
     if (data.front() != report_ids::IN_COMMAND) {
         return;
     }
+#endif
     auto buf_idx = in_buffer_.indexof(data.data());
     in_buffer_.compare_swap(buf_idx);
 }

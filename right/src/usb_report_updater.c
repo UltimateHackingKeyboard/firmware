@@ -1,4 +1,5 @@
 #include <math.h>
+#include <errno.h>
 #include "atomicity.h"
 #include "bt_defs.h"
 #include "event_scheduler.h"
@@ -139,6 +140,7 @@ static void switchActiveControlsReport() {
         ActiveControlsReport = &controlsReports[0];
     }
 }
+
 
 hid_keyboard_report_t* GetInactiveKeyboardReport(void)
 {
@@ -614,7 +616,7 @@ static void mergeReports(void)
     }
 }
 
-static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTimestamp)
+static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTimestamp, bool forcePostponer)
 {
     WATCH_TRIGGER(keyState);
 
@@ -630,7 +632,7 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
         return;
     }
 
-    if (PostponerCore_EventsShouldBeQueued()) {
+    if (PostponerCore_EventsShouldBeQueued() || forcePostponer) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
     } else {
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
@@ -639,7 +641,7 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
     Macros_WakeBecauseOfKeystateChange();
 }
 
-static inline void preprocessKeyState(key_state_t *keyState)
+static inline void preprocessKeyState(key_state_t *keyState, bool forcePostponer)
 {
     uint32_t currentTime = Timer_GetCurrentTime();
     uint8_t debounceTime = keyState->previous ? Cfg.DebounceTimePress : Cfg.DebounceTimeRelease;
@@ -661,7 +663,7 @@ static inline void preprocessKeyState(key_state_t *keyState)
         keyState->debouncedSwitchState = hardwareState;
 
         Trace_Printc("x1");
-        commitKeyState(keyState, keyState->debouncedSwitchState, pressTimestamp);
+        commitKeyState(keyState, keyState->debouncedSwitchState, pressTimestamp, forcePostponer);
         Trace_Printc("x2");
     }
 
@@ -740,7 +742,7 @@ static void updateActionStates() {
                 continue;
             }
 
-            preprocessKeyState(keyState);
+            preprocessKeyState(keyState, false);
 
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
@@ -862,12 +864,12 @@ static void updateActiveUsbReports(void)
     lastSomeonePostponing = currentSomeonePostponing;
 }
 
-void justPreprocessInput(void) {
+void justPreprocessInput(bool forcePostponer) {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
 
-            preprocessKeyState(keyState);
+            preprocessKeyState(keyState, forcePostponer);
         }
     }
 }
@@ -877,12 +879,37 @@ uint32_t UsbReportUpdateCounter;
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
 uint32_t retryThrottleTime = 0;
-static uint8_t keyboardRetries = 0;
-static bool keyboardNeedsResending = false;
-static uint8_t controlsRetries = 0;
-static bool controlsNeedsResending = false;
-static uint8_t mouseRetries = 0;
-static bool mouseNeedsResending = false;
+uint8_t keyboardRetries = 0;
+bool keyboardNeedsResending = false;
+uint8_t controlsRetries = 0;
+bool controlsNeedsResending = false;
+uint8_t mouseRetries = 0;
+bool mouseNeedsResending = false;
+bool givenUp = false;
+
+// Confirm that an in-flight report was delivered. Called by the transport layer once
+// delivery is confirmed (USB/BLE asynchronously via the sent callback, NUS/dongle
+// synchronously on successful enqueue). Advance the baseline to the just-sent report,
+// reset the retry counter (the send succeeded), and release the semaphore gate.
+void UsbReportUpdater_ConfirmKeyboardReportSent(void) {
+    switchActiveKeyboardReport();
+    keyboardRetries = 0;
+    givenUp = false;
+    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+}
+void UsbReportUpdater_ConfirmMouseReportSent(void) {
+    switchActiveMouseReport();
+    mouseRetries = 0;
+    givenUp = false;
+    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
+}
+void UsbReportUpdater_ConfirmControlsReportSent(void) {
+    switchActiveControlsReport();
+    controlsRetries = 0;
+    givenUp = false;
+    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
+}
+
 
 // Counts retry attempts and decides whether to keep trying. On success, resets
 // the counter and clears the give-up latch. On failure, increments the counter
@@ -892,8 +919,11 @@ static bool mouseNeedsResending = false;
 // Pair with GetResendThrottleDelay() to compute the wait before the next retry.
 // MAX_RETRIES is sized so that the cumulative wait from GetResendThrottleDelay()
 // is ~1024 ms (1+2+4+8+16+32 + 30*32 = 1023).
-bool ShouldResendReport(bool statusOk, uint8_t* counter) {
-    static bool givenUp = false;
+#define THROTTLE_MAX_RETRIES 36
+#define THROTTLE_MAX_SHIFT 5 // 1 << 5 == 32 ms
+#define THROTTLE_MAX_DELAY_MS 32
+bool ShouldResendReport(int err, uint8_t* counter) {
+    bool statusOk = err == 0;
 
     if (statusOk) {
         *counter = 0;
@@ -905,14 +935,17 @@ bool ShouldResendReport(bool statusOk, uint8_t* counter) {
         return false;
     }
 
-    const uint8_t MAX_RETRIES = 36;
-
     (*counter)++;
-    if (*counter > MAX_RETRIES) {
+    if (*counter > THROTTLE_MAX_RETRIES) {
         *counter = 0;
         givenUp = true;
         return false;
     }
+
+    if (*counter == 1) {
+        LOG_WRN("First send try failed, result: %d (%s). Will retry.\n", err, ErrToStr(err));
+    }
+
     return true;
 }
 
@@ -923,10 +956,9 @@ uint16_t GetResendThrottleDelay(uint8_t counter) {
     if (counter == 0) {
         return 0;
     }
-    const uint8_t MAX_SHIFT = 5; // 1 << 5 == 32 ms
     uint8_t shift = counter - 1;
-    if (shift > MAX_SHIFT) {
-        shift = MAX_SHIFT;
+    if (shift > THROTTLE_MAX_SHIFT) {
+        shift = THROTTLE_MAX_SHIFT;
     }
     return (uint16_t)1 << shift;
 }
@@ -943,7 +975,7 @@ static void clearMouseMovement(void) {
     }
 }
 
-static void reportRetry(errno_t err) {
+static void reportRetry(errno_t err, uint8_t retries) {
     // uint32_t currentTime = Timer_GetCurrentTime();
     // uint32_t seconds = currentTime / 1000;
     // uint32_t milliseconds = currentTime % 1000;
@@ -959,7 +991,7 @@ static void handleFail(errno_t errorCode) {
     if (ActiveHostConnectionId == ConnectionId_Invalid) {
         LOG_WRN("Send failed: no connection selected: %d (%s)\n", errorCode, ErrToStr(errorCode));
     } else {
-        LOG_WRN("Send failed: %d (%s)\n", errorCode, ErrToStr(errorCode));
+        LOG_ERR("Send failed (gave up resending): %d (%s)\n", errorCode, ErrToStr(errorCode));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
             // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
             if (!WormCfg->devMode) {
@@ -973,6 +1005,27 @@ static void handleFail(errno_t errorCode) {
 #endif
 }
 
+static bool resendMaybe(errno_t ret, uint8_t* retries, bool* needsResending, uint8_t semaphoreBit, bool withDelay) {
+    if (ShouldResendReport(ret, retries)) {
+        reportRetry(ret, *retries);
+        *needsResending = true;
+        // The semaphore timeout path already waited out its own delay, so resend now.
+        retryThrottleTime = withDelay ? Timer_GetCurrentTime() + GetResendThrottleDelay(*retries) : Timer_GetCurrentTime();
+        UsbReportUpdateSemaphore &= ~semaphoreBit;
+        EventVector_Set(EventVector_ResendUsbReports);
+        return true;
+    } else {
+        if (ret != 0) {
+            // Genuine send failure with retries exhausted: give up on this report and
+            // release the gate. (ret == 0 is the success case - leave the semaphore set,
+            // it is cleared only once delivery is confirmed.)
+            handleFail(ret);
+            UsbReportUpdateSemaphore &= ~semaphoreBit;
+        }
+        *needsResending = false;
+        return false;
+    }
+}
 
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAction = false;
@@ -1001,23 +1054,15 @@ static void sendActiveReports(bool resending) {
                 //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
                 UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
-                if (ShouldResendReport(ret == 0, &keyboardRetries)) {
-                    reportRetry(ret);
-                    //This is *not* asynchronously safe as long as multiple reports of different type can be sent at the same time.
-                    //TODO: consider making it atomic, or lowering semaphore reset delay
-                    keyboardNeedsResending = true;
-                    retryThrottleTime = Timer_GetCurrentTime() + GetResendThrottleDelay(keyboardRetries);
-                    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
-                    EventVector_Set(EventVector_ResendUsbReports);
-                } else {
-                    if (ret != 0) {
-                        handleFail(ret);
-                    } else {
-                        // don't throw out the state. This way even if we drop reports, we keep in-line with what we have actually sent, so
-                        // once the connection is alive again, we report the new state if needed.
-                        switchActiveKeyboardReport();
-                    }
-                    keyboardNeedsResending = false;
+                // On success the report is accepted by the transport, but NOT yet confirmed
+                // delivered. We advance the baseline (switchActiveKeyboardReport) only once
+                // delivery is confirmed: USB/BLE asynchronously via Hid_KeyboardReportSentCallback,
+                // NUS/dongle synchronously inside Hid_SendKeyboardReport. If a USB/BLE confirmation
+                // never arrives, the UsbReadyForTransfers timeout re-arms the resend - the baseline
+                // was not advanced, so HasChange stays true and we re-send the current state instead
+                // of losing it (the stuck-key bug).
+                if (ret != 0) {
+                    resendMaybe(ret, &keyboardRetries, &keyboardNeedsResending, UsbReportUpdate_Keyboard, true);
                 }
             }
             usbReportsChangedByAction = true;
@@ -1030,19 +1075,8 @@ static void sendActiveReports(bool resending) {
     if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsNeedsResending)) {
         UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
         ret = Hid_SendControlsReport(ActiveControlsReport);
-        if (ShouldResendReport(ret == 0, &controlsRetries)) {
-            reportRetry(ret);
-            controlsNeedsResending = true;
-            retryThrottleTime = Timer_GetCurrentTime() + GetResendThrottleDelay(controlsRetries);
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
-            EventVector_Set(EventVector_ResendUsbReports);
-        } else {
-            if (ret != 0) {
-                handleFail(ret);
-            } else {
-                switchActiveControlsReport();
-            }
-            controlsNeedsResending = false;
+        if (ret != 0) {
+            resendMaybe(ret, &controlsRetries, &controlsNeedsResending, UsbReportUpdate_Controls, true);
         }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
@@ -1052,24 +1086,11 @@ static void sendActiveReports(bool resending) {
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || mouseNeedsResending) &&
         (CurrentPowerMode == PowerMode_Awake)) {
         bool usbMouseButtonsChanged = mouseReports[0].buttons != mouseReports[1].buttons;
-        // Macros_Printf("sm\n");
 
         UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
         ret = Hid_SendMouseReport(ActiveMouseReport);
-        if (ShouldResendReport(ret == 0, &mouseRetries)) {
-            reportRetry(ret);
-            mouseNeedsResending = true;
-            retryThrottleTime = Timer_GetCurrentTime() + GetResendThrottleDelay(mouseRetries);
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
-            EventVector_Set(EventVector_ResendUsbReports);
-        } else {
-            if (ret != 0) {
-                handleFail(ret);
-                clearMouseMovement(); // Don't make cursor jump if we have connection issues.
-            } else {
-                switchActiveMouseReport();
-            }
-            mouseNeedsResending = false;
+        if (ret != 0 && !resendMaybe(ret, &mouseRetries, &mouseNeedsResending, UsbReportUpdate_Mouse, true)) {
+            clearMouseMovement(); // Don't make cursor jump if we have connection issues.
         }
 
         Debug_RecordBleSendResult(ret);
@@ -1085,6 +1106,10 @@ static void sendActiveReports(bool resending) {
     if (usbReportsChangedByAnything) {
         EventVector_Set(EventVector_SendUsbReports);
     }
+
+    if (UsbReportUpdateSemaphore) {
+        EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
+    }
 }
 
 static bool blockedByReportThrottle() {
@@ -1092,6 +1117,14 @@ static bool blockedByReportThrottle() {
     uint32_t currentTime = Timer_GetCurrentTime();
     uint32_t blockedUntil = 0;
     bool blocked = false;
+
+    // UsbReportSemaphore - make sure:
+    // - we are not sending reports until last report is sent
+    // - we resend if sent is not confirmed within timeout
+    if (!UsbReadyForTransfers()) {
+        blockedUntil = MAX(blockedUntil, Timer_GetCurrentTime() + USB_SEMAPHORE_TIMEOUT);
+        blocked = true;
+    }
 
     // Configured delay - prevent firmware (macros and similar) from sending reports too fast -
     // some applications (esp. games) don't expect that.
@@ -1121,7 +1154,7 @@ static bool blockedByReportThrottle() {
         // Make sure to wake up postponer so that it can process the events.
         EventScheduler_Reschedule(blockedUntil, EventSchedulerEvent_Postponer, "report throttle");
 
-        justPreprocessInput();
+        justPreprocessInput(true);
         return true;
     } else if (postponedMasks) {
         DISABLE_IRQ();
@@ -1130,6 +1163,25 @@ static bool blockedByReportThrottle() {
         ENABLE_IRQ();
     }
     return false;
+}
+
+bool UsbReadyForTransfers(void) {
+    if (UsbReportUpdateSemaphore && CurrentPowerMode <= PowerMode_LastAwake) {
+        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
+            return false;
+        } else {
+            if (UsbReportUpdateSemaphore & UsbReportUpdate_Keyboard) {
+                resendMaybe(-ETIMEDOUT, &keyboardRetries, &keyboardNeedsResending, UsbReportUpdate_Keyboard, false);
+            }
+            if (UsbReportUpdateSemaphore & UsbReportUpdate_Controls) {
+                resendMaybe(-ETIMEDOUT, &controlsRetries, &controlsNeedsResending, UsbReportUpdate_Controls, false);
+            }
+            if (UsbReportUpdateSemaphore & UsbReportUpdate_Mouse) {
+                resendMaybe(-ETIMEDOUT, &mouseRetries, &mouseNeedsResending, UsbReportUpdate_Mouse, false);
+            }
+        }
+    }
+    return true;
 }
 
 void UpdateUsbReports(void)
@@ -1150,7 +1202,7 @@ void UpdateUsbReports(void)
     Resending = resending;
 
     if (resending) {
-        justPreprocessInput(); // don't allow resending to block input processing
+        justPreprocessInput(true); // don't allow resending to block input processing
     } else {
         Trace_Printc("u2");
         updateActiveUsbReports();

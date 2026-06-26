@@ -180,8 +180,8 @@ void keyboard_app::set_report(hid::report::type type, const std::span<const uint
 void keyboard_app::in_report_sent(const std::span<const uint8_t> &data)
 {
 #if DEVICE_IS_UHK80_RIGHT
-    if ((prot_ == hid::protocol::REPORT) && (data.front() != KEYS_NKRO_REPORT_ID) &&
-        (data.front() != KEYS_6KRO_REPORT_ID)) {
+    if ((this == &ble_handle()) && (prot_ == hid::protocol::REPORT) &&
+        (data.front() != KEYS_NKRO_REPORT_ID) && (data.front() != KEYS_6KRO_REPORT_ID)) {
         return;
     }
 #endif
