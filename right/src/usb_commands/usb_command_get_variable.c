@@ -41,7 +41,7 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             }
             break;
         case UsbVariable_ShellEnabled:
-            SetUsbTxBufferUint8(1, WormCfg->UsbLogEnabled);
+            SetUsbTxBufferUint8(1, WormCfg->LogUsbSinkEnabled);
             break;
         case UsbVariable_ShellBuffer:
             UsbLogBuffer_Consume(GenericHidInBuffer + 1, USB_COMMAND_BUFFER_LENGTH - 1);

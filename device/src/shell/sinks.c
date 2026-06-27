@@ -20,8 +20,8 @@ static shell_sinks_t emptyConfig() {
 
 static shell_sinks_t activeConfig() {
     return (shell_sinks_t){
-        .toUsbBuffer = WormCfg->UsbLogEnabled,
-        .toOled = WormCfg->UsbLogEnabled,
+        .toUsbBuffer = WormCfg->LogUsbSinkEnabled,
+        .toOled = WormCfg->LogOledSinkEnabled,
         .toStatusBuffer = ShellConfig_IsInPanicMode,
     };
 }

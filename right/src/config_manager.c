@@ -306,7 +306,8 @@ worm_config_t* WormCfg = &StateWormhole.WormCfg;
 
 const worm_config_t DefaultWormCfg = {
     .devMode = false,
-    .UsbLogEnabled = false,
+    .LogUsbSinkEnabled = false,
+    .LogOledSinkEnabled = false,
 };
 
 void ConfigManager_ResetWormConfiguration(void) {

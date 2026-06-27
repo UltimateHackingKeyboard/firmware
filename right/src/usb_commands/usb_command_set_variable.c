@@ -51,7 +51,8 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
 #endif
             break;
         case UsbVariable_ShellEnabled:
-            WormCfg->UsbLogEnabled = GetUsbRxBufferUint8(2);
+            WormCfg->LogUsbSinkEnabled = GetUsbRxBufferUint8(2);
+            WormCfg->LogOledSinkEnabled = GetUsbRxBufferUint8(2);
             break;
         case UsbVariable_FirmwareVersionCheckEnabled:
             #ifdef __ZEPHYR__

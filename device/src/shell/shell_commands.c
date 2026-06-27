@@ -379,20 +379,32 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
-static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
+static int cmd_uhk_usbLog(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc > 1 && argv[1][0] == '1') {
-        WormCfg->UsbLogEnabled = true;
+        WormCfg->LogUsbSinkEnabled = true;
     } else if (argc > 1 && argv[1][0] == '0') {
-        WormCfg->UsbLogEnabled = false;
+        WormCfg->LogUsbSinkEnabled = false;
     }
 
     uint16_t usbBufferFill, usbBufferSize;
     UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
 
-    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
+    printk("Usb log sink enabled: %d\n", WormCfg->LogUsbSinkEnabled);
     printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
+    return 0;
+}
+
+static int cmd_uhk_oledLog(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc > 1 && argv[1][0] == '1') {
+        WormCfg->LogOledSinkEnabled = true;
+    } else if (argc > 1 && argv[1][0] == '0') {
+        WormCfg->LogOledSinkEnabled = false;
+    }
+
+    printk("Oled log sink enabled: %d\n", WormCfg->LogOledSinkEnabled);
     return 0;
 }
 
@@ -421,7 +433,8 @@ static int cmd_uhk_logStatus(const struct shell *shell, size_t argc, char *argv[
     uint16_t usbBufferFill, usbBufferSize;
     UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
 
-    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
+    printk("Usb log sink enabled: %d\n", WormCfg->LogUsbSinkEnabled);
+    printk("Oled log sink enabled: %d\n", WormCfg->LogOledSinkEnabled);
     printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
     printk("UseShellSinks: %d\n", ShellConfig_UseShellSinks ? 1 : 0);
@@ -492,7 +505,8 @@ void InitShellCommands(void)
 {
 
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_log_cmds,
-        SHELL_CMD_ARG(usbLog, NULL, "Set/get USB log enabled", cmd_uhk_logs, 1, 1),
+        SHELL_CMD_ARG(usbSink, NULL, "Set/get USB log sink enabled", cmd_uhk_usbLog, 1, 1),
+        SHELL_CMD_ARG(oledSink, NULL, "Set/get OLED log sink enabled", cmd_uhk_oledLog, 1, 1),
         SHELL_CMD_ARG(priority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
         SHELL_CMD_ARG(snapshot, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(status, NULL, "print log status overview", cmd_uhk_logStatus, 1, 0),

@@ -15,7 +15,8 @@
 
     typedef struct {
         bool devMode;
-        bool UsbLogEnabled;
+        bool LogUsbSinkEnabled;
+        bool LogOledSinkEnabled;
     } worm_config_t;
 
     typedef struct {
