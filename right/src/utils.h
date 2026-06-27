@@ -42,6 +42,7 @@ if (reentrancyGuard_active) {                    \
     key_coordinates_t Utils_KeyIdToKeyCoordinates(uint16_t keyId);
     uint16_t Utils_KeyCoordinatesToKeyId(uint8_t slotId, uint8_t keyIdx);
     const char* Utils_KeyAbbreviation(key_state_t* keyState);
+    uint32_t Utils_Random(void);
 
     static inline bool test_bit(unsigned nr, const uint8_t *addr)
     {

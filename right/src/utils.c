@@ -162,3 +162,13 @@ const char* Utils_KeyAbbreviation(key_state_t* keyState)
     uint8_t keyId = Utils_KeyStateToKeyId(keyState);
     return MacroKeyIdParser_KeyIdToAbbreviation(keyId);
 }
+
+ATTR_UNUSED uint32_t Utils_Random(void)
+{
+    static uint32_t s = 2463534242u;
+    s ^= s << 13;
+    s ^= s >> 17;
+    s ^= s << 5;
+    return s;
+}
+
