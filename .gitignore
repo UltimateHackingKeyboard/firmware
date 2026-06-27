@@ -9,3 +9,8 @@ right/src/macros/command_hash.c
 tags
 compile_commands.json
 specs
+logs
+build_logs
+.devices
+*.orig
+*.obsidian
