@@ -1705,22 +1705,24 @@ static macro_result_t processRepeatForCommand(parser_context_t* ctx)
 
 
 #define SL_START_OFFSET 40
+#define SL_LEN 72
+#define SL_INTERVAL 96
 static macro_result_t processSlCommand()
 {
     static const char* const slTrain[2][5] = {
         {
-            "    o o o O O      _____                                       ",
-            "  o      _________==|[ ] | .oOo.   .============.   .============.   .============.",
-            " .][__n_n_|DD[  ====|    |./   |   | []  []  [] |   | []  []  [] |   | []  []  [] |",
-            ">(________|__|_[_]_|____|-|____|-u-|____________|-u-|____________|-u-|____________|",
-            " _/oo OOOOO oo`  ooo  OOO oo  oo     OO       OO      OO       OO      OO       OO",
+            "    o o o O O                                     ",
+            "  o       ____          ____________     ____________     ____________ ",
+            " .][__n_n_|DD[ .&&&.   | []  []  [] |   | []  []  [] |   | []  []  [] |",
+            ">(________|__|=|___|-u-|____________|-u-|____________|-u-|____________|",
+            " _/oo =O=OO oo oo oo     88       OO      88       OO      88       OO ",
         },
         {
-            "   o o O o O O      _____                                       ",
-            "         _________==|[ ] | .oOo.   .============.   .============.   .============.",
-            " .][__n_n_|DD[  ====|    |./   |   | []  []  [] |   | []  []  [] |   | []  []  [] |",
-            ">(________|__|_[_]_|____|-|____|-u-|____________|-u-|____________|-u-|____________|",
-            " _/oo OOOOO oo`  ooo  OOO oo  oo     OO       OO      OO       OO      OO       OO",
+            "   o o O o O O                                                 ",
+            "          ____          ____________     ____________     ____________ ",
+            " .][__n_n_|DD[ .&&&.   | []  []  [] |   | []  []  [] |   | []  []  [] |",
+            ">(________|__|=|___|-u-|____________|-u-|____________|-u-|____________|",
+            " _/oo OO8O= oo oo oo     0O       88      0O       88      OO       88 ",
         },
     };
     uint8_t frame = S->as.actionPhase;
@@ -1750,12 +1752,12 @@ static macro_result_t processSlCommand()
         }
     }
 
-    if (processDelay(96) == MacroResult_Sleeping) {
+    if (processDelay(SL_INTERVAL) == MacroResult_Sleeping) {
         return MacroResult_Sleeping;
     }
 
     S->as.actionPhase++;
-    if (frame >= SL_START_OFFSET + 83) {
+    if (frame >= SL_START_OFFSET + SL_LEN) {
         S->as.actionPhase = 0;
         return MacroResult_Finished;
     }
