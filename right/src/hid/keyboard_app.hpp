@@ -1,5 +1,4 @@
-#ifndef __KEYBOARD_APP_HEADER__
-#define __KEYBOARD_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "hid/keyboard_report.h"
@@ -192,5 +191,3 @@ class keyboard_app : public hid::application {
     };
     double_buffer<keys_reports> keys_{};
 };
-
-#endif // __KEYBOARD_APP_HEADER__

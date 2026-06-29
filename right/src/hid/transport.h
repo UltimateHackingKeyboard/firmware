@@ -1,5 +1,4 @@
-#ifndef __HID_TRANSPORT_H__
-#define __HID_TRANSPORT_H__
+#pragma once
 
 #include <string.h>
 #include "hid/keyboard_report.h"
@@ -79,5 +78,3 @@ bool USB_IsMsHost(void);
 bool HOGP_Enable(void);
 void HOGP_Disable(void);
 int HOGP_HealthCheck(void);
-
-#endif // __HID_TRANSPORT_H__

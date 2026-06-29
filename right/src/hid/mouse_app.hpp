@@ -1,5 +1,4 @@
-#ifndef __MOUSE_APP_HEADER__
-#define __MOUSE_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "hid/mouse_report.h"
@@ -92,5 +91,3 @@ class mouse_app : public hid::application {
 };
 
 using mouse_buffer = mouse_app::mouse_report_base<>;
-
-#endif // __KEYBOARD_APP_HEADER__

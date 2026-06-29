@@ -1,5 +1,4 @@
-#ifndef _DOUBLE_BUFFER_HPP_
-#define _DOUBLE_BUFFER_HPP_
+#pragma once
 
 #include <array>
 #include <atomic>
@@ -64,5 +63,3 @@ class double_buffer {
     std::array<aligned_storage, 2> buffers_{};
     std::atomic_uint8_t select_{};
 };
-
-#endif // _DOUBLE_BUFFER_HPP_

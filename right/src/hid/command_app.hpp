@@ -1,5 +1,4 @@
-#ifndef __COMMAND_APP_HEADER__
-#define __COMMAND_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "device.h"
@@ -85,5 +84,3 @@ class command_app : public hid::application {
     double_buffer<report_in> in_buffer_{};
     double_buffer<report_out> out_buffer_{};
 };
-
-#endif // __COMMAND_APP_HEADER__

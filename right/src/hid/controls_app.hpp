@@ -1,5 +1,4 @@
-#ifndef __CONTROLS_APP_HEADER__
-#define __CONTROLS_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "hid/controls_report.h"
@@ -91,5 +90,3 @@ class controls_app : public hid::application {
 };
 
 using controls_buffer = controls_app::controls_report_base<0>;
-
-#endif // __CONTROLS_APP_HEADER__

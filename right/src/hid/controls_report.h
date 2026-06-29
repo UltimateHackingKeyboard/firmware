@@ -1,5 +1,4 @@
-#ifndef __HID_CONTROLS_REPORT_H__
-#define __HID_CONTROLS_REPORT_H__
+#pragma once
 
 #include "arduino_hid/SystemAPI.h"
 #include "attributes.h"
@@ -29,5 +28,3 @@ bool ControlsReport_ContainsConsumerUsage(
 bool ControlsReport_ContainsSystemUsage(
     const hid_controls_report_t *report, uint8_t scancode);
 bool ControlsReport_HasChanges(const hid_controls_report_t buffer[2]);
-
-#endif // __HID_CONTROLS_REPORT_H__

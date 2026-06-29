@@ -1,5 +1,4 @@
-#ifndef __REPORT_IDS__
-#define __REPORT_IDS__
+#pragma once
 
 #include "device.h"
 
@@ -39,5 +38,3 @@ enum report_ids {
     IN_GAMEPAD = 6,
 #endif
 };
-
-#endif // __REPORT_IDS__
