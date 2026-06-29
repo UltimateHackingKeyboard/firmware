@@ -1122,7 +1122,7 @@ static bool blockedByReportThrottle() {
     // - we are not sending reports until last report is sent
     // - we resend if sent is not confirmed within timeout
     if (!UsbReadyForTransfers()) {
-        blockedUntil = MAX(blockedUntil, Timer_GetCurrentTime() + USB_SEMAPHORE_TIMEOUT);
+        blockedUntil = MAX(blockedUntil, currentTime + USB_SEMAPHORE_TIMEOUT);
         blocked = true;
     }
 
@@ -1145,6 +1145,7 @@ static bool blockedByReportThrottle() {
         blockedUntil = MAX(throttleUntil, blockedUntil);;
         blocked = true;
     }
+
     if (blocked) {
         DISABLE_IRQ();
         postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
@@ -1152,7 +1153,8 @@ static bool blockedByReportThrottle() {
         ENABLE_IRQ();
 
         // Make sure to wake up postponer so that it can process the events.
-        EventScheduler_Reschedule(blockedUntil, EventSchedulerEvent_Postponer, "report throttle");
+        // Don't reschedule here - it is unsafe because of races.
+        EventScheduler_Schedule(blockedUntil, EventSchedulerEvent_Postponer, "report throttle");
 
         justPreprocessInput(true);
         return true;
