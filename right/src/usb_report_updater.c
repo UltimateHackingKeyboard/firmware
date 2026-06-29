@@ -943,7 +943,7 @@ bool ShouldResendReport(int err, uint8_t* counter) {
     }
 
     if (*counter == 1) {
-        LOG_WRN("First send try failed, result: %d (%s). Will retry.\n", err, ErrToStr(err));
+        LOG_WRN("Send try failed, result: %d (%s). Will retry.\n", err, ErrToStr(err));
     }
 
     return true;
@@ -1046,9 +1046,8 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveKeyboardReport));
 
-            if (TestHooks_Active || RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
+            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
                 //just switch reports without sending the report
-                TestHooks_CaptureReport(ActiveKeyboardReport);
                 switchActiveKeyboardReport();
             } else {
                 //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)

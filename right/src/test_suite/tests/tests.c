@@ -17,6 +17,7 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_ParserBenevolence,
     &TestModule_Sticky,
     &TestModule_Playtime,
+    &TestModule_Transport,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);

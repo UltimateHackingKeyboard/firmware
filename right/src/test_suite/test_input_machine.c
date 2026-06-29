@@ -342,6 +342,14 @@ void InputMachine_Tick(void) {
                 break;
             }
 
+            case TestAction_SetBool:
+                if (action->boolPtr != NULL) {
+                    *action->boolPtr = action->boolValue;
+                }
+                LOG_VERBOSE("[TEST] > SetBool %s\n", action->boolValue ? "true" : "false");
+                InputMachine_ActionIndex++;
+                break;
+
             case TestAction_CheckNow:
                 if (!validateReport(action->expectShortcuts, true)) {  // Always log failures
                     InputMachine_Failed = true;

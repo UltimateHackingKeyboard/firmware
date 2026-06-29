@@ -31,5 +31,6 @@ extern const test_module_t TestModule_CurrentMacroKeyIsActive;
 extern const test_module_t TestModule_ParserBenevolence;
 extern const test_module_t TestModule_Sticky;
 extern const test_module_t TestModule_Playtime;
+extern const test_module_t TestModule_Transport;
 
 #endif

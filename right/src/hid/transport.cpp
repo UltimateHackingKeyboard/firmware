@@ -20,6 +20,7 @@ extern "C" {
 #include "jitter_test.h"
 #include "usb_state.h"
 #include "utils.h"
+#include "test_suite/test_hooks.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -36,6 +37,7 @@ typedef enum {
     ReportSink_Usb,
     ReportSink_BleHid,
     ReportSink_Dongle,
+    ReportSink_TestSuite,
 } report_sink_t;
 
 // Exponential moving average (alpha=1/8) of the measured delay between a
@@ -53,6 +55,8 @@ static uint32_t dispatchTimeMs = 0;
 // callback then reduces the estimate to "now + interval".
 static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
 
+bool UnreliableTransportTestMode = false;
+
 static uint32_t reportIntervalForSink(report_sink_t sink)
 {
     switch (sink) {
@@ -66,7 +70,7 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
         return 11;
 #endif
     default:
-        return 0;
+        return 1;
     }
 }
 
@@ -109,9 +113,14 @@ extern "C" void HidTransport_NoteNusReportSent(void)
 
 static report_sink_t determineSink()
 {
+    if (TestHooks_Active) {
+        return ReportSink_TestSuite;
+    }
+
 #if DEVICE_IS_UHK_DONGLE || DEVICE_IS_UHK60
     return ReportSink_Usb;
 #else
+
     connection_type_t connectionType = Connections_Type(ActiveHostConnectionId);
 
     if (!Connections_IsReady(ActiveHostConnectionId)) {
@@ -174,8 +183,8 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     noteReportDispatched(sink);
     Trace_Printf("z11,%d", sink);
     errno_t err;
-    if (DEBUG_STRESS_REPORTS && Utils_Random() % 16 == 0) {
-        return 1;
+    if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
+        return -EAGAIN;
     }
     switch (sink) {
     case ReportSink_Usb:
@@ -196,6 +205,11 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         }
         break;
 #endif
+    case ReportSink_TestSuite:
+        err = 0;
+        TestHooks_CaptureReport(report);
+        Hid_KeyboardReportSentCallback(HID_TRANSPORT_USB);
+        break;
     default:
 #ifdef __ZEPHYR__
         printk("Unhandled and unexpected switch state!\n");
@@ -209,8 +223,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 
 extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 {
-    if (DEBUG_STRESS_REPORTS && Utils_Random() % 16 == 0) {
-        // 666
+    if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
         return;
     }
     UsbReportUpdater_ConfirmKeyboardReportSent();
