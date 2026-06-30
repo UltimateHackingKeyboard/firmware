@@ -12,18 +12,6 @@
     #include "key_states.h"
     #include "key_action.h"
 
-// Macros:
-
-    #define USB_SEMAPHORE_TIMEOUT 32 // ms
-
-    // This is how much time we leave for report construction. Most of the time is
-    // (probably) consumed inside the transport layers.
-    //
-    // If too low, we will be missing transports. If too high, we will be introducing
-    // latency.
-    #define USB_REPORT_WINDOW_LOOKAHEAD_MS 3
-    #define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
-
 // Typedefs:
 
     typedef struct {
@@ -37,12 +25,6 @@
         uint8_t inputModifiers;
     } ATTR_PACKED usb_keyboard_reports_t;
 
-    typedef enum {
-        UsbReportUpdate_None = 0,
-        UsbReportUpdate_Keyboard = 1,
-        UsbReportUpdate_Controls = 2,
-        UsbReportUpdate_Mouse = 4,
-    } UsbReportUpdateFlags_t;
 // Variables:
 
     extern uint32_t UsbReportUpdateCounter;
@@ -60,14 +42,20 @@
     extern uint32_t LastUsbGetKeyboardStateRequestTimestamp;
     extern uint32_t UsbReportUpdater_LastActivityTime;
     extern uint32_t UsbReportUpdater_LastMouseActivityTime;
-    extern uint32_t UsbReportWindowEstimate;
-    extern uint32_t UsbReportWindowEstimateLast;
+
+    // Report double-buffers + their active-side pointers, exposed for the report sender (which
+    // compares both halves for changes, sends the active report, and switches the baseline).
+    extern hid_keyboard_report_t keyboardReports[2];
+    extern hid_controls_report_t controlsReports[2];
+    extern hid_mouse_report_t mouseReports[2];
+    extern hid_keyboard_report_t* ActiveKeyboardReport;
+    extern hid_controls_report_t* ActiveControlsReport;
+    extern hid_mouse_report_t* ActiveMouseReport;
 
 // Functions:
 
     key_action_cached_t* RetrieveCurrentActiveAction(key_state_t *keyState);
 
-    void UpdateUsbReports(void);
     void ToggleMouseState(serialized_mouse_action_t action, bool activate);
     void ActivateKey(key_state_t *keyState, bool debounce);
     void ActivateStickyMods(key_state_t *keyState, uint8_t mods);
@@ -79,18 +67,15 @@
 
     hid_keyboard_report_t* GetInactiveKeyboardReport(void);
 
-    void UsbReportUpdater_ConfirmKeyboardReportSent(void);
-    void UsbReportUpdater_ConfirmMouseReportSent(void);
-    void UsbReportUpdater_ConfirmControlsReportSent(void);
+    // Advance a report's double-buffer baseline. Called by the report sender on delivery
+    // confirmation (so the just-sent report becomes the new baseline for change detection).
+    void UsbReportUpdater_SwitchActiveKeyboardReport(void);
+    void UsbReportUpdater_SwitchActiveMouseReport(void);
+    void UsbReportUpdater_SwitchActiveControlsReport(void);
 
-    // Legacy uint8 bitfield view of the per-report in-flight flags (bits = UsbReportUpdateFlags_t).
-    uint8_t UsbReportUpdater_GetSemaphore(void);
-    void UsbReportUpdater_SetSemaphore(uint8_t bits);
-    void UsbReportUpdater_ClearSemaphore(uint8_t bits);
-
-    bool ShouldResendReport(int err, uint8_t* counter);
-    uint16_t GetResendThrottleDelay(uint8_t counter);
-
-    bool UsbReadyForTransfers(void);
+    // Report construction, exposed for the report sender's orchestration loop.
+    void UsbReportUpdater_UpdateActiveReports(void);
+    void UsbReportUpdater_MergeReports(void);
+    void justPreprocessInput(bool forcePostponer);
 
 #endif

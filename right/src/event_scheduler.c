@@ -11,6 +11,7 @@
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "oneshot.h"
 #include "trace.h"
 
@@ -255,7 +256,7 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_UpdateUsbSemaphore:
             // Drives the semaphore timeout so a stuck (unconfirmed) report gets resent
             // even if nothing else wakes the event loop.
-            UsbReadyForTransfers();
+            UsbSemaphore_RecalculateIsReady();
             break;
         case EventSchedulerEvent_CheckLeftBleVsUart:
 #if DEVICE_IS_UHK80_LEFT

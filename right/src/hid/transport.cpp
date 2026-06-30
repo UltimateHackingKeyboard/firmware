@@ -16,6 +16,8 @@ extern "C" {
 #include "timer.h"
 #include "trace.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
+#include "usb_scheduler.h"
 #include "led_display.h"
 #include "jitter_test.h"
 #include "usb_state.h"
@@ -32,83 +34,25 @@ extern "C" {
     #error "Either CONFIG_DEBUG or NDEBUG must be defined"
 #endif
 
-typedef enum {
-    ReportSink_Invalid,
-    ReportSink_Usb,
-    ReportSink_BleHid,
-    ReportSink_Dongle,
-    ReportSink_TestSuite,
-} report_sink_t;
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(Transport, LOG_LEVEL_INF);
+#endif
+// On mcux, logger.h provides the LOG_WRN / LOG_ERR / ... redirects.
 
 // Exponential moving average (alpha=1/8) of the measured delay between a
 // BLE HID report being handed to the stack and the corresponding sent callback
-// firing. Populated when DEBUG_BLE_LATENCY_STATS is enabled; useful for
-// observing whether the send pipeline is saturated.
+// firing. Populated when DEBUG_BLE_LATENCY_STATS is enabled (in usb_report_sender.c);
+// useful for observing whether the send pipeline is saturated.
 extern "C" {
 float HidReportBleLatencyAvgMs = 0;
 }
-static uint32_t dispatchTimeMs = 0;
-
-// Approximate transport window intervals (ms) used by the report-construction
-// throttle. After dispatch we estimate the next free window at "now + 2 *
-// interval" (worst case: we just missed a window). The send-completion
-// callback then reduces the estimate to "now + interval".
-static constexpr uint32_t USB_REPORT_INTERVAL_MS = 1;
 
 bool UnreliableTransportTestMode = false;
 
-static uint32_t reportIntervalForSink(report_sink_t sink)
-{
-    switch (sink) {
-    case ReportSink_Usb:
-        return USB_REPORT_INTERVAL_MS;
-    case ReportSink_BleHid:
-    case ReportSink_Dongle:
-#if DEVICE_IS_UHK80_RIGHT
-        return BtConn_GetReportIntervalMs(ActiveHostConnectionId);
-#else
-        return 11;
-#endif
-    default:
-        return 1;
-    }
-}
-
-static void noteReportDispatched(report_sink_t sink)
-{
-    if (DEBUG_BLE_LATENCY_STATS) {
-        if (dispatchTimeMs == 0) {
-            dispatchTimeMs = Timer_GetCurrentTime();
-        }
-    }
-    UsbReportWindowEstimate = UsbReportWindowEstimateLast + 2 * reportIntervalForSink(sink);
-}
-
-static void noteReportSent(report_sink_t transport)
-{
-    if (DEBUG_BLE_LATENCY_STATS) {
-        if (dispatchTimeMs != 0) {
-            uint32_t delta = Timer_GetCurrentTime() - dispatchTimeMs;
-            HidReportBleLatencyAvgMs = (HidReportBleLatencyAvgMs * 7 + delta) / 8;
-            dispatchTimeMs = 0;
-        }
-    }
-    uint32_t reportInterval = reportIntervalForSink(transport);
-    uint32_t currentTime = Timer_GetCurrentTime();
-    int16_t jitterGuess = (currentTime - UsbReportWindowEstimateLast - reportInterval + 1) / 2;
-    jitterGuess = MAX(0, jitterGuess);
-    UsbReportWindowEstimateLast = currentTime - jitterGuess;
-    UsbReportWindowEstimate = currentTime - jitterGuess + reportInterval;
-    uint32_t nextIn = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
-
-    if (DEVICE_IS_UHK80_RIGHT) {
-        EventScheduler_Schedule(nextIn, EventSchedulerEvent_Postponer, "Report sent. Recalculate report throttles");
-    }
-}
-
 extern "C" void HidTransport_NoteNusReportSent(void)
 {
-    noteReportSent(ReportSink_Dongle);
+    UsbScheduler_ReportDelivered(ReportSink_Dongle);
 }
 
 static report_sink_t determineSink()
@@ -180,7 +124,7 @@ extern "C" void Hid_TransportStateChanged(
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
     report_sink_t sink = determineSink();
-    noteReportDispatched(sink);
+    UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z11,%d", sink);
     errno_t err;
     if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
@@ -201,7 +145,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         if (err != 0) {
             printk("Failed to send keyboard report to dongle: %d\n", err);
         } else {
-            UsbReportUpdater_ConfirmKeyboardReportSent();
+            UsbSemaphore_Release(&UsbSemaphore.keyboard);
         }
         break;
 #endif
@@ -226,8 +170,8 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
     if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
         return;
     }
-    UsbReportUpdater_ConfirmKeyboardReportSent();
-    noteReportSent(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbSemaphore_Release(&UsbSemaphore.keyboard);
+    UsbScheduler_ReportDelivered(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -236,7 +180,7 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 {
     report_sink_t sink = determineSink();
-    noteReportDispatched(sink);
+    UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z21,%d", sink);
     errno_t err;
     switch (sink) {
@@ -254,7 +198,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         if (err != 0) {
             printk("Failed to send mouse report to dongle: %d\n", err);
         } else {
-            UsbReportUpdater_ConfirmMouseReportSent();
+            UsbSemaphore_Release(&UsbSemaphore.mouse);
         }
         break;
 #endif
@@ -274,8 +218,8 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
-    UsbReportUpdater_ConfirmMouseReportSent();
-    noteReportSent( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbSemaphore_Release(&UsbSemaphore.mouse);
+    UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -284,7 +228,7 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 {
     report_sink_t sink = determineSink();
-    noteReportDispatched(sink);
+    UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z31,%d", sink);
     errno_t err;
     switch (sink) {
@@ -302,7 +246,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         if (err != 0) {
             printk("Failed to send controls report to dongle: %d\n", err);
         } else {
-            UsbReportUpdater_ConfirmControlsReportSent();
+            UsbSemaphore_Release(&UsbSemaphore.controls);
         }
         break;
 #endif
@@ -319,8 +263,8 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 
 extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
-    UsbReportUpdater_ConfirmControlsReportSent();
-    noteReportSent( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbSemaphore_Release(&UsbSemaphore.controls);
+    UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif

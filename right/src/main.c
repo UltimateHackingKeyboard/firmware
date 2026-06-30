@@ -22,6 +22,7 @@
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "macro_events.h"
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
@@ -86,14 +87,14 @@ static void sendFirstReport()
     errno_t ret = -1;
     // Wait until sending a report is successful, but don't block longer than 5 seconds.
     while (ret && Timer_GetCurrentTime() < 5000) {
-        UsbReportUpdater_SetSemaphore(UsbReportUpdate_Keyboard);
+        UsbSemaphore_Set(UsbReportUpdate_Keyboard);
         ret = Hid_SendKeyboardReport(&emptyReport);
         if (ret) {
-            UsbReportUpdater_ClearSemaphore(UsbReportUpdate_Keyboard);
+            UsbSemaphore_Clear();
             __WFI();
         }
     }
-    while (UsbReportUpdater_GetSemaphore()) {
+    while (UsbSemaphore_Get()) {
         __WFI();
     }
 }

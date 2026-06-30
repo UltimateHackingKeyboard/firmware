@@ -5,6 +5,7 @@
 #include "key_matrix.h"
 #include "test_switches.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "config_manager.h"
 #include "ledmap.h"
 
@@ -37,12 +38,10 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
         case UsbVariable_DebounceTimeRelease:
             Cfg.DebounceTimeRelease = GetUsbRxBufferUint8(2);
             break;
-        case UsbVariable_UsbReportSemaphore: {
-            uint8_t bits = GetUsbRxBufferUint8(2);
-            UsbReportUpdater_ClearSemaphore((uint8_t)~bits);
-            UsbReportUpdater_SetSemaphore(bits);
+        case UsbVariable_UsbReportSemaphore:
+            // Set overwrites all three in-flight flags from the bitfield.
+            UsbSemaphore_Set(GetUsbRxBufferUint8(2));
             break;
-        }
         case UsbVariable_StatusBuffer:
             break;
         case UsbVariable_LedAudioRegisters:
