@@ -37,9 +37,12 @@ void UsbCommand_SetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
         case UsbVariable_DebounceTimeRelease:
             Cfg.DebounceTimeRelease = GetUsbRxBufferUint8(2);
             break;
-        case UsbVariable_UsbReportSemaphore:
-            UsbReportUpdateSemaphore = GetUsbRxBufferUint8(2);
+        case UsbVariable_UsbReportSemaphore: {
+            uint8_t bits = GetUsbRxBufferUint8(2);
+            UsbReportUpdater_ClearSemaphore((uint8_t)~bits);
+            UsbReportUpdater_SetSemaphore(bits);
             break;
+        }
         case UsbVariable_StatusBuffer:
             break;
         case UsbVariable_LedAudioRegisters:

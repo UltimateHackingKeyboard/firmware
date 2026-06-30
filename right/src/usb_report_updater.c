@@ -79,7 +79,6 @@ uint32_t UsbReportWindowEstimateLast = 0;
 uint32_t UsbReportWindowEstimate = 0;
 
 
-volatile uint8_t UsbReportUpdateSemaphore = 0;
 
 // Modifiers can be applied as one of the following classes
 // - input:
@@ -879,36 +878,71 @@ uint32_t UsbReportUpdateCounter;
 uint32_t UpdateUsbReports_LastUpdateTime = 0;
 uint32_t lastBasicReportTime = 0;
 uint32_t retryThrottleTime = 0;
-uint8_t keyboardRetries = 0;
-bool keyboardNeedsResending = false;
-uint8_t controlsRetries = 0;
-bool controlsNeedsResending = false;
-uint8_t mouseRetries = 0;
-bool mouseNeedsResending = false;
 bool givenUp = false;
+
+// Per-report send/resend bookkeeping. Bundles the retry counter and resend flag with
+// the report's identity (its semaphore bit and double-buffer switch), so the send path
+// can treat all three reports uniformly.
+//
+// inFlight replaces the old shared UsbReportUpdateSemaphore bitfield: each report owns its
+// own byte, so setting/clearing one is a single whole-byte store (STRB on ARMv7-M) with no
+// read-modify-write, and therefore can't clobber another report's flag from an ISR. It is
+// volatile because it is written from the async transport sent callbacks. The legacy uint8
+// bitfield view (for the bus-reset reset and the debug get/set-variable command) is
+// reassembled on demand by UsbReportUpdater_GetSemaphore() & co.
+typedef struct {
+    uint8_t retries;
+    bool needsResending;
+    volatile bool inFlight;
+    uint8_t semaphoreBit;
+    void (*switchActiveReport)(void);
+} report_send_state_t;
+
+static report_send_state_t keyboardSendState = {
+    .semaphoreBit = UsbReportUpdate_Keyboard, .switchActiveReport = switchActiveKeyboardReport };
+static report_send_state_t controlsSendState = {
+    .semaphoreBit = UsbReportUpdate_Controls, .switchActiveReport = switchActiveControlsReport };
+static report_send_state_t mouseSendState = {
+    .semaphoreBit = UsbReportUpdate_Mouse, .switchActiveReport = switchActiveMouseReport };
+
+static bool anyReportInFlight(void) {
+    return keyboardSendState.inFlight || controlsSendState.inFlight || mouseSendState.inFlight;
+}
+
+// Reassemble / apply the legacy uint8 bitfield view of the in-flight flags.
+uint8_t UsbReportUpdater_GetSemaphore(void) {
+    uint8_t bits = 0;
+    bits |= keyboardSendState.inFlight ? UsbReportUpdate_Keyboard : 0;
+    bits |= controlsSendState.inFlight ? UsbReportUpdate_Controls : 0;
+    bits |= mouseSendState.inFlight ? UsbReportUpdate_Mouse : 0;
+    return bits;
+}
+
+void UsbReportUpdater_SetSemaphore(uint8_t bits) {
+    keyboardSendState.inFlight = bits & UsbReportUpdate_Keyboard;
+    controlsSendState.inFlight = bits & UsbReportUpdate_Controls;
+    mouseSendState.inFlight = bits & UsbReportUpdate_Mouse;
+}
+
+void UsbReportUpdater_ClearSemaphore(uint8_t bits) {
+    keyboardSendState.inFlight = false;
+    controlsSendState.inFlight = false;
+    mouseSendState.inFlight = false;
+}
 
 // Confirm that an in-flight report was delivered. Called by the transport layer once
 // delivery is confirmed (USB/BLE asynchronously via the sent callback, NUS/dongle
 // synchronously on successful enqueue). Advance the baseline to the just-sent report,
 // reset the retry counter (the send succeeded), and release the semaphore gate.
-void UsbReportUpdater_ConfirmKeyboardReportSent(void) {
-    switchActiveKeyboardReport();
-    keyboardRetries = 0;
+static void confirmReportSent(report_send_state_t* st) {
+    st->switchActiveReport();
+    st->retries = 0;
     givenUp = false;
-    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+    st->inFlight = false;
 }
-void UsbReportUpdater_ConfirmMouseReportSent(void) {
-    switchActiveMouseReport();
-    mouseRetries = 0;
-    givenUp = false;
-    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Mouse;
-}
-void UsbReportUpdater_ConfirmControlsReportSent(void) {
-    switchActiveControlsReport();
-    controlsRetries = 0;
-    givenUp = false;
-    UsbReportUpdateSemaphore &= ~UsbReportUpdate_Controls;
-}
+void UsbReportUpdater_ConfirmKeyboardReportSent(void) { confirmReportSent(&keyboardSendState); }
+void UsbReportUpdater_ConfirmMouseReportSent(void) { confirmReportSent(&mouseSendState); }
+void UsbReportUpdater_ConfirmControlsReportSent(void) { confirmReportSent(&controlsSendState); }
 
 
 // Counts retry attempts and decides whether to keep trying. On success, resets
@@ -1005,13 +1039,13 @@ static void handleFail(errno_t errorCode) {
 #endif
 }
 
-static bool resendMaybe(errno_t ret, uint8_t* retries, bool* needsResending, uint8_t semaphoreBit, bool withDelay) {
-    if (ShouldResendReport(ret, retries)) {
-        reportRetry(ret, *retries);
-        *needsResending = true;
+static bool resendMaybe(errno_t ret, report_send_state_t* st, bool withDelay) {
+    if (ShouldResendReport(ret, &st->retries)) {
+        reportRetry(ret, st->retries);
+        st->needsResending = true;
         // The semaphore timeout path already waited out its own delay, so resend now.
-        retryThrottleTime = withDelay ? Timer_GetCurrentTime() + GetResendThrottleDelay(*retries) : Timer_GetCurrentTime();
-        UsbReportUpdateSemaphore &= ~semaphoreBit;
+        retryThrottleTime = withDelay ? Timer_GetCurrentTime() + GetResendThrottleDelay(st->retries) : Timer_GetCurrentTime();
+        st->inFlight = false;
         EventVector_Set(EventVector_ResendUsbReports);
         return true;
     } else {
@@ -1020,9 +1054,9 @@ static bool resendMaybe(errno_t ret, uint8_t* retries, bool* needsResending, uin
             // release the gate. (ret == 0 is the success case - leave the semaphore set,
             // it is cleared only once delivery is confirmed.)
             handleFail(ret);
-            UsbReportUpdateSemaphore &= ~semaphoreBit;
+            st->inFlight = false;
         }
-        *needsResending = false;
+        st->needsResending = false;
         return false;
     }
 }
@@ -1035,7 +1069,7 @@ static void sendActiveReports(bool resending) {
     // in case of usb error, this gets set back again
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
-    if (KeyboardReport_HasChange(keyboardReports) && (!resending || keyboardNeedsResending)) {
+    if (KeyboardReport_HasChange(keyboardReports) && (!resending || keyboardSendState.needsResending)) {
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
             switchActiveKeyboardReport();
@@ -1051,7 +1085,7 @@ static void sendActiveReports(bool resending) {
                 switchActiveKeyboardReport();
             } else {
                 //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
-                UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
+                keyboardSendState.inFlight = true;
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
                 // On success the report is accepted by the transport, but NOT yet confirmed
                 // delivered. We advance the baseline (switchActiveKeyboardReport) only once
@@ -1061,7 +1095,7 @@ static void sendActiveReports(bool resending) {
                 // was not advanced, so HasChange stays true and we re-send the current state instead
                 // of losing it (the stuck-key bug).
                 if (ret != 0) {
-                    resendMaybe(ret, &keyboardRetries, &keyboardNeedsResending, UsbReportUpdate_Keyboard, true);
+                    resendMaybe(ret, &keyboardSendState, true);
                 }
             }
             usbReportsChangedByAction = true;
@@ -1071,24 +1105,24 @@ static void sendActiveReports(bool resending) {
         }
     }
 
-    if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsNeedsResending)) {
-        UsbReportUpdateSemaphore |= UsbReportUpdate_Controls;
+    if (ControlsReport_HasChanges(controlsReports) && (!resending || controlsSendState.needsResending)) {
+        controlsSendState.inFlight = true;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
-            resendMaybe(ret, &controlsRetries, &controlsNeedsResending, UsbReportUpdate_Controls, true);
+            resendMaybe(ret, &controlsSendState, true);
         }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
-    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || mouseNeedsResending) &&
+    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || mouseSendState.needsResending) &&
         (CurrentPowerMode == PowerMode_Awake)) {
         bool usbMouseButtonsChanged = mouseReports[0].buttons != mouseReports[1].buttons;
 
-        UsbReportUpdateSemaphore |= UsbReportUpdate_Mouse;
+        mouseSendState.inFlight = true;
         ret = Hid_SendMouseReport(ActiveMouseReport);
-        if (ret != 0 && !resendMaybe(ret, &mouseRetries, &mouseNeedsResending, UsbReportUpdate_Mouse, true)) {
+        if (ret != 0 && !resendMaybe(ret, &mouseSendState, true)) {
             clearMouseMovement(); // Don't make cursor jump if we have connection issues.
         }
 
@@ -1106,7 +1140,7 @@ static void sendActiveReports(bool resending) {
         EventVector_Set(EventVector_SendUsbReports);
     }
 
-    if (UsbReportUpdateSemaphore) {
+    if (anyReportInFlight()) {
         EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
     }
 }
@@ -1167,18 +1201,18 @@ static bool blockedByReportThrottle() {
 }
 
 bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && CurrentPowerMode <= PowerMode_LastAwake) {
+    if (anyReportInFlight() && CurrentPowerMode <= PowerMode_LastAwake) {
         if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
             return false;
         } else {
-            if (UsbReportUpdateSemaphore & UsbReportUpdate_Keyboard) {
-                resendMaybe(-ETIMEDOUT, &keyboardRetries, &keyboardNeedsResending, UsbReportUpdate_Keyboard, false);
+            if (keyboardSendState.inFlight) {
+                resendMaybe(-ETIMEDOUT, &keyboardSendState, false);
             }
-            if (UsbReportUpdateSemaphore & UsbReportUpdate_Controls) {
-                resendMaybe(-ETIMEDOUT, &controlsRetries, &controlsNeedsResending, UsbReportUpdate_Controls, false);
+            if (controlsSendState.inFlight) {
+                resendMaybe(-ETIMEDOUT, &controlsSendState, false);
             }
-            if (UsbReportUpdateSemaphore & UsbReportUpdate_Mouse) {
-                resendMaybe(-ETIMEDOUT, &mouseRetries, &mouseNeedsResending, UsbReportUpdate_Mouse, false);
+            if (mouseSendState.inFlight) {
+                resendMaybe(-ETIMEDOUT, &mouseSendState, false);
             }
         }
     }

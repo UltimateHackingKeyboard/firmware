@@ -86,14 +86,14 @@ static void sendFirstReport()
     errno_t ret = -1;
     // Wait until sending a report is successful, but don't block longer than 5 seconds.
     while (ret && Timer_GetCurrentTime() < 5000) {
-        UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
+        UsbReportUpdater_SetSemaphore(UsbReportUpdate_Keyboard);
         ret = Hid_SendKeyboardReport(&emptyReport);
         if (ret) {
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+            UsbReportUpdater_ClearSemaphore(UsbReportUpdate_Keyboard);
             __WFI();
         }
     }
-    while (UsbReportUpdateSemaphore) {
+    while (UsbReportUpdater_GetSemaphore()) {
         __WFI();
     }
 }

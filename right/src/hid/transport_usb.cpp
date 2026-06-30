@@ -131,7 +131,7 @@ struct usb_manager {
             }
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
                 // reset the semaphore on USB configuration or reset
-                UsbReportUpdateSemaphore = 0;
+                UsbReportUpdater_ClearSemaphore(0xFF);
             }
         });
     }

@@ -46,7 +46,6 @@
 // Variables:
 
     extern uint32_t UsbReportUpdateCounter;
-    extern volatile uint8_t UsbReportUpdateSemaphore;
     extern bool TestUsbStack;
     extern uint8_t InputModifiers;
     extern uint8_t InputModifiersPrevious;
@@ -83,6 +82,11 @@
     void UsbReportUpdater_ConfirmKeyboardReportSent(void);
     void UsbReportUpdater_ConfirmMouseReportSent(void);
     void UsbReportUpdater_ConfirmControlsReportSent(void);
+
+    // Legacy uint8 bitfield view of the per-report in-flight flags (bits = UsbReportUpdateFlags_t).
+    uint8_t UsbReportUpdater_GetSemaphore(void);
+    void UsbReportUpdater_SetSemaphore(uint8_t bits);
+    void UsbReportUpdater_ClearSemaphore(uint8_t bits);
 
     bool ShouldResendReport(int err, uint8_t* counter);
     uint16_t GetResendThrottleDelay(uint8_t counter);
