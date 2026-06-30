@@ -1049,7 +1049,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         WormCfg->devMode = Cfg.DevMode;
     }
     else if (ConsumeToken(ctx, "log")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return logCommand(ctx, action);
     }
     else if (ConsumeToken(ctx, "stickyModifiers")) {
