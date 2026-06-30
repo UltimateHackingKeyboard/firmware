@@ -272,8 +272,6 @@ const config_t DefaultCfg = (config_t){
         .AutoShiftDelay = 0,
         .ChordingDelay = 0,
         .Chords_Timeout = 75,
-        .Chords_TriggerOnHold = false,
-        .Chords_TriggerOnRelease = false,
         .BatteryStationaryMode = false,
 #ifdef __ZEPHYR__
         .I2cBaudRate = 0,

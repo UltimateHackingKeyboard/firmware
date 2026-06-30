@@ -215,34 +215,17 @@ chord_search_result_t searchForChordAction(key_action_t *outAction, layer_id_t l
         layer = LayerId_None;
     }
 
-    if (matched && partialMatched) {
-        return ChordSearch_ExactAndPartial;
-    }
-    if (matched) {
-        // We have found an exact match
-        return ChordSearch_Exact;
-    }
-    if (partialMatched) {
-        return ChordSearch_Partial;
-    }
-    return ChordSearch_Nothing;
+    return (matched ? ChordSearch_Exact : 0) | (partialMatched ? ChordSearch_Partial : 0);
 }
 
 void Chords_ResetChords() {
     ChordCount = 0;
 }
 
-typedef enum {
-    ResolutionStage_Press,
-    ResolutionStage_Wait,
-    ResolutionStage_Release,
-} ResolutionStage;
-
 static struct {
     key_state_t *initialKey;
     uint32_t pressTime;
     uint32_t releaseTime;
-    ResolutionStage stage;
 } ResolutionState;
 
 static inline void finishResolution() {
@@ -253,51 +236,17 @@ static inline void finishResolution() {
     memset((void *)&ResolutionState, 0, sizeof(ResolutionState));
 }
 
-
-// returns length of longest matched chord
-static uint8_t matchLongestAvailableChord(key_action_t *resolvedAction, chord_keys_t keys, uint8_t count, layer_id_t layer) {
-    // Cut off any trailing keys which are not part of any chords.
-    for (uint8_t i = 0; i < count; ++i) {
-        if (!CurrentKeymap[layer][keys[i] / 64][keys[i] % 64].isPartOfChord) {
-            count = i;
-            break;
-        }
-        // Any double represented keys means that we have spam from macros.  Stop at the dual key.
-        if (i > 0) {
-            for (uint8_t j = 0; j < i; ++j) {
-                if (keys[j] == keys[i]) {
-                    count = i;
-                    break;
-                }      
-            }
-        }
-    }
-    if (count < 2) {
-        //Macros_SetStatusString("NoLong\n", NULL);
-        return 0;
-    }
-    // Have to test from the bottom up to keep order, to find the longest viable chord *from the beginning*
-    // Because of the sorting of the keys happening in the searcher, we can't start from the full key amount, as we need to sort of maintain order
-    uint8_t lastMatch = 0;
-    for (uint8_t i = 2; i <= count; ++i) {
-        chord_search_result_t searchRes = searchForChordAction(resolvedAction, layer, keys, i, i == count);
-        if (searchRes & ChordSearch_Exact) {
-            //Macros_SetStatusNum(searchRes);
-            //Macros_SetStatusString("GotExact\n", NULL);
-            lastMatch = i;
-        }
-        if (!(searchRes & ChordSearch_Partial)) {
-            break; // There are no potentially longer chords we could match with more keys
-        }
-    }
-    //Macros_SetStatusNum(lastMatch);
-    //Macros_SetStatusString("Longest\n", NULL);
-    return lastMatch;
-}
-
-
-static chord_resolution_t runPressStage(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction)
+chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction)
 {
+    uint32_t start = Timer_GetCurrentTimeMicros();
+    if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
+        ResolutionState.initialKey = keyState;
+        ResolutionState.pressTime = CurrentPostponedTime;
+    }
+    else if (ResolutionState.initialKey != keyState) {
+        return ChordResolution_Failed;
+    }
+
     chord_keys_t pressedKeys;
     uint8_t keyCount = PostponerQuery_GetPendingKeypresses(pressedKeys + 1, MAX_CHORD_KEYS - 1, ResolutionState.pressTime + Cfg.Chords_Timeout) + 1;
 
@@ -312,156 +261,21 @@ static chord_resolution_t runPressStage(key_state_t *keyState, layer_id_t layer,
         }
     }
 
-    const bool hasReasonToWait = Cfg.Chords_TriggerOnHold || Cfg.Chords_TriggerOnRelease;
     const bool pressIntervalIsOver = ResolutionState.pressTime + Cfg.Chords_Timeout <= Timer_GetCurrentTime();
-    const bool isFinalChoice = !hasReasonToWait && pressIntervalIsOver;
 
-    chord_search_result_t searchRes = searchForChordAction(resolvedAction, layer, pressedKeys, keyCount, isFinalChoice);
+    chord_search_result_t searchRes = searchForChordAction(resolvedAction, layer, pressedKeys, keyCount, pressIntervalIsOver || hasDuplicate);
 
-    switch (searchRes) {
-    case ChordSearch_Exact:
-        //Macros_SetStatusNum(Timer_GetCurrentTime() - ResolutionState.pressTime);
-        //Macros_SetStatusChar('\n');
-        //Macros_SetStatusString("Matched\n", NULL);
-        PostponerExtended_ConsumePendingKeypresses(keyCount - 1, true);
-        finishResolution();
-        return ChordResolution_Resolved;
-    case ChordSearch_Nothing:
-        //Macros_SetStatusString("Failed\n", NULL);
-        finishResolution();
-        return ChordResolution_Failed;
-    case ChordSearch_Partial:
-        if (hasDuplicate) {
-            // If we had a duplicate, it will still be there in any future checks and block matches
-            finishResolution();
-            return ChordResolution_Failed;
-        }
-        // Intentional fallthrough
-    case ChordSearch_ExactAndPartial:
-        //Macros_SetStatusString("Partial\n", NULL);
-        if (!pressIntervalIsOver) {
-            EventScheduler_Schedule(ResolutionState.pressTime + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Press Interval");
-        }
-        else {
-            ResolutionState.stage = ResolutionStage_Wait;
-            EventScheduler_Schedule(ResolutionState.pressTime + Cfg.HoldTimeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Wait For Release");
-        }
+    if (searchRes & ChordSearch_Partial) {
+        EventScheduler_Schedule(ResolutionState.pressTime + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Press Interval");
         return ChordResolution_Wait;
     }
-    return ChordResolution_Failed;
-}
-
-
-static chord_resolution_t runWaitStage(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction)
-{
-        //Macros_SetStatusString("InWait\n", NULL);
-    if (PostponerQuery_IsKeyReleased(keyState)) {
-        //Macros_SetStatusString("Released\n", NULL);
-        if (!Cfg.Chords_TriggerOnRelease) {
-            finishResolution();
-            return ChordResolution_Failed;
-        }
-        postponer_buffer_record_type_t *press, *release;
-        PostponerQuery_InfoByKeystate(keyState, &press, &release);
-        ResolutionState.stage = ResolutionStage_Release;
-        ResolutionState.releaseTime = release->time;
-        EventScheduler_Schedule(release->time + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Wait release timeout");
-        return ChordResolution_Wait;
-    }
-    if ((ResolutionState.pressTime + Cfg.HoldTimeout <= Timer_GetCurrentTime())) {
-       //Macros_SetStatusString("Held!\n", NULL);
-        // Reached timeout without releasing any keys.
-        if (Cfg.Chords_TriggerOnHold){
-            // Resolve chord from currently held keys
-            chord_keys_t keys;
-            keys[0] = Utils_KeyStateToKeyId(keyState);
-            // Get the start of the queue which is still being held
-            uint8_t count = PostponerQuery_GetPendingHeldKeys(keys + 1, MAX_CHORD_KEYS - 1) + 1;
-            for (uint8_t i = 1; i < count; ++i) {
-                for (uint8_t j = 0; j < i; ++j) {
-                    if (keys[i] == keys[j]) {
-                        count = i;
-                        break;
-                    }
-                }
-            }
-
-            count = matchLongestAvailableChord(resolvedAction, keys, count, layer);
-
-            finishResolution();
-            if (count == 0) {
-                //Macros_SetStatusString("HeldFailed\n", NULL);
-                return ChordResolution_Failed;
-            }
-            else {
-                //Macros_SetStatusNum(count);
-                //Macros_SetStatusString("HeldMatched\n", NULL);
-                PostponerExtended_ConsumePendingKeypresses(count - 1, true);
-                return ChordResolution_Resolved;
-            }
-        }
-
-        finishResolution();
-        return ChordResolution_Failed;
-    }
-    else {
-        EventScheduler_Schedule(ResolutionState.pressTime + Cfg.HoldTimeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Wait For Release");
-        return ChordResolution_Wait;
-    }
-}
-
-static chord_resolution_t runReleaseStage(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction) {
-    if (ResolutionState.releaseTime + Cfg.Chords_Timeout > Timer_GetCurrentTime()) {
-       //Macros_SetStatusString("ReleasedWaiting\n", NULL);
-        EventScheduler_Schedule(ResolutionState.releaseTime + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Wait release timeout 2");
-        return ChordResolution_Wait;
-    }
-
-
-       //Macros_SetStatusString("ReleasedReleased\n", NULL);
-    chord_keys_t keys;
-    uint8_t count = PostponerQuery_GetPendingReleaseCluster(keys, MAX_CHORD_KEYS, ResolutionState.releaseTime - Cfg.Chords_Timeout, Cfg.Chords_Timeout);
-   //Macros_SetStatusNum(count);
-   //Macros_SetStatusString("ReleaseCount\n", NULL);
-
-    count = matchLongestAvailableChord(resolvedAction, keys, count, layer);
-
+    
     finishResolution();
-    if (count == 0) {
-        return ChordResolution_Failed;
-    }
-    else {
-        PostponerExtended_ConsumePendingKeypresses(count - 1, true);
+
+    if (searchRes & ChordSearch_Exact) {
+        PostponerExtended_ConsumePendingKeypresses(keyCount - 1, true);
         return ChordResolution_Resolved;
     }
-}
-
-chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction)
-{
-    uint32_t start = Timer_GetCurrentTimeMicros();
-    if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
-        ResolutionState.initialKey = keyState;
-        ResolutionState.pressTime = CurrentPostponedTime;
-        ResolutionState.stage = ResolutionStage_Press;
-    }
-    else if (ResolutionState.initialKey != keyState) {
-        return ChordResolution_Failed;
-    }
-
-    if (ResolutionState.stage == ResolutionStage_Press) {
-        return runPressStage(keyState, layer, resolvedAction);
-    }
-    if (ResolutionState.stage == ResolutionStage_Wait) {
-        return runWaitStage(keyState, layer, resolvedAction);
-    }
-    if (ResolutionState.stage == ResolutionStage_Release) {
-        return runReleaseStage(keyState, layer, resolvedAction);
-    }
-
-    uint32_t elapsed = Timer_GetCurrentTimeMicros() - start;
-    //Macros_SetStatusString("Processing micros: ", NULL);
-    //Macros_SetStatusNum(elapsed);
-    //Macros_SetStatusChar('\n');
 
     return ChordResolution_Failed;
 }

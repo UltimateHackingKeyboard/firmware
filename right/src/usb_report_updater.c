@@ -810,7 +810,7 @@ static void updateActionStates() {
 
                 Trace_Printc("w3");
                 //apply base-layer holds
-                if (chordRes != ChordResolution_Wait && actionCache[slotId][keyId].action.type != KeyActionType_None) {
+                if (chordRes != ChordResolution_Wait) {
                     applyLayerHolds(keyState, &CurrentKeymap[LayerId_Base][slotId][keyId].action);
                 }
                 Trace_Printc("w4");
