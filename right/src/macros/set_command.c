@@ -980,7 +980,7 @@ static macro_variable_t logSinks(parser_context_t* ctx, set_command_action_t act
 static macro_variable_t logCommand(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "sink") || ConsumeToken(ctx, "sinks")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return logSinks(ctx, action);
     }
     else if (action == SetCommandAction_Write) {
