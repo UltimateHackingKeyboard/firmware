@@ -68,11 +68,6 @@
     typedef struct {
         uint8_t rxIdx;
         uint8_t txIdx;
-        uint16_t missedCount;
-        bool needsResend;
-        uint8_t lastSentResendableWm;
-        uint8_t lastSentId1;
-        uint8_t lastSentId2;
     } ATTR_PACKED connection_watermarks_t;
 
     typedef struct {

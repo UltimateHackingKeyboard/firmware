@@ -82,10 +82,8 @@ static string_segment_t getKeymapText() {
 static string_segment_t getDebugLineText() {
 #define BUFFER_LENGTH 80
     static char buffer[BUFFER_LENGTH] = { [BUFFER_LENGTH-1] = 0 };
-    snprintf(buffer, BUFFER_LENGTH-1, "D %d, MB %d, MU %d, R %d, RTT %d",
+    snprintf(buffer, BUFFER_LENGTH-1, "D %d, R %d, RTT %d",
             MessengerQueue_DroppedMessageCount,
-            Connections[ConnectionId_UartLeft].watermarks.missedCount,
-            Connections[ConnectionId_NusServerLeft].watermarks.missedCount,
             StateSync_LeftResetCounter,
             RoundTripTime
             );

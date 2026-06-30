@@ -28,7 +28,6 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         messenger.c
         pin_wiring.c
         shell/shell_log_backend.c
-        resend.c
         round_trip_test.c
         settings.c
         shell/shell_backend_usb.c
