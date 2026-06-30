@@ -176,6 +176,7 @@ COMMAND = set stickyModifiers {never|smart|always}
 COMMAND = set debounceDelay <time in ms, at most 250 (INT)>
 COMMAND = set doubletapTimeout <time in ms (INT)>
 COMMAND = set holdTimeout <time in ms (INT)>
+COMMAND = set mouseActiveTimeout <time in ms (INT)>
 COMMAND = set keystrokeDelay <time in ms (INT)>
 COMMAND = set autoRepeatDelay <time in ms (INT)>
 COMMAND = set autoRepeatRate <time in ms (INT)>
@@ -221,6 +222,7 @@ CONDITION = {ifLayerToggled | ifNotLayerToggled}
 CONDITION = {ifRecording | ifNotRecording}
 CONDITION = {ifRecordingId | ifNotRecordingId} MACROID
 CONDITION = {ifModuleConnected | ifNotModuleConnected} MODULEID
+CONDITION = {ifMouseActive | ifNotMouseActive}
 CONDITION = {ifAlreadyRunning | ifNotAlreadyRunning}
 MODIFIER = <modifier>
 MODIFIER = suppressMods
@@ -319,8 +321,11 @@ COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
+COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
 COMMAND = set devMode BOOL
+COMMAND = set log.sink.usb BOOL
+COMMAND = set log.sink.oled BOOL
 COMMAND = set maxVoltage INT
 COMMAND = powerMode autoShutdown
 COMMAND = testLeakage
@@ -563,6 +568,7 @@ Conditions are checked before processing the rest of the command. If the conditi
 - `{ifKeymap|ifNotKeymap|ifLayer|ifNotLayer} <value>` will test if the current Keymap/Layer equals the first argument.
 - `{ifLayerToggled|ifNotLayerToggled}` will return true if current layer is toggled. It will return true if the toggled layer is on top of the stack, or anywhere else as long as only the same (currently active) layers are above it in the layer stack.
 - `ifRecording/ifNotRecording` and `ifRecordingId/ifNotRecordingId MACROID` test if the runtime macro recorder is in the recording state.
+- `ifMouseActive/ifNotMouseActive` is true if any mouse activity (pointer movement, scroll, or button) was sent within the last `mouseActiveTimeout` milliseconds (see `set mouseActiveTimeout`, default 400). Useful for autodetecting whether the mouse is being used, e.g. `ifMouseActive final holdKey mouseBtnLeft` to turn a key into a left button only while the mouse is in use.
 - `ifAlreadyRunning/ifNotAlreadyRunning` is true if another macro slot is currently playing the same macro index as the current one. Useful to prevent re-entering a macro that is already in progress.
 - `ifShortcut/ifNotShortcut [IFSHORTCUT_OPTIONS]* [KEYID]*` will wait for future keypresses and compare them to the argument. See the postponer mechanism section.
 - `ifGesture/ifNotGesture [IFSHORTCUT_OPTIONS]* [KEYID]*` just as `ifShortcut`, but breaks after 1000ms instead of when the key is released. See the postponer mechanism section.
@@ -636,6 +642,7 @@ Such named arguments can also be accessed using `$macroArg.<name>`, and the valu
 - `set keystrokeDelay <time in ms, at most 65535>` allows slowing down keyboard output. This is handy for lousily written RDP clients and other software which just scans keys once a while and processes them in wrong order if multiple keys have been pressed inbetween. In more detail, this setting adds a delay whenever a basic usb report is sent. During this delay, key matrix is still scanned and keys are debounced, but instead of activating, the keys are added into a queue to be replayed later. Recommended value is 10 if you have issues with RDP missing modifier keys, 0 otherwise.
 - `set autoRepeatDelay <time in ms, at most 65535>` and `set autoRepeatRate <time in ms, at most 65535>` allows you to set the initial delay (default: 500 ms) and the repeat delay (default: 50 ms) when using `autoRepeat`. When you run the command `autoRepeat <command>`, the `<command>` is first run without delay. Then, it will waits `autoRepeatDelay` amount of time before running `<command>` again. Then and thereafter, it will waits `autoRepeatRate` amount of time before repeating `<command>` again. This is consistent with typical OS keyrepeat feature.
 - `set oneShotTimeout <time in ms, at most 65535>` sets the timeout for `oneShot` modifier. Zero means infinite.
+- `set mouseActiveTimeout <time in ms, at most 65535>` sets how long after the last mouse activity (movement, scroll, or button) the `ifMouseActive` condition keeps returning true. Default is 400.
 - `set simulateLowResScrolling BOOL` will make scroll events be sent in occasional large dents, producing results similar to low resolution scrolling. This does not change HID descriptors to low res scrolling.
 - `set mouseKeys.{move|scroll}.{...} INT` please refer to Agent for more details.
   - `initialSpeed` - the speed that is active when the key is pressed.

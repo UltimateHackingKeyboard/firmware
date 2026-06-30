@@ -816,7 +816,6 @@ void MouseController_ProcessMouseActions()
         bool eventsIsNonzero = moduleState->pointerDelta.x || moduleState->pointerDelta.y;
         if (eventsIsNonzero && canWeRun(ks)) {
             DISABLE_IRQ();
-            DetectJumps(moduleState->pointerDelta.x, moduleState->pointerDelta.y, "MouseController1");
             // Gcc compiles those int16_t assignments as sequences of
             // single-byte instructions, therefore we need to make the
             // sequence atomic.
@@ -824,7 +823,6 @@ void MouseController_ProcessMouseActions()
             int16_t y = moduleState->pointerDelta.y;
             moduleState->pointerDelta.x = 0;
             moduleState->pointerDelta.y = 0;
-            DetectJumps(x, y, "MouseController2");
             ENABLE_IRQ();
 
 #ifdef __ZEPHYR__

@@ -93,6 +93,8 @@ typedef enum {
     CommandId_ifNotKeyDefined,
     CommandId_ifModuleConnected,
     CommandId_ifNotModuleConnected,
+    CommandId_ifMouseActive,
+    CommandId_ifNotMouseActive,
     CommandId_ifAlreadyRunning,
     CommandId_ifNotAlreadyRunning,
     CommandId_ifHold,

@@ -1,4 +1,4 @@
-# Crash logs - users
+# Crash logs
 
 ## Uhk80
 
@@ -8,7 +8,7 @@ Crash logs have to be enabled via `set devMode true` in `$onInit`
 
 Crash logs are enabled by default. However, `set devMode true` is suggested as it enables logging in cases of ESD events.
 
-(We don't log esd reboots because they are often and these crash logs are significantly more disturbing than a quick reboot.)
+(We don't log esd reboots because they are frequent and these crash logs are significantly more disturbing than a quick reboot.)
 
 # Developer notes
 

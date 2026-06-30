@@ -1614,6 +1614,16 @@ static bool processIfModuleConnected(parser_context_t* ctx, bool negate)
     return moduleConnected != negate;
 }
 
+static bool processIfMouseActiveCommand(parser_context_t* ctx, bool negate)
+{
+    if (Macros_DryRun) {
+        return true;
+    }
+
+    bool active = (CurrentPostponedTime - UsbReportUpdater_LastMouseActivityTime) < Cfg.MouseActiveTimeout;
+    return active != negate;
+}
+
 static macro_result_t processPanicCommand(parser_context_t* ctx) {
     if (Macros_DryRun) {
         return MacroResult_Finished;
@@ -1787,22 +1797,24 @@ static macro_result_t processRepeatForCommand(parser_context_t* ctx)
 
 
 #define SL_START_OFFSET 40
+#define SL_LEN 72
+#define SL_INTERVAL 96
 static macro_result_t processSlCommand()
 {
     static const char* const slTrain[2][5] = {
         {
-            "    o o o O O      _____                                       ",
-            "  o      _________==|[ ] | .oOo.   .============.   .============.   .============.",
-            " .][__n_n_|DD[  ====|    |./   |   | []  []  [] |   | []  []  [] |   | []  []  [] |",
-            ">(________|__|_[_]_|____|-|____|-u-|____________|-u-|____________|-u-|____________|",
-            " _/oo OOOOO oo`  ooo  OOO oo  oo     OO       OO      OO       OO      OO       OO",
+            "    o o o O O                                     ",
+            "  o       ____          ____________     ____________     ____________ ",
+            " .][__n_n_|DD[ .&&&.   | []  []  [] |   | []  []  [] |   | []  []  [] |",
+            ">(________|__|=|___|-u-|____________|-u-|____________|-u-|____________|",
+            " _/oo =O=OO oo oo oo     88       OO      88       OO      88       OO ",
         },
         {
-            "   o o O o O O      _____                                       ",
-            "         _________==|[ ] | .oOo.   .============.   .============.   .============.",
-            " .][__n_n_|DD[  ====|    |./   |   | []  []  [] |   | []  []  [] |   | []  []  [] |",
-            ">(________|__|_[_]_|____|-|____|-u-|____________|-u-|____________|-u-|____________|",
-            " _/oo OOOOO oo`  ooo  OOO oo  oo     OO       OO      OO       OO      OO       OO",
+            "   o o O o O O                                                 ",
+            "          ____          ____________     ____________     ____________ ",
+            " .][__n_n_|DD[ .&&&.   | []  []  [] |   | []  []  [] |   | []  []  [] |",
+            ">(________|__|=|___|-u-|____________|-u-|____________|-u-|____________|",
+            " _/oo OO8O= oo oo oo     0O       88      0O       88      OO       88 ",
         },
     };
     uint8_t frame = S->as.actionPhase;
@@ -1832,12 +1844,12 @@ static macro_result_t processSlCommand()
         }
     }
 
-    if (processDelay(96) == MacroResult_Sleeping) {
+    if (processDelay(SL_INTERVAL) == MacroResult_Sleeping) {
         return MacroResult_Sleeping;
     }
 
     S->as.actionPhase++;
-    if (frame >= SL_START_OFFSET + 83) {
+    if (frame >= SL_START_OFFSET + SL_LEN) {
         S->as.actionPhase = 0;
         return MacroResult_Finished;
     }
@@ -2335,10 +2347,14 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         PROCESS_CONDITION(processIfModuleConnected(ctx, false))
     case CommandId_ifNotModuleConnected:
         PROCESS_CONDITION(processIfModuleConnected(ctx, true))
-        case CommandId_ifAlreadyRunning:
-            PROCESS_CONDITION(processIfAlreadyRunningCommand(false))
-        case CommandId_ifNotAlreadyRunning:
-            PROCESS_CONDITION(processIfAlreadyRunningCommand(true))
+    case CommandId_ifMouseActive:
+         PROCESS_CONDITION(processIfMouseActiveCommand(ctx, false))
+    case CommandId_ifNotMouseActive:
+        PROCESS_CONDITION(processIfMouseActiveCommand(ctx, true))
+    case CommandId_ifAlreadyRunning:
+        PROCESS_CONDITION(processIfAlreadyRunningCommand(false))
+    case CommandId_ifNotAlreadyRunning:
+        PROCESS_CONDITION(processIfAlreadyRunningCommand(true))
     case CommandId_ifHold:
         return processIfHoldCommand(ctx, false);
     case CommandId_ifTap:

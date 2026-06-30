@@ -26,6 +26,10 @@
 #include "slot.h"
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
+#include "test_switches.h"
+#include "key_states.h"
+#include "utils.h"
+#include "postponer.h"
 #include "jitter_test.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
@@ -129,6 +133,19 @@ static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *arg
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_Flash;
     shell_fprintf(shell, SHELL_NORMAL, "Kboot flash sequence started for right module\n");
+    return 0;
+}
+
+
+static int cmd_uhk_testSwitches(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc == 1) {
+        shell_fprintf(shell, SHELL_NORMAL, "%i\n", TestSwitches ? 1 : 0);
+    } else if (argv[1][0] == '1') {
+        TestSwitches_Activate();
+    } else {
+        TestSwitches_Deactivate();
+    }
     return 0;
 }
 
@@ -362,20 +379,32 @@ static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
-static int cmd_uhk_logs(const struct shell *shell, size_t argc, char *argv[])
+static int cmd_uhk_usbLog(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc > 1 && argv[1][0] == '1') {
-        WormCfg->UsbLogEnabled = true;
+        WormCfg->LogUsbSinkEnabled = true;
     } else if (argc > 1 && argv[1][0] == '0') {
-        WormCfg->UsbLogEnabled = false;
+        WormCfg->LogUsbSinkEnabled = false;
     }
 
     uint16_t usbBufferFill, usbBufferSize;
     UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
 
-    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
+    printk("Usb log sink enabled: %d\n", WormCfg->LogUsbSinkEnabled);
     printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
+    return 0;
+}
+
+static int cmd_uhk_oledLog(const struct shell *shell, size_t argc, char *argv[])
+{
+    if (argc > 1 && argv[1][0] == '1') {
+        WormCfg->LogOledSinkEnabled = true;
+    } else if (argc > 1 && argv[1][0] == '0') {
+        WormCfg->LogOledSinkEnabled = false;
+    }
+
+    printk("Oled log sink enabled: %d\n", WormCfg->LogOledSinkEnabled);
     return 0;
 }
 
@@ -404,7 +433,8 @@ static int cmd_uhk_logStatus(const struct shell *shell, size_t argc, char *argv[
     uint16_t usbBufferFill, usbBufferSize;
     UsbLogBuffer_GetFill(&usbBufferFill, &usbBufferSize);
 
-    printk("Usb logging enabled: %d\n", WormCfg->UsbLogEnabled);
+    printk("Usb log sink enabled: %d\n", WormCfg->LogUsbSinkEnabled);
+    printk("Oled log sink enabled: %d\n", WormCfg->LogOledSinkEnabled);
     printk("Has log: %d\n", UsbLogBuffer_HasLog);
     printk("Usb log buffer fill: %d / %d\n", usbBufferFill, usbBufferSize);
     printk("UseShellSinks: %d\n", ShellConfig_UseShellSinks ? 1 : 0);
@@ -438,6 +468,25 @@ static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[
     return 0;
 }
 
+static int cmd_uhk_listActiveKeys(const struct shell *shell, size_t argc, char *argv[])
+{
+    uint8_t count = 0;
+    for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            key_state_t *keyState = &KeyStates[slotId][keyId];
+            if (KeyState_Active(keyState)) {
+                printk("slot %d, key %d (%s): hw %d, debounced %d, postponer %s\n", slotId, keyId,
+                    Utils_KeyAbbreviation(keyState),
+                    keyState->hardwareSwitchState, keyState->debouncedSwitchState,
+                    PostponerQuery_IsActiveEventually(keyState) ? "active" : "inactive");
+                count++;
+            }
+        }
+    }
+    printk("%d active key(s)\n", count);
+    return 0;
+}
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -456,7 +505,8 @@ void InitShellCommands(void)
 {
 
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_log_cmds,
-        SHELL_CMD_ARG(usbLog, NULL, "Set/get USB log enabled", cmd_uhk_logs, 1, 1),
+        SHELL_CMD_ARG(usbSink, NULL, "Set/get USB log sink enabled", cmd_uhk_usbLog, 1, 1),
+        SHELL_CMD_ARG(oledSink, NULL, "Set/get OLED log sink enabled", cmd_uhk_oledLog, 1, 1),
         SHELL_CMD_ARG(priority, NULL, "set log priority", cmd_uhk_logPriority, 2, 0),
         SHELL_CMD_ARG(snapshot, NULL, "Snap log buffer to status buffer", cmd_uhk_snaplog, 1, 0),
         SHELL_CMD_ARG(status, NULL, "print log status overview", cmd_uhk_logStatus, 1, 0),
@@ -483,6 +533,7 @@ void InitShellCommands(void)
         SHELL_CMD(kboot, &uhk_kboot_cmds, "kboot module flashing commands", NULL),
         SHELL_CMD_ARG(testled, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
         SHELL_CMD_ARG(ledtest, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
+        SHELL_CMD_ARG(testSwitches, NULL, "get/set switch test mode", cmd_uhk_testSwitches, 1, 1),
 #endif
 #if DEVICE_HAS_OLED
         SHELL_CMD_ARG(oled, NULL, "get/set OLED_EN pin", cmd_uhk_oled, 1, 1),
@@ -504,6 +555,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
+        SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

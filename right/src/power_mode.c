@@ -55,22 +55,12 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
     },
 };
 
-ATTR_UNUSED static bool usbAwake = false;
-
 static uint32_t lastWakeEvent = 0;
 
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
 #define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10*1000
 
-// originally written for Benedek's power callback
-// TODO: remove this and simplify the rest of the code if the callback is not used.
-void PowerMode_SetUsbAwake(bool awake) {
-#if DEVICE_IS_UHK80_RIGHT
-    usbAwake = awake;
-    EventScheduler_Reschedule(Timer_GetCurrentTime() + POWER_MODE_UPDATE_DELAY, EventSchedulerEvent_PowerModeUpdate, "update sleep mode from power callback");
-#endif
-}
 
 static bool isSomeoneAwake() {
 #ifdef __ZEPHYR__
@@ -192,6 +182,7 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 }
 
 void PowerMode_WakeHost() {
+    LogUS("Usb_RemoteWakeup\n");
     USB_RemoteWakeup();
 }
 

@@ -72,6 +72,7 @@ bool TestUsbStack = false;
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 uint32_t UsbReportUpdater_LastActivityTime;
+uint32_t UsbReportUpdater_LastMouseActivityTime;
 
 uint32_t UsbReportWindowEstimateLast = 0;
 uint32_t UsbReportWindowEstimate = 0;
@@ -742,7 +743,6 @@ static void updateActionStates() {
             preprocessKeyState(keyState);
 
             if (KeyState_NonZero(keyState)) {
-                LOG_WRN("Key pressed %s\n", Utils_KeyStateToKeyAbbreviation(keyState));
                 Trace_Printc("w2");
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
@@ -1075,6 +1075,7 @@ static void sendActiveReports(bool resending) {
         Debug_RecordBleSendResult(ret);
 
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+        UsbReportUpdater_LastMouseActivityTime = resending ? UsbReportUpdater_LastMouseActivityTime : Timer_GetCurrentTime();
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
     }

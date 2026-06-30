@@ -51,6 +51,7 @@
         uint16_t KeystrokeDelay;
         uint16_t DoubletapTimeout;
         uint16_t HoldTimeout; // not present in UserConfig atm.
+        uint16_t MouseActiveTimeout;
         uint16_t DoubletapSwitchLayerReleaseTimeout;
         sticky_strategy_t StickyModifierStrategy;
         uint8_t DebounceTimePress;
@@ -103,6 +104,7 @@
         bool DevMode;
         uint32_t I2cBaudRate;
         uint8_t Bt_MaxPeripheralConnections;
+        uint16_t Bt_MinAdvertisingDelay;
         ui_style_t UiStyle;
         string_ref_t DeviceName;
     } config_t;

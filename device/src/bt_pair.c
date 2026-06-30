@@ -8,6 +8,7 @@
 #include "bt_conn.h"
 #include "bt_scan.h"
 #include "event_scheduler.h"
+#include "timer.h"
 #include "zephyr/kernel.h"
 #include "bt_manager.h"
 #include "bt_advertise.h"
@@ -132,6 +133,7 @@ void BtPair_PairPeripheral() {
 #endif
 
 void BtPair_EndPairing(bool success, const char* msg) {
+    bool wasOob = BtPair_PairingMode == PairingMode_Oob;
     BT_TRACE_AND_ASSERT("bp4");
     printk("--- Pairing ended, success = %d: %s ---\n", success, msg);
     if (BtPair_PairingMode == PairingMode_Oob) {
@@ -157,7 +159,13 @@ void BtPair_EndPairing(bool success, const char* msg) {
         BtAdvertise_Stop();
 #endif
 
-    BtManager_StartScanningAndAdvertisingAsync(false, "BtPair_EndPairing");
+
+    if (wasOob) {
+        // Most importantly, start hogp again.
+        EventScheduler_Schedule( Timer_GetCurrentTime()+100, EventSchedulerEvent_RestartBt, "finished oob pairing");
+    } else {
+        BtManager_StartScanningAndAdvertisingAsync(false, "BtPair_EndPairing");
+    }
 }
 
 struct delete_args_t {

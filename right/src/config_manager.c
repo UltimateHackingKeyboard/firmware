@@ -262,6 +262,7 @@ const config_t DefaultCfg = (config_t){
         .DebounceTimePress = 50,
         .DebounceTimeRelease = 50,
         .DoubletapTimeout = 400,
+        .MouseActiveTimeout = 400,
         .DoubletapSwitchLayerReleaseTimeout = 200,
         .HoldTimeout = 200,
         .KeystrokeDelay = 0,
@@ -279,6 +280,7 @@ const config_t DefaultCfg = (config_t){
         .Bt_Enabled = true,
         .Bt_AllowUnsecuredConnections = false,
         .Bt_MaxPeripheralConnections = 3,
+        .Bt_MinAdvertisingDelay = 250,
         .Bt_AlwaysAdvertiseHid = true,
         .Bt_DirectedAdvertisingAllowed = false,
         .DevMode = false,
@@ -304,7 +306,8 @@ worm_config_t* WormCfg = &StateWormhole.WormCfg;
 
 const worm_config_t DefaultWormCfg = {
     .devMode = false,
-    .UsbLogEnabled = false,
+    .LogUsbSinkEnabled = false,
+    .LogOledSinkEnabled = false,
 };
 
 void ConfigManager_ResetWormConfiguration(void) {

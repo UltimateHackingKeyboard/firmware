@@ -1,3 +1,4 @@
+#include "atomicity.h"
 #include "attributes.h"
 #include "keyboard/oled/framebuffer.h"
 #include "timer.h"
@@ -89,6 +90,28 @@ uint32_t Bt_LastConnectedTime = 0;
 
 static void disconnectAllHids();
 static void auth_cancel(struct bt_conn *conn);
+
+// BLE APIs that allocate HCI/ATT buffers (data length update, MTU exchange,
+// GATT discovery, security elevation) must not run directly in connection
+// callbacks: those execute on the BT RX workqueue, and a blocking buffer
+// allocation there can stall/deadlock the very thread that frees the buffers.
+// We defer that work onto the system workqueue instead. Because scanning and
+// advertising are mutually exclusive (see bt_manager.c) and separated by a
+// rescheduling delay, connection callbacks are effectively serialized, so a
+// single slot is sufficient; if it is ever occupied we refuse rather than
+// clobber it.
+typedef enum {
+    BtFlow_Connected,
+    BtFlow_AuthenticatedConnection,
+} bt_flow_t;
+
+static struct k_work btDeferredWork;
+static struct bt_conn *btDeferredConn = NULL;
+static bt_flow_t btDeferredAction;
+static connection_id_t btDeferredConnectionId;
+static connection_type_t btDeferredConnectionType;
+
+static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id_t connectionId, connection_type_t connectionType);
 
 peer_t Peers[PeerCount] = {
     {
@@ -559,7 +582,9 @@ static void connectHid(struct bt_conn *conn, connection_id_t connectionId, conne
 
     // Assume that HOGP is ready
     LOG_INF("Established HID connection with %s", GetPeerStringByConn(conn));
-    Connections_SetState(connectionId, ConnectionState_Ready);
+    if (Connections[connectionId].state == ConnectionState_Disconnected) {
+        Connections_SetState(connectionId, ConnectionState_Connected);
+    }
     BtManager_StartScanningAndAdvertisingAsync(false, "connectHid");
 
     EventScheduler_Reschedule(Timer_GetCurrentTime() + 10*1000, EventSchedulerEvent_KickHid, "HID health kick");
@@ -623,18 +648,11 @@ static void connectUnknown(struct bt_conn *conn) {
 #endif
 }
 
-static void connected(struct bt_conn *conn, uint8_t err) {
+static void connectedCallback(struct bt_conn *conn, uint8_t err) {
     BT_TRACE_AND_ASSERT("bc1");
 
     LOG_DBG("Connected cb");
     Bt_LastConnectedTime = Timer_GetCurrentTime();
-
-    // Without this, linux pairing fails, because tiny 27 byte packets
-    // exhaust acl buffers easily
-    enableDataLengthExtension(conn);
-    if (!DEBUG_STRESS_GATT) {
-        requestMtuExchange(conn);
-    }
 
     if (err) {
         LOG_WRN("Failed to connect (in connected cb) to %s, err %u", GetPeerStringByConn(conn), err);
@@ -642,27 +660,9 @@ static void connected(struct bt_conn *conn, uint8_t err) {
         return;
     }
 
-    const bt_addr_le_t * addr = bt_conn_get_dst(conn);
-    connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(addr);
-    connection_type_t connectionType = Connections_Type(connectionId);
-
-    LOG_INF("Connected %s, %d %d", GetPeerStringByConn(conn), connectionId, connectionType);
-
-    if (connectionId == ConnectionId_Invalid) {
-        connectUnknown(conn);
-        BtManager_StartScanningAndAdvertisingAsync(true, "connected - invalid connection");
-    } else {
-
-        if (isWanted(conn, false, connectionId, connectionType)) {
-            bt_conn_set_security(conn, BT_SECURITY_L4);
-            // advertising/scanning needs to be started only after peers are assigned :-/
-        } else {
-            youAreNotWanted(conn);
-            BtManager_StartScanningAndAdvertisingAsync(true, "connected - they are not wanted");
-        }
-    }
-
-
+    // The buffer-allocating setup (data length, MTU, security) is deferred off
+    // the BT RX workqueue. See submitDeferredBtWork / handleConnectedDeferred.
+    scheduleBtFlow(conn, BtFlow_Connected, ConnectionId_Invalid, ConnectionType_Unknown);
 
     return;
 }
@@ -730,7 +730,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
     }
 }
 
-static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
+static void authenticatedConnectionFlow(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, true, connectionId, connectionType)) {
         LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection(%d))", connectionId, SelectedHostConnectionId);
@@ -756,6 +756,82 @@ static void connectAuthenticatedConnection(struct bt_conn *conn, connection_id_t
     }
 }
 
+// Runs on the system workqueue; performs the buffer-allocating setup that used
+// to live at the top of connected().
+static void connectedFlow(struct bt_conn *conn) {
+    // Without this, linux pairing fails, because tiny 27 byte packets
+    // exhaust acl buffers easily
+    enableDataLengthExtension(conn);
+    if (!DEBUG_STRESS_GATT) {
+        requestMtuExchange(conn);
+    }
+
+    const bt_addr_le_t * addr = bt_conn_get_dst(conn);
+    connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(addr);
+    connection_type_t connectionType = Connections_Type(connectionId);
+
+    LOG_INF("Connected %s, %d %d", GetPeerStringByConn(conn), connectionId, connectionType);
+
+    if (connectionId == ConnectionId_Invalid) {
+        connectUnknown(conn);
+        BtManager_StartScanningAndAdvertisingAsync(true, "connected - invalid connection");
+    } else {
+        if (isWanted(conn, false, connectionId, connectionType)) {
+            bt_conn_set_security(conn, BT_SECURITY_L4);
+            // advertising/scanning needs to be started only after peers are assigned :-/
+        } else {
+            youAreNotWanted(conn);
+            BtManager_StartScanningAndAdvertisingAsync(true, "connected - they are not wanted");
+        }
+    }
+}
+
+
+static void btDeferredWorkHandler(struct k_work *work) {
+    struct bt_conn *conn = btDeferredConn;
+    bt_flow_t action = btDeferredAction;
+    connection_id_t connectionId = btDeferredConnectionId;
+    connection_type_t connectionType = btDeferredConnectionType;
+
+    switch (action) {
+        case BtFlow_Connected:
+            connectedFlow(conn);
+            break;
+        case BtFlow_AuthenticatedConnection:
+            authenticatedConnectionFlow(conn, connectionId, connectionType);
+            break;
+    }
+
+    btDeferredConn = NULL;
+    bt_conn_unref(conn);
+}
+
+static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id_t connectionId, connection_type_t connectionType) {
+    bool accepted = false;
+    DISABLE_IRQ();
+    if (btDeferredConn == NULL) {
+        btDeferredConn = conn;
+        accepted = true;
+    }
+    ENABLE_IRQ();
+
+    if (!accepted) {
+        if (action == btDeferredAction && BtAddrEq(bt_conn_get_dst(conn), bt_conn_get_dst(btDeferredConn))) {
+            LOG_DBG("Already scheduled equivalent action %d for %s, ignoring", action, GetPeerStringByConn(conn));
+            return;
+        } else {
+            LOG_ERR("BT deferred work slot busy, dropping action %d for %s", action, GetPeerStringByConn(conn));
+            return;
+        }
+    }
+
+    bt_conn_ref(conn);
+    btDeferredAction = action;
+    btDeferredConnectionId = connectionId;
+    btDeferredConnectionType = connectionType;
+    k_work_submit(&btDeferredWork);
+}
+
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     BT_TRACE_AND_ASSERT("bc3");
     // In case of failure, disconnect
@@ -765,7 +841,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
         struct bt_conn_info info;
         int err = bt_conn_get_info(conn, &info);
         if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
-            // bt_conn_auth_cancel(conn);
+            bt_conn_auth_cancel(conn);
             // bt_conn_disconnect(conn, BT_REASON_PERMANENT);
         } else {
             // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
@@ -785,7 +861,7 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     const bt_addr_le_t *addr = bt_conn_get_dst(conn);
     connection_id_t connectionId = Connections_GetConnectionIdByHostAddr(addr);
     connection_type_t connectionType = Connections_Type(connectionId);
-    connectAuthenticatedConnection(conn, connectionId, connectionType);
+    scheduleBtFlow(conn, BtFlow_AuthenticatedConnection, connectionId, connectionType);
 }
 
 __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* conn, uint16_t interval, uint16_t latency, uint16_t timeout)
@@ -816,7 +892,7 @@ uint32_t BtConn_GetReportIntervalMs(connection_id_t connectionId) {
 }
 
 BT_CONN_CB_DEFINE(conn_callbacks) = {
-    .connected = connected,
+    .connected = connectedCallback,
     .disconnected = disconnected,
     .security_changed = securityChanged,
     .le_param_updated = infoLatencyParamsUpdated,
@@ -834,8 +910,6 @@ static void auth_passkey_entry(struct bt_conn *conn) {
     setAuthConn(conn);
 
     LOG_INF("Received passkey pairing inquiry.");
-
-    enableDataLengthExtension(conn);
 
     if (!auth_conn) {
         LOG_INF("Returning: no auth conn");
@@ -940,7 +1014,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
         LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d", connectionId, SelectedHostConnectionId);
 
         // we have to connect from here, because central changes its address *after* setting security
-        connectAuthenticatedConnection(conn, connectionId, connectionType);
+        scheduleBtFlow(conn, BtFlow_AuthenticatedConnection, connectionId, connectionType);
     }
 
     if (auth_conn) {
@@ -1027,6 +1101,8 @@ static struct bt_conn_auth_info_cb conn_auth_info_callbacks = {
 void BtConn_Init(void) {
     BT_TRACE_AND_ASSERT("bc6");
     int err = 0;
+
+    k_work_init(&btDeferredWork, btDeferredWorkHandler);
 
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         Peers[peerId].id = peerId;

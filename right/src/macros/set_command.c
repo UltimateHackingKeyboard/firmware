@@ -145,7 +145,10 @@ static macro_variable_t floatVar(float value)
 
 static macro_variable_t boolVar(bool value)
 {
-    return (macro_variable_t) { .asBool = value, .type = MacroVariableType_Bool };
+    // sanitize the bool and prevent compiler from optimizing it away
+    uint8_t raw;
+    __builtin_memcpy(&raw, &value, 1);
+    return (macro_variable_t) { .asBool = raw != 0, .type = MacroVariableType_Bool };
 }
 
 static int32_t coalesce_int32_t(int32_t lowerBound, int32_t val, int32_t upperBound) {
@@ -384,6 +387,9 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
         DEFINE_INT_LIMITS(1, 1);
 #endif
         ASSIGN_INT(Cfg.Bt_MaxPeripheralConnections);
+    } else if (ConsumeToken(ctx, "minAdvertisingDelay")) {
+        DEFINE_INT_LIMITS(0, 5000);
+        ASSIGN_INT(Cfg.Bt_MinAdvertisingDelay);
     } else if (ConsumeToken(ctx, "alwaysAdvertiseHid")) {
         ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertiseHid);
 #if DEVICE_IS_UHK80_RIGHT
@@ -957,6 +963,32 @@ static macro_variable_t setMaxVoltage(parser_context_t* ctx, set_command_action_
     return noneVar();
 }
 
+static macro_variable_t logSinks(parser_context_t* ctx, set_command_action_t action)
+{
+    if (ConsumeToken(ctx, "usb")) {
+        ASSIGN_BOOL(WormCfg->LogUsbSinkEnabled);
+    }
+    else if (ConsumeToken(ctx, "oled")) {
+        ASSIGN_BOOL(WormCfg->LogOledSinkEnabled);
+    }
+    else if (action == SetCommandAction_Write) {
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
+    }
+    return noneVar();
+}
+
+static macro_variable_t logCommand(parser_context_t* ctx, set_command_action_t action)
+{
+    if (ConsumeToken(ctx, "sink") || ConsumeToken(ctx, "sinks")) {
+        ConsumeUntilDot(ctx);
+        return logSinks(ctx, action);
+    }
+    else if (action == SetCommandAction_Write) {
+        Macros_ReportErrorTok(ctx, "Parameter not recognized:");
+    }
+    return noneVar();
+}
+
 static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "module")) {
@@ -1016,6 +1048,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         ASSIGN_BOOL(Cfg.DevMode);
         WormCfg->devMode = Cfg.DevMode;
     }
+    else if (ConsumeToken(ctx, "log")) {
+        ConsumeUntilDot(ctx);
+        return logCommand(ctx, action);
+    }
     else if (ConsumeToken(ctx, "stickyModifiers")) {
         return stickyModifiers(ctx, action);
     }
@@ -1038,6 +1074,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if ( ConsumeToken(ctx, "holdTimeout")) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.HoldTimeout);
+    }
+    else if ( ConsumeToken(ctx, "mouseActiveTimeout")) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(Cfg.MouseActiveTimeout);
     }
     else if (ConsumeToken(ctx, "autoRepeatDelay")) {
         DEFINE_INT_LIMITS(0, 65535);

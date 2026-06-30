@@ -10,13 +10,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-set(WORKSPACE_TOPDIR "${CMAKE_CURRENT_LIST_DIR}/../..")
-set(CPM_bitfilled_SOURCE "${WORKSPACE_TOPDIR}/modules/lib/bitfilled")
-set(CPM_hid-rp_SOURCE "${WORKSPACE_TOPDIR}/modules/lib/hid-rp")
-set(CPM_etl_SOURCE "${WORKSPACE_TOPDIR}/modules/lib/etl")
-
-set(EXTRA_MCUX_MODULES ${CMAKE_CURRENT_LIST_DIR}/../../c2usb)
+set(WEST ON) # necessary for looking up mcux modules from west workspace
 
 set(board frdmk22f) # TODO: how to remove the board selection?
 set(device MK22F51212)

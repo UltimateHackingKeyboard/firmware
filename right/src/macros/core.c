@@ -981,7 +981,7 @@ static void recalculateSleepingMods()
         }
     }
     EventVector_SetValue(EventVector_MacroEnginePostponing, applicableState.someonePostponing);
-    EventVector_SetValue(EventVector_MacroEngine, applicableState.someoneAwake);
+    EventVector_SetValue(EventVector_MacroEngine, applicableState.someoneAwake || SchedulerPostponing);
     EventVector_SetValue(EventVector_MacroReportsUsed, applicableState.reportsUsed);
     Macros_WakeMeOnOneShot = applicableState.someOneShot;
     SuppressMods = applicableState.modifierSuppressMods;
