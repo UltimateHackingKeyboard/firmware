@@ -269,14 +269,14 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
     module_id_t moduleId = ConsumeModuleId(ctx);
     module_configuration_t* module = GetModuleConfiguration(moduleId);
 
-    ConsumeUntilDot(ctx);
+    ConsumeOneDot(ctx);
 
     if (Macros_ParserError) {
         return noneVar();
     }
 
     if (ConsumeToken(ctx, "navigationMode")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return moduleNavigationMode(ctx, action, module);
     }
     else if (ConsumeToken(ctx, "holdContinuationTimeout") && moduleId == ModuleId_TouchpadRight) {
@@ -351,7 +351,7 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
         ASSIGN_CUSTOM(int32_t, intVar, Cfg.SecondaryRoles_Strategy, ConsumeSecondaryRoleStrategy(ctx));
     }
     else if (ConsumeToken(ctx, "advanced")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return secondaryRoleAdvanced(ctx, action);
     }
     else {
@@ -420,7 +420,7 @@ static macro_variable_t mouseKeys(parser_context_t* ctx, set_command_action_t ac
         return noneVar();
     }
 
-    ConsumeUntilDot(ctx);
+    ConsumeOneDot(ctx);
 
     if (ConsumeToken(ctx, "initialSpeed")) {
         DEFINE_INT_LIMITS(0, 255);
@@ -546,7 +546,7 @@ static macro_variable_t keyRgb(parser_context_t* ctx, set_command_action_t actio
 {
     layer_id_t layerId = Macros_ConsumeLayerId(ctx);
 
-    ConsumeUntilDot(ctx);
+    ConsumeOneDot(ctx);
 
     uint16_t keyId = Macros_TryConsumeKeyId(ctx);
 
@@ -709,11 +709,11 @@ static macro_variable_t backlight(parser_context_t* ctx, set_command_action_t ac
         return backlightStrategy(ctx, action);
     }
     else if (ConsumeToken(ctx, "constantRgb")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return constantRgb(ctx, action);
     }
     else if (ConsumeToken(ctx, "keyRgb")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return keyRgb(ctx, action);
     }
     else {
@@ -762,7 +762,7 @@ static macro_variable_t navigationModeAction(parser_context_t* ctx, set_command_
 
     navigationMode = ConsumeNavigationModeId(ctx);
 
-    ConsumeUntilDot(ctx);
+    ConsumeOneDot(ctx);
 
     if (action == SetCommandAction_Read) {
         Macros_ReportErrorPos(ctx, "Reading actions is not supported!");
@@ -816,7 +816,7 @@ static macro_variable_t keymapAction(parser_context_t* ctx, set_command_action_t
     uint8_t layerId = Macros_ConsumeLayerId(ctx);
     CTX_COPY(keyIdPos, *ctx);
 
-    ConsumeUntilDot(ctx);
+    ConsumeOneDot(ctx);
 
     uint16_t keyId = Macros_TryConsumeKeyId(ctx);
 
@@ -980,7 +980,7 @@ static macro_variable_t logSinks(parser_context_t* ctx, set_command_action_t act
 static macro_variable_t logCommand(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "sink") || ConsumeToken(ctx, "sinks")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return logSinks(ctx, action);
     }
     else if (action == SetCommandAction_Write) {
@@ -992,47 +992,47 @@ static macro_variable_t logCommand(parser_context_t* ctx, set_command_action_t a
 static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "module")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return module(ctx, action);
     }
     else if (ConsumeToken(ctx, "secondaryRole")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return secondaryRoles(ctx, action);
     }
     else if (ConsumeToken(ctx, "bluetooth")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return bluetooth(ctx, action);
     }
     else if (ConsumeToken(ctx, "mouseKeys")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return mouseKeys(ctx, action);
     }
     else if (ConsumeToken(ctx, "keymapAction")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return keymapAction(ctx, action);
     }
     else if (ConsumeToken(ctx, "navigationModeAction")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return navigationModeAction(ctx, action);
     }
     else if (ConsumeToken(ctx, "macroEngine")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return macroEngine(ctx, action);
     }
     else if (ConsumeToken(ctx, "backlight")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return backlight(ctx, action);
     }
     else if (ConsumeToken(ctx, "battery")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return battery(ctx, action);
     }
     else if (ConsumeToken(ctx, "leds")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return leds(ctx, action);
     }
     else if (ConsumeToken(ctx, "modifierLayerTriggers")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return modLayerTriggers(ctx, action);
     }
     else if (ConsumeToken(ctx, "maxVoltage")) {
@@ -1049,7 +1049,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         WormCfg->devMode = Cfg.DevMode;
     }
     else if (ConsumeToken(ctx, "log")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         return logCommand(ctx, action);
     }
     else if (ConsumeToken(ctx, "stickyModifiers")) {

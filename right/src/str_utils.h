@@ -30,7 +30,6 @@
 
 // Typedefs:
 
-
     typedef struct macro_state_t macro_state_t;
 
     typedef struct {
@@ -39,7 +38,7 @@
         const char* at;
         const char* end;
         uint8_t nestingLevel;
-        uint8_t nestingBound; // This context can't be popped bellow this bound, because it is a copy.
+        uint8_t nestingBound; // This context can't be popped below this bound, because it is a copy.
     } parser_context_t;
 
     typedef struct {
@@ -57,6 +56,8 @@
 
     uint8_t SegmentLen(string_segment_t str);
     bool IsEnd(parser_context_t* ctx);
+    bool IsDigit(parser_context_t* ctx);
+    bool IsWhite(parser_context_t* ctx);
     bool SegmentEqual(string_segment_t str1, string_segment_t str2);
     bool StrLessOrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
     bool StrEqual(const char* a, const char* aEnd, const char* b, const char* bEnd);
@@ -82,6 +83,8 @@
     const char* NextTok(const char* cmd, const char *cmdEnd);
     const char* NextCmd(const char* cmd, const char *cmdEnd);
     const char* CmdEnd(const char* cmd, const char *cmdEnd);
+    bool ConsumeOneChar(parser_context_t* ctx, char c);
+    bool ConsumeOneDot(parser_context_t* ctx);
     void ConsumeUntilDot(parser_context_t* ctx);
     void ConsumeWhiteAt(parser_context_t* ctx, const char* at);
     const char* SkipWhite(const char* cmd, const char *cmdEnd);
