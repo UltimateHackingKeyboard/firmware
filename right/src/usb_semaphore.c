@@ -48,7 +48,9 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     st->retries = 0;
     st->inFlight = false;
     UsbReportSender_GivenUp = false;
-    EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
+    if (DEVICE_IS_MASTER) {
+        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
+    }
 }
 
 // NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
