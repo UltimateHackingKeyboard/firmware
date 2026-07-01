@@ -18,6 +18,16 @@ typedef enum  {
     HID_TRANSPORT_BLE,
 } hid_transport_t;
 
+// Which physical sink a report is dispatched to. Determined by transport.c's
+// determineSink(); shared so the report-sender module can size transport windows per sink.
+typedef enum {
+    ReportSink_Invalid,
+    ReportSink_Usb,
+    ReportSink_BleHid,
+    ReportSink_Dongle,
+    ReportSink_TestSuite,
+} report_sink_t;
+
 typedef enum
 {
     ROLLOVER_N_KEY = 0,
@@ -26,6 +36,7 @@ typedef enum
 
 
 extern float HidReportBleLatencyAvgMs;
+extern bool UnreliableTransportTestMode;
 
 void Hid_TransportStateChanged(hid_transport_t transport, bool enabled);
 

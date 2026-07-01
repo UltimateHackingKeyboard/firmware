@@ -34,6 +34,7 @@
 #if DEVICE_IS_UHK_DONGLE
 #include <zephyr/kernel.h>
 #include "usb_report_updater.h"
+#include "usb_report_sender.h"
 
 static K_SEM_DEFINE(dongleUsbSem, 0, 1);
 
@@ -229,8 +230,8 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
 
 #if DEVICE_IS_UHK_DONGLE
     uint8_t retryCounter = 0;
-    while (ShouldResendReport(ret == 0, &retryCounter)) {
-        uint16_t delay = GetResendThrottleDelay(retryCounter);
+    while (!UsbReportSender_ShouldGiveUp(ret, &retryCounter)) {
+        uint16_t delay = UsbReportSender_ComputeResendDelay(retryCounter);
         k_sleep(K_MSEC(delay));
         k_sem_take(&dongleUsbSem, K_MSEC(128));
         ret = sendDongleReport(propertyId, message);

@@ -10,6 +10,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "usb_report_updater.h"
 #include "oneshot.h"
 #include "trace.h"
 

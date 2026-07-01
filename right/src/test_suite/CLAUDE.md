@@ -29,6 +29,7 @@ All actions are defined as macros in `test_actions.h`. The struct backing them i
 | `TEST_SET_GENERIC_ACTION(key_id, action)` | Base only |
 | `TEST_SET_EMPTY(key_id)` | Base only |
 | `TEST_SET_CONFIG(config_text)` | Runs a `set` command (no key mapping) |
+| `TEST_SET_BOOL(bool_ptr, bool_value)` | Writes `bool_value` to the `bool` at `bool_ptr` (e.g. toggling a test-mode flag) |
 
 `shortcut` strings go through `MacroShortcutParser_Parse` — same syntax as in macros (e.g. `"LS-i"`, `"sLA-tab"`, `"tab"`).
 

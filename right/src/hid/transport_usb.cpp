@@ -6,6 +6,7 @@ extern "C" {
 #include "usb_state.h"
 #include "timer.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "user_logic.h"
 #include "logger.h"
 #ifdef __ZEPHYR__
@@ -131,7 +132,7 @@ struct usb_manager {
             }
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
                 // reset the semaphore on USB configuration or reset
-                UsbReportUpdateSemaphore = 0;
+                UsbSemaphore_Clear();
             }
         });
     }

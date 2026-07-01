@@ -72,6 +72,10 @@
 #define TEST_SET_CONFIG(config_text) \
     { .type = TestAction_SetConfig, .configText = (config_text) }
 
+// SetBool: write a bool value to the bool pointed to by bool_ptr
+#define TEST_SET_BOOL(bool_ptr, bool_value) \
+    { .type = TestAction_SetBool, .boolPtr = (bool_ptr), .boolValue = (bool_value) }
+
 #define TEST_END() \
     { .type = TestAction_End }
 
@@ -89,6 +93,7 @@ typedef enum {
     TestAction_SetSecondaryRole,
     TestAction_SetGenericAction,
     TestAction_SetConfig,
+    TestAction_SetBool,
     TestAction_Expect,       // OutputMachine only
     TestAction_ExpectMaybe,  // OutputMachine only, optional
     TestAction_CheckNow,     // Both machines
@@ -101,6 +106,8 @@ typedef struct {
     uint8_t switchLayerMode;      // For SetLayerHold (0 = Hold, see SwitchLayerMode enum)
     uint8_t primaryScancode;      // For SetSecondaryRole
     uint8_t secondaryRoleId;      // For SetSecondaryRole
+    bool *boolPtr;                // For SetBool
+    bool boolValue;               // For SetBool
     union {
         uint16_t delayMs;
         const char *expectShortcuts;  // Space-separated shortcut strings

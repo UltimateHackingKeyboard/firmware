@@ -7,6 +7,7 @@
 #include "segment_display.h"
 #include "usb_commands/usb_command_exec_macro_command.h"
 #include "usb_report_updater.h"
+#include "usb_report_sender.h"
 #include "macro_events.h"
 #include "debug.h"
 #include "event_scheduler.h"
@@ -44,7 +45,7 @@ void RunUserLogic(void) {
 
     if (EventVector_IsSet(EventVector_ReportUpdateMask)) {
         Trace_Printc("l6");
-        UpdateUsbReports();
+        UsbReportSender_UpdateAndSendUsbReports();
     }
 
     if (EventVector_IsSet(EventVector_LedManagerFullUpdateNeeded)) {

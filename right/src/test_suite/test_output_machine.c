@@ -95,6 +95,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
             case TestAction_SetSecondaryRole:
             case TestAction_SetGenericAction:
             case TestAction_SetConfig:
+            case TestAction_SetBool:
                 OutputMachine_ActionIndex++;
                 break;
 

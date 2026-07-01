@@ -34,6 +34,15 @@ int mouse_app::send_report(const hid_mouse_report_t &report)
 
 void mouse_app::in_report_sent(const std::span<const uint8_t> &data)
 {
+#if DEVICE_IS_UHK80_RIGHT
+    // On BLE all apps share one merged HOGP interface, so in_report_sent is broadcast
+    // to every app for every sent report. Act only on our own (mouse) report ID. The
+    // USB handle is a standalone interface that only ever receives mouse completions,
+    // so the filter must not be applied there.
+    if ((this == &ble_handle()) && (data.front() != report_ids::IN_MOUSE)) {
+        return;
+    }
+#endif
     Hid_MouseReportSentCallback((this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE);
 }
 

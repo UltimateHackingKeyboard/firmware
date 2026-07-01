@@ -22,6 +22,7 @@
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "macro_events.h"
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
@@ -86,14 +87,14 @@ static void sendFirstReport()
     errno_t ret = -1;
     // Wait until sending a report is successful, but don't block longer than 5 seconds.
     while (ret && Timer_GetCurrentTime() < 5000) {
-        UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
+        UsbSemaphore_Set(UsbReportUpdate_Keyboard);
         ret = Hid_SendKeyboardReport(&emptyReport);
         if (ret) {
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+            UsbSemaphore_Clear();
             __WFI();
         }
     }
-    while (UsbReportUpdateSemaphore) {
+    while (UsbSemaphore_Get()) {
         __WFI();
     }
 }
@@ -121,17 +122,6 @@ void CopyRightKeystateMatrix(void)
     if (stateChanged) {
         EventVector_Set(EventVector_StateMatrix);
     }
-}
-
-bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && CurrentPowerMode > PowerMode_LastAwake) {
-        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
-            return false;
-        } else {
-            UsbReportUpdateSemaphore = 0;
-        }
-    }
-    return true;
 }
 
 static void initUsb() {
@@ -245,6 +235,7 @@ int main(void)
         sendFirstReport();
 
         Trace_Printc("initialized");
+        LOG_INF("Booted up");
 
         while (1) {
             Trace_Printc("{");
@@ -258,7 +249,7 @@ int main(void)
                 checkSleepMode();
             }
 
-            if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+            if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
                 Trace('(');
                 RunUserLogic();
                 Trace(')');
