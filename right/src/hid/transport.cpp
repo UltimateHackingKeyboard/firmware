@@ -65,12 +65,12 @@ static report_sink_t determineSink()
     return ReportSink_Usb;
 #else
 
-    connection_type_t connectionType = Connections_Type(ActiveHostConnectionId);
+    connection_type_t connectionType = Connections_Type(CurrentHostConnectionId);
 
-    if (!Connections_IsReady(ActiveHostConnectionId)) {
+    if (!Connections_IsReady(CurrentHostConnectionId)) {
         printk("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
-        if (!Connections_IsReady(ActiveHostConnectionId)) {
+        if (!Connections_IsReady(CurrentHostConnectionId)) {
             // printk("Giving report to c2usb anyways!\n");
             return ReportSink_Usb;
         }
@@ -309,7 +309,7 @@ static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
 extern "C" void Hid_UpdateKeyboardLedsState()
 {
 #ifdef __ZEPHYR__
-    switch (Connections_Type(ActiveHostConnectionId)) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
     case ConnectionType_UsbHidRight:
     case ConnectionType_UsbHidLeft:
         setKeyboardLedsState(keyboard_app::usb_handle().get_leds());
@@ -323,7 +323,7 @@ extern "C" void Hid_UpdateKeyboardLedsState()
         StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
         break;
     default:
-        printk("Unhandled connection type %d\n", Connections_Type(ActiveHostConnectionId));
+        printk("Unhandled connection type %d\n", Connections_Type(CurrentHostConnectionId));
         break;
     }
 #else
@@ -337,7 +337,7 @@ extern "C" void Hid_KeyboardLedsStateChanged(hid_transport_t transport)
     auto value = (transport == HID_TRANSPORT_USB) ? keyboard_app::usb_handle().get_leds()
                                                   : keyboard_app::ble_handle().get_leds();
     connection_id_t connectionId = hidConnId(transport);
-    if (Connections_IsActiveHostConnection(connectionId)) {
+    if (Connections_IsCurrentHost(connectionId)) {
         setKeyboardLedsState(value);
     }
 #else
@@ -358,7 +358,7 @@ extern "C" void Hid_MouseScrollResolutionsChanged(
 extern "C" float VerticalScrollMultiplier(void)
 {
 #if !DEVICE_IS_UHK60
-    switch (Connections_Type(ActiveHostConnectionId)) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
         return mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
@@ -381,7 +381,7 @@ extern "C" float VerticalScrollMultiplier(void)
 extern "C" float HorizontalScrollMultiplier(void)
 {
 #if !DEVICE_IS_UHK60
-    switch (Connections_Type(ActiveHostConnectionId)) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
         return mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();

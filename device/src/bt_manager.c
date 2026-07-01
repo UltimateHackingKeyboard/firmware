@@ -143,7 +143,7 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     }
 
     bool weArePairing = BtPair_PairingMode == PairingMode_PairHid;
-    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
+    bool weAreSwitching = Connections_IsSelectedConnecting();
 
     if (weArePairing || weAreSwitching) {
         expDelay = minDelay;

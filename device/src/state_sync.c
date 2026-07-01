@@ -331,19 +331,19 @@ void StateSync_CheckFirmwareVersions() {
 }
 
 void StateSync_CheckDongleProtocolVersion() {
-    host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
+    host_connection_t *hostConnection = HostConnection(CurrentHostConnectionId);
     if (hostConnection->type == HostConnectionType_Dongle) {
         if (RemoteDongleProtocolVersion.major == 0) {
-            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(ActiveHostConnectionId));
+            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(CurrentHostConnectionId));
         } else if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
             LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
-                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    GetPeerStringByConnId(CurrentHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
         } else {
             LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
-                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    GetPeerStringByConnId(CurrentHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
@@ -860,7 +860,7 @@ static void updateStandbys() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         uint8_t connectionId = Peers[peerId].connectionId;
         if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
-            bool standby = !(ActiveHostConnectionId == connectionId);
+            bool standby = !(CurrentHostConnectionId == connectionId);
             Messenger_Send2Via(DeviceId_Uhk_Dongle, connectionId, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
         }
     }

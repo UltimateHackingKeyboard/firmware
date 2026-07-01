@@ -63,7 +63,7 @@ static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80 BLE")};
 // Fast advertisement makes mouse key movement jittery as it makes us miss transports
 static void applyAdvInterval(struct bt_le_adv_param* param) {
     bool fast = BtConn_UnusedPeripheralConnectionCount() == ACTUAL_PERIPHERAL_CONNECTION_COUNT
-        || SelectedHostConnectionId != ConnectionId_Invalid;
+        || Connections_IsSelectedConnecting();
     if (fast) {
         param->interval_min = BT_GAP_ADV_FAST_INT_MIN_1;
         param->interval_max = BT_GAP_ADV_FAST_INT_MAX_1;
@@ -244,16 +244,16 @@ adv_config_t BtAdvertise_Config() {
                     // struct bt_le_oob* oob = BtPair_GetRemoteOob();
                     // return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
                 }
-                else if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
-                    /* we need to reserve last peripheral slot for a specific target */
-                    connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
-                    if (selectedConnectionType == ConnectionType_NusDongle) {
-                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
-                    } else if (selectedConnectionType == ConnectionType_BtHid) {
+                else if (freeSlots == 1 && Connections_IsSelectedConnecting()) {
+                    /* we need to reserve last peripheral slot for the current target */
+                    connection_type_t currentConnectionType = Connections_Type(CurrentHostConnectionId);
+                    if (currentConnectionType == ConnectionType_NusDongle) {
+                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(CurrentHostConnectionId)->bleAddress);
+                    } else if (currentConnectionType == ConnectionType_BtHid) {
                         return ADVERTISEMENT(ADVERTISE_HID);
                     } else {
-                        LOG_INF("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
-                        return ADVERTISEMENT( 0 );
+                        /* Current is not a BLE target (e.g. USB) - no slot to reserve. */
+                        return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
                     }
                 }
                 else if (BtConn_ConnectedHidCount(NULL) > 0) {
