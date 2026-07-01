@@ -43,11 +43,6 @@ void UsbSemaphore_Clear(void) {
     UsbSemaphore.mouse.inFlight = false;
 }
 
-// Release a report's in-flight latch once it has been successfully sent (USB/BLE via the
-// async sent callback, NUS/dongle synchronously on successful enqueue). This unblocks report
-// processing: advance the baseline to the just-sent report and reset the resend state
-// (ShouldResendReport(0, ...) clears the retry counter and the give-up latch). This means
-// "sent", not "delivered" - for USB/BLE the delivery confirmation is a separate, later event.
 void UsbSemaphore_Release(report_send_state_t* st) {
     st->switchActiveReport();
     st->retries = 0;
@@ -56,10 +51,7 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
 }
 
-// Recompute the in-flight gate. While a report is still in flight within its confirmation
-// grace window we are not ready (return false). Once the window elapses, re-arm the resend
-// for the still-pending reports (their baseline was never advanced, so the current state is
-// re-sent rather than lost) and report ready.
+// NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
 bool UsbSemaphore_RecalculateIsReady(void) {
     if (UsbSemaphore_AnyInFlight() && CurrentPowerMode <= PowerMode_LastAwake) {
         if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {

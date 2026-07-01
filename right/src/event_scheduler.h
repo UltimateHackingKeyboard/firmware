@@ -50,7 +50,6 @@
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
-        EventSchedulerEvent_UpdateUsbSemaphore,
         EventSchedulerEvent_CheckLeftBleVsUart,
         EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_Count

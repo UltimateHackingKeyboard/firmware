@@ -251,14 +251,14 @@ static bool blockedByReportThrottle() {
 
     // If we are retrying too agressively, we may clog some USB hubs, so add a throttle in that case as well.
     if (currentTime < retryThrottleTime) {
-        blockedUntil = MAX(retryThrottleTime, blockedUntil);;
+        blockedUntil = MAX(retryThrottleTime, blockedUntil);
         blocked = true;
     }
 
     // To reduce mouse latency, don't construct report until we are close enough to transport window.
     if ((int32_t)(UsbReportWindowEstimate - currentTime) > USB_REPORT_WINDOW_LOOKAHEAD_MS) {
         uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
-        blockedUntil = MAX(throttleUntil, blockedUntil);;
+        blockedUntil = MAX(throttleUntil, blockedUntil);
         blocked = true;
     }
 
@@ -281,7 +281,7 @@ static bool blockedByReportThrottle() {
     return false;
 }
 
-// All paths have to call either UsbReportUpdater_UpdateActiveReports or justPreprocessInput.
+// All paths have to call either UsbReportUpdater_UpdateActiveReports or justPreprocessInput(true).
 void UsbReportSender_UpdateAndSendUsbReports(void)
 {
     Trace_Printc("u1");
