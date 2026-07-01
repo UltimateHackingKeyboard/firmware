@@ -23,6 +23,7 @@ extern "C" {
 #include "usb_state.h"
 #include "utils.h"
 #include "test_suite/test_hooks.h"
+#include "usb_state.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -109,15 +110,9 @@ static inline connection_id_t hidConnId(hid_transport_t transport)
 extern "C" void Hid_TransportStateChanged(
     [[maybe_unused]] hid_transport_t transport, [[maybe_unused]] bool enabled)
 {
-#ifdef __ZEPHYR__
-    connection_id_t connId = hidConnId(transport);
-    if (connId == ConnectionId_UsbHidRight) {
-        UsbState_SetUsbTransportUp(enabled);
-    } else {
-        Connections_SetStateAsync( hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
-    }
-#else
     UsbState_SetUsbTransportUp(enabled);
+#ifdef __ZEPHYR__
+    Connections_SetStateAsync(hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
 #endif
 }
 
@@ -172,6 +167,7 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
     UsbScheduler_ReportDelivered(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbState_Delivered();
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -220,6 +216,7 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
     UsbSemaphore_Release(&UsbSemaphore.mouse);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbState_Delivered();
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -265,6 +262,7 @@ extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbSemaphore_Release(&UsbSemaphore.controls);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbState_Delivered();
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif

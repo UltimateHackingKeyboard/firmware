@@ -427,13 +427,7 @@ static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionId
     if (KeyState_DeactivatedNow(keyState)) {
         if (inProgress == keyState && currentTime - startTime < unpairTimeout) {
             inProgress = NULL;
-            uint8_t connId = hostConnectionIdx + ConnectionId_HostConnectionFirst;
-            if (connId == CurrentHostConnectionId && Connections_IsSelectedConnecting()) {
-                // Pressing the key of the host we are already trying to reach cancels the pursuit.
-                HostConnection_Unselect(false);
-            } else {
-                HostConnections_SelectByHostConnIndex(hostConnectionIdx);
-            }
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
         }
     }
 

@@ -12,6 +12,7 @@
 #include "state_sync.h"
 #include "thread_stats.h"
 #include "hid/transport.h"
+#include "usb_state.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "module.h"
@@ -225,6 +226,14 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             return;
     }
+
+#if DEVICE_IS_UHK_DONGLE
+    if (!Connections_IsConnectionAwake(ConnectionId_UsbHidRight)) {
+        // We received a report to relay but our USB host is suspended - ask it
+        // to wake up instead of just failing to deliver.
+        USB_RemoteWakeup();
+    }
+#endif
 
     errno_t ATTR_UNUSED ret = sendDongleReport(propertyId, message);
 

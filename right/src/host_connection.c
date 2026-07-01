@@ -74,21 +74,6 @@ host_connection_t* HostConnection(uint8_t connectionId) {
     return &HostConnections[connectionId - ConnectionId_HostConnectionFirst];
 }
 
-// Give up actively pursuing an explicitly-selected host (e.g. after the select
-// timeout). Clears the explicit-selection protection so the automatic fallback
-// rules apply again; Current itself stays put unless a fallback takes over.
-void HostConnection_Unselect(bool unselectedDueToTimeout) {
-#if DEVICE_HAS_OLED
-    if (unselectedDueToTimeout) {
-        string_segment_t name = WidgetStore_GetHostConnectionName(CurrentHostConnectionId, false);
-        NotifyPrintf("%.*s unavailable", EXPAND_SEGMENT(name));
-    }
-#endif
-
-    Connections_ClearExplicitSelection();
-    BtManager_StartScanningAndAdvertisingAsync(false, "HostConnection_Unselect");
-}
-
 static void selectConnection(uint8_t connectionId) {
     // Explicit user selection: adopt as Current (even if not connected yet).
     Connections_HandleSwitchover(connectionId, true);
@@ -98,7 +83,6 @@ static void selectConnection(uint8_t connectionId) {
     } else {
         printk("Selecting not ready host connection %d\n", connectionId);
         BtConn_ReserveConnections();
-        EventScheduler_Reschedule(Timer_GetCurrentTime() + HOST_CONNECTION_SELECT_TIMEOUT, EventSchedulerEvent_UnselectHostConnection, "Unselect host connection timeout");
     }
     Connections_ReportState(connectionId);
     LastSelectedHostConnectionId = connectionId;

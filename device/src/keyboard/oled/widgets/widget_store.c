@@ -157,7 +157,9 @@ static string_segment_t getTargetText() {
         size_t offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
 
         if (Connections_IsSelectedConnecting()) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " ...");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (not connected)");
+        } else if (!Connections_IsConnectionAwake(CurrentHostConnectionId)) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)");
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };

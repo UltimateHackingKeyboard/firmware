@@ -107,6 +107,7 @@
     bool Connections_IsReady(connection_id_t connectionId);
     bool Connections_IsCurrentHost(connection_id_t connectionId);
     bool Connections_IsSelectedConnecting(void);
+    bool Connections_IsConnectionAwake(connection_id_t connectionId);
 
     void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
     void Connections_ClearExplicitSelection(void);

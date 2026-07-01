@@ -19,6 +19,7 @@
 #include "event_scheduler.h"
 #include "timer.h"
 #include <zephyr/logging/log.h>
+#include "usb_state.h"
 
 LOG_MODULE_REGISTER(Conn, LOG_LEVEL_INF);
 
@@ -520,6 +521,22 @@ void Connections_ClearExplicitSelection(void) {
         // Now that the explicit pursuit is dropped, let the automatic fallback
         // rules run (they will take over if Current is not connected).
         Connections_HandleSwitchover(CurrentHostConnectionId, false);
+    }
+}
+
+bool Connections_IsConnectionAwake(connection_id_t connectionId) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
+        case ConnectionType_NusDongle:
+            return DongleHostAwake;
+        case ConnectionType_UsbHidRight:
+            return DEVICE_IS_UHK80_RIGHT && UsbState_Awake && UsbState_TransportUp;
+        case ConnectionType_UsbHidLeft:
+            return DEVICE_IS_UHK80_LEFT && UsbState_Awake && UsbState_TransportUp;
+        case ConnectionType_Unknown:
+        case ConnectionType_Empty:
+            return false;
+        default:
+            return true;
     }
 }
 

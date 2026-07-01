@@ -59,6 +59,7 @@ sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
+bool DongleHostAwake = true;
 version_t RemoteDongleProtocolVersion = {0, 0, 0};
 
 uint16_t StateSync_LeftResetCounter = 0;
@@ -172,6 +173,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
+    SIMPLE(DongleHostAwake,         SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleHostAwake),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
     SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
@@ -510,6 +512,14 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             DongleScrollMultipliers = *(scroll_multipliers_t*)data;
         }
         break;
+    case StateSyncPropertyId_DongleHostAwake:
+        if (!isLocalUpdate && DEVICE_IS_UHK80_RIGHT) {
+            // DongleHostAwake is a single global reflecting the currently active
+            // (non-standby) dongle's USB host. Refresh the target widget so the
+            // asleep indicator updates.
+            WIDGET_REFRESH(&TargetWidget);
+        }
+        break;
     case StateSyncPropertyId_DongleProtocolVersion:
         if (!isLocalUpdate) {
             RemoteDongleProtocolVersion = *(version_t*)data;
@@ -815,6 +825,7 @@ static bool handlePropertyUpdateDongleToRight() {
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleHostAwake, UpdateResult_UpdatedHighPrio);
 
     return UpdateResult_AllUpToDate;
 }
@@ -967,6 +978,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
+        invalidateProperty(StateSyncPropertyId_DongleHostAwake);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         RemoteDongleProtocolVersion = (version_t){0, 0, 0};
