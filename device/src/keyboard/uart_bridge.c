@@ -8,7 +8,6 @@
 #include "bt_manager.h"
 #include "debug.h"
 #include "connections.h"
-#include "resend.h"
 #include "pin_wiring.h"
 #include "keyboard/uart_link.h"
 #include "shared/uart_parser.h"
@@ -161,7 +160,7 @@ int UartBridge_SendMessage(message_t* msg) {
     UartLink_LockBusy(&uartState->core);
 
     // Call this only after we have taken the semaphore.
-    Resend_RegisterMessageAndUpdateWatermarks(msg);
+    Messenger_UpdateWatermarks(msg);
 
     UartParser_StartMessage(&uartState->parser);
 

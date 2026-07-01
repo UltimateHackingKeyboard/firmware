@@ -29,7 +29,6 @@
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};
     ATTRS void Oled_RequestRedraw() {};
     ATTRS void RoundTripTest_Run() {};
-    ATTRS void Resend_RequestResendSync() {};
     ATTRS void PairingScreen_Feedback(const char* message) {};
     ATTRS void StateSync_CheckFirmwareVersions() {};
     ATTRS void StateSync_CheckDongleProtocolVersion() {};

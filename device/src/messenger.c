@@ -22,7 +22,6 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/status_buffer.h"
 #include "connections.h"
-#include "resend.h"
 #include "debug.h"
 #include "trace.h"
 #include "usb_commands/usb_command_reenumerate.h"
@@ -117,11 +116,6 @@ static connection_id_t determineChannel(device_id_t dst) {
     return ConnectionId_Invalid;
 }
 
-uint16_t Messenger_GetMissedMessages(device_id_t dst) {
-    connection_id_t connId = determineChannel(dst);
-    return Connections[connId].watermarks.missedCount;
-}
-
 static char getDeviceAbbrev(device_id_t src) {
     switch (src) {
         case DeviceId_Uhk80_Left:
@@ -152,9 +146,6 @@ static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
-            break;
-        case MessageId_ResendRequest:
-            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
             break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
@@ -199,9 +190,6 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
-            break;
-        case MessageId_ResendRequest:
-            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -263,9 +251,6 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
-            break;
-        case MessageId_ResendRequest:
-            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -386,34 +371,11 @@ void logAllMessages(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, u
 
 
 bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
-    if (data[offset+MessageOffset_MsgId1] == MessageId_ResendRequest) {
-        return true;
-    }
-
-    uint8_t wm = data[offset+MessageOffset_Wm];
-    uint8_t lastWm = Connections[srcConnectionId].watermarks.rxIdx;
-    uint8_t expectedWm = lastWm + 1;
-
-    if (wm == lastWm) {
-        // we have already received this message, so don't push it into the queue again.
-        return false;
-    }
-
     if (data == MessengerQueue_BlackholeBuffer) {
         return false;
     }
 
-    if (false && wm != expectedWm && DEBUG_MODE) {
-        if (wm != 0) {
-            int8_t difference = wm - expectedWm;
-            LogUSDO("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
-        } else {
-            // they have resetted their connection; that is fine, just update our watermarks
-        }
-        Connections[srcConnectionId].watermarks.missedCount++;
-    }
-
-    Connections[srcConnectionId].watermarks.rxIdx = wm;
+    Connections[srcConnectionId].watermarks.rxIdx = data[offset+MessageOffset_Wm];
 
     return true;
 }
@@ -470,6 +432,10 @@ void Messenger_ProcessQueue() {
 
         rec = MessengerQueue_Take();
     }
+}
+
+void Messenger_UpdateWatermarks(message_t* msg) {
+    msg->wm = Connections[msg->connectionId].watermarks.txIdx++;
 }
 
 int Messenger_SendMessage(message_t* message) {
