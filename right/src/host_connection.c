@@ -92,7 +92,7 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
     selectConnection(connectionId);
 }
 
-static void selectNextConnection(int8_t direction) {
+static void selectNextConnection(int8_t direction, bool activeOnly) {
     for (int8_t i = CurrentHostConnectionId + direction; i != CurrentHostConnectionId; i += direction) {
         if (i > ConnectionId_HostConnectionLast) {
             i = ConnectionId_HostConnectionFirst;
@@ -101,20 +101,39 @@ static void selectNextConnection(int8_t direction) {
             i = ConnectionId_HostConnectionLast;
         }
 
-        if (Connections_IsReady(i)) {
-            LastSelectedHostConnectionId = i;
-            Connections_HandleSwitchover(i, true);
-            break;
+        if (activeOnly) {
+            if (Connections_IsReady(i)) {
+                LastSelectedHostConnectionId = i;
+                Connections_HandleSwitchover(i, true);
+                break;
+            }
+        } else {
+            bool isRegular = i <= ConnectionId_HostConnectionLastRegular;
+            host_connection_t *hostConnection = HostConnection(i);
+            bool isNonEmpty = hostConnection && hostConnection->type != HostConnectionType_Empty;
+
+            if (isRegular && isNonEmpty) {
+                selectConnection(i);
+                break;
+            }
         }
     }
 }
 
 void HostConnections_SelectNextConnection(void) {
-    selectNextConnection(1);
+    selectNextConnection(1, false);
 }
 
 void HostConnections_SelectPreviousConnection(void) {
-    selectNextConnection(-1);
+    selectNextConnection(-1, false);
+}
+
+void HostConnections_SelectNextActiveConnection(void) {
+    selectNextConnection(1, true);
+}
+
+void HostConnections_SelectPreviousActiveConnection(void) {
+    selectNextConnection(-1, true);
 }
 
 void HostConnections_SelectLastConnection(void) {

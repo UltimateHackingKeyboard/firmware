@@ -975,6 +975,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         DongleStandby = false;
+        DongleHostAwake = true;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);

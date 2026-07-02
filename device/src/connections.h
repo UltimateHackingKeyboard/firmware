@@ -31,6 +31,7 @@
     typedef enum {
         ConnectionId_Invalid,
         ConnectionId_HostConnectionFirst,
+        ConnectionId_HostConnectionLastRegular = ConnectionId_HostConnectionFirst + HOST_CONNECTION_COUNT_MAX - 1 - 2,
         ConnectionId_HostConnectionLast = ConnectionId_HostConnectionFirst + HOST_CONNECTION_COUNT_MAX - 1,
         ConnectionId_UsbHidLeft,
         ConnectionId_UsbHidRight, //alias to some host connection

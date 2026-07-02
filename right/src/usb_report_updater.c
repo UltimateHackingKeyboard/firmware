@@ -455,6 +455,12 @@ static void applyConnectionActionPress(connection_action_t command, uint8_t host
         case ConnectionAction_Previous:
             HostConnections_SelectPreviousConnection();
             break;
+        case ConnectionAction_NextActive:
+            HostConnections_SelectNextActiveConnection();
+            break;
+        case ConnectionAction_PreviousActive:
+            HostConnections_SelectPreviousActiveConnection();
+            break;
         case ConnectionAction_LastSelected:
             HostConnections_SelectLastSelectedConnection();
             break;
