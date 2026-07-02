@@ -7,9 +7,16 @@
 #include "timer.h"
 #include "power_mode.h"
 #include "event_scheduler.h"
+#include "logger.h"
+#include "utils.h"
 
 #ifndef __ZEPHYR__
 #include "stubs.h"
+#endif
+
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(UsbSemaphore, LOG_LEVEL_INF);
 #endif
 
 report_send_states_t UsbSemaphore = {
@@ -44,6 +51,10 @@ void UsbSemaphore_Clear(void) {
 }
 
 void UsbSemaphore_Release(report_send_state_t* st) {
+    if (st == &UsbSemaphore.keyboard) {
+        LOG_INF("      '%s' delivered\n", Utils_GetUsbReportString(ActiveKeyboardReport));
+    }
+
     st->switchActiveReport();
     st->retries = 0;
     st->inFlight = false;

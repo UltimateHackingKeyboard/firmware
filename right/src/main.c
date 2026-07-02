@@ -36,6 +36,7 @@
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
+#include "utils.h"
 #include "wormhole.h"
 #include "trace.h"
 #include "trace_reasons.h"
@@ -115,6 +116,7 @@ void CopyRightKeystateMatrix(void)
         }
 
         if (KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
+            LOG_INF("%s %d scan\n", Utils_KeyStateToKeyAbbreviation(Utils_KeyIdToKeyState(targetKeyId)), RightKeyMatrix.keyStates[keyId]);
             KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
             stateChanged = true;
         }
@@ -235,7 +237,7 @@ int main(void)
         sendFirstReport();
 
         Trace_Printc("initialized");
-        LOG_INF("Booted up");
+        LOG_INF("Booted up.\n");
 
         while (1) {
             Trace_Printc("{");

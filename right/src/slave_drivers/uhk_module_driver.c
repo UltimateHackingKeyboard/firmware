@@ -32,7 +32,12 @@
 #include "layouts/key_layout_60_to_universal.h"
 #include "test_switches.h"
 #include "mouse_controller.h"
-#include "logger.h"
+
+
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(UhkModuleDriver, LOG_LEVEL_INF);
+#endif
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -168,6 +173,7 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         }
 
         if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            LOG_INF("%s %d scan\n", Utils_KeyStateToKeyAbbreviation(Utils_KeyIdToKeyState(slotId*64 + targetKeyId)), keyStatesBuffer[keyId]);
             KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
         }

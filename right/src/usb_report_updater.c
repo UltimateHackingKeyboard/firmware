@@ -638,7 +638,13 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
 
     if (PostponerCore_EventsShouldBeQueued() || forcePostponer) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
+        if (forcePostponer) {
+            LOG_INF("  %s %d force queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
+        } else {
+            LOG_INF("  %s %d queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
+        }
     } else {
+        LOG_INF("  %s %d applied\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
         keyState->current = active;
     }
@@ -750,6 +756,14 @@ static void updateActionStates() {
 
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
+
+                if (KeyState_ActivatedNow(keyState)) {
+                    LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 1);
+                }
+                if (KeyState_DeactivatedNow(keyState)) {
+                    LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 0);
+                }
+
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
