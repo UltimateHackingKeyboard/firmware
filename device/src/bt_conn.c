@@ -373,7 +373,7 @@ static void youAreNotWanted(struct bt_conn *conn) {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_REASON_HID_GIVE_US_BREAK);
     } else {
-        LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))", GetPeerStringByConn(conn), SelectedHostConnectionId);
+        LOG_WRN("Refusing connenction %s (slots reserved for current connection (%d))", GetPeerStringByConn(conn), CurrentHostConnectionId);
         safeDisconnect(conn, BT_REASON_TEMPORARY);
     }
     LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
@@ -500,54 +500,31 @@ static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthentic
 static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
 
-    bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
-
     bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
-    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(SelectedHostConnectionId)->bleAddress);
-    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || SelectedHostConnectionId == ConnectionId_Invalid;
+
+    // We only reserve the last free slot when Current is a BLE host we are still
+    // trying to reach; otherwise we accept freely. We never refuse a connection
+    // merely for not being Current - only when slots are actually scarce.
+    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(CurrentHostConnectionId)->bleAddress);
+    // The Current host / slot-reservation concept only exists on the right half.
+    // On the dongle (and left) CurrentHostConnectionId stays at its unused
+    // Disconnected default, so never reserve there - accept freely.
+    bool reserveForCurrent = DEVICE_IS_UHK80_RIGHT && Connections_GetState(CurrentHostConnectionId) == ConnectionState_Disconnected;
+    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !reserveForCurrent;
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
 
-
     if (isHidCollision) {
-    /**
-     * TODO: uncomment and test this code if we want to allow inplace hid switchover initiated by the remote.
-     *       I predict this is not workable due to aggressive connection policies of third parties.
-        if (SelectedHostConnectionId == ConnectionId_Invalid) {
-            host_connection_t *hostConnection = HostConnection(connectionId);
-            bool wantSwitch = hostConnection != NULL && hostConnection->switchover;
-            if (wantSwitch) {
-                disconnectAllHids();
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            if (isSelectedConnection) {
-                disconnectAllHids();
-                return true;
-            } else {
-                return false;
-            }
-        }
-    */
-
         // We can get here during pairing where the connection collides with itself.
         LOG_INF("    Not wanted: this is HID collision");
         return false;
-    } else if (selectedConnectionIsBleHid) {
-        if (!isSelectedConnection) {
-            LOG_INF("    Not wanted: selected connection is BLE HID, this is not it: %d != %d (%d)", SelectedHostConnectionId, connectionId, connectionType);
-        }
-        return isSelectedConnection;
     }
-    else {
-        bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
-        if (!result) {
-            LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (%d != %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
-                SelectedHostConnectionId, connectionId, connectionType, isLeftConnection);
-        }
-        return result;
+
+    bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+    if (!result) {
+        LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (selected %d, this %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
+            CurrentHostConnectionId, connectionId, connectionType, isLeftConnection);
     }
+    return result;
 }
 
 // If last available slot is reserved for a selected connection, refuse other connections
@@ -733,7 +710,7 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 static void authenticatedConnectionFlow(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     // in case we don't have free connection slots and this is not the selected connection, then refuse
     if (!isWanted(conn, true, connectionId, connectionType)) {
-        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection(%d))", connectionId, SelectedHostConnectionId);
+        LOG_WRN("Refusing authenticated connenction %d (slots reserved for connection (%d))", connectionId, CurrentHostConnectionId);
         youAreNotWanted(conn);
         return;
     }
@@ -1011,7 +988,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 
         HostConnection_SetSelectedConnection(connectionId);
 
-        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d", connectionId, SelectedHostConnectionId);
+        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Current conn is %d", connectionId, CurrentHostConnectionId);
 
         // we have to connect from here, because central changes its address *after* setting security
         scheduleBtFlow(conn, BtFlow_AuthenticatedConnection, connectionId, connectionType);
@@ -1188,19 +1165,19 @@ ATTR_UNUSED static void disconnectAllHids() {
 
 void BtConn_ReserveConnections() {
 #if DEVICE_IS_UHK80_RIGHT
-    bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
-    uint8_t hostState = hostSelected ? Connections_GetState(SelectedHostConnectionId) : ConnectionState_Disconnected;
-    bool hostActive = hostSelected && hostState >= ConnectionState_Connected;
-    bool selectionIsSatisfied = !hostSelected || hostActive;
+    // We reserve a slot for the selected host while it is a BLE target we have
+    // not reached yet.
+    bool needToReach = Connections_IsSelectedConnecting();
+    connection_state_t hostState = Connections_GetState(CurrentHostConnectionId);
 
-    if (!selectionIsSatisfied) {
+    if (needToReach) {
         // clear filters and restart advertising
         BtAdvertise_Stop();
 
         BtConn_DisconnectAllUnidentified();
 
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
-        bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
+        bool selectedConnectionIsBleHid = Connections_Type(CurrentHostConnectionId) == ConnectionType_BtHid;
 
         if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
             disconnectAllHids();

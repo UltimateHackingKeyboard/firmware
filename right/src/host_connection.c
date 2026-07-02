@@ -74,43 +74,26 @@ host_connection_t* HostConnection(uint8_t connectionId) {
     return &HostConnections[connectionId - ConnectionId_HostConnectionFirst];
 }
 
-void HostConnection_SetSelectedConnection(uint8_t connectionId) {
-    if (SelectedHostConnectionId != connectionId) {
-        SelectedHostConnectionId = connectionId;
-        WIDGET_REFRESH(&TargetWidget);
-    }
-}
-
-void HostConnection_Unselect(bool unselectedDueToTimeout) {
-#if DEVICE_HAS_OLED
-    if (unselectedDueToTimeout) {
-        string_segment_t name = WidgetStore_GetHostConnectionName(SelectedHostConnectionId, false);
-        NotifyPrintf("%.*s unavailable", EXPAND_SEGMENT(name));
-    }
-#endif
-
-    HostConnection_SetSelectedConnection(ConnectionId_Invalid);
-    BtManager_StartScanningAndAdvertisingAsync(false, "HostConnection_Unselect");
-}
-
 static void selectConnection(uint8_t connectionId) {
+    // Explicit user selection: adopt as Current (even if not connected yet).
+    Connections_HandleSwitchover(connectionId, true);
     if (Connections_IsReady(connectionId)) {
         printk("Selecting ready host connection %d\n", connectionId);
-        Connections_HandleSwitchover(connectionId, true);
-        HostConnection_Unselect(false);
+        BtManager_StartScanningAndAdvertisingAsync(false, "selectConnection");
     } else {
         printk("Selecting not ready host connection %d\n", connectionId);
-        HostConnection_SetSelectedConnection(connectionId);
         BtConn_ReserveConnections();
-        EventScheduler_Reschedule(Timer_GetCurrentTime() + HOST_CONNECTION_SELECT_TIMEOUT, EventSchedulerEvent_UnselectHostConnection, "Unselect host connection timeout");
-
     }
     Connections_ReportState(connectionId);
     LastSelectedHostConnectionId = connectionId;
 }
 
-static void selectNextConnection(int8_t direction) {
-    for (int8_t i = ActiveHostConnectionId + direction; i != ActiveHostConnectionId; i += direction) {
+void HostConnection_SetSelectedConnection(uint8_t connectionId) {
+    selectConnection(connectionId);
+}
+
+static void selectNextConnection(int8_t direction, bool activeOnly) {
+    for (int8_t i = CurrentHostConnectionId + direction; i != CurrentHostConnectionId; i += direction) {
         if (i > ConnectionId_HostConnectionLast) {
             i = ConnectionId_HostConnectionFirst;
         }
@@ -118,27 +101,44 @@ static void selectNextConnection(int8_t direction) {
             i = ConnectionId_HostConnectionLast;
         }
 
-        if (Connections_IsReady(i)) {
-            LastSelectedHostConnectionId = i;
-            Connections_HandleSwitchover(i, true);
-            break;
+        if (activeOnly) {
+            if (Connections_IsReady(i)) {
+                LastSelectedHostConnectionId = i;
+                Connections_HandleSwitchover(i, true);
+                break;
+            }
+        } else {
+            bool isRegular = i <= ConnectionId_HostConnectionLastRegular;
+            host_connection_t *hostConnection = HostConnection(i);
+            bool isNonEmpty = hostConnection && hostConnection->type != HostConnectionType_Empty;
+
+            if (isRegular && isNonEmpty) {
+                selectConnection(i);
+                break;
+            }
         }
     }
-
-    HostConnection_SetSelectedConnection(ConnectionId_Invalid);
 }
 
 void HostConnections_SelectNextConnection(void) {
-    selectNextConnection(1);
+    selectNextConnection(1, false);
 }
 
 void HostConnections_SelectPreviousConnection(void) {
-    selectNextConnection(-1);
+    selectNextConnection(-1, false);
+}
+
+void HostConnections_SelectNextActiveConnection(void) {
+    selectNextConnection(1, true);
+}
+
+void HostConnections_SelectPreviousActiveConnection(void) {
+    selectNextConnection(-1, true);
 }
 
 void HostConnections_SelectLastConnection(void) {
-    if (LastActiveHostConnectionId != ConnectionId_Invalid) {
-        selectConnection(LastActiveHostConnectionId);
+    if (LastHostConnectionId != ConnectionId_Invalid) {
+        selectConnection(LastHostConnectionId);
     }
 }
 
@@ -200,7 +200,7 @@ void HostConnections_ListKnownBleConnections() {
 }
 
 void HostConnections_Reconnect() {
-    connection_id_t connId = ActiveHostConnectionId;
+    connection_id_t connId = CurrentHostConnectionId;
     BtConn_DisconnectOne(connId);
     k_sleep(K_MSEC(100));
     HostConnections_SelectByHostConnIndex(connId - ConnectionId_HostConnectionFirst);

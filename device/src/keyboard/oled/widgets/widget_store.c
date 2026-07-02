@@ -150,18 +150,16 @@ static string_segment_t getTargetText() {
     if ( Macros_DisplayStringsBuffs.host[0] != 0) {
         return (string_segment_t){ .start = Macros_DisplayStringsBuffs.host, .end = NULL };
     } else {
-        bool shortNames = SelectedHostConnectionId != ConnectionId_Invalid;
-        size_t offset = 0;
+        // Current is a single sticky target now (it may be an explicitly
+        // selected host that is not connected yet). Show its name; append an
+        // ellipsis while we are still trying to (re)connect to it.
+        string_segment_t currentConnection = getTargetText_(CurrentHostConnectionId, false);
+        size_t offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
 
-        string_segment_t currentConnection = getTargetText_(ActiveHostConnectionId, shortNames);
-        offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
-
-        if (SelectedHostConnectionId != ConnectionId_Invalid) {
-            string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
-            selectedConnection = getTargetText_(SelectedHostConnectionId, true);
-            if (selectedConnection.start) {
-                snprintf(buffer+offset, sizeof(buffer)-1-offset, " -> %.*s", SegmentLen(selectedConnection), selectedConnection.start);
-            }
+        if (Connections_IsSelectedConnecting()) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (not connected)");
+        } else if (!Connections_IsConnectionAwake(CurrentHostConnectionId)) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)");
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };

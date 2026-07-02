@@ -5,6 +5,7 @@
 #include "wormhole.h"
 #include "stubs.h"
 #include "hid/transport.h"
+#include "usb_state.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -64,10 +65,16 @@ volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
 static bool isSomeoneAwake() {
 #ifdef __ZEPHYR__
-    connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
-    bool someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    bool someoneAwake = false;
+    if (DEVICE_IS_UHK80_LEFT) {
+        connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
+        someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    }
+    if (DEVICE_IS_UHK80_RIGHT) {
+        someoneAwake = Connections_IsConnectionAwake(CurrentHostConnectionId);
+    }
 #else
-    bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
+    bool someoneAwake = UsbState_Awake && UsbState_TransportUp;
 #endif
     return someoneAwake;
 }
@@ -182,7 +189,14 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 }
 
 void PowerMode_WakeHost() {
-    LogUS("Usb_RemoteWakeup\n");
+#if DEVICE_IS_UHK80_RIGHT
+    // A USB remote wakeup only makes sense when our own USB host is the current
+    // connection. For a dongle host, the dongle wakes its own USB host; for BLE
+    // it does not apply.
+    if (Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
+        return;
+    }
+#endif
     USB_RemoteWakeup();
 }
 

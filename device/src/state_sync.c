@@ -59,6 +59,7 @@ sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
 
 scroll_multipliers_t DongleScrollMultipliers = {1, 1};
+bool DongleHostAwake = true;
 version_t RemoteDongleProtocolVersion = {0, 0, 0};
 
 uint16_t StateSync_LeftResetCounter = 0;
@@ -172,6 +173,7 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(SwitchTestMode,          SyncDirection_RightToLeft,        DirtyState_Clean),
     SIMPLE(DongleStandby,           SyncDirection_RightToDongle,      DirtyState_Clean,    &DongleStandby),
     SIMPLE(DongleScrollMultipliers, SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleScrollMultipliers),
+    SIMPLE(DongleHostAwake,         SyncDirection_DongleToRight,      DirtyState_Clean,    &DongleHostAwake),
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
     SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
@@ -331,19 +333,19 @@ void StateSync_CheckFirmwareVersions() {
 }
 
 void StateSync_CheckDongleProtocolVersion() {
-    host_connection_t *hostConnection = HostConnection(ActiveHostConnectionId);
+    host_connection_t *hostConnection = HostConnection(CurrentHostConnectionId);
     if (hostConnection->type == HostConnectionType_Dongle) {
         if (RemoteDongleProtocolVersion.major == 0) {
-            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(ActiveHostConnectionId));
+            LogU("Dongle (%s) protocol version is zero, can't check its version.\n", GetPeerStringByConnId(CurrentHostConnectionId));
         } else if (!VERSIONS_EQUAL(RemoteDongleProtocolVersion, dongleProtocolVersion)) {
             LogUOS("Dongle (%s) and right half run different dongle protocol versions\n  (dongle: %d.%d.%d, right: %d.%d.%d)\n  Please upgrade!\n",
-                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    GetPeerStringByConnId(CurrentHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
         } else {
             LogU("Dongle (%s) and right half run the same dongle protocol version %d.%d.%d\n",
-                    GetPeerStringByConnId(ActiveHostConnectionId),
+                    GetPeerStringByConnId(CurrentHostConnectionId),
                     RemoteDongleProtocolVersion.major, RemoteDongleProtocolVersion.minor, RemoteDongleProtocolVersion.patch,
                     dongleProtocolVersion.major, dongleProtocolVersion.minor, dongleProtocolVersion.patch
                   );
@@ -508,6 +510,14 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_DongleScrollMultipliers:
         if (!isLocalUpdate) {
             DongleScrollMultipliers = *(scroll_multipliers_t*)data;
+        }
+        break;
+    case StateSyncPropertyId_DongleHostAwake:
+        if (!isLocalUpdate && DEVICE_IS_UHK80_RIGHT) {
+            // DongleHostAwake is a single global reflecting the currently active
+            // (non-standby) dongle's USB host. Refresh the target widget so the
+            // asleep indicator updates.
+            WIDGET_REFRESH(&TargetWidget);
         }
         break;
     case StateSyncPropertyId_DongleProtocolVersion:
@@ -815,6 +825,7 @@ static bool handlePropertyUpdateDongleToRight() {
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyboardLedsState, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleScrollMultipliers, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_DongleHostAwake, UpdateResult_UpdatedHighPrio);
 
     return UpdateResult_AllUpToDate;
 }
@@ -860,7 +871,7 @@ static void updateStandbys() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         uint8_t connectionId = Peers[peerId].connectionId;
         if (Connections_Type(connectionId) == ConnectionType_NusDongle) {
-            bool standby = !(ActiveHostConnectionId == connectionId);
+            bool standby = !(CurrentHostConnectionId == connectionId);
             Messenger_Send2Via(DeviceId_Uhk_Dongle, connectionId, MessageId_StateSync, StateSyncPropertyId_DongleStandby, (const uint8_t*)&standby, 1);
         }
     }
@@ -964,9 +975,11 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         DongleStandby = false;
+        DongleHostAwake = true;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
+        invalidateProperty(StateSyncPropertyId_DongleHostAwake);
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         RemoteDongleProtocolVersion = (version_t){0, 0, 0};
