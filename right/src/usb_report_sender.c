@@ -19,6 +19,7 @@
 #include "trace.h"
 #include "utils.h"
 #include "slave_drivers/uhk_module_driver.h"
+#include <errno.h>
 
 #ifdef __ZEPHYR__
 #include "keyboard/input_interceptor.h"
@@ -63,7 +64,7 @@ bool UsbReportSender_ShouldGiveUp(int err, uint8_t* counter) {
         return true;
     }
 
-    if (*counter == 1) {
+    if (*counter == 1 && err != -EBUSY) {
         LOG_WRN("Send try failed, result: %d (%s). Will retry.\n", err, ErrToStr(err));
     }
 

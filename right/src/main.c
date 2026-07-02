@@ -235,7 +235,7 @@ int main(void)
         sendFirstReport();
 
         Trace_Printc("initialized");
-        LOG_INF("Booted up");
+        LOG_INF("Booted up.\n");
 
         while (1) {
             Trace_Printc("{");

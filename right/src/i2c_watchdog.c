@@ -10,6 +10,12 @@
 #include "trace.h"
 #include "slave_protocol.h"
 
+
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(I2cWatchdog, LOG_LEVEL_INF);
+#endif
+
 uint32_t I2cWatchdog_WatchCounter;
 uint32_t I2cWatchdog_RecoveryCounter;
 
@@ -30,6 +36,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
         I2cWatchdog_RecoveryCounter++;
         ReinitI2cMainBus();
+        LOG_ERR("I2C bus unresponsive, reinitializing. Recovery count: %d\n", I2cWatchdog_RecoveryCounter);
     }
 
     prevWatchdogCounter = I2C_Watchdog;
