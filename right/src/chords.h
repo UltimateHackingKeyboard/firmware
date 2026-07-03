@@ -30,6 +30,6 @@ typedef enum {
     ChordResolution_Resolved,
 } chord_resolution_t;
 
-chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction);
+chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, chord_def_t **out_matchedChord);
  
 #endif

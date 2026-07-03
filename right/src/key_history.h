@@ -3,6 +3,7 @@
 
 // Includes:
 
+#include "chords.h"
 #include "key_states.h"
 
 // Macros:
@@ -14,6 +15,7 @@
 // Functions:
 
 void KeyHistory_RecordPress(const key_state_t *keyState);
+void KeyHistory_RecordChordPress(const key_state_t *keyState, const chord_def_t *chord);
 void KeyHistory_RecordRelease(const key_state_t *keyState);
 bool KeyHistory_WasLastDoubletap();
 bool KeyHistory_WasLastMultitap();

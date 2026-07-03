@@ -755,6 +755,8 @@ static void updateActionStates() {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_cached_t *cachedAction;
+            chord_def_t *activatedChord = NULL;
+            uint8_t chordActivationId;
 
             if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
@@ -767,12 +769,16 @@ static void updateActionStates() {
                 uint8_t layerInEffect = Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()
                     ? Postponer_LastKeyLayer : ActiveLayer;
                 chord_resolution_t chordRes = CurrentKeymap[layerInEffect][slotId][keyId].isPartOfChord
-                    ? Chords_Driver(keyState, layerInEffect, &actionCache[slotId][keyId].action) : ChordResolution_Failed;
-                if (chordRes == ChordResolution_Wait) {
+                    ? Chords_Driver(keyState, layerInEffect, &activatedChord) : ChordResolution_Failed;
+                if (chordRes == ChordResolution_Resolved) {
+                    actionCache[slotId][keyId].action = activatedChord->action;
+                    KeyHistory_RecordChordPress(keyState, activatedChord);
+                }
+                else if (chordRes == ChordResolution_Wait) {
                     actionCache[slotId][keyId].action = (key_action_t){.type = KeyActionType_None};
                     EventVector_Set(EventVector_NativeActionsPostponing);
                 }
-                if (chordRes == ChordResolution_Failed && KeyState_ActivatedNow(keyState)) {
+                else if (chordRes == ChordResolution_Failed && KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed
                     actionCache[slotId][keyId].modifierLayerMask = 0;

@@ -12,6 +12,12 @@
 chord_def_t Chords[MAX_CHORDS_COUNT];
 uint8_t ChordCount = 0;
 
+static struct {
+    key_state_t *initialKey;
+    uint32_t pressTime;
+    uint32_t releaseTime;
+} ResolutionState;
+
 static inline void sortKeys(chord_keys_t keys, uint8_t keyCount)
 {
     // Some kind of bubblesort, I dunno
@@ -163,7 +169,7 @@ static bool isPartialOfChord(const chord_def_t *large, chord_keys_t keys, uint8_
     return true;
 }
 
-chord_search_result_t searchForChordAction(key_action_t *outAction, layer_id_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
+chord_search_result_t searchForChordAction(chord_def_t **out_matchedChord, layer_id_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
 {
     sortKeys(keys, keyCount);
 
@@ -179,7 +185,7 @@ chord_search_result_t searchForChordAction(key_action_t *outAction, layer_id_t l
                 if (chordCmp < 0) continue;
                 if (chordCmp == 0) {
                     // We found the longest completed chord so far
-                    *outAction = Chords[i].action;
+                    *out_matchedChord = &Chords[i];
                     //Macros_SetStatusNum(i);
                     //Macros_SetStatusString("Matched!!!\n", NULL);
                     matched = true;
@@ -222,12 +228,6 @@ void Chords_ResetChords() {
     ChordCount = 0;
 }
 
-static struct {
-    key_state_t *initialKey;
-    uint32_t pressTime;
-    uint32_t releaseTime;
-} ResolutionState;
-
 static inline void finishResolution() {
     // Fake activation of the key now.
     ResolutionState.initialKey->current = true;
@@ -236,7 +236,7 @@ static inline void finishResolution() {
     memset((void *)&ResolutionState, 0, sizeof(ResolutionState));
 }
 
-chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, key_action_t *resolvedAction)
+chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, chord_def_t **out_matchedChord)
 {
     uint32_t start = Timer_GetCurrentTimeMicros();
     if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
@@ -263,7 +263,7 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, key_ac
 
     const bool pressIntervalIsOver = ResolutionState.pressTime + Cfg.Chords_Timeout <= Timer_GetCurrentTime();
 
-    chord_search_result_t searchRes = searchForChordAction(resolvedAction, layer, pressedKeys, keyCount, pressIntervalIsOver || hasDuplicate);
+    chord_search_result_t searchRes = searchForChordAction(out_matchedChord, layer, pressedKeys, keyCount, pressIntervalIsOver || hasDuplicate);
 
     if (searchRes & ChordSearch_Partial) {
         EventScheduler_Schedule(ResolutionState.pressTime + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Press Interval");
