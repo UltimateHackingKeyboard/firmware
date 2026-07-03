@@ -7,6 +7,7 @@
 #include "macro_events.h"
 #include "debug.h"
 #include "usb_log_buffer.h"
+#include "timer.h"
 
 
 #ifdef __ZEPHYR__
@@ -64,6 +65,21 @@ void Log(const char *fmt, ...) {
 
     LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
 }
+
+// Hooks injected into the patched c2usb (usb/df/mac_diag.hpp). The log targets
+// the error buffer too, so USB anomalies survive reboot in noinit memory.
+void c2usb_log(const char *fmt, ...) {
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+}
+
+#ifndef __ZEPHYR__
+// on Zephyr the c2usb port provides its own k_uptime-based time source
+uint32_t c2usb_diag_time_ms(void) {
+    return Timer_GetCurrentTime();
+}
+#endif
 
 void LogErr(const char *fmt, ...) {
     EXPAND_STRING(buffer);

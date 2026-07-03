@@ -1,9 +1,9 @@
 manifest:
   remotes:
-    - name: IntergatedCircuits
-      url-base: https://github.com/IntergatedCircuits
+    - name: kareltucek
+      url-base: https://github.com/kareltucek
   projects:
     - name: c2usb
-      remote: IntergatedCircuits
-      revision: c263b00c48047d3845fd76f5938e0644d905de07
+      remote: kareltucek
+      revision: ec7b60c0e552954e36ae91be11fff25323834bfa
       import: true

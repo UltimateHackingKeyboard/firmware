@@ -27,6 +27,9 @@ typedef enum {
     void InitLogLevels();
 #endif
 
+    // logging hook injected into the patched c2usb
+    void c2usb_log(const char *fmt, ...);
+
     void Log(const char *fmt, ...);
     void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...);
     void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer);

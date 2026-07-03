@@ -1,13 +1,17 @@
+#include "logger.h"
 #include "macros/core.h"
 #include "macros/status_buffer.h"
 #include "macros/debug_commands.h"
 #include "macros/key_timing.h"
+#include "str_utils.h"
 #include "utils.h"
 #include "layer_stack.h"
 #include "postponer.h"
 #include "config_parser/parse_macro.h"
 #include "timer.h"
 #include "event_scheduler.h"
+#include "wormhole.h"
+#include "usb_commands/usb_command_reenumerate.h"
 
 #ifdef __ZEPHYR__
 #include "device.h"
@@ -140,30 +144,40 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
     return MacroResult_Finished;
 }
 
-macro_result_t Macros_ProcessDiagnoseCommand()
+// provided by the patched c2usb (usb/df/mac_diag.hpp)
+extern void c2usb_diag_dump(void);
+
+macro_result_t Macros_ProcessDiagnoseCommand(parser_context_t* ctx)
 {
-#if DEVICE_IS_UHK_DONGLE
-    return 0;
-#else
     if (Macros_DryRun) {
+        ConsumeAnyToken(ctx);
+
         return MacroResult_Finished;
     }
-    Macros_ProcessStatsLayerStackCommand();
-    Macros_ProcessStatsActiveKeysCommand();
-    Macros_ProcessStatsPostponerStackCommand();
-    Macros_ProcessStatsActiveMacrosCommand();
-    for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
-        for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
-            key_state_t *keyState = &KeyStates[slotId][keyId];
-            if (keyState != S->ms.currentMacroKey) {
-                keyState->current = 0;
-                keyState->previous = 0;
+
+    if (ConsumeToken(ctx, "usb")) {
+        c2usb_diag_dump();
+        Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
+        StateWormhole.persistStatusBuffer = true;
+        Reboot(false);
+    } else if (ConsumeToken(ctx, "logic")) {
+        Macros_ProcessStatsLayerStackCommand();
+        Macros_ProcessStatsActiveKeysCommand();
+        Macros_ProcessStatsPostponerStackCommand();
+        Macros_ProcessStatsActiveMacrosCommand();
+        for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
+            for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
+                key_state_t *keyState = &KeyStates[slotId][keyId];
+                if (keyState != S->ms.currentMacroKey) {
+                    keyState->current = 0;
+                    keyState->previous = 0;
+                }
             }
         }
+        PostponerExtended_ResetPostponer();
     }
-    PostponerExtended_ResetPostponer();
+
     return MacroResult_Finished;
-#endif
 }
 
 macro_result_t Macros_ProcessStatsRecordKeyTimingCommand()
