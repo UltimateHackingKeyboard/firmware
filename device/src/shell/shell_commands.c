@@ -487,6 +487,15 @@ static int cmd_uhk_listActiveKeys(const struct shell *shell, size_t argc, char *
     return 0;
 }
 
+// provided by the patched c2usb (usb/df/mac_diag.hpp)
+extern void c2usb_diag_dump(void);
+
+static int cmd_uhk_usbDiag(const struct shell *shell, size_t argc, char *argv[])
+{
+    c2usb_diag_dump();
+    return 0;
+}
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -556,6 +565,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
+        SHELL_CMD_ARG(usbDiag, NULL, "dump c2usb state and anomaly log", cmd_uhk_usbDiag, 1, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

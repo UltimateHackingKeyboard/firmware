@@ -343,7 +343,7 @@ int main(void) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
-        if (WormCfg->devMode) {
+        if (WormCfg->devMode || StateWormhole.persistStatusBuffer) {
             MacroStatusBuffer_InitFromWormhole();
         } else {
             MacroStatusBuffer_InitNormal();
