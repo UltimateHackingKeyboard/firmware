@@ -9,13 +9,22 @@
 
 #define MAX_CHORDS_COUNT 64
 
+typedef enum {
+    ChordSearch_Nothing = 0b00, // There is no chord which could match provided data
+    ChordSearch_Partial = 0b01, // There was no exact match, but there were chords eligible with more keys
+    ChordSearch_Exact = 0b10, // There was an exact match and no other potential matches
+    ChordSearch_ExactAndPartial = 0b11, // There was a match, but there are potentially longer chords
+} chord_search_result_t;
+
 chord_def_t Chords[MAX_CHORDS_COUNT];
 uint8_t ChordCount = 0;
 
 static struct {
-    key_state_t *initialKey;
+    const key_state_t *initialKey;
     uint32_t pressTime;
     uint32_t releaseTime;
+    uint8_t unrollingKeysCount;
+    const chord_def_t *unrollingChord;
 } ResolutionState;
 
 static inline void sortKeys(chord_keys_t keys, uint8_t keyCount)
@@ -169,7 +178,7 @@ static bool isPartialOfChord(const chord_def_t *large, chord_keys_t keys, uint8_
     return true;
 }
 
-chord_search_result_t searchForChordAction(chord_def_t **out_matchedChord, layer_id_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
+chord_search_result_t searchForChordAction(const chord_def_t **out_matchedChord, layer_id_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
 {
     sortKeys(keys, keyCount);
 
@@ -228,17 +237,20 @@ void Chords_ResetChords() {
     ChordCount = 0;
 }
 
-static inline void finishResolution() {
-    // Fake activation of the key now.
-    ResolutionState.initialKey->current = true;
-    ResolutionState.initialKey->previous = false;
-    // Then clear the resolution state.
-    memset((void *)&ResolutionState, 0, sizeof(ResolutionState));
-}
-
-chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, chord_def_t **out_matchedChord)
+chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const chord_def_t **out_matchedChord)
 {
-    uint32_t start = Timer_GetCurrentTimeMicros();
+    const uint8_t thisKeyId = Utils_KeyStateToKeyId(keyState);
+    if (KeyState_ActivatedNow(keyState) && ResolutionState.unrollingKeysCount > 0) {
+        --ResolutionState.unrollingKeysCount;
+        *out_matchedChord = ResolutionState.unrollingChord;
+        // Since the chord is unrolling, initial action on the keystroke should already have taken effect on the first key.
+        // We set the chord action, but block the initial effect.  This allows the effect of keys to linger until release.
+        // Except with macros, where we specifically want the initial effect on the last key.
+        if ( !(ResolutionState.unrollingKeysCount == 0 && ResolutionState.unrollingChord->action.type == KeyActionType_PlayMacro) ) {
+            keyState->previous = true;
+        }
+        return ChordResolution_Resolved;
+    }
     if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
         ResolutionState.initialKey = keyState;
         ResolutionState.pressTime = CurrentPostponedTime;
@@ -250,7 +262,7 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, chord_
     chord_keys_t pressedKeys;
     uint8_t keyCount = PostponerQuery_GetPendingKeypresses(pressedKeys + 1, MAX_CHORD_KEYS - 1, ResolutionState.pressTime + Cfg.Chords_Timeout) + 1;
 
-    pressedKeys[0] = Utils_KeyStateToKeyId(keyState);
+    pressedKeys[0] = thisKeyId;
     bool hasDuplicate = PostponerQuery_ContainsKeyId(pressedKeys[0]);
     for (uint8_t i = 1; i < keyCount; ++i) {
         for (uint8_t j = 0; j < i; ++j) {
@@ -270,10 +282,33 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, chord_
         return ChordResolution_Wait;
     }
     
-    finishResolution();
+    memset((void *)&ResolutionState, 0, sizeof(ResolutionState));
+    // Fake activation of the key now.
+    keyState->current = true;
+    keyState->previous = false;
 
     if (searchRes & ChordSearch_Exact) {
-        PostponerExtended_ConsumePendingKeypresses(keyCount - 1, true);
+        if (Cfg.Chords_ApplicationType == ChordApplicationType_LeadingKey) {
+            PostponerExtended_ConsumePendingKeypresses(keyCount - 1);
+        }
+        else if (Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
+            if ((*out_matchedChord)->action.type == KeyActionType_PlayMacro) {
+                // Do not activate on the first key, but rather on the last.
+                // This is to prevent the following issues:
+                //  - activateKeyPostponed with prepend, or consumePending modifying the roll-out
+                //  - the rest of the chord waiting on the queue causing problems with ifSecondary in the macro we run
+                // We are still hypothetically vulnerable to other macros using those commands, but that's highly hypothetical as they would
+                // likely be used while postponeKeys is active, meaning we would not be resolving anyway.
+                keyState->previous = true;
+            }
+            // TODO:
+            //  - Somehow ensure that macro related release detections work with the idea of chord release rather than just the leading key.
+            //      In the macro engine, could grab chord key list from key history on launch, and then perform the existing released check on all
+            //          Costs some RAM to make room for 4 additional keyStates and activationIds in macro engine
+            //          Paves the way for ifChord and chordKey.n commands
+            ResolutionState.unrollingKeysCount = keyCount - 1;
+            ResolutionState.unrollingChord = *out_matchedChord;
+        }
         return ChordResolution_Resolved;
     }
 

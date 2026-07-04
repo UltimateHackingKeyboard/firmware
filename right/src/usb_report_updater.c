@@ -755,7 +755,7 @@ static void updateActionStates() {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_cached_t *cachedAction;
-            chord_def_t *activatedChord = NULL;
+            const chord_def_t *activatedChord = NULL;
             uint8_t chordActivationId;
 
             if(KEYSTATE_KEYINACTIVE(keyState)) {

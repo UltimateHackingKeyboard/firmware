@@ -50,26 +50,28 @@ void KeyHistory_RecordChordPress(const key_state_t *keyState, const chord_def_t 
         lastPress.eventType == HistoryEventType_Chord
         && lastPress.event.chord.chord == chord;
 
-    // There is a chance that the key press is one from the same chord activation
-    // This will be the case if we can see it's the same chord as last, but we haven't seen that key
-    // for that chord for that event.
-    // If so, register the key as pressed as part of this chord
-    bool isSameActivation = isSameChord;
-    for (uint8_t i = 0; isSameActivation && i < MAX_CHORD_KEYS; ++i) {
-        if (lastPress.event.chord.chord_keys[i] == keyState) {
-            isSameActivation = false;
-            break;
+    if (Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
+        // There is a chance that the key press is one from the same chord activation
+        // This will be the case if we can see it's the same chord as last, but we haven't seen that key
+        // for that chord for that event.
+        // If so, register the key as pressed as part of this chord
+        bool isSameActivation = isSameChord;
+        for (uint8_t i = 0; isSameActivation && i < MAX_CHORD_KEYS; ++i) {
+            if (lastPress.event.chord.chord_keys[i] == keyState) {
+                isSameActivation = false;
+                break;
+            }
+            if (lastPress.event.chord.chord_keys[i] == NULL) {
+                break;
+            }
         }
-        if (lastPress.event.chord.chord_keys[i] == NULL) {
-            break;
-        }
-    }
 
-    if (isSameActivation) {
-        uint8_t i = 0;
-        while (lastPress.event.chord.chord_keys[i] != NULL) ++i;
-        lastPress.event.chord.chord_keys[i] = keyState;
-        return;
+        if (isSameActivation) {
+            uint8_t i = 0;
+            while (lastPress.event.chord.chord_keys[i] != NULL) ++i;
+            lastPress.event.chord.chord_keys[i] = keyState;
+            return;
+        }
     }
 
     const bool isMultitap = 

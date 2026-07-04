@@ -1153,6 +1153,19 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(Cfg.Chords_Timeout);    
     }
+    else if (ConsumeToken(ctx, "chordApplication")) {
+        if (ConsumeToken(ctx, "leadingKey")) {
+            DEFINE_NONE_LIMITS();
+            ASSIGN_CUSTOM(int32_t, intVar, Cfg.Chords_ApplicationType, ChordApplicationType_LeadingKey);
+        }
+        else if (ConsumeToken(ctx, "allKeys")) {
+            DEFINE_NONE_LIMITS();
+            ASSIGN_CUSTOM(int32_t, intVar, Cfg.Chords_ApplicationType, ChordApplicationType_AllKeys);
+        }
+        else {
+            Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        }
+    }
     else if (ConsumeToken(ctx, "autoShiftDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.AutoShiftDelay);

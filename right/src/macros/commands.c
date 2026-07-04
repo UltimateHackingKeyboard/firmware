@@ -165,7 +165,7 @@ static macro_result_t writeNum(uint32_t a)
 
     macro_result_t res = Macros_DispatchText(&num[10-len], len, NULL);
     if (res == MacroResult_Finished) {
-        PostponerExtended_ConsumePendingKeypresses(1, true);
+        PostponerExtended_ConsumePendingKeypresses(1);
         return MacroResult_Finished;
     }
     return res;
@@ -1099,7 +1099,7 @@ static macro_result_t processResolveNextKeyIdCommand()
     }
     macro_result_t res = writeNum(PostponerExtended_PendingId(0));
     if (res == MacroResult_Finished) {
-        PostponerExtended_ConsumePendingKeypresses(1, true);
+        PostponerExtended_ConsumePendingKeypresses(1);
         return MacroResult_Finished;
     }
     return res;
@@ -1238,7 +1238,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                 return MacroResult_Sleeping;
             }
             else if (cancelInTimedOut) {
-                PostponerExtended_ConsumePendingKeypresses(numArgs, true);
+                PostponerExtended_ConsumePendingKeypresses(numArgs);
                 S->ms.macroBroken = true;
                 goto conditionFailed;
             }
@@ -1273,7 +1273,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
 matched:
     //all keys match
     if (consume) {
-        PostponerExtended_ConsumePendingKeypresses(numArgs, true);
+        PostponerExtended_ConsumePendingKeypresses(numArgs);
     }
     if (negate) {
         goto conditionFailed;
@@ -1659,7 +1659,7 @@ static macro_result_t processConsumePendingCommand(parser_context_t* ctx)
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    PostponerExtended_ConsumePendingKeypresses(cnt, true);
+    PostponerExtended_ConsumePendingKeypresses(cnt);
     return MacroResult_Finished;
 }
 

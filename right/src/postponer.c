@@ -532,10 +532,10 @@ uint32_t PostponerExtended_LastPressTime()
     return lastPressTime;
 }
 
-void PostponerExtended_ConsumePendingKeypresses(int count, bool suppress)
+void PostponerExtended_ConsumePendingKeypresses(int count)
 {
     for (int i = 0; i < count; i++) {
-        consumeOneKeypress(suppress);
+        consumeOneKeypress();
     }
 }
 

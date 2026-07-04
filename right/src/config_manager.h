@@ -3,6 +3,7 @@
 
 // Includes:
 
+    #include "chords.h"
     #include "key_action.h"
     #include "module.h"
     #include "secondary_role_driver.h"
@@ -93,6 +94,8 @@
         uint16_t AutoShiftDelay;
         uint8_t ChordingDelay;
         uint8_t Chords_Timeout;
+        uint8_t Chords_ApplicationType;
+        
         key_state_t* EmergencyKey;
 
         // bluetooth
