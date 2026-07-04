@@ -756,7 +756,6 @@ static void updateActionStates() {
             key_state_t *keyState = &KeyStates[slotId][keyId];
             key_action_cached_t *cachedAction;
             const chord_def_t *activatedChord = NULL;
-            uint8_t chordActivationId;
 
             if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
@@ -815,8 +814,8 @@ static void updateActionStates() {
                 cachedAction = &actionCache[slotId][keyId];
 
                 Trace_Printc("w3");
-                //apply base-layer holds
-                if (chordRes != ChordResolution_Wait) {
+                //apply base-layer holds, but only if the key is not currenty applying another action
+                if (chordRes != ChordResolution_Wait && cachedAction->action.type == KeyActionType_None) {
                     applyLayerHolds(keyState, &CurrentKeymap[LayerId_Base][slotId][keyId].action);
                 }
                 Trace_Printc("w4");
