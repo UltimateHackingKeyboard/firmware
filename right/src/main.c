@@ -116,7 +116,7 @@ void CopyRightKeystateMatrix(void)
         }
 
         if (KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
-            LOG_INF("%s %d scan\n", Utils_KeyStateToKeyAbbreviation(Utils_KeyIdToKeyState(targetKeyId)), RightKeyMatrix.keyStates[keyId]);
+            DEBUG_KEY_LIFE(LOG_INF("%s %d scan\n", Utils_KeyStateToKeyAbbreviation(Utils_KeyIdToKeyState(targetKeyId)), RightKeyMatrix.keyStates[keyId]));
             KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
             stateChanged = true;
         }
