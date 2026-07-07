@@ -14,13 +14,11 @@ static volatile uint32_t currentTime;
 
 void PIT_TIMER_HANDLER(void)
 {
-    Trace_Printc("<i4");
     currentTime++;
     if (delayLength) {
         --delayLength;
     }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, kPIT_TimerFlag);
-    Trace_Printc(">");
     SDK_ISR_EXIT_BARRIER;
 }
 

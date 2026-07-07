@@ -30,7 +30,6 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
         return;
     }
 
-    Trace_Printc("<i5");
     I2cWatchdog_WatchCounter++;
 
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
@@ -42,7 +41,6 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
     prevWatchdogCounter = I2C_Watchdog;
     PIT_ClearStatusFlags(PIT, PIT_I2C_WATCHDOG_CHANNEL, PIT_TFLG_TIF_MASK);
 	TestLed_Toggle();
-    Trace_Printc(">");
     SDK_ISR_EXIT_BARRIER;
 }
 
