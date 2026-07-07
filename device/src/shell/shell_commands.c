@@ -31,6 +31,7 @@
 #include "utils.h"
 #include "postponer.h"
 #include "jitter_test.h"
+#include "event_scheduler.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
 #include <string.h>
@@ -366,6 +367,17 @@ static int cmd_uhk_mouseMultipliers(const struct shell *shell, size_t argc, char
     return 0;
 }
 
+static int cmd_uhk_reportEventVector(const struct shell *shell, size_t argc, char *argv[]) {
+    int err = 0;
+    uint32_t mask = shell_strtoul(argv[1], 0, &err);
+    if (err) {
+        shell_error(shell, "invalid EventVector value: %s", argv[1]);
+        return -EINVAL;
+    }
+    EventVector_ReportMask("EventVector: ", mask);
+    return 0;
+}
+
 static int cmd_uhk_logPriority(const struct shell *shell, size_t argc, char *argv[])
 {
 
@@ -566,6 +578,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
         SHELL_CMD_ARG(usbDiag, NULL, "dump c2usb state and anomaly log", cmd_uhk_usbDiag, 1, 0),
+        SHELL_CMD_ARG(reportEventVector, NULL, "decode an EventVector mask value", cmd_uhk_reportEventVector, 2, 0),
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);
