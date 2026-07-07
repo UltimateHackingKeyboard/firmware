@@ -278,7 +278,6 @@ const config_t DefaultCfg = (config_t){
         .I2cBaudRate = I2C_MAIN_BUS_NORMAL_BAUD_RATE,
 #endif
         .Bt_Enabled = true,
-        .Bt_AllowUnsecuredConnections = false,
         .Bt_MaxPeripheralConnections = 3,
         .Bt_MinAdvertisingDelay = 250,
         .Bt_AlwaysAdvertiseHid = true,

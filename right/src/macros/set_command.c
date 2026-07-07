@@ -360,16 +360,6 @@ static macro_variable_t secondaryRoles(parser_context_t* ctx, set_command_action
     return noneVar();
 }
 
-static macro_variable_t allowUnsecuredConnections(parser_context_t* ctx, set_command_action_t action)
-{
-    ASSIGN_BOOL(Cfg.Bt_AllowUnsecuredConnections);
-    if (Cfg.Bt_AllowUnsecuredConnections) {
-        Macros_PrintfWithPos(ctx, "Warning: insecure connections were allowed. This may allow eavesdropping on your keyboard input!");
-    }
-
-    return noneVar();
-}
-
 static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t action)
 {
     if (ConsumeToken(ctx, "enabled")) {
@@ -378,8 +368,6 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
 #if DEVICE_IS_UHK80_RIGHT
         Bt_SetEnabled(newBtEnabled);
 #endif
-    } else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
-        return allowUnsecuredConnections(ctx, action);
     } else if (ConsumeToken(ctx, "peripheralConnectionCount")) {
 #ifdef __ZEPHYR__
         DEFINE_INT_LIMITS(1, PERIPHERAL_CONNECTION_COUNT);
@@ -1098,9 +1086,6 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "autoShiftDelay")) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.AutoShiftDelay);
-    }
-    else if (ConsumeToken(ctx, "allowUnsecuredConnections")) {
-        return allowUnsecuredConnections(ctx, action);
     }
     else if (ConsumeToken(ctx, "uiStyle")) {
         return uiStyle(ctx, action);

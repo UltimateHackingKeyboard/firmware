@@ -317,7 +317,6 @@ COMMAND = set emergencyKey KEYID
 COMMAND = validateMacros
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
-COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
@@ -365,6 +364,7 @@ COMMAND = setCompensateDiagonalSpeed {0|1}
 COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
 COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
 COMMAND = setEmergencyKey KEYID
+COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 ```
 
 ### Uncategorized commands
