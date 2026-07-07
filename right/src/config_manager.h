@@ -93,6 +93,7 @@
         uint16_t AutoShiftDelay;
         uint8_t ChordingDelay;
         key_state_t* EmergencyKey;
+        uint8_t RecoveryKey;
 
         // bluetooth
         bool Bt_AllowUnsecuredConnections;

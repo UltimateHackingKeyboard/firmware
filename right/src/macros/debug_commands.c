@@ -147,6 +147,15 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
 // provided by the patched c2usb (usb/df/mac_diag.hpp)
 extern void c2usb_diag_dump(void);
 
+void Macros_RecoverDiagnostics(void)
+{
+    Macros_ProcessClearStatusCommand(true);
+    c2usb_diag_dump();
+    Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
+    StateWormhole.persistStatusBuffer = true;
+    Reboot(false);
+}
+
 macro_result_t Macros_ProcessDiagnoseCommand(parser_context_t* ctx)
 {
     if (Macros_DryRun) {
@@ -156,10 +165,7 @@ macro_result_t Macros_ProcessDiagnoseCommand(parser_context_t* ctx)
     }
 
     if (ConsumeToken(ctx, "usb")) {
-        c2usb_diag_dump();
-        Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
-        StateWormhole.persistStatusBuffer = true;
-        Reboot(false);
+        Macros_RecoverDiagnostics();
     } else if (ConsumeToken(ctx, "logic")) {
         Macros_ProcessStatsLayerStackCommand();
         Macros_ProcessStatsActiveKeysCommand();

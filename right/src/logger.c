@@ -8,6 +8,7 @@
 #include "debug.h"
 #include "usb_log_buffer.h"
 #include "timer.h"
+#include "utils.h"
 
 
 #ifdef __ZEPHYR__
@@ -35,7 +36,7 @@
 #define RED "\033[1m\033[31m"
 #define UNCOLOR "\033[0m"
 
-#define MAX_LOG_LENGTH 256
+#define MAX_LOG_LENGTH 80
 
 #define EXPAND_STRING(BUFFER)  \
 char BUFFER[MAX_LOG_LENGTH]; \
@@ -69,9 +70,11 @@ void Log(const char *fmt, ...) {
 // Hooks injected into the patched c2usb (usb/df/mac_diag.hpp). The log targets
 // the error buffer too, so USB anomalies survive reboot in noinit memory.
 void c2usb_log(const char *fmt, ...) {
+    REENTRANCY_GUARD_BEGIN;
     EXPAND_STRING(buffer);
 
     LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+    REENTRANCY_GUARD_END;
 }
 
 #ifndef __ZEPHYR__
@@ -171,7 +174,7 @@ void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffe
         }
 #endif
         if (logMask & LogTarget_ErrorBuffer) {
-            Macros_PrintfWithPos(NULL, "%s", buffer);
+            Macros_PrintConstant(buffer);
         }
     } else {
 #ifdef __ZEPHYR__

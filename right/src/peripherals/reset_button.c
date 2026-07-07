@@ -8,9 +8,12 @@
 #include "trace.h"
 #include "config_manager.h"
 #include "macros/status_buffer.h"
+#include "macros/debug_commands.h"
 
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
+    Macros_RecoverDiagnostics();
+
     if (Cfg.DevMode) {
         Macros_ReportErrorPrintf(NULL, "Uptime: %d. Rebooting because reset button got activated. Reporting as a crash because dev mode is on.", Timer_GetCurrentTime());
         StateWormhole.wasReboot = false;

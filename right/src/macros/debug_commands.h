@@ -26,4 +26,6 @@
     macro_result_t Macros_ProcessStatsRuntimeCommand();
     macro_result_t Macros_ProcessStatsBatteryCommand();
 
+    void Macros_RecoverDiagnostics(void);
+
 #endif

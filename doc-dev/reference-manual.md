@@ -314,6 +314,7 @@ COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set emergencyKey KEYID
+COMMAND = set recoveryKey KEYID
 COMMAND = validateMacros
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
@@ -468,6 +469,7 @@ COMMAND = setEmergencyKey KEYID
 - `statsRecordKeyTiming` will write timing information of pressed and released keys into status buffer until invoked again.
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
 - `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
+- `set recoveryKey KEYID` designates a key that is handled directly in the right half's key scanner. When pressed, it dumps USB diagnostics and reboots the keyboard, so it works even when the main event loop is stuck. The key has to be bound in the right half; 255 (default) disables it.
 
 ### Delays
 

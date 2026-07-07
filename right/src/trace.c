@@ -1,9 +1,11 @@
 #include "trace.h"
 #include <string.h>
 #include "macros/status_buffer.h"
+#include "timer.h"
 #include "trace_reasons.h"
 #include "logger.h"
 #include "versioning.h"
+#include "user_logic.h"
 
 #include "device.h"
 
@@ -41,8 +43,10 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
         targetInterface = LogTarget_Uart | additionalLogTargets;
     }
 
+    uint32_t lastMain = Timer_GetCurrentTime() - UserLogic_LastEventloopTime;
+
     LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);
-    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s, Time: %d\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag, currentTime);
+    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s, Uptime: %d ms, Last main: %d ms ago\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag, currentTime, lastMain);
 
 #ifndef __ZEPHYR__
     Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);
