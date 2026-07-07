@@ -158,6 +158,7 @@ void LogUSDO(const char *fmt, ...) {
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
+    REENTRANCY_GUARD_BEGIN;
     if (DEVICE_IS_UHK60 || DEVICE_ID == deviceId) {
 #if DEVICE_HAS_OLED
         if (logMask & LogTarget_Oled) {
@@ -185,6 +186,7 @@ void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffe
         }
 #endif
     }
+    REENTRANCY_GUARD_END;
 }
 
 void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...) {
