@@ -91,6 +91,15 @@ static string_segment_t getDebugLineText() {
 #undef BUFFER_LENGTH
 }
 
+static string_segment_t getSlotText(uint8_t connId, bool empty) {
+#define UNREGISTERED_BLE_HID_TEXT "Ble slot %d"
+#define EMPTY_BLE_HID_TEXT "Empty slot %d"
+    static char buffer[] = EMPTY_BLE_HID_TEXT;
+    const char* fmt = empty ? EMPTY_BLE_HID_TEXT : UNREGISTERED_BLE_HID_TEXT;
+    snprintf(buffer, sizeof(buffer), fmt, connId - ConnectionId_HostConnectionFirst + 1);
+    return (string_segment_t){ .start = buffer, .end = NULL };
+}
+
 static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
     switch (connId) {
         case ConnectionId_UsbHidRight:
@@ -106,19 +115,14 @@ static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
             }
 
             if (SegmentLen(hostConnection->name) > 0) {
-                if (hostConnection->type == HostConnectionType_UnregisteredBtHid) {
-                    #define UNREGISTERED_BLE_HID_TEXT_SHORT "Ble slot %d"
-                    #define UNREGISTERED_BLE_HID_TEXT "Bluetooth device, slot %d"
-                    static char buffer[] = UNREGISTERED_BLE_HID_TEXT;
-                    const char* fmt = shortVersion ? UNREGISTERED_BLE_HID_TEXT_SHORT : UNREGISTERED_BLE_HID_TEXT;
-                    snprintf(buffer, sizeof(buffer), fmt, connId - ConnectionId_HostConnectionFirst + 1);
-                    return (string_segment_t){ .start = buffer, .end = NULL };
-                } else {
-                    return hostConnection->name;
-                }
+                return hostConnection->name;
             }
 
             switch(hostConnection->type) {
+                case HostConnectionType_UnregisteredBtHid:
+                    return getSlotText(connId, false);
+                case HostConnectionType_Empty:
+                    return getSlotText(connId, true);
                 case HostConnectionType_UsbHidRight:
                     return (string_segment_t){ .start = "USB Cable", .end = NULL };
                 case HostConnectionType_UsbHidLeft:
@@ -129,7 +133,6 @@ static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
                     return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
                 default:
                     return (string_segment_t){ .start = "Unknown", .end = NULL };
-
             }
         }
         case ConnectionId_Invalid:

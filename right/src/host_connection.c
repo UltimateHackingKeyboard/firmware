@@ -77,11 +77,7 @@ host_connection_t* HostConnection(uint8_t connectionId) {
 static void selectConnection(uint8_t connectionId) {
     // Explicit user selection: adopt as Current (even if not connected yet).
     Connections_HandleSwitchover(connectionId, true);
-    if (Connections_IsReady(connectionId)) {
-        printk("Selecting ready host connection %d\n", connectionId);
-        BtManager_StartScanningAndAdvertisingAsync(false, "selectConnection");
-    } else {
-        printk("Selecting not ready host connection %d\n", connectionId);
+    if (!Connections_IsReady(connectionId)) {
         BtConn_ReserveConnections();
     }
     Connections_ReportState(connectionId);
@@ -168,13 +164,7 @@ void HostConnections_SelectByName(parser_context_t* ctx) {
 
 void HostConnections_SelectByHostConnIndex(uint8_t hostConnIndex) {
     uint8_t connId = ConnectionId_HostConnectionFirst + hostConnIndex;
-    host_connection_t *hostConnection = HostConnection(connId);
-    if (hostConnection && hostConnection->type != HostConnectionType_Empty) {
-        selectConnection(connId);
-    } else {
-        LogU("Invalid host connection index: %d. Ignoring!\n", hostConnIndex);
-        NotifyPrintf("Unassigned slot: %d.", hostConnIndex + 1);
-    }
+    selectConnection(connId);
 }
 
 void HostConnections_ListKnownBleConnections() {

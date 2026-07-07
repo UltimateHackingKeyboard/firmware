@@ -20,6 +20,7 @@
 #include "timer.h"
 #include <zephyr/logging/log.h>
 #include "usb_state.h"
+#include "bt_manager.h"
 
 LOG_MODULE_REGISTER(Conn, LOG_LEVEL_INF);
 
@@ -431,11 +432,12 @@ bool Connections_IsSelectedConnecting(void) {
         return false;
     }
     switch (Connections_Type(CurrentHostConnectionId)) {
+        case ConnectionType_BtHid:
+        case ConnectionType_NusDongle:
         case ConnectionType_Empty:
-        case ConnectionType_Unknown:
-            return false;
-        default:
             return true;
+        default:
+            return false;
     }
 }
 
@@ -485,6 +487,7 @@ static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
 
     Hid_UpdateKeyboardLedsState();
     WIDGET_REFRESH(&TargetWidget);
+    BtManager_StartScanningAndAdvertisingAsync(false, "switchover");
 }
 
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
