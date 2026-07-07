@@ -243,7 +243,6 @@ int main(void)
         LOG_INF("Booted up.\n");
 
         while (1) {
-            Trace_Printc("{");
             if (TestHooks_Active) {
                 TestHooks_Tick();
             } else {
@@ -265,7 +264,6 @@ int main(void)
 
             UserLogic_LastEventloopTime = Timer_GetCurrentTime();
 
-            Trace_Printc("}");
             __WFI();
         }
     }
