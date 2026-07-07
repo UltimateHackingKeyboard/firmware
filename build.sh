@@ -27,6 +27,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
     uart          open uhk shell
     switchMcux    switch to UHK60 build environment
     switchZephyr  switch to UHK80 build environment
+    status        print current branch and west workspace (zephyr/mcux)
 
     Optionally run with "--dev-id 123" to select device for flashing.
 
@@ -82,7 +83,7 @@ function processArguments() {
                 TARGET_TMUX_SESSION=$BUILD_SESSION_NAME
                 shift
                 ;;
-            switchMcux|switchZephyr)
+            switchMcux|switchZephyr|status)
                 SINGLEPLEXED_ACTIONS="$SINGLEPLEXED_ACTIONS $1"
                 shift
                 ;;
@@ -384,6 +385,20 @@ function performAction() {
             west init -l "$ROOT" --mf west_nrfsdk.yml
             west config --local build.cmake-args -- "-Wno-dev"
             upgradeEnv
+            ;;
+        status)
+            echo "branch: `git rev-parse --abbrev-ref HEAD`"
+            case `west config manifest.file` in
+                west_nrfsdk.yml)
+                    echo "workspace: zephyr"
+                    ;;
+                west_mcuxsdk.yml)
+                    echo "workspace: mcux"
+                    ;;
+                *)
+                    echo "workspace: unknown (`west config manifest.file`)"
+                    ;;
+            esac
             ;;
         switchMcux)
             west config manifest.file west_mcuxsdk.yml
