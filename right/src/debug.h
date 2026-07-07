@@ -27,7 +27,7 @@
 
 #define DEBUG_BLE_LATENCY_STATS false
 
-#define DEBUG_KEY_LIFE(ARG) ARG
+#define DEBUG_KEY_LIFE(ARG)
 
 #ifdef __ZEPHYR__
     #include "logger.h"
