@@ -36,15 +36,15 @@
 #define RED "\033[1m\033[31m"
 #define UNCOLOR "\033[0m"
 
-#define MAX_LOG_LENGTH 80
+#define MAX_LOG_LENGTH 128
 
 #define EXPAND_STRING(BUFFER)  \
 char BUFFER[MAX_LOG_LENGTH]; \
 { \
     va_list myargs; \
     va_start(myargs, fmt); \
+    vsnprintf(BUFFER, MAX_LOG_LENGTH, fmt, myargs); \
     BUFFER[MAX_LOG_LENGTH-1] = '\0'; \
-    vsnprintf(BUFFER, MAX_LOG_LENGTH-1, fmt, myargs); \
 }
 
 void Uart_LogConstant(const char* buffer) {
