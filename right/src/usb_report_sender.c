@@ -311,13 +311,6 @@ void UsbReportSender_UpdateAndSendUsbReports(void)
     bool sendingNew = EventVector_IsSet(EventVector_SendUsbReports);
 
     if (resending || sendingNew) {
-        if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
-            Trace_Printf("y1.%d", CurrentPowerMode);
-            PowerMode_WakeHost();
-            PowerMode_ActivateMode(PowerMode_Awake, false, true, "key action wakeup");
-            Trace_Printc("y4");
-        }
-
         if (CurrentPowerMode < PowerMode_Lock) {
             if (!resending) {
                 Trace_Printc("u3");
