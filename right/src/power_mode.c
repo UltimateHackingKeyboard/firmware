@@ -188,18 +188,6 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
     }
 }
 
-void PowerMode_WakeHost() {
-#if DEVICE_IS_UHK80_RIGHT
-    // A USB remote wakeup only makes sense when our own USB host is the current
-    // connection. For a dongle host, the dongle wakes its own USB host; for BLE
-    // it does not apply.
-    if (Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
-        return;
-    }
-#endif
-    USB_RemoteWakeup();
-}
-
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
     StateWormhole_Open();

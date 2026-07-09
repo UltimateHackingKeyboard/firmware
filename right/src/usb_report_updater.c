@@ -759,10 +759,7 @@ static void updateActionStates() {
                     KeyHistory_RecordPress(keyState);
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
-                        Trace_Printf("y1.%d", CurrentPowerMode);
-                        PowerMode_WakeHost();
                         PowerMode_ActivateMode(PowerMode_Awake, false, true, "key action wakeup");
-                        Trace_Printc("y4");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {

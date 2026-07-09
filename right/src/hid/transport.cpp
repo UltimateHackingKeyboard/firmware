@@ -94,6 +94,15 @@ static report_sink_t determineSink()
 #endif
 }
 
+static void wakeUsbHostIfNeeded()
+{
+    if (!UsbState_Awake) {
+        Trace_Printf("y1.%d", CurrentPowerMode);
+        USB_RemoteWakeup();
+        Trace_Printc("y4");
+    }
+}
+
 #ifdef __ZEPHYR__
 static inline connection_id_t hidConnId(hid_transport_t transport)
 {
@@ -127,6 +136,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     }
     switch (sink) {
     case ReportSink_Usb:
+        wakeUsbHostIfNeeded();
         err = keyboard_app::usb_handle().send_report(*report);
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -181,6 +191,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     errno_t err;
     switch (sink) {
     case ReportSink_Usb:
+        wakeUsbHostIfNeeded();
         err = mouse_app::usb_handle().send_report(*report);
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -230,6 +241,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     errno_t err;
     switch (sink) {
     case ReportSink_Usb:
+        wakeUsbHostIfNeeded();
         err = controls_app::usb_handle().send_report(*report);
         break;
 #if DEVICE_IS_UHK80_RIGHT
