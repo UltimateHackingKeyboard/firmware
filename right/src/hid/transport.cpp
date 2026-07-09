@@ -177,7 +177,9 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
     UsbScheduler_ReportDelivered(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
-    UsbState_Delivered();
+    if (transport == HID_TRANSPORT_USB) {
+        UsbState_Delivered();
+    }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -227,7 +229,9 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
     UsbSemaphore_Release(&UsbSemaphore.mouse);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
-    UsbState_Delivered();
+    if (transport == HID_TRANSPORT_USB) {
+        UsbState_Delivered();
+    }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -274,7 +278,9 @@ extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbSemaphore_Release(&UsbSemaphore.controls);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
-    UsbState_Delivered();
+    if (transport == HID_TRANSPORT_USB) {
+        UsbState_Delivered();
+    }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif

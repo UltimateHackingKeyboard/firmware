@@ -59,7 +59,3 @@ void UsbState_Delivered(void) {
         recalculateConnectionState();
     }
 }
-
-bool UsbState_IsHostAwake(void) {
-    return UsbState_Awake;
-}

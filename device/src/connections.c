@@ -173,6 +173,10 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
         } else {
             DeviceState_Update(Connections_Target(connectionId));
         }
+
+        if (connectionId == CurrentHostConnectionId) {
+            WIDGET_REFRESH(&TargetWidget);
+        }
     }
 }
 

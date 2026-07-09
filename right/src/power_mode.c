@@ -60,7 +60,7 @@ static uint32_t lastWakeEvent = 0;
 
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
-#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10*1000
+#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 5*1000
 
 
 static bool isSomeoneAwake() {
