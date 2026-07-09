@@ -75,6 +75,8 @@ static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 uint32_t UsbReportUpdater_LastActivityTime;
 uint32_t UsbReportUpdater_LastMouseActivityTime;
 
+key_life_times_t KeyLifeTimes;
+
 
 
 
@@ -638,15 +640,13 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
 
     if (PostponerCore_EventsShouldBeQueued() || forcePostponer) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
-        if (DEBUG_KEY_LIFE_ENABLED) {
-            if (forcePostponer) {
-                LOG_INF("  %s %d force queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
-            } else {
-                LOG_INF("  %s %d queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
-            }
+        if (forcePostponer) {
+            DEBUG_KEY_LIFE(forceQueued);
+        } else {
+            DEBUG_KEY_LIFE(queued);
         }
     } else {
-        DEBUG_KEY_LIFE(LOG_INF("  %s %d applied\n", Utils_KeyStateToKeyAbbreviation(keyState), active));
+        DEBUG_KEY_LIFE(applied);
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
         keyState->current = active;
     }
@@ -759,13 +759,8 @@ static void updateActionStates() {
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
 
-                if (DEBUG_KEY_LIFE_ENABLED) {
-                    if (KeyState_ActivatedNow(keyState)) {
-                        LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 1);
-                    }
-                    if (KeyState_DeactivatedNow(keyState)) {
-                        LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 0);
-                    }
+                if (KeyState_ActivatedNow(keyState) || KeyState_DeactivatedNow(keyState)) {
+                    DEBUG_KEY_LIFE(action);
                 }
 
                 if (KeyState_ActivatedNow(keyState)) {

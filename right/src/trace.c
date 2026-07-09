@@ -50,7 +50,7 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     LogTo(targetDeviceId, targetInterface, "Uptime: %d ms, Last main: %d ms ago\n", currentTime, lastMain);
 
 #ifndef __ZEPHYR__
-    Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);
+    // Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);
 #endif
 
     LogTo(targetDeviceId, targetInterface, "Trace:\n");

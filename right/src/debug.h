@@ -28,11 +28,26 @@
 
 #define DEBUG_BLE_LATENCY_STATS false
 
+#include <stdint.h>
+#include "timer.h"
+
+// Last-seen timestamps of the key event pipeline stages; printed by Hid_DumpTransportState.
+typedef struct {
+    uint32_t scan;
+    uint32_t queued;
+    uint32_t forceQueued;
+    uint32_t applied;
+    uint32_t action;
+    uint32_t delivered;
+} key_life_times_t;
+
+extern key_life_times_t KeyLifeTimes;
+
 #define DEBUG_KEY_LIFE_ENABLED true
 #if DEBUG_KEY_LIFE_ENABLED
-#define DEBUG_KEY_LIFE(ARG) ARG
+#define DEBUG_KEY_LIFE(STAGE) (KeyLifeTimes.STAGE = Timer_GetCurrentTime())
 #else
-#define DEBUG_KEY_LIFE(ARG)
+#define DEBUG_KEY_LIFE(STAGE)
 #endif
 
 #ifdef __ZEPHYR__

@@ -61,6 +61,10 @@ extern "C" void Hid_DumpTransportState(void)
         (int)command_app::usb_handle().has_transport());
     c2usb_log("  powerMode=%d usbUp=%d usbAwake=%d\n",
         (int)CurrentPowerMode, (int)UsbState_IsTransportUp(), (int)UsbState_IsAwake());
+    uint32_t now = Timer_GetCurrentTime();
+    c2usb_log("  key life (ms ago): scan=%u queued=%u/forceQueued=%u/applied=%u action=%u delivered=%u\n",
+        now - KeyLifeTimes.scan, now - KeyLifeTimes.queued, now - KeyLifeTimes.forceQueued,
+        now - KeyLifeTimes.applied, now - KeyLifeTimes.action, now - KeyLifeTimes.delivered);
     c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d givenUp=%d\n",
         (int)UsbSemaphore.keyboard.inFlight, (int)UsbSemaphore.keyboard.retries, (int)UsbSemaphore.keyboard.needsResending,
         (int)UsbSemaphore.controls.inFlight, (int)UsbSemaphore.controls.retries, (int)UsbSemaphore.controls.needsResending,

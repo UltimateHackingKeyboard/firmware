@@ -173,7 +173,7 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         }
 
         if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
-            DEBUG_KEY_LIFE(LOG_INF("%s %d scan\n", Utils_KeyStateToKeyAbbreviation(Utils_KeyIdToKeyState(slotId*64 + targetKeyId)), keyStatesBuffer[keyId]));
+            DEBUG_KEY_LIFE(scan);
             KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
         }
