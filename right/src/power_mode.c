@@ -182,7 +182,6 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 }
 
 void PowerMode_WakeHost() {
-    LogUS("Usb_RemoteWakeup\n");
     USB_RemoteWakeup();
 }
 
