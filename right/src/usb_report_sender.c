@@ -159,7 +159,7 @@ static void sendActiveReports(bool resending) {
 
             KEY_TIMING(KeyTiming_RecordReport(ActiveKeyboardReport));
 
-            if (RuntimeMacroRecordingBlind || (CurrentPowerMode != PowerMode_Awake)) {
+            if (RuntimeMacroRecordingBlind) {
                 //just switch reports without sending the report
                 UsbReportUpdater_SwitchActiveKeyboardReport();
             } else {
@@ -197,8 +197,7 @@ static void sendActiveReports(bool resending) {
         usbReportsChangedByAnything = true;
     }
 
-    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending) &&
-        (CurrentPowerMode == PowerMode_Awake)) {
+    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
         bool usbMouseButtonsChanged = mouseButtonsChanged();
 
         UsbSemaphore.mouse.inFlight = true;
