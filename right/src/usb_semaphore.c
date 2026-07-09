@@ -51,8 +51,8 @@ void UsbSemaphore_Clear(void) {
 }
 
 void UsbSemaphore_Release(report_send_state_t* st) {
-    if (st == &UsbSemaphore.keyboard) {
-        DEBUG_KEY_LIFE(LOG_INF("      '%s' delivered\n", Utils_GetUsbReportString(ActiveKeyboardReport)));
+    if (DEBUG_KEY_LIFE_ENABLED && st == &UsbSemaphore.keyboard) {
+        LOG_INF("      '%s' delivered\n", Utils_GetUsbReportString(ActiveKeyboardReport));
     }
 
     st->switchActiveReport();

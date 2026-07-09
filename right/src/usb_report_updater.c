@@ -638,10 +638,12 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
 
     if (PostponerCore_EventsShouldBeQueued() || forcePostponer) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
-        if (forcePostponer) {
-            DEBUG_KEY_LIFE(LOG_INF("  %s %d force queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active));
-        } else {
-            DEBUG_KEY_LIFE(LOG_INF("  %s %d queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active));
+        if (DEBUG_KEY_LIFE_ENABLED) {
+            if (forcePostponer) {
+                LOG_INF("  %s %d force queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
+            } else {
+                LOG_INF("  %s %d queued\n", Utils_KeyStateToKeyAbbreviation(keyState), active);
+            }
         }
     } else {
         DEBUG_KEY_LIFE(LOG_INF("  %s %d applied\n", Utils_KeyStateToKeyAbbreviation(keyState), active));
@@ -757,11 +759,13 @@ static void updateActionStates() {
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
 
-                if (KeyState_ActivatedNow(keyState)) {
-                    DEBUG_KEY_LIFE(LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 1));
-                }
-                if (KeyState_DeactivatedNow(keyState)) {
-                    DEBUG_KEY_LIFE(LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 0));
+                if (DEBUG_KEY_LIFE_ENABLED) {
+                    if (KeyState_ActivatedNow(keyState)) {
+                        LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 1);
+                    }
+                    if (KeyState_DeactivatedNow(keyState)) {
+                        LOG_INF("    %s %d action\n", Utils_KeyStateToKeyAbbreviation(keyState), 0);
+                    }
                 }
 
                 if (KeyState_ActivatedNow(keyState)) {

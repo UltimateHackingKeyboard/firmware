@@ -46,8 +46,8 @@ void Trace_Print(log_target_t additionalLogTargets, const char* reason) {
     uint32_t lastMain = Timer_GetCurrentTime() - UserLogic_LastEventloopTime;
 
     LogTo(targetDeviceId, targetInterface, "Printing trace buffer because: %s\n", reason);
-    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s");
-    LogTo(targetDeviceId, targetInterface, "Uptime: %d ms, Last main: %d ms ago\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag, currentTime, lastMain);
+    LogTo(targetDeviceId, targetInterface, "ID: %d, EV: %d, Tag: %s\n", DEVICE_ID, StateWormhole.traceBuffer.eventVector, gitTag);
+    LogTo(targetDeviceId, targetInterface, "Uptime: %d ms, Last main: %d ms ago\n", currentTime, lastMain);
 
 #ifndef __ZEPHYR__
     Trace_PrintUhk60ReasonRegisters(targetDeviceId, targetInterface);

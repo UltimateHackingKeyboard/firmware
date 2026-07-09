@@ -16,6 +16,7 @@ extern "C" {
 #include "timer.h"
 #include "trace.h"
 #include "usb_report_updater.h"
+#include "usb_report_sender.h"
 #include "usb_semaphore.h"
 #include "usb_scheduler.h"
 #include "led_display.h"
@@ -48,7 +49,24 @@ extern "C" {
 float HidReportBleLatencyAvgMs = 0;
 }
 
-bool UnreliableTransportTestMode = false;
+bool UnreliableTransportTestMode = DEBUG_STRESS_TRANSPORT;
+
+extern "C" void Hid_DumpTransportState(void)
+{
+    c2usb_log("hid state (t=%u ms):\n", (unsigned)Timer_GetCurrentTime());
+    c2usb_log("  transports: kb=%d mouse=%d controls=%d cmd=%d\n",
+        (int)keyboard_app::usb_handle().has_transport(),
+        (int)mouse_app::usb_handle().has_transport(),
+        (int)controls_app::usb_handle().has_transport(),
+        (int)command_app::usb_handle().has_transport());
+    c2usb_log("  powerMode=%d usbUp=%d usbAwake=%d\n",
+        (int)CurrentPowerMode, (int)UsbState_IsTransportUp(), (int)UsbState_IsAwake());
+    c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d givenUp=%d\n",
+        (int)UsbSemaphore.keyboard.inFlight, (int)UsbSemaphore.keyboard.retries, (int)UsbSemaphore.keyboard.needsResending,
+        (int)UsbSemaphore.controls.inFlight, (int)UsbSemaphore.controls.retries, (int)UsbSemaphore.controls.needsResending,
+        (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending,
+        (int)UsbReportSender_GivenUp);
+}
 
 extern "C" void HidTransport_NoteNusReportSent(void)
 {
@@ -218,6 +236,9 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 {
+    if (UnreliableTransportTestMode && (Utils_Random() % 7 == 0 || Timer_GetCurrentTime() / (1024*32) == 0)) {
+        return;
+    }
     UsbSemaphore_Release(&UsbSemaphore.mouse);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE

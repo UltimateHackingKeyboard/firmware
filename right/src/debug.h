@@ -16,6 +16,7 @@
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
 #define DEBUG_STRESS_GATT false
+#define DEBUG_STRESS_TRANSPORT false
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
@@ -27,7 +28,12 @@
 
 #define DEBUG_BLE_LATENCY_STATS false
 
+#define DEBUG_KEY_LIFE_ENABLED true
+#if DEBUG_KEY_LIFE_ENABLED
 #define DEBUG_KEY_LIFE(ARG) ARG
+#else
+#define DEBUG_KEY_LIFE(ARG)
+#endif
 
 #ifdef __ZEPHYR__
     #include "logger.h"

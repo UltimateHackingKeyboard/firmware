@@ -12,6 +12,7 @@
 #include "event_scheduler.h"
 #include "wormhole.h"
 #include "usb_commands/usb_command_reenumerate.h"
+#include "hid/transport.h"
 
 #ifdef __ZEPHYR__
 #include "device.h"
@@ -151,6 +152,7 @@ void Macros_RecoverDiagnostics(void)
 {
     Macros_ProcessClearStatusCommand(true);
     c2usb_diag_dump();
+    Hid_DumpTransportState();
     Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
     StateWormhole.persistStatusBuffer = true;
     Reboot(false);
