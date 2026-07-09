@@ -188,6 +188,7 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
     }
 }
 
+
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
     StateWormhole_Open();
