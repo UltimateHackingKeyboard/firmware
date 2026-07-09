@@ -192,8 +192,6 @@ void HostConnections_ListKnownBleConnections() {
 void HostConnections_Reconnect() {
     connection_id_t connId = CurrentHostConnectionId;
     BtConn_DisconnectOne(connId);
-    k_sleep(K_MSEC(100));
-    HostConnections_SelectByHostConnIndex(connId - ConnectionId_HostConnectionFirst);
 }
 
 static void allocateUnregisteredHidId(const bt_addr_le_t *addr, connection_id_t connectionId) {
