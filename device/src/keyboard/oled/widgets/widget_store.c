@@ -159,10 +159,14 @@ static string_segment_t getTargetText() {
         string_segment_t currentConnection = getTargetText_(CurrentHostConnectionId, false);
         size_t offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
 
-        if (Connections_IsSelectedConnecting()) {
+        connection_state_t connectionState = Connections_GetState(CurrentHostConnectionId);
+        bool isAwake = Connections_IsConnectionAwake(CurrentHostConnectionId);
+        if (connectionState == ConnectionState_Disconnected) {
             snprintf(buffer+offset, sizeof(buffer)-1-offset, " (not connected)");
-        } else if (!Connections_IsConnectionAwake(CurrentHostConnectionId)) {
+        } else if (!isAwake && connectionState >= ConnectionState_Connected) {
             snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)");
+        } else if (connectionState == ConnectionState_Connected) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)");
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };
