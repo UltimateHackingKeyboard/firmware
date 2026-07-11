@@ -5,5 +5,5 @@ manifest:
   projects:
     - name: c2usb
       remote: kareltucek
-      revision: ec7b60c0e552954e36ae91be11fff25323834bfa
+      revision: 72aa7fcc09a5397a3e20092d34d4b937449eefef
       import: true
