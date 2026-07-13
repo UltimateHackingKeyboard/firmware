@@ -967,6 +967,17 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
     }
 }
 
+static void setDongleStandby(bool standby) {
+    // The chain of action:
+    // - right DeviceState notices that connection changes, and triggers dongle link reset
+    // - dongle receives this reset, which sets DongleStandby to false
+    // - -> we need to udpate the leds from here
+    if (DEVICE_ID == DeviceId_Uhk_Dongle && DongleStandby != standby) {
+        DongleStandby = standby;
+        DongleLeds_Update();
+    }
+}
+
 void StateSync_ResetRightDongleLink(bool bidirectional) {
     StateSync_DongleResetCounter++;
     // LOG_INF("Resetting dongle right link! %s", bidirectional ? "Bidirectional" : "Unidirectional");
@@ -974,7 +985,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_ResetRightDongleLink);
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
-        DongleStandby = false;
+        setDongleStandby(false);
         DongleHostAwake = true;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
