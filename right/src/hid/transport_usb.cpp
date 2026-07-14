@@ -8,6 +8,7 @@ extern "C" {
 #include "usb_report_updater.h"
 #include "usb_semaphore.h"
 #include "user_logic.h"
+#include "debug.h"
 #include "logger.h"
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -153,6 +154,7 @@ struct usb_manager {
 #ifndef __ZEPHYR__
 extern "C" void USB0_IRQHandler(void)
 {
+    ISR_LIFE_START(usb);
     Trace_Printc("<i6");
     if (usb::df::nxp::mcux_mac::notification_routing) {
         usb_manager::mac().handle_irq();
@@ -160,6 +162,7 @@ extern "C" void USB0_IRQHandler(void)
         USB_DeviceKhciIsrFunction(BuspalCompositeUsbDevice.device_handle);
     }
     Trace_Printc(">");
+    ISR_LIFE_END(usb);
     SDK_ISR_EXIT_BARRIER;
 }
 #endif

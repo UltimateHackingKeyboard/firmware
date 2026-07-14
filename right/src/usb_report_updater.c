@@ -76,6 +76,8 @@ uint32_t UsbReportUpdater_LastActivityTime;
 uint32_t UsbReportUpdater_LastMouseActivityTime;
 
 key_life_times_t KeyLifeTimes;
+main_life_times_t MainLifeTimes;
+isr_life_times_t IsrLifeTimes;
 
 
 

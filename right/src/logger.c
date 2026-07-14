@@ -84,6 +84,13 @@ uint32_t c2usb_diag_time_ms(void) {
 }
 #endif
 
+// Weak fallback so the firmware also links against a plain upstream c2usb
+// checkout (without the diagnostics patch); the patched c2usb's strong
+// definition overrides this.
+__attribute__((weak)) void c2usb_diag_dump(void) {
+    c2usb_log("c2usb diag not available (unpatched c2usb build)\n");
+}
+
 void LogErr(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 

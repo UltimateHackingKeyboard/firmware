@@ -24,6 +24,9 @@ extern "C" {
 #include "usb_state.h"
 #include "utils.h"
 #include "test_suite/test_hooks.h"
+#if DEVICE_IS_UHK60
+#include "i2c_watchdog.h"
+#endif
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -70,6 +73,22 @@ extern "C" void Hid_DumpTransportState(void)
         (int)UsbSemaphore.controls.inFlight, (int)UsbSemaphore.controls.retries, (int)UsbSemaphore.controls.needsResending,
         (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending,
         (int)UsbReportSender_GivenUp);
+    c2usb_log("  throttle: %u ms ago blocked=%d reasons=0x%x until=in %d ms postponed=0x%x\n",
+        now - MainLifeTimes.throttleTime,
+        (int)MainLifeTimes.throttleBlocked, MainLifeTimes.throttleBlockReasons,
+        (int)(MainLifeTimes.throttleBlockedUntil - now), (unsigned)MainLifeTimes.throttlePostponedMasks);
+#if DEVICE_IS_UHK60
+    c2usb_log("  isr (start/end ms ago): usb=%u/%u pit=%u/%u wdog=%u/%u i2c=%u/%u btn=%u/%u\n",
+        now - IsrLifeTimes.usb.start, now - IsrLifeTimes.usb.end,
+        now - IsrLifeTimes.pitTimer.start, now - IsrLifeTimes.pitTimer.end,
+        now - IsrLifeTimes.i2cWatchdog.start, now - IsrLifeTimes.i2cWatchdog.end,
+        now - IsrLifeTimes.i2cMain.start, now - IsrLifeTimes.i2cMain.end,
+        now - IsrLifeTimes.resetButton.start, now - IsrLifeTimes.resetButton.end);
+    c2usb_log("  i2c watchdog: watch=%u recoveries=%u\n",
+        (unsigned)I2cWatchdog_WatchCounter, (unsigned)I2cWatchdog_RecoveryCounter);
+    uint32_t headroom = Debug_StackHeadroom();
+    c2usb_log("  stack headroom: %u bytes%s\n", (unsigned)headroom, headroom == 0 ? " (OVERFLOWED)" : "");
+#endif
 }
 
 extern "C" void HidTransport_NoteNusReportSent(void)

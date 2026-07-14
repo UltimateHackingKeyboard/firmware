@@ -1,5 +1,8 @@
 #include <string.h>
 #include "debug.h"
+#include "trace.h"
+#include "logger.h"
+#include "macros/status_buffer.h"
 
 #ifdef __ZEPHYR__
 #include "logger.h"
@@ -7,6 +10,44 @@
 #include <zephyr/kernel.h>
 #else
 #include "segment_display.h"
+#endif
+
+#ifndef __ZEPHYR__
+
+// SOFT_ASSERT reporter (see shared/atomicity.h): prints only the first failure,
+// as soft asserts may fire from hot ISR paths.
+void SoftAssertFailed(const char* file, int line)
+{
+    LogS("!SOFT_ASSERT:%s:%d!\n", file, line);
+}
+
+// Main/MSP stack canary: the free stack (from __StackLimit up to just below the
+// current SP) gets filled with a pattern at boot; the untouched remainder gives
+// the all-time worst-case headroom of main + ISRs combined. Headroom 0 means
+// the stack overflowed past __StackLimit (into the heap region).
+
+extern uint32_t __StackLimit[];
+extern uint32_t __StackTop[];
+
+#define STACK_CANARY_PATTERN 0xC0DEBA5Eu
+
+void Debug_InitStackCanary(void) {
+    uint32_t sp;
+    __asm volatile ("mov %0, sp" : "=r" (sp));
+    uint32_t* end = (uint32_t*)((sp - 64) & ~3u);
+    for (uint32_t* p = __StackLimit; p < end && p < __StackTop; p++) {
+        *p = STACK_CANARY_PATTERN;
+    }
+}
+
+uint32_t Debug_StackHeadroom(void) {
+    uint32_t headroom = 0;
+    for (uint32_t* p = __StackLimit; p < __StackTop && *p == STACK_CANARY_PATTERN; p++) {
+        headroom += 4;
+    }
+    return headroom;
+}
+
 #endif
 
 #ifdef WATCHES
