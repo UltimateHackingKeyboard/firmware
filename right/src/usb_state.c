@@ -2,6 +2,8 @@
 #include "device.h"
 #include "power_mode.h"
 #include "event_scheduler.h"
+#include "usb_report_updater.h"
+#include "hid/keyboard_report.h"
 #include "stubs.h"
 
 #ifdef __ZEPHYR__
@@ -43,10 +45,22 @@ void UsbState_SetUsbTransportUp(bool up) {
     }
 }
 
+static void probeHostWithReport(void) {
+#if !DEVICE_IS_UHK_DONGLE
+    GetInactiveKeyboardReport()->modifiers = ~ActiveKeyboardReport->modifiers;
+
+    EventVector_Set(EventVector_SendUsbReports);
+    EventVector_WakeMain();
+#endif
+}
+
 void UsbState_SetUsbAwake(bool awake) {
     if (UsbState_Awake != awake && !awake) {
         UsbState_Awake = awake;
         recalculateConnectionState();
+    }
+    if (UsbState_Awake != awake && awake) {
+        probeHostWithReport();
     }
 }
 
