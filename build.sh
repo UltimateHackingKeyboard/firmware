@@ -14,7 +14,7 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
 
     DEVICE is in { uhk-80-left | uhk-80-right | uhk-60-right | uhk-dongle }
              there are also these aliases: { left | right | dongle | all }
-    ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart | addrline <address> }
+    ACTION is in { clean | setup | update | build | make | flash | flashUsb | shell | uart | addrline <address>... }
 
     setup         initialize submodules and set up zephyr environment
     clean         removes zephyr libraries
@@ -23,6 +23,8 @@ usage: ./build DEVICE1 DEVICE2 ... ACTION1 ACTION2 ...
     make          just recompile / relink the binary
     flash         make and then flash
     flashUsb      just flash via USB
+    addrline      resolve addresses to source lines in the device's elf
+                  (build with DEBUG=1 for symbols; accepts a whole backtrace)
     shell         open build shell
     uart          open uhk shell
     switchMcux    switch to UHK60 build environment
@@ -89,16 +91,14 @@ function processArguments() {
                 ;;
             addrline)
                 shift
-                ADDR=$1
-                shift
-                for device in $DEVICES
+                ADDRS=""
+                # consume all following addresses (a whole backtrace can be passed at once)
+                while [ $# -gt 0 ] && [[ "$1" =~ ^(0x)?[0-9a-fA-F]+$ ]]
                 do
-                    echo "addrline for $ADDR:"
-                    printf "    "
-                    # addr2line -e device/build/$device/zephyr/zephyr.elf $ADDR
-                    arm-none-eabi-addr2line -e device/build/$device/device/zephyr/zephyr.elf $ADDR
+                    ADDRS="$ADDRS $1"
+                    shift
                 done
-                exit 0
+                MULTIPLEXED_ACTIONS="$MULTIPLEXED_ACTIONS addrline"
                 ;;
             uart)
                 TERMINAL_ACTIONS="$TERMINAL_ACTIONS $1"
@@ -172,6 +172,7 @@ function dealiasDeviceMcux() {
             VARIANT="v1-$BUILD_TYPE"
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
+            DEVICE_ELF="uhk-60-right.elf"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             ;;
         uhk-60v2-right|rightv2|right)
@@ -179,6 +180,7 @@ function dealiasDeviceMcux() {
             VARIANT="v2-$BUILD_TYPE"
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
+            DEVICE_ELF="uhk-60-right.elf"
             USBDEVICEARG="--vid=0x37a8 --pid=3"
             ;;
         trackpoint|trackball|keycluster|left)
@@ -186,6 +188,7 @@ function dealiasDeviceMcux() {
             VARIANT="release"
             BUILD_DIR="$DEVICE/build/$VARIANT"
             DEVICE_DIR="$DEVICE"
+            DEVICE_ELF="uhk-$DEVICE.elf"
             DEVICEARG="-SelectEmuBySN $DEVICEID_UHK_MODULE"
             ;;
         *)
@@ -302,7 +305,26 @@ function performMcuxAction() {
             mutex unlock
             exitOnFail $?
             ;;
+        addrline)
+            addrline "$BUILD_DIR/$DEVICE_ELF" "$ADDRS"
+            ;;
     esac
+}
+
+function addrline() {
+    ELF=$1
+    ADDRS=$2
+
+    if [ ! -f "$ELF" ]; then
+        echo "$ELF not found - build the device first (DEBUG=1 for symbols)."
+        return 1
+    fi
+
+    for ADDR in $ADDRS
+    do
+        printf "%s: " "$ADDR"
+        arm-none-eabi-addr2line -f -p -C -e "$ELF" "$ADDR"
+    done
 }
 
 function exitOnFail() {
@@ -347,6 +369,9 @@ function performZephyrAction() {
             mutex lock
             west agent --build-dir $BUILD_DIR
             mutex unlock
+            ;;
+        addrline)
+            addrline "$ROOT/device/build/$DEVICE/device/zephyr/zephyr.elf" "$ADDRS"
             ;;
     esac
 }
@@ -408,7 +433,7 @@ function performAction() {
             west config manifest.file west_nrfsdk.yml
             upgradeEnv
             ;;
-        make|build|flash|flashUsb)
+        make|build|flash|flashUsb|addrline)
             if [ `west config manifest.file` == "west_nrfsdk.yml" ]
             then
                 performZephyrAction $DEVICE $ACTION
@@ -427,8 +452,6 @@ function performAction() {
             ;;
         uart)
             setupUartMonitor
-            ;;
-        addrline)
             ;;
         *)
             help
