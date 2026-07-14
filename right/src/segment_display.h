@@ -34,6 +34,7 @@
     void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_t slot);
     void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot);
     void SegmentDisplay_SetFloat(float a, segment_display_slot_t slot);
+    void SegmentDisplay_SerializeString(char* buffer, string_ref_t strRef);
     void SegmentDisplay_SerializeInt(char* buffer, int32_t a);
     void SegmentDisplay_SerializeFloat(char* buffer, float f);
     void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var);
