@@ -281,7 +281,6 @@ const config_t DefaultCfg = (config_t){
         .Bt_AllowUnsecuredConnections = false,
         .Bt_MaxPeripheralConnections = 3,
         .Bt_MinAdvertisingDelay = 250,
-        .Bt_AlwaysAdvertiseHid = true,
         .Bt_DirectedAdvertisingAllowed = false,
         .DevMode = false,
         .EmergencyKey = NULL,

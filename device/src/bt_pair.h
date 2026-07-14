@@ -14,7 +14,6 @@
 // Typedefs:
 
     #define PAIRING_TIMEOUT 20000
-    #define USER_PAIRING_TIMEOUT 120000
 
 // Functions:
 
@@ -23,17 +22,17 @@
     void BtPair_SetRemoteOob(const struct bt_le_oob* oob);
     void BtPair_PairCentral();
     void BtPair_PairPeripheral();
+    void BtPair_EnterOobPairingMode(void);
     void BtPair_EndPairing(bool success, const char* msg);
     void BtPair_Unpair(const bt_addr_le_t addr);
     bool BtPair_IsDeviceBonded(const bt_addr_le_t *addr);
-    void BtManager_EnterMode(pairing_mode_t mode, bool toggle);
     void BtPair_ClearUnknownBonds();
     void BtPair_UnpairAllNonLR();
     void BtPair_AllocateUnregisteredBonds();
 
 // Variables
 
-    extern pairing_mode_t BtPair_PairingMode;
+    extern bool BtPair_OobPairingInProgress;
     extern bool BtPair_LastOobPairingSucceeded;
     extern bool BtPair_PairingAsCentral;
 

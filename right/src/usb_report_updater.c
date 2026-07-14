@@ -1,7 +1,6 @@
 #include <math.h>
 #include <errno.h>
 #include "atomicity.h"
-#include "bt_defs.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
 #include "key_action.h"
@@ -55,7 +54,6 @@
 #include "shell.h"
 #include "keyboard/charger.h"
 #include "logger.h"
-#include "bt_pair.h"
 #include "connections.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "keyboard/input_interceptor.h"
@@ -466,12 +464,6 @@ static void applyConnectionActionPress(connection_action_t command, uint8_t host
             break;
         case ConnectionAction_SwitchByHostConnectionId:
             //handled elsewhere
-            break;
-        case ConnectionAction_ToggleAdvertisement:
-            BtManager_EnterMode(PairingMode_Advertise, true);
-            break;
-        case ConnectionAction_TogglePairing:
-            BtManager_EnterMode(PairingMode_PairHid, true);
             break;
     }
 #endif

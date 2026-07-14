@@ -406,6 +406,8 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
 
     if (isOldCurrent || isNewCurrent) {
         WIDGET_REFRESH(&TargetWidget);
+        // The advertising icon depends on the current connection's type.
+        WIDGET_REFRESH(&StatusWidget);
     }
 }
 
@@ -491,6 +493,8 @@ static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
 
     Hid_UpdateKeyboardLedsState();
     WIDGET_REFRESH(&TargetWidget);
+    // The advertising icon depends on the current connection's type.
+    WIDGET_REFRESH(&StatusWidget);
     BtManager_StartScanningAndAdvertisingAsync(false, "switchover");
 }
 
@@ -565,7 +569,7 @@ void Connections_PrintInfo(log_target_t target) {
     LogTo(DEVICE_ID, target, "----------------------\n");
     LogTo(DEVICE_ID, target, "Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
     LogTo(DEVICE_ID, target, "Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
-    LogTo(DEVICE_ID, target, "Pairing mode: %d\n", BtPair_PairingMode);
+    LogTo(DEVICE_ID, target, "Oob pairing in progress: %d\n", BtPair_OobPairingInProgress);
     LogTo(DEVICE_ID, target, "Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
     LogTo(DEVICE_ID, target, "New connection: %d\n", Bt_NewPairedDevice);
 

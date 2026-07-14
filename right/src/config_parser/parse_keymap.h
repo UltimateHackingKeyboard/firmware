@@ -111,8 +111,11 @@
         SerializedConnectionAction_Next,
         SerializedConnectionAction_Previous,
         SerializedConnectionAction_SwitchByHostConnectionId,
-        SerializedConnectionAction_ToggleAdvertisement,
-        SerializedConnectionAction_TogglePairing,
+        // Removed in user config 15.0.0 - advertising and pairing now follow the current host
+        // connection. Older configs may still contain them; the values remain reserved so that
+        // the ones below keep their serialized numbering.
+        SerializedConnectionAction_RemovedToggleAdvertisement,
+        SerializedConnectionAction_RemovedTogglePairing,
         SerializedConnectionAction_NextActive,
         SerializedConnectionAction_PreviousActive,
     } serialized_connection_action_t;

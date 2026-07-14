@@ -21,7 +21,7 @@ LOG_MODULE_DECLARE(Bt);
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
-pairing_mode_t AdvertisingHid = false;
+bool BtAdvertise_IsAdvertising = false;
 
 // Advertisement packets
 
@@ -118,10 +118,8 @@ ATTR_UNUSED static void setFilters(adv_config_t advConfig) {
 }
 
 static void updateAdvertisingIcon(bool newAdvertising) {
-    pairing_mode_t actualMode = newAdvertising ? (BtPair_PairingMode == PairingMode_PairHid ? PairingMode_PairHid : PairingMode_Advertise) : PairingMode_Off;
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != actualMode) {
-        AdvertisingHid = actualMode;
+    if (DEVICE_ID == DeviceId_Uhk80_Right && BtAdvertise_IsAdvertising != newAdvertising) {
+        BtAdvertise_IsAdvertising = newAdvertising;
 #if DEVICE_HAS_OLED
         Widget_Refresh(&StatusWidget);
 #endif
@@ -147,7 +145,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
     // to clear filters
     BtAdvertise_Stop();
 
-    updateAdvertisingIcon(advConfig.advType);
+    updateAdvertisingIcon(advConfig.advType != 0);
 
     // Start advertising
     static struct bt_le_adv_param advParam;
@@ -223,7 +221,7 @@ void BtAdvertise_Stop(void) {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            if (BtPair_PairingMode == PairingMode_Oob) {
+            if (BtPair_OobPairingInProgress) {
                 return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
                 // Fails handshake with "RF Noise?"
                 // struct bt_le_oob* oob = BtPair_GetRemoteOob();
@@ -242,7 +240,7 @@ adv_config_t BtAdvertise_Config() {
                 return ADVERTISEMENT( 0 );
             }
 
-            if (BtPair_PairingMode == PairingMode_Oob) {
+            if (BtPair_OobPairingInProgress) {
                 return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
                 // Fails handshake with "RF Noise?"
                 // struct bt_le_oob* oob = BtPair_GetRemoteOob();

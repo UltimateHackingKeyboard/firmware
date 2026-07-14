@@ -234,12 +234,15 @@ static string_segment_t getLeftStatusText() {
 
     string_segment_t uartDebugText = getUartDebugModeText();
 
+    // An empty current slot means we are advertising in order to pair a new host.
+    bool pairing = Connections_Type(CurrentHostConnectionId) == ConnectionType_Empty;
+
     snprintf(buffer, BUFFER_LENGTH-1, "%c%c %c%c%c %s %c%c%c %s",
             // connection icon; always present
             (char)FontControl_NextCharIcon12, (char)connectionIcon,
-            // pairing icon; sometimes present
-            (AdvertisingHid == PairingMode_PairHid || AdvertisingHid == PairingMode_Advertise) ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
-            (char)FontControl_NextCharIcon12, AdvertisingHid == PairingMode_PairHid ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal,
+            // advertising icon; sometimes present
+            BtAdvertise_IsAdvertising ? FontControl_NextCharWhite : FontControl_NextCharAndSpaceGone,
+            (char)FontControl_NextCharIcon12, pairing ? FontIcon_BluetoothSignalPlus : FontIcon_BluetoothSignal,
             // UART debug mode indicator; always present
             uartDebugText.start,
             // recording icon; sometimes present

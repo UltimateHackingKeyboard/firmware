@@ -114,13 +114,16 @@ static parser_error_t parseConnectionsAction(key_definition_t *keyDefinition, co
             keyAction->connections.command = ConnectionAction_Previous;
             keyAction->connections.hostConnectionId = 0;
             break;
-        case SerializedConnectionAction_ToggleAdvertisement:
-            keyAction->connections.command = ConnectionAction_ToggleAdvertisement;
-            keyAction->connections.hostConnectionId = 0;
-            break;
-        case SerializedConnectionAction_TogglePairing:
-            keyAction->connections.command = ConnectionAction_TogglePairing;
-            keyAction->connections.hostConnectionId = 0;
+        case SerializedConnectionAction_RemovedToggleAdvertisement:
+        case SerializedConnectionAction_RemovedTogglePairing:
+            // Advertising and pairing now follow the current host connection, so these actions
+            // were removed in user config 15.0.0. Configs older than that may still contain them
+            // - keep parsing those, with the key doing nothing.
+            if (VERSION_AT_LEAST(DataModelVersion, 15, 0, 0)) {
+                ConfigParser_Error(buffer, "Connection action was removed: %d", connectionCommand);
+                return ParserError_InvalidSerializedConnectionAction;
+            }
+            keyAction->type = KeyActionType_None;
             break;
         case SerializedConnectionAction_NextActive:
             keyAction->connections.command = ConnectionAction_NextActive;

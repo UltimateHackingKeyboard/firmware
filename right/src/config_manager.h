@@ -98,7 +98,6 @@
         bool Bt_AllowUnsecuredConnections;
         bool Bt_DirectedAdvertisingAllowed;
         bool Bt_Enabled;
-        bool Bt_AlwaysAdvertiseHid;
 
         // others
         bool DevMode;

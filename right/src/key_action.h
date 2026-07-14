@@ -40,8 +40,6 @@
         ConnectionAction_Next,
         ConnectionAction_Previous,
         ConnectionAction_SwitchByHostConnectionId,
-        ConnectionAction_ToggleAdvertisement,
-        ConnectionAction_TogglePairing,
         ConnectionAction_LastSelected,
         ConnectionAction_NextActive,
         ConnectionAction_PreviousActive,
