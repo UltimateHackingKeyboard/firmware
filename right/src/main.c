@@ -196,6 +196,7 @@ static void checkSleepMode() {
 
 int main(void)
 {
+    Debug_InitStackCanary();
     Trace_Init();
     if (StateWormhole_IsOpen()) {
         if (StateWormhole.persistStatusBuffer) {

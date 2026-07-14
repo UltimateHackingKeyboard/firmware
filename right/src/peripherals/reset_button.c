@@ -9,9 +9,11 @@
 #include "config_manager.h"
 #include "macros/status_buffer.h"
 #include "macros/debug_commands.h"
+#include "debug.h"
 
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
+    ISR_LIFE_START(resetButton);
     Macros_RecoverDiagnostics();
 
     if (Cfg.DevMode) {
