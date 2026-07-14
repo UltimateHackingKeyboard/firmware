@@ -89,12 +89,15 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
 }
 
 static void selectNextConnection(int8_t direction, bool activeOnly) {
-    for (int8_t i = CurrentHostConnectionId + direction; i != CurrentHostConnectionId; i += direction) {
+    for (int8_t i = CurrentHostConnectionId + direction; true; i += direction) {
         if (i > ConnectionId_HostConnectionLast) {
             i = ConnectionId_HostConnectionFirst;
         }
         if (i < ConnectionId_HostConnectionFirst) {
             i = ConnectionId_HostConnectionLast;
+        }
+        if (i == CurrentHostConnectionId) {
+            return;
         }
 
         if (activeOnly) {
