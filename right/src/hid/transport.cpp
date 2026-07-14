@@ -56,6 +56,11 @@ bool UnreliableTransportTestMode = DEBUG_STRESS_TRANSPORT;
 
 extern "C" void Hid_DumpTransportState(void)
 {
+#if DEVICE_IS_UHK60
+    // snapshot before our own logging deepens the stack
+    uint32_t stackUsed = Debug_StackUsed();
+    int32_t stackHeadroom = Debug_StackHeadroom();
+#endif
     c2usb_log("hid state (t=%u ms):\n", (unsigned)Timer_GetCurrentTime());
     c2usb_log("  transports: kb=%d mouse=%d controls=%d cmd=%d\n",
         (int)keyboard_app::usb_handle().has_transport(),
@@ -86,8 +91,9 @@ extern "C" void Hid_DumpTransportState(void)
         now - IsrLifeTimes.resetButton.start, now - IsrLifeTimes.resetButton.end);
     c2usb_log("  i2c watchdog: watch=%u recoveries=%u\n",
         (unsigned)I2cWatchdog_WatchCounter, (unsigned)I2cWatchdog_RecoveryCounter);
-    uint32_t headroom = Debug_StackHeadroom();
-    c2usb_log("  stack headroom: %u bytes%s\n", (unsigned)headroom, headroom == 0 ? " (OVERFLOWED)" : "");
+    c2usb_log("  stack: used=%u/%u headroom=%d%s\n",
+        (unsigned)stackUsed, (unsigned)Debug_StackSize(), (int)stackHeadroom,
+        stackHeadroom < 0 ? " (OVERFLOW)" : "");
 #endif
 }
 

@@ -21,31 +21,49 @@ void SoftAssertFailed(const char* file, int line)
     LogS("!SOFT_ASSERT:%s:%d!\n", file, line);
 }
 
-// Main/MSP stack canary: the free stack (from __StackLimit up to just below the
-// current SP) gets filled with a pattern at boot; the untouched remainder gives
-// the all-time worst-case headroom of main + ISRs combined. Headroom 0 means
-// the stack overflowed past __StackLimit (into the heap region).
+// Main/MSP stack canary. main + every ISR share the 1 KB MSP (__StackLimit ..
+// __StackTop). At boot we fill it - and the unused gap below it, down to
+// __HeapLimit - with a pattern; the lowest word the stack ever clobbered is
+// then its all-time low-water mark. Filling below __StackLimit means an
+// overflow is measured, not just detected (it lands in the gap, which is
+// otherwise unused; only past __HeapLimit does it corrupt the heap).
 
 extern uint32_t __StackLimit[];
 extern uint32_t __StackTop[];
+extern uint32_t __HeapLimit[];
 
 #define STACK_CANARY_PATTERN 0xC0DEBA5Eu
 
 void Debug_InitStackCanary(void) {
     uint32_t sp;
     __asm volatile ("mov %0, sp" : "=r" (sp));
-    uint32_t* end = (uint32_t*)((sp - 64) & ~3u);
-    for (uint32_t* p = __StackLimit; p < end && p < __StackTop; p++) {
+    uint32_t* end = (uint32_t*)((sp - 32) & ~3u);
+    for (uint32_t* p = __HeapLimit; p < end && p < __StackTop; p++) {
         *p = STACK_CANARY_PATTERN;
     }
 }
 
-uint32_t Debug_StackHeadroom(void) {
-    uint32_t headroom = 0;
-    for (uint32_t* p = __StackLimit; p < __StackTop && *p == STACK_CANARY_PATTERN; p++) {
-        headroom += 4;
+static uint32_t* stackLowWaterMark(void) {
+    uint32_t* p = __HeapLimit;
+    while (p < __StackTop && *p == STACK_CANARY_PATTERN) {
+        p++;
     }
-    return headroom;
+    return p;
+}
+
+uint32_t Debug_StackSize(void) {
+    return (uint8_t*)__StackTop - (uint8_t*)__StackLimit;
+}
+
+uint32_t Debug_StackUsed(void) {
+    return (uint8_t*)__StackTop - (uint8_t*)stackLowWaterMark();
+}
+
+// Bytes still unused below the deepest the stack ever went. Negative means the
+// stack grew past __StackLimit by that many bytes (into the unused gap; if it
+// reaches -HEADROOM_GAP it has eaten into the heap).
+int32_t Debug_StackHeadroom(void) {
+    return (uint8_t*)stackLowWaterMark() - (uint8_t*)__StackLimit;
 }
 
 #endif

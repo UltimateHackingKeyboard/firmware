@@ -45,8 +45,8 @@ mcux_add_source(SOURCES ../lib/bootloader/src/bootloader/src/wormhole.c)
 mcux_add_include(INCLUDES ../lib/bootloader/src)
 
 mcux_add_linker_symbol(SYMBOLS
-    __heap_size__=0x2000
-    __stack_size__=0x0400
+    __heap_size__=0x400
+    __stack_size__=0x1000
     __bl_app_vector_table_address__=${BL_APP_VECTOR_TABLE_ADDRESS}
 )
 mcux_add_armgcc_linker_script(LINKER src/link/MK22FN512xxx12_flash.ld)

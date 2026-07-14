@@ -240,10 +240,15 @@ extern isr_life_times_t IsrLifeTimes;
 void Debug_RecordBleSendResult(int ret);
 
 #ifndef __ZEPHYR__
-    // Fill the free main/MSP stack with a canary pattern (call early in main).
+    // Fill the free main/MSP stack (and the unused gap below it) with a canary
+    // pattern; call as the first thing in main.
     void Debug_InitStackCanary(void);
-    // All-time minimum of untouched stack bytes above __StackLimit; 0 = overflowed.
-    uint32_t Debug_StackHeadroom(void);
+    // Size of the MSP stack region (__StackTop - __StackLimit).
+    uint32_t Debug_StackSize(void);
+    // All-time peak stack usage of main + ISRs combined.
+    uint32_t Debug_StackUsed(void);
+    // Unused bytes below the peak; negative = overflowed past __StackLimit by that much.
+    int32_t Debug_StackHeadroom(void);
 #endif
 
 #endif // __DEBUG_H__
