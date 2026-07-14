@@ -15,6 +15,19 @@ extern "C" {
 using system_code = hid::page::generic_desktop;
 using consumer_code = hid::page::consumer;
 
+class controls_session : public hid::session {
+  public:
+    controls_session() = default;
+
+  protected:
+    void report_sent(const std::span<const uint8_t> &data) override;
+
+    std::span<const uint8_t> get_report(
+        hid::report::selector select, const std::span<uint8_t> &buffer) override;
+
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override {}
+};
+
 class controls_app : public hid::application {
     static constexpr size_t CONSUMER_CODE_COUNT = HID_CONTROLS_MAX_CONSUMER_KEYS;
     static constexpr size_t SYSTEM_CODE_COUNT = HID_CONTROLS_MAX_SYSTEM_KEYS;
@@ -51,7 +64,7 @@ class controls_app : public hid::application {
             collection::application(
                 conditional_report_id<report_ids::IN_CONTROLS>(),
 
-                report_size(sizeof(hid::le_uint16_t) * 8),
+                report_size(sizeof(c2usb::le_uint16_t) * 8),
                 report_count(CONSUMER_CODE_COUNT),
                 logical_limits<1, 2>(0, get_info<consumer>().max_usage_id),
                 usage_extended_limits(nullusage, static_cast<consumer>(get_info<consumer>().max_usage_id)),
@@ -67,26 +80,21 @@ class controls_app : public hid::application {
         // clang-format on
     }
 
-    static controls_app &usb_handle();
-#if DEVICE_IS_UHK80_RIGHT
-    static controls_app &ble_handle();
-#endif
+    static controls_app &usb_handle()
+    {
+        static controls_app app{};
+        return app;
+    }
 
-    int send_report(const hid_controls_report_t &report);
+    controls_session *session() { return session_.has_value() ? &*session_ : nullptr; }
 
   private:
     controls_app() : hid::application(hid::report_protocol::from_descriptor<report_desc()>()) {}
 
-    void start(hid::protocol prot) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
-    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override
-    {
-        // No OUTPUT or FEATURE reports are used
-    }
-    void in_report_sent(const std::span<const uint8_t> &data) override;
+    hid::session &start(const hid::session_params &params) override;
+    void stop(hid::session &sess) override;
 
-    using controls_report = controls_report_base<report_ids::IN_CONTROLS>;
-    double_buffer<controls_report> report_buffer_{};
+    std::optional<controls_session> session_{};
 };
 
-using controls_buffer = controls_app::controls_report_base<0>;
+void controls_report_sent_callback(hid::session &session);

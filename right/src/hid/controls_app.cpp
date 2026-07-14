@@ -1,58 +1,33 @@
 #include "controls_app.hpp"
 
-controls_app &controls_app::usb_handle()
+hid::session &controls_app::start(const hid::session_params &params)
 {
-    static controls_app app{};
-    return app;
+    assert(!session_.has_value());
+    auto &sess = session_.emplace();
+    return sess;
 }
 
-#if DEVICE_IS_UHK80_RIGHT
-controls_app &controls_app::ble_handle()
+void controls_app::stop(hid::session &sess)
 {
-    static controls_app ble_app{};
-    return ble_app;
-}
-#endif
-
-void controls_app::start(hid::protocol prot)
-{
-    report_buffer_.reset();
+    assert(&sess == &session_.value());
+    return session_.reset();
 }
 
-int controls_app::send_report(const hid_controls_report_t &report)
+void controls_session::report_sent(const std::span<const uint8_t> &data)
 {
-    auto &buf = report_buffer_[report_buffer_.active_side()];
-    buf.data = report;
-    auto result = application::send_report(
-        std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&buf), sizeof(buf)));
-    if (result == hid::result::ok) {
-        report_buffer_.swap_sides();
-    }
-    return result.to_int();
+    controls_report_sent_callback(*this);
 }
 
-void controls_app::in_report_sent(const std::span<const uint8_t> &data)
+std::span<const uint8_t> controls_session::get_report(
+    hid::report::selector select, const std::span<uint8_t> &buffer)
 {
-#if DEVICE_IS_UHK80_RIGHT
-    // On BLE all apps share one merged HOGP interface, so in_report_sent is broadcast
-    // to every app for every sent report. Act only on our own (controls) report ID.
-    // The USB handle is a standalone interface, so the filter must not be applied there.
-    if ((this == &ble_handle()) && (data.front() != report_ids::IN_CONTROLS)) {
-        return;
-    }
-#endif
-    Hid_ControlsReportSentCallback((this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE);
-}
+    using controls_report = controls_app::controls_report_base<report_ids::IN_CONTROLS>;
 
-void controls_app::get_report(hid::report::selector select, const std::span<uint8_t> &buffer)
-{
-    if (select != controls_report::selector()) {
-        return;
+    if (select == hid::report::selector(hid::report::type::INPUT, report_ids::IN_CONTROLS)) {
+        assert(buffer.size() >= sizeof(controls_report));
+        std::ignore = new (buffer.data()) controls_report{};
+        return buffer.subspan(0, sizeof(controls_report));
     }
 
-    // copy to buffer to avoid overwriting data in transit
-    auto &report = report_buffer_[report_buffer_.inactive_side()];
-    assert(buffer.size() >= sizeof(report));
-    memcpy(buffer.data(), &report, sizeof(report));
-    application::send_report(buffer.subspan(0, sizeof(report)));
+    return {};
 }

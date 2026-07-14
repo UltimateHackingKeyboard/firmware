@@ -250,7 +250,6 @@ void mainRuntime(void) {
 
     // 6.6mA
 
-    HID_SetGamepadActive(false);
     USB_Enable(); // +2.2mA, 8.8mA; has to be after USB_SetSerialNumber
 
     // 8.8mA
