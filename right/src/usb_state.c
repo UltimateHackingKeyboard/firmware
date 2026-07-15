@@ -1,9 +1,17 @@
 #include "usb_state.h"
 #include "device.h"
 #include "power_mode.h"
+#include "event_scheduler.h"
+#include "stubs.h"
 
 #ifdef __ZEPHYR__
     #include "connections.h"
+    #include "state_sync.h"
+#endif
+
+#if DEVICE_HAS_OLED
+    #include "keyboard/oled/widgets/widget.h"
+    #include "keyboard/oled/widgets/widget_store.h"
 #endif
 
 // USB transport and host-awake states are kept separately and the derived
@@ -16,41 +24,39 @@
 // C2usb doesn't report the transport as not available when the host is asleep,
 // so the awake state is tracked here on top of the transport state.
 
-static bool usbTransportUp = false;
-static bool usbAwake = false;
+bool UsbState_TransportUp = false;
+bool UsbState_Awake = true;
 
 static void recalculateConnectionState(void) {
-#if DEVICE_IS_UHK60
-    power_mode_t newMode = (usbTransportUp && usbAwake) ? PowerMode_Awake : PowerMode_Uhk60Sleep;
-    PowerMode_ActivateMode(newMode, false, false, "received device resume event");
-#elif DEVICE_IS_UHK80_RIGHT
-    connection_state_t newState;
-    if (usbTransportUp && usbAwake) {
-        newState = ConnectionState_Ready;
-    } else if (usbTransportUp) {
-        newState = ConnectionState_Connected;
-    } else {
-        newState = ConnectionState_Disconnected;
-    }
-    // This will then trigger power_mode update if the number of awake connections changes.
-    Connections_SetStateAsync(ConnectionId_UsbHidRight, newState);
+#if DEVICE_IS_UHK_DONGLE
+    StateSync_UpdateProperty(StateSyncPropertyId_DongleHostAwake, &UsbState_Awake);
+#else
+    EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
+    WIDGET_REFRESH(&TargetWidget);
 #endif
 }
 
 void UsbState_SetUsbTransportUp(bool up) {
-    usbTransportUp = up;
-    recalculateConnectionState();
+    if (UsbState_TransportUp != up) {
+        UsbState_TransportUp = up;
+        recalculateConnectionState();
+    }
 }
 
 void UsbState_SetUsbAwake(bool awake) {
-    usbAwake = awake;
-    recalculateConnectionState();
+    if (UsbState_Awake != awake && !awake) {
+        UsbState_Awake = awake;
+        recalculateConnectionState();
+    }
 }
 
-bool UsbState_IsTransportUp(void) {
-    return usbTransportUp;
+// Remote wakeup doesn't work on some devices. Require a delivered report as a witness.
+//
+// Do we prefer false positives or false negatives?
+void UsbState_Delivered(void) {
+    if (!UsbState_Awake) {
+        UsbState_Awake = true;
+        recalculateConnectionState();
+    }
 }
 
-bool UsbState_IsAwake(void) {
-    return usbAwake;
-}

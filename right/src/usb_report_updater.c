@@ -431,12 +431,7 @@ static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionId
     if (KeyState_DeactivatedNow(keyState)) {
         if (inProgress == keyState && currentTime - startTime < unpairTimeout) {
             inProgress = NULL;
-            uint8_t connId = hostConnectionIdx + ConnectionId_HostConnectionFirst;
-            if (connId == SelectedHostConnectionId) {
-                HostConnection_Unselect(false);
-            } else {
-                HostConnections_SelectByHostConnIndex(hostConnectionIdx);
-            }
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
         }
     }
 
@@ -463,6 +458,12 @@ static void applyConnectionActionPress(connection_action_t command, uint8_t host
             break;
         case ConnectionAction_Previous:
             HostConnections_SelectPreviousConnection();
+            break;
+        case ConnectionAction_NextActive:
+            HostConnections_SelectNextActiveConnection();
+            break;
+        case ConnectionAction_PreviousActive:
+            HostConnections_SelectPreviousActiveConnection();
             break;
         case ConnectionAction_LastSelected:
             HostConnections_SelectLastSelectedConnection();
@@ -773,10 +774,7 @@ static void updateActionStates() {
                     KeyHistory_RecordPress(keyState);
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
-                        Trace_Printf("y1.%d", CurrentPowerMode);
-                        PowerMode_WakeHost();
                         PowerMode_ActivateMode(PowerMode_Awake, false, true, "key action wakeup");
-                        Trace_Printc("y4");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {

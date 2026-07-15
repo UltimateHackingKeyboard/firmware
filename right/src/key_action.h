@@ -43,6 +43,8 @@
         ConnectionAction_ToggleAdvertisement,
         ConnectionAction_TogglePairing,
         ConnectionAction_LastSelected,
+        ConnectionAction_NextActive,
+        ConnectionAction_PreviousActive,
     } connection_action_t;
 
     typedef enum {

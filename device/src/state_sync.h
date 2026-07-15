@@ -106,6 +106,7 @@
         StateSyncPropertyId_KeyStatesDummy = 31,
         StateSyncPropertyId_DongleProtocolVersion = 32,
         StateSyncPropertyId_BatteryStationaryMode = 33,
+        StateSyncPropertyId_DongleHostAwake = 34,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -142,6 +143,11 @@
     extern sync_generic_half_state_t SyncLeftHalfState;
     extern sync_generic_half_state_t SyncRightHalfState;
     extern scroll_multipliers_t DongleScrollMultipliers;
+    // Transport variable for StateSyncPropertyId_DongleHostAwake: on the dongle
+    // it holds our own USB host's awake state (source); on the right it holds the
+    // last received value, which is then fanned into the current dongle
+    // connection's per-connection awake bit.
+    extern bool DongleHostAwake;
 
     extern bool StateSync_BatteryBacklightPowersavingMode;
     extern bool StateSync_BlinkBatteryIcon;

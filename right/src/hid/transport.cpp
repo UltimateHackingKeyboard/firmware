@@ -24,6 +24,7 @@ extern "C" {
 #include "usb_state.h"
 #include "utils.h"
 #include "test_suite/test_hooks.h"
+#include "usb_state.h"
 #if DEVICE_IS_UHK60
 #include "i2c_watchdog.h"
 #endif
@@ -68,7 +69,7 @@ extern "C" void Hid_DumpTransportState(void)
         (int)controls_app::usb_handle().has_transport(),
         (int)command_app::usb_handle().has_transport());
     c2usb_log("  powerMode=%d usbUp=%d usbAwake=%d\n",
-        (int)CurrentPowerMode, (int)UsbState_IsTransportUp(), (int)UsbState_IsAwake());
+        (int)CurrentPowerMode, UsbState_TransportUp, UsbState_Awake);
     uint32_t now = Timer_GetCurrentTime();
     c2usb_log("  key life (ms ago): scan=%u queued=%u/forceQueued=%u/applied=%u action=%u delivered=%u\n",
         now - KeyLifeTimes.scan, now - KeyLifeTimes.queued, now - KeyLifeTimes.forceQueued,
@@ -112,12 +113,12 @@ static report_sink_t determineSink()
     return ReportSink_Usb;
 #else
 
-    connection_type_t connectionType = Connections_Type(ActiveHostConnectionId);
+    connection_type_t connectionType = Connections_Type(CurrentHostConnectionId);
 
-    if (!Connections_IsReady(ActiveHostConnectionId)) {
+    if (!Connections_IsReady(CurrentHostConnectionId)) {
         printk("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
-        if (!Connections_IsReady(ActiveHostConnectionId)) {
+        if (!Connections_IsReady(CurrentHostConnectionId)) {
             // printk("Giving report to c2usb anyways!\n");
             return ReportSink_Usb;
         }
@@ -140,6 +141,15 @@ static report_sink_t determineSink()
 #endif
 }
 
+static void wakeUsbHostIfNeeded()
+{
+    if (!UsbState_Awake) {
+        Trace_Printf("y1.%d", CurrentPowerMode);
+        USB_RemoteWakeup();
+        Trace_Printc("y4");
+    }
+}
+
 #ifdef __ZEPHYR__
 static inline connection_id_t hidConnId(hid_transport_t transport)
 {
@@ -156,15 +166,9 @@ static inline connection_id_t hidConnId(hid_transport_t transport)
 extern "C" void Hid_TransportStateChanged(
     [[maybe_unused]] hid_transport_t transport, [[maybe_unused]] bool enabled)
 {
-#ifdef __ZEPHYR__
-    connection_id_t connId = hidConnId(transport);
-    if (connId == ConnectionId_UsbHidRight) {
-        UsbState_SetUsbTransportUp(enabled);
-    } else {
-        Connections_SetStateAsync( hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
-    }
-#else
     UsbState_SetUsbTransportUp(enabled);
+#ifdef __ZEPHYR__
+    Connections_SetStateAsync(hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
 #endif
 }
 
@@ -179,6 +183,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     }
     switch (sink) {
     case ReportSink_Usb:
+        wakeUsbHostIfNeeded();
         err = keyboard_app::usb_handle().send_report(*report);
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -219,6 +224,9 @@ extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
     UsbScheduler_ReportDelivered(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    if (transport == HID_TRANSPORT_USB) {
+        UsbState_Delivered();
+    }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -232,6 +240,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     errno_t err;
     switch (sink) {
     case ReportSink_Usb:
+        wakeUsbHostIfNeeded();
         err = mouse_app::usb_handle().send_report(*report);
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -270,6 +279,9 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
     }
     UsbSemaphore_Release(&UsbSemaphore.mouse);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    if (transport == HID_TRANSPORT_USB) {
+        UsbState_Delivered();
+    }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -283,6 +295,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     errno_t err;
     switch (sink) {
     case ReportSink_Usb:
+        wakeUsbHostIfNeeded();
         err = controls_app::usb_handle().send_report(*report);
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -315,6 +328,9 @@ extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
 {
     UsbSemaphore_Release(&UsbSemaphore.controls);
     UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    if (transport == HID_TRANSPORT_USB) {
+        UsbState_Delivered();
+    }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -359,7 +375,7 @@ static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
 extern "C" void Hid_UpdateKeyboardLedsState()
 {
 #ifdef __ZEPHYR__
-    switch (Connections_Type(ActiveHostConnectionId)) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
     case ConnectionType_UsbHidRight:
     case ConnectionType_UsbHidLeft:
         setKeyboardLedsState(keyboard_app::usb_handle().get_leds());
@@ -373,7 +389,7 @@ extern "C" void Hid_UpdateKeyboardLedsState()
         StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
         break;
     default:
-        printk("Unhandled connection type %d\n", Connections_Type(ActiveHostConnectionId));
+        printk("Unhandled connection type %d\n", Connections_Type(CurrentHostConnectionId));
         break;
     }
 #else
@@ -387,7 +403,7 @@ extern "C" void Hid_KeyboardLedsStateChanged(hid_transport_t transport)
     auto value = (transport == HID_TRANSPORT_USB) ? keyboard_app::usb_handle().get_leds()
                                                   : keyboard_app::ble_handle().get_leds();
     connection_id_t connectionId = hidConnId(transport);
-    if (Connections_IsActiveHostConnection(connectionId)) {
+    if (Connections_IsCurrentHost(connectionId)) {
         setKeyboardLedsState(value);
     }
 #else
@@ -408,7 +424,7 @@ extern "C" void Hid_MouseScrollResolutionsChanged(
 extern "C" float VerticalScrollMultiplier(void)
 {
 #if !DEVICE_IS_UHK60
-    switch (Connections_Type(ActiveHostConnectionId)) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
         return mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
@@ -431,7 +447,7 @@ extern "C" float VerticalScrollMultiplier(void)
 extern "C" float HorizontalScrollMultiplier(void)
 {
 #if !DEVICE_IS_UHK60
-    switch (Connections_Type(ActiveHostConnectionId)) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
         return mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();

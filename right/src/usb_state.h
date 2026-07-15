@@ -5,11 +5,16 @@
 
     #include <stdbool.h>
 
+
+// Variables:
+
+    extern bool UsbState_TransportUp;
+    extern bool UsbState_Awake;
+
 // Functions:
 
     void UsbState_SetUsbTransportUp(bool up);
     void UsbState_SetUsbAwake(bool awake);
-    bool UsbState_IsTransportUp(void);
-    bool UsbState_IsAwake(void);
+    void UsbState_Delivered(void);
 
 #endif
