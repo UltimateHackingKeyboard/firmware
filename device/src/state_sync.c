@@ -1,5 +1,6 @@
 #include "state_sync.h"
 #include "bt_conn.h"
+#include "link_protocol.h"
 #include "connections.h"
 #include "device.h"
 #include "device_state.h"
@@ -160,7 +161,26 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
     SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
+    // Emitted alongside ModuleState*; never independently dirtied.
+    CUSTOM(ModuleGitRepo,           SyncDirection_LeftToRight,        DirtyState_Clean),
+    CUSTOM(ModuleGitTag,            SyncDirection_LeftToRight,        DirtyState_Clean),
 };
+
+// Bytes a state-sync message occupies on top of its payload struct: the 3-byte
+// link header (src, dst, watermark - MessageOffset_Payload) plus the two message
+// id bytes (MessageId_StateSync and the property id).
+#define STATE_SYNC_MESSAGE_HEADER_LENGTH (MessageOffset_Payload + 2)
+// Largest payload struct that still fits in a single link packet.
+#define STATE_SYNC_MAX_PAYLOAD_LENGTH (MAX_LINK_PACKET_LENGTH - STATE_SYNC_MESSAGE_HEADER_LENGTH)
+
+_Static_assert(sizeof(sync_command_layer_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_layer_t does not fit in a link packet; reduce KEY_COUNT_PER_UPDATE");
+_Static_assert(sizeof(sync_command_module_state_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_module_state_t does not fit in a link packet");
+_Static_assert(sizeof(sync_command_module_git_repo_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_module_git_repo_t does not fit in a link packet");
+_Static_assert(sizeof(sync_command_module_git_tag_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_module_git_tag_t does not fit in a link packet");
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
     STATE_SYNC_LOG("<<< Invalidating property %s\n", stateSyncProps[propId].name);
@@ -339,8 +359,6 @@ static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     moduleState->firmwareVersion = buffer->firmwareVersion;
     moduleState->keyCount = buffer->keyCount;
     moduleState->pointerCount = buffer->pointerCount;
-    Utils_SafeStrCopy(moduleState->gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
-    Utils_SafeStrCopy(moduleState->gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(moduleState->firmwareChecksum, buffer->firmwareChecksum, MD5_CHECKSUM_LENGTH);
 
     if (DEVICE_IS_UHK80_RIGHT && leftModuleChanged) {
@@ -444,6 +462,20 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_ModuleStateLeftModule:
         if (!isLocalUpdate) {
             receiveModuleStateData((sync_command_module_state_t *)data);
+        }
+        break;
+    case StateSyncPropertyId_ModuleGitRepo:
+        if (!isLocalUpdate) {
+            sync_command_module_git_repo_t *buffer = (sync_command_module_git_repo_t *)data;
+            uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
+            Utils_SafeStrCopy(UhkModuleStates[driverId].gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
+        }
+        break;
+    case StateSyncPropertyId_ModuleGitTag:
+        if (!isLocalUpdate) {
+            sync_command_module_git_tag_t *buffer = (sync_command_module_git_tag_t *)data;
+            uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
+            Utils_SafeStrCopy(UhkModuleStates[driverId].gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
         }
         break;
     case StateSyncPropertyId_FunctionalColors:
@@ -565,27 +597,37 @@ static void prepareLayerActions(layer_id_t layerId, uint8_t slotId, uint8_t buff
 
 static void prepareAndSubmitLayer(device_id_t dst, state_sync_prop_id_t propId, layer_id_t layerId) {
     sync_command_layer_t buffer;
-
-    const uint8_t firstPacketLeftHalfActionCount = KEY_COUNT_PER_UPDATE;
-    const uint8_t secondPacketLeftHalfActionCount = MAX_KEY_COUNT_PER_MODULE - KEY_COUNT_PER_UPDATE;
-    const uint8_t secondPacketLeftModuleActionCount = MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE;
-
     buffer.layerId = layerId;
-    buffer.startOffset = 0;
-    buffer.actionCount = firstPacketLeftHalfActionCount;
-    buffer.moduleActionCount = 0;
 
-    prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, 0, firstPacketLeftHalfActionCount, &buffer);
-    submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+    // Chunk the half-keyboard actions into KEY_COUNT_PER_UPDATE-sized packets. The
+    // module actions ride in the last chunk if they fit, else in a trailing packet.
+    bool moduleActionsSent = false;
 
-    buffer.layerId = layerId;
-    buffer.startOffset = firstPacketLeftHalfActionCount;
-    buffer.actionCount = secondPacketLeftHalfActionCount;
-    buffer.moduleActionCount = secondPacketLeftModuleActionCount;
+    for (uint8_t halfOffset = 0; halfOffset < MAX_KEY_COUNT_PER_MODULE; halfOffset += KEY_COUNT_PER_UPDATE) {
+        uint8_t halfCount = MIN(KEY_COUNT_PER_UPDATE, MAX_KEY_COUNT_PER_MODULE - halfOffset);
+        bool isLastHalfChunk = halfOffset + halfCount >= MAX_KEY_COUNT_PER_MODULE;
 
-    prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, firstPacketLeftHalfActionCount, secondPacketLeftHalfActionCount, &buffer);
-    prepareLayerActions(layerId, SlotId_LeftModule, secondPacketLeftHalfActionCount, 0, secondPacketLeftModuleActionCount, &buffer);
-    submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        buffer.startOffset = halfOffset;
+        buffer.actionCount = halfCount;
+        buffer.moduleActionCount = 0;
+        prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, halfOffset, halfCount, &buffer);
+
+        if (isLastHalfChunk && halfCount + MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE <= KEY_COUNT_PER_UPDATE) {
+            buffer.moduleActionCount = MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE;
+            prepareLayerActions(layerId, SlotId_LeftModule, halfCount, 0, MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE, &buffer);
+            moduleActionsSent = true;
+        }
+
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+    }
+
+    if (!moduleActionsSent) {
+        buffer.startOffset = 0;
+        buffer.actionCount = 0;
+        buffer.moduleActionCount = MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE;
+        prepareLayerActions(layerId, SlotId_LeftModule, 0, 0, MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE, &buffer);
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+    }
 }
 
 static void prepareBacklight(sync_command_backlight_t *buffer) {
@@ -604,8 +646,6 @@ static void prepareLeftHalfStateData(sync_command_module_state_t *buffer) {
     buffer->firmwareVersion = firmwareVersion;
     buffer->keyCount = MODULE_KEY_COUNT;
     buffer->pointerCount = MODULE_POINTER_COUNT;
-    Utils_SafeStrCopy(buffer->gitRepo, gitRepo, MAX_STRING_PROPERTY_LENGTH);
-    Utils_SafeStrCopy(buffer->gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(buffer->firmwareChecksum, DeviceMD5Checksums[DEVICE_ID], MD5_CHECKSUM_LENGTH);
 #endif
 }
@@ -619,9 +659,33 @@ static void prepareLeftModuleStateData(sync_command_module_state_t *buffer) {
     buffer->firmwareVersion = moduleState->firmwareVersion;
     buffer->keyCount = moduleState->keyCount;
     buffer->pointerCount = moduleState->pointerCount;
-    memcpy(buffer->gitRepo, moduleState->gitRepo, MAX_STRING_PROPERTY_LENGTH);
-    memcpy(buffer->gitTag, moduleState->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(buffer->firmwareChecksum, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH);
+}
+
+static void prepareModuleGitRepo(device_id_t dst) {
+    sync_command_module_git_repo_t buffer = {};
+
+    buffer.slotId = SlotId_LeftKeyboardHalf;
+    Utils_SafeStrCopy(buffer.gitRepo, gitRepo, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitRepo, (const uint8_t *)&buffer, sizeof(buffer));
+
+    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule);
+    buffer.slotId = SlotId_LeftModule;
+    Utils_SafeStrCopy(buffer.gitRepo, moduleState->gitRepo, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitRepo, (const uint8_t *)&buffer, sizeof(buffer));
+}
+
+static void prepareModuleGitTag(device_id_t dst) {
+    sync_command_module_git_tag_t buffer = {};
+
+    buffer.slotId = SlotId_LeftKeyboardHalf;
+    Utils_SafeStrCopy(buffer.gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitTag, (const uint8_t *)&buffer, sizeof(buffer));
+
+    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule);
+    buffer.slotId = SlotId_LeftModule;
+    Utils_SafeStrCopy(buffer.gitTag, moduleState->gitTag, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitTag, (const uint8_t *)&buffer, sizeof(buffer));
 }
 
 static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_prop_id_t propId) {
@@ -636,13 +700,13 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
 
     switch (propId) {
     case StateSyncPropertyId_LayerActionFirst ... StateSyncPropertyId_LayerActionLast: {
-        layer_id_t layerId = propId - StateSyncPropertyId_LayerActionFirst + LayerId_First;
+        uint8_t layerId = propId - StateSyncPropertyId_LayerActionFirst + LayerId_First;
 
         if (prop->dirtyState == DirtyState_NeedsClearing) {
             submitPreparedData(dst, StateSyncPropertyId_LayerActionsClear, &layerId, sizeof(layerId));
             return;
         } else {
-            // 2 packets!
+            // split across multiple packets
             prepareAndSubmitLayer(dst, propId, layerId);
             return;
         }
@@ -657,6 +721,14 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         sync_command_module_state_t buffer = {};
         prepareLeftModuleStateData(&buffer);
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        return;
+    } break;
+    case StateSyncPropertyId_ModuleGitRepo: {
+        prepareModuleGitRepo(dst);
+        return;
+    } break;
+    case StateSyncPropertyId_ModuleGitTag: {
+        prepareModuleGitTag(dst);
         return;
     } break;
     case StateSyncPropertyId_Backlight: {
@@ -772,6 +844,8 @@ static bool handlePropertyUpdateLeftToRight() {
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleGitRepo, UpdateResult_UpdatedLowPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleGitTag, UpdateResult_UpdatedLowPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyStatesDummy, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor, UpdateResult_UpdatedHighPrio);
@@ -915,6 +989,8 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Battery);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftHalf);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftModule);
+        invalidateProperty(StateSyncPropertyId_ModuleGitRepo);
+        invalidateProperty(StateSyncPropertyId_ModuleGitTag);
         invalidateProperty(StateSyncPropertyId_KeyStatesDummy);
         invalidateProperty(StateSyncPropertyId_MergeSensor);
     }

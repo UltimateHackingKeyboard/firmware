@@ -291,10 +291,13 @@ static void enableDataLengthExtension(struct bt_conn *conn) {
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
     /**
-     * This configures actual transmission length.
+     * Configures actual transmission length. Cap the payload to our reduced ACL
+     * buffer (CONFIG_BT_BUF_ACL_TX_SIZE) rather than the DLE max of 251: we never
+     * send larger packets and shorter PDUs mean lower latency.
      *
-     * We don't want it too high in order to prevent scheduling conflicts between multiple links.
+     * tx_max_time kept low to avoid scheduling conflicts between multiple links.
      * */
+    data_len->tx_max_len = CONFIG_BT_BUF_ACL_TX_SIZE;
     data_len->tx_max_time = 2500;
 
     int err = bt_conn_le_data_len_update(conn, data_len);
