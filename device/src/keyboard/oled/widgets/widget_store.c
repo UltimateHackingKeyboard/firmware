@@ -91,6 +91,15 @@ static string_segment_t getDebugLineText() {
 #undef BUFFER_LENGTH
 }
 
+static string_segment_t getSlotText(uint8_t connId, bool empty) {
+#define UNREGISTERED_BLE_HID_TEXT "Ble slot %d"
+#define EMPTY_BLE_HID_TEXT "Empty slot %d"
+    static char buffer[] = EMPTY_BLE_HID_TEXT;
+    const char* fmt = empty ? EMPTY_BLE_HID_TEXT : UNREGISTERED_BLE_HID_TEXT;
+    snprintf(buffer, sizeof(buffer), fmt, connId - ConnectionId_HostConnectionFirst + 1);
+    return (string_segment_t){ .start = buffer, .end = NULL };
+}
+
 static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
     switch (connId) {
         case ConnectionId_UsbHidRight:
@@ -106,19 +115,14 @@ static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
             }
 
             if (SegmentLen(hostConnection->name) > 0) {
-                if (hostConnection->type == HostConnectionType_UnregisteredBtHid) {
-                    #define UNREGISTERED_BLE_HID_TEXT_SHORT "Ble slot %d"
-                    #define UNREGISTERED_BLE_HID_TEXT "Bluetooth device, slot %d"
-                    static char buffer[] = UNREGISTERED_BLE_HID_TEXT;
-                    const char* fmt = shortVersion ? UNREGISTERED_BLE_HID_TEXT_SHORT : UNREGISTERED_BLE_HID_TEXT;
-                    snprintf(buffer, sizeof(buffer), fmt, connId - ConnectionId_HostConnectionFirst + 1);
-                    return (string_segment_t){ .start = buffer, .end = NULL };
-                } else {
-                    return hostConnection->name;
-                }
+                return hostConnection->name;
             }
 
             switch(hostConnection->type) {
+                case HostConnectionType_UnregisteredBtHid:
+                    return getSlotText(connId, false);
+                case HostConnectionType_Empty:
+                    return getSlotText(connId, true);
                 case HostConnectionType_UsbHidRight:
                     return (string_segment_t){ .start = "USB Cable", .end = NULL };
                 case HostConnectionType_UsbHidLeft:
@@ -129,7 +133,6 @@ static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
                     return (string_segment_t){ .start = "UHK Dongle", .end = NULL };
                 default:
                     return (string_segment_t){ .start = "Unknown", .end = NULL };
-
             }
         }
         case ConnectionId_Invalid:
@@ -150,18 +153,20 @@ static string_segment_t getTargetText() {
     if ( Macros_DisplayStringsBuffs.host[0] != 0) {
         return (string_segment_t){ .start = Macros_DisplayStringsBuffs.host, .end = NULL };
     } else {
-        bool shortNames = SelectedHostConnectionId != ConnectionId_Invalid;
-        size_t offset = 0;
+        // Current is a single sticky target now (it may be an explicitly
+        // selected host that is not connected yet). Show its name; append an
+        // ellipsis while we are still trying to (re)connect to it.
+        string_segment_t currentConnection = getTargetText_(CurrentHostConnectionId, false);
+        size_t offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
 
-        string_segment_t currentConnection = getTargetText_(ActiveHostConnectionId, shortNames);
-        offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
-
-        if (SelectedHostConnectionId != ConnectionId_Invalid) {
-            string_segment_t selectedConnection = (string_segment_t){ .start = NULL, .end = NULL };
-            selectedConnection = getTargetText_(SelectedHostConnectionId, true);
-            if (selectedConnection.start) {
-                snprintf(buffer+offset, sizeof(buffer)-1-offset, " -> %.*s", SegmentLen(selectedConnection), selectedConnection.start);
-            }
+        connection_state_t connectionState = Connections_GetState(CurrentHostConnectionId);
+        bool isAwake = Connections_IsConnectionAwake(CurrentHostConnectionId);
+        if (connectionState == ConnectionState_Disconnected) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (not connected)");
+        } else if (!isAwake && connectionState >= ConnectionState_Connected) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)");
+        } else if (connectionState == ConnectionState_Connected) {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)");
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };

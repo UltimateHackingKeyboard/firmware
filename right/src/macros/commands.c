@@ -2030,6 +2030,14 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
         DRY_RUN_FINISH();
         HostConnections_SelectPreviousConnection();
     }
+    else if (ConsumeToken(ctx, "nextActive")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectNextActiveConnection();
+    }
+    else if (ConsumeToken(ctx, "prevActive") || ConsumeToken(ctx, "previousActive")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectPreviousActiveConnection();
+    }
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
         HostConnections_SelectLastConnection();

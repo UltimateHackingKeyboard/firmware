@@ -5,6 +5,7 @@
 #include "wormhole.h"
 #include "stubs.h"
 #include "hid/transport.h"
+#include "usb_state.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -59,15 +60,21 @@ static uint32_t lastWakeEvent = 0;
 
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
-#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10*1000
+#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 5*1000
 
 
 static bool isSomeoneAwake() {
 #ifdef __ZEPHYR__
-    connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
-    bool someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    bool someoneAwake = false;
+    if (DEVICE_IS_UHK80_LEFT) {
+        connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
+        someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    }
+    if (DEVICE_IS_UHK80_RIGHT) {
+        someoneAwake = Connections_IsConnectionAwake(CurrentHostConnectionId);
+    }
 #else
-    bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
+    bool someoneAwake = UsbState_Awake && UsbState_TransportUp;
 #endif
     return someoneAwake;
 }
@@ -181,9 +188,6 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
     }
 }
 
-void PowerMode_WakeHost() {
-    USB_RemoteWakeup();
-}
 
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
