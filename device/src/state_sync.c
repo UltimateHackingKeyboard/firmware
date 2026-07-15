@@ -696,13 +696,14 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
 
     STATE_SYNC_LOG("<<< Preparing %s data for %s\n", prop->name, Utils_DeviceIdToString(dst));
 
+    uint8_t oldState = DirtyState_Clean;
     prop->dirtyState = DirtyState_Clean;
 
     switch (propId) {
     case StateSyncPropertyId_LayerActionFirst ... StateSyncPropertyId_LayerActionLast: {
         uint8_t layerId = propId - StateSyncPropertyId_LayerActionFirst + LayerId_First;
 
-        if (prop->dirtyState == DirtyState_NeedsClearing) {
+        if (oldState == DirtyState_NeedsClearing) {
             submitPreparedData(dst, StateSyncPropertyId_LayerActionsClear, &layerId, sizeof(layerId));
             return;
         } else {
