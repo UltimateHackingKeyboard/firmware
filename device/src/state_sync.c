@@ -47,13 +47,9 @@ LOG_MODULE_REGISTER(StateSync, LOG_LEVEL_INF);
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
-static K_THREAD_STACK_DEFINE(stack_area_left, THREAD_STACK_SIZE);
-static struct k_thread thread_data_left;
-static k_tid_t stateSyncThreadLeftId = 0;
-
-static K_THREAD_STACK_DEFINE(stack_area_dongle, THREAD_STACK_SIZE);
-static struct k_thread thread_data_dongle;
-static k_tid_t stateSyncThreadDongleId = 0;
+static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
+static struct k_thread thread_data;
+static k_tid_t stateSyncThreadId = 0;
 
 sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
@@ -70,17 +66,6 @@ bool StateSync_BlinkLeftBatteryPercentage = false;
 bool StateSync_BlinkRightBatteryPercentage = false;
 
 bool StateSync_VersionCheckEnabled = true;
-
-static void wake(k_tid_t tid) {
-    if (tid != 0) {
-        k_wakeup(tid);
-        // if (DEBUG_MODE) {
-        //     LogU("StateSync woke up %p", tid);
-        // }
-    } else if (k_uptime_get_32() > 5000) {
-        LOG_INF("Skipping wake up, tid is 0");
-    }
-}
 
 static void receiveProperty(device_id_t src, state_sync_prop_id_t property, const uint8_t *data, uint8_t len);
 
@@ -185,20 +170,7 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
     } else {
         stateSyncProps[propId].dirtyState = DirtyState_NeedsUpdate;
     }
-    bool isRightLeftDevice =
-        (DEVICE_ID == DeviceId_Uhk80_Left || DEVICE_ID == DeviceId_Uhk80_Right);
-    bool isRightLeftLink = (stateSyncProps[propId].direction &
-                            (SyncDirection_RightToLeft | SyncDirection_LeftToRight));
-    if (isRightLeftLink && isRightLeftDevice) {
-        wake(stateSyncThreadLeftId);
-    }
-    bool isRightDongleDevice =
-        (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle);
-    bool isRightDongleLink = (stateSyncProps[propId].direction &
-                              (SyncDirection_DongleToRight | SyncDirection_RightToDongle));
-    if (isRightDongleLink && isRightDongleDevice) {
-        wake(stateSyncThreadDongleId);
-    }
+    WAKE(stateSyncThreadId);
 }
 
 void StateSync_UpdateProperty(state_sync_prop_id_t propId, void *data) {
@@ -825,37 +797,6 @@ static bool handlePropertyUpdateRightToDongle() {
     return UpdateResult_AllUpToDate;
 }
 
-static void updateLoopRightLeft() {
-    update_result_t res;
-
-    if (DEVICE_ID == DeviceId_Uhk80_Left) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
-            STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
-
-            if (!isConnected || (res = handlePropertyUpdateLeftToRight()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
-            }
-        }
-    }
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
-            STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected);
-            if (!isConnected || (res = handlePropertyUpdateRightToLeft()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
-            }
-        }
-    }
-}
-
 static void updateStandbys() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         uint8_t connectionId = Peers[peerId].connectionId;
@@ -866,40 +807,72 @@ static void updateStandbys() {
     }
 }
 
-static void updateLoopRightDongle() {
-    update_result_t res;
 
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
-            STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected);
+static void updateLoop() {
+    update_result_t res1 = UpdateResult_AllUpToDate;
+    update_result_t res2 = UpdateResult_AllUpToDate;
+    bool isConnected1 = false;
+    bool isConnected2 = false;
+    bool isIdle1 = true;
+    bool isIdle2 = true;
 
+    while (true) {
+        if (DEVICE_ID == DeviceId_Uhk80_Left) {
+            isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
+            STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
+
+            if (isConnected1) {
+                res1 = handlePropertyUpdateLeftToRight();
+            }
+
+            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+        }
+
+        if (DEVICE_ID == DeviceId_Uhk80_Right) {
+            isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
+            STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected1);
+            if (isConnected1) {
+                res1 = handlePropertyUpdateRightToLeft();
+            }
+            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+        }
+
+        if (DEVICE_ID == DeviceId_Uhk80_Right) {
+            isConnected2 = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
+            STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected2);
             if (stateSyncProps[StateSyncPropertyId_DongleStandby].dirtyState != DirtyState_Clean) {                                   \
                 updateStandbys();                                                                    \
             }
 
-            if (!isConnected || (res = handlePropertyUpdateRightToDongle()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
+            if (!isConnected2) {
+                res2 = handlePropertyUpdateRightToDongle();
             }
+            isIdle2 = !isConnected2 || res2 == UpdateResult_AllUpToDate;
         }
-    }
 
-    if (DEVICE_ID == DeviceId_Uhk_Dongle) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
-            STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
-            if (!isConnected || DongleStandby || (res = handlePropertyUpdateDongleToRight()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
+
+        if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+            isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
+            STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected1);
+            if (!isConnected1) {
+                res1 = handlePropertyUpdateDongleToRight();
             }
+
+            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+        }
+
+        update_result_t mergedResult = MIN(res1, res2);
+
+
+        if (isIdle1 && isIdle2) {
+            k_sleep(K_FOREVER);
+        } else {
+            uint32_t delay = mergedResult == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
+            k_sleep(K_MSEC(delay));
         }
     }
 }
+
 
 void StateSync_UpdateLayer(layer_id_t layerId, bool fullUpdate) {
     state_sync_prop_id_t propId = StateSyncPropertyId_LayerActionFirst + layerId - LayerId_First;
@@ -907,23 +880,14 @@ void StateSync_UpdateLayer(layer_id_t layerId, bool fullUpdate) {
     stateSyncProps[propId].dirtyState = fullUpdate ? DirtyState_NeedsUpdate : DirtyState_NeedsClearing;
     stateSyncProps[propId].defaultDirty = stateSyncProps[propId].dirtyState;
 
-    WAKE(stateSyncThreadLeftId);
+    WAKE(stateSyncThreadId);
 }
 
 void StateSync_Init() {
-    if (DEVICE_ID == DeviceId_Uhk80_Left || DEVICE_ID == DeviceId_Uhk80_Right) {
-        stateSyncThreadLeftId = k_thread_create(&thread_data_left, stack_area_left,
-            K_THREAD_STACK_SIZEOF(stack_area_left), updateLoopRightLeft, NULL, NULL, NULL,
+    stateSyncThreadId = k_thread_create(&thread_data, stack_area,
+            K_THREAD_STACK_SIZEOF(stack_area), updateLoop, NULL, NULL, NULL,
             THREAD_PRIORITY, 0, K_NO_WAIT);
-        k_thread_name_set(&thread_data_left, "state_sync_left_right");
-    }
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle) {
-        stateSyncThreadDongleId = k_thread_create(&thread_data_dongle, stack_area_dongle,
-            K_THREAD_STACK_SIZEOF(stack_area_dongle), updateLoopRightDongle, NULL, NULL, NULL,
-            THREAD_PRIORITY, 0, K_NO_WAIT);
-        k_thread_name_set(&thread_data_dongle, "state_sync_dongle_right");
-    }
+    k_thread_name_set(&thread_data, "state_sync");
 }
 
 void StateSync_ResetRightLeftLink(bool bidirectional) {
