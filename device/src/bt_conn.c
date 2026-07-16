@@ -838,7 +838,7 @@ static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     BT_TRACE_AND_ASSERT("bc3");
     // In case of failure, disconnect
-    if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
+    if (err || level < BT_SECURITY_L4) {
         LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting", GetPeerStringByConn(conn), level, err);
 
         struct bt_conn_info info;
