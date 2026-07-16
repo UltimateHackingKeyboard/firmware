@@ -1,5 +1,6 @@
 #include "state_sync.h"
 #include "bt_conn.h"
+#include "link_protocol.h"
 #include "connections.h"
 #include "device.h"
 #include "device_state.h"
@@ -47,13 +48,9 @@ LOG_MODULE_REGISTER(StateSync, LOG_LEVEL_INF);
 
 #define THREAD_STACK_SIZE 2000
 #define THREAD_PRIORITY 5
-static K_THREAD_STACK_DEFINE(stack_area_left, THREAD_STACK_SIZE);
-static struct k_thread thread_data_left;
-static k_tid_t stateSyncThreadLeftId = 0;
-
-static K_THREAD_STACK_DEFINE(stack_area_dongle, THREAD_STACK_SIZE);
-static struct k_thread thread_data_dongle;
-static k_tid_t stateSyncThreadDongleId = 0;
+static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
+static struct k_thread thread_data;
+static k_tid_t stateSyncThreadId = 0;
 
 sync_generic_half_state_t SyncLeftHalfState;
 sync_generic_half_state_t SyncRightHalfState;
@@ -70,17 +67,6 @@ bool StateSync_BlinkLeftBatteryPercentage = false;
 bool StateSync_BlinkRightBatteryPercentage = false;
 
 bool StateSync_VersionCheckEnabled = true;
-
-static void wake(k_tid_t tid) {
-    if (tid != 0) {
-        k_wakeup(tid);
-        // if (DEBUG_MODE) {
-        //     LogU("StateSync woke up %p", tid);
-        // }
-    } else if (k_uptime_get_32() > 5000) {
-        LOG_INF("Skipping wake up, tid is 0");
-    }
-}
 
 static void receiveProperty(device_id_t src, state_sync_prop_id_t property, const uint8_t *data, uint8_t len);
 
@@ -175,7 +161,26 @@ static state_sync_prop_t stateSyncProps[StateSyncPropertyId_Count] = {
     CUSTOM(KeyStatesDummy,          SyncDirection_LeftToRight,        DirtyState_Clean),
     CUSTOM(DongleProtocolVersion,   SyncDirection_DongleToRight,      DirtyState_Clean),
     SIMPLE(BatteryStationaryMode,   SyncDirection_RightToLeft,        DirtyState_Clean,    &Cfg.BatteryStationaryMode),
+    // Emitted alongside ModuleState*; never independently dirtied.
+    CUSTOM(ModuleGitRepo,           SyncDirection_LeftToRight,        DirtyState_Clean),
+    CUSTOM(ModuleGitTag,            SyncDirection_LeftToRight,        DirtyState_Clean),
 };
+
+// Bytes a state-sync message occupies on top of its payload struct: the 3-byte
+// link header (src, dst, watermark - MessageOffset_Payload) plus the two message
+// id bytes (MessageId_StateSync and the property id).
+#define STATE_SYNC_MESSAGE_HEADER_LENGTH (MessageOffset_Payload + 2)
+// Largest payload struct that still fits in a single link packet.
+#define STATE_SYNC_MAX_PAYLOAD_LENGTH (MAX_LINK_PACKET_LENGTH - STATE_SYNC_MESSAGE_HEADER_LENGTH)
+
+_Static_assert(sizeof(sync_command_layer_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_layer_t does not fit in a link packet; reduce KEY_COUNT_PER_UPDATE");
+_Static_assert(sizeof(sync_command_module_state_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_module_state_t does not fit in a link packet");
+_Static_assert(sizeof(sync_command_module_git_repo_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_module_git_repo_t does not fit in a link packet");
+_Static_assert(sizeof(sync_command_module_git_tag_t) <= STATE_SYNC_MAX_PAYLOAD_LENGTH,
+    "sync_command_module_git_tag_t does not fit in a link packet");
 
 static void invalidateProperty(state_sync_prop_id_t propId) {
     STATE_SYNC_LOG("<<< Invalidating property %s\n", stateSyncProps[propId].name);
@@ -185,20 +190,7 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
     } else {
         stateSyncProps[propId].dirtyState = DirtyState_NeedsUpdate;
     }
-    bool isRightLeftDevice =
-        (DEVICE_ID == DeviceId_Uhk80_Left || DEVICE_ID == DeviceId_Uhk80_Right);
-    bool isRightLeftLink = (stateSyncProps[propId].direction &
-                            (SyncDirection_RightToLeft | SyncDirection_LeftToRight));
-    if (isRightLeftLink && isRightLeftDevice) {
-        wake(stateSyncThreadLeftId);
-    }
-    bool isRightDongleDevice =
-        (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle);
-    bool isRightDongleLink = (stateSyncProps[propId].direction &
-                              (SyncDirection_DongleToRight | SyncDirection_RightToDongle));
-    if (isRightDongleLink && isRightDongleDevice) {
-        wake(stateSyncThreadDongleId);
-    }
+    WAKE(stateSyncThreadId);
 }
 
 void StateSync_UpdateProperty(state_sync_prop_id_t propId, void *data) {
@@ -367,8 +359,6 @@ static void receiveModuleStateData(sync_command_module_state_t *buffer) {
     moduleState->firmwareVersion = buffer->firmwareVersion;
     moduleState->keyCount = buffer->keyCount;
     moduleState->pointerCount = buffer->pointerCount;
-    Utils_SafeStrCopy(moduleState->gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
-    Utils_SafeStrCopy(moduleState->gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(moduleState->firmwareChecksum, buffer->firmwareChecksum, MD5_CHECKSUM_LENGTH);
 
     if (DEVICE_IS_UHK80_RIGHT && leftModuleChanged) {
@@ -472,6 +462,20 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     case StateSyncPropertyId_ModuleStateLeftModule:
         if (!isLocalUpdate) {
             receiveModuleStateData((sync_command_module_state_t *)data);
+        }
+        break;
+    case StateSyncPropertyId_ModuleGitRepo:
+        if (!isLocalUpdate) {
+            sync_command_module_git_repo_t *buffer = (sync_command_module_git_repo_t *)data;
+            uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
+            Utils_SafeStrCopy(UhkModuleStates[driverId].gitRepo, buffer->gitRepo, MAX_STRING_PROPERTY_LENGTH);
+        }
+        break;
+    case StateSyncPropertyId_ModuleGitTag:
+        if (!isLocalUpdate) {
+            sync_command_module_git_tag_t *buffer = (sync_command_module_git_tag_t *)data;
+            uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(buffer->slotId);
+            Utils_SafeStrCopy(UhkModuleStates[driverId].gitTag, buffer->gitTag, MAX_STRING_PROPERTY_LENGTH);
         }
         break;
     case StateSyncPropertyId_FunctionalColors:
@@ -593,27 +597,37 @@ static void prepareLayerActions(layer_id_t layerId, uint8_t slotId, uint8_t buff
 
 static void prepareAndSubmitLayer(device_id_t dst, state_sync_prop_id_t propId, layer_id_t layerId) {
     sync_command_layer_t buffer;
-
-    const uint8_t firstPacketLeftHalfActionCount = KEY_COUNT_PER_UPDATE;
-    const uint8_t secondPacketLeftHalfActionCount = MAX_KEY_COUNT_PER_MODULE - KEY_COUNT_PER_UPDATE;
-    const uint8_t secondPacketLeftModuleActionCount = MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE;
-
     buffer.layerId = layerId;
-    buffer.startOffset = 0;
-    buffer.actionCount = firstPacketLeftHalfActionCount;
-    buffer.moduleActionCount = 0;
 
-    prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, 0, firstPacketLeftHalfActionCount, &buffer);
-    submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+    // Chunk the half-keyboard actions into KEY_COUNT_PER_UPDATE-sized packets. The
+    // module actions ride in the last chunk if they fit, else in a trailing packet.
+    bool moduleActionsSent = false;
 
-    buffer.layerId = layerId;
-    buffer.startOffset = firstPacketLeftHalfActionCount;
-    buffer.actionCount = secondPacketLeftHalfActionCount;
-    buffer.moduleActionCount = secondPacketLeftModuleActionCount;
+    for (uint8_t halfOffset = 0; halfOffset < MAX_KEY_COUNT_PER_MODULE; halfOffset += KEY_COUNT_PER_UPDATE) {
+        uint8_t halfCount = MIN(KEY_COUNT_PER_UPDATE, MAX_KEY_COUNT_PER_MODULE - halfOffset);
+        bool isLastHalfChunk = halfOffset + halfCount >= MAX_KEY_COUNT_PER_MODULE;
 
-    prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, firstPacketLeftHalfActionCount, secondPacketLeftHalfActionCount, &buffer);
-    prepareLayerActions(layerId, SlotId_LeftModule, secondPacketLeftHalfActionCount, 0, secondPacketLeftModuleActionCount, &buffer);
-    submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        buffer.startOffset = halfOffset;
+        buffer.actionCount = halfCount;
+        buffer.moduleActionCount = 0;
+        prepareLayerActions(layerId, SlotId_LeftKeyboardHalf, 0, halfOffset, halfCount, &buffer);
+
+        if (isLastHalfChunk && halfCount + MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE <= KEY_COUNT_PER_UPDATE) {
+            buffer.moduleActionCount = MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE;
+            prepareLayerActions(layerId, SlotId_LeftModule, halfCount, 0, MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE, &buffer);
+            moduleActionsSent = true;
+        }
+
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+    }
+
+    if (!moduleActionsSent) {
+        buffer.startOffset = 0;
+        buffer.actionCount = 0;
+        buffer.moduleActionCount = MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE;
+        prepareLayerActions(layerId, SlotId_LeftModule, 0, 0, MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE, &buffer);
+        submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+    }
 }
 
 static void prepareBacklight(sync_command_backlight_t *buffer) {
@@ -632,8 +646,6 @@ static void prepareLeftHalfStateData(sync_command_module_state_t *buffer) {
     buffer->firmwareVersion = firmwareVersion;
     buffer->keyCount = MODULE_KEY_COUNT;
     buffer->pointerCount = MODULE_POINTER_COUNT;
-    Utils_SafeStrCopy(buffer->gitRepo, gitRepo, MAX_STRING_PROPERTY_LENGTH);
-    Utils_SafeStrCopy(buffer->gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(buffer->firmwareChecksum, DeviceMD5Checksums[DEVICE_ID], MD5_CHECKSUM_LENGTH);
 #endif
 }
@@ -647,9 +659,33 @@ static void prepareLeftModuleStateData(sync_command_module_state_t *buffer) {
     buffer->firmwareVersion = moduleState->firmwareVersion;
     buffer->keyCount = moduleState->keyCount;
     buffer->pointerCount = moduleState->pointerCount;
-    memcpy(buffer->gitRepo, moduleState->gitRepo, MAX_STRING_PROPERTY_LENGTH);
-    memcpy(buffer->gitTag, moduleState->gitTag, MAX_STRING_PROPERTY_LENGTH);
     memcpy(buffer->firmwareChecksum, moduleState->firmwareChecksum, MD5_CHECKSUM_LENGTH);
+}
+
+static void prepareModuleGitRepo(device_id_t dst) {
+    sync_command_module_git_repo_t buffer = {};
+
+    buffer.slotId = SlotId_LeftKeyboardHalf;
+    Utils_SafeStrCopy(buffer.gitRepo, gitRepo, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitRepo, (const uint8_t *)&buffer, sizeof(buffer));
+
+    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule);
+    buffer.slotId = SlotId_LeftModule;
+    Utils_SafeStrCopy(buffer.gitRepo, moduleState->gitRepo, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitRepo, (const uint8_t *)&buffer, sizeof(buffer));
+}
+
+static void prepareModuleGitTag(device_id_t dst) {
+    sync_command_module_git_tag_t buffer = {};
+
+    buffer.slotId = SlotId_LeftKeyboardHalf;
+    Utils_SafeStrCopy(buffer.gitTag, gitTag, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitTag, (const uint8_t *)&buffer, sizeof(buffer));
+
+    uhk_module_state_t *moduleState = UhkModuleStates + UhkModuleSlaveDriver_SlotIdToDriverId(SlotId_LeftModule);
+    buffer.slotId = SlotId_LeftModule;
+    Utils_SafeStrCopy(buffer.gitTag, moduleState->gitTag, MAX_STRING_PROPERTY_LENGTH);
+    submitPreparedData(dst, StateSyncPropertyId_ModuleGitTag, (const uint8_t *)&buffer, sizeof(buffer));
 }
 
 static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_prop_id_t propId) {
@@ -660,17 +696,18 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
 
     STATE_SYNC_LOG("<<< Preparing %s data for %s\n", prop->name, Utils_DeviceIdToString(dst));
 
+    uint8_t oldState = DirtyState_Clean;
     prop->dirtyState = DirtyState_Clean;
 
     switch (propId) {
     case StateSyncPropertyId_LayerActionFirst ... StateSyncPropertyId_LayerActionLast: {
-        layer_id_t layerId = propId - StateSyncPropertyId_LayerActionFirst + LayerId_First;
+        uint8_t layerId = propId - StateSyncPropertyId_LayerActionFirst + LayerId_First;
 
-        if (prop->dirtyState == DirtyState_NeedsClearing) {
+        if (oldState == DirtyState_NeedsClearing) {
             submitPreparedData(dst, StateSyncPropertyId_LayerActionsClear, &layerId, sizeof(layerId));
             return;
         } else {
-            // 2 packets!
+            // split across multiple packets
             prepareAndSubmitLayer(dst, propId, layerId);
             return;
         }
@@ -685,6 +722,14 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
         sync_command_module_state_t buffer = {};
         prepareLeftModuleStateData(&buffer);
         submitPreparedData(dst, propId, (const uint8_t *)&buffer, sizeof(buffer));
+        return;
+    } break;
+    case StateSyncPropertyId_ModuleGitRepo: {
+        prepareModuleGitRepo(dst);
+        return;
+    } break;
+    case StateSyncPropertyId_ModuleGitTag: {
+        prepareModuleGitTag(dst);
         return;
     } break;
     case StateSyncPropertyId_Backlight: {
@@ -800,6 +845,8 @@ static bool handlePropertyUpdateLeftToRight() {
 
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftHalf, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleStateLeftModule, UpdateResult_UpdatedHighPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleGitRepo, UpdateResult_UpdatedLowPrio);
+    UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_ModuleGitTag, UpdateResult_UpdatedLowPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_KeyStatesDummy, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_LeftModuleDisconnected, UpdateResult_UpdatedHighPrio);
     UPDATE_AND_RETURN_IF_DIRTY(StateSyncPropertyId_MergeSensor, UpdateResult_UpdatedHighPrio);
@@ -825,37 +872,6 @@ static bool handlePropertyUpdateRightToDongle() {
     return UpdateResult_AllUpToDate;
 }
 
-static void updateLoopRightLeft() {
-    update_result_t res;
-
-    if (DEVICE_ID == DeviceId_Uhk80_Left) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
-            STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
-
-            if (!isConnected || (res = handlePropertyUpdateLeftToRight()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
-            }
-        }
-    }
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
-            STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected);
-            if (!isConnected || (res = handlePropertyUpdateRightToLeft()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
-            }
-        }
-    }
-}
-
 static void updateStandbys() {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         uint8_t connectionId = Peers[peerId].connectionId;
@@ -866,40 +882,72 @@ static void updateStandbys() {
     }
 }
 
-static void updateLoopRightDongle() {
-    update_result_t res;
 
-    if (DEVICE_ID == DeviceId_Uhk80_Right) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
-            STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected);
+static void updateLoop() {
+    update_result_t res1 = UpdateResult_AllUpToDate;
+    update_result_t res2 = UpdateResult_AllUpToDate;
+    bool isConnected1 = false;
+    bool isConnected2 = false;
+    bool isIdle1 = true;
+    bool isIdle2 = true;
 
+    while (true) {
+        if (DEVICE_ID == DeviceId_Uhk80_Left) {
+            isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
+            STATE_SYNC_LOG("--- Left to right update loop, connected: %i\n", isConnected);
+
+            if (isConnected1) {
+                res1 = handlePropertyUpdateLeftToRight();
+            }
+
+            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+        }
+
+        if (DEVICE_ID == DeviceId_Uhk80_Right) {
+            isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Left);
+            STATE_SYNC_LOG("--- Right to left update loop, connected: %i\n", isConnected1);
+            if (isConnected1) {
+                res1 = handlePropertyUpdateRightToLeft();
+            }
+            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+        }
+
+        if (DEVICE_ID == DeviceId_Uhk80_Right) {
+            isConnected2 = DeviceState_IsDeviceConnected(DeviceId_Uhk_Dongle);
+            STATE_SYNC_LOG("--- Right to dongle update loop, connected: %i\n", isConnected2);
             if (stateSyncProps[StateSyncPropertyId_DongleStandby].dirtyState != DirtyState_Clean) {                                   \
                 updateStandbys();                                                                    \
             }
 
-            if (!isConnected || (res = handlePropertyUpdateRightToDongle()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
+            if (!isConnected2) {
+                res2 = handlePropertyUpdateRightToDongle();
             }
+            isIdle2 = !isConnected2 || res2 == UpdateResult_AllUpToDate;
         }
-    }
 
-    if (DEVICE_ID == DeviceId_Uhk_Dongle) {
-        while (true) {
-            bool isConnected = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
-            STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected);
-            if (!isConnected || DongleStandby || (res = handlePropertyUpdateDongleToRight()) == UpdateResult_AllUpToDate) {
-                k_sleep(K_FOREVER);
-            } else {
-                uint32_t delay = res == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
-                k_sleep(K_MSEC(delay));
+
+        if (DEVICE_ID == DeviceId_Uhk_Dongle) {
+            isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
+            STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected1);
+            if (!isConnected1) {
+                res1 = handlePropertyUpdateDongleToRight();
             }
+
+            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+        }
+
+        update_result_t mergedResult = MIN(res1, res2);
+
+
+        if (isIdle1 && isIdle2) {
+            k_sleep(K_FOREVER);
+        } else {
+            uint32_t delay = mergedResult == UpdateResult_UpdatedHighPrio ? STATE_SYNC_SEND_DELAY_HPRIO : STATE_SYNC_SEND_DELAY_LPRIO;
+            k_sleep(K_MSEC(delay));
         }
     }
 }
+
 
 void StateSync_UpdateLayer(layer_id_t layerId, bool fullUpdate) {
     state_sync_prop_id_t propId = StateSyncPropertyId_LayerActionFirst + layerId - LayerId_First;
@@ -907,23 +955,14 @@ void StateSync_UpdateLayer(layer_id_t layerId, bool fullUpdate) {
     stateSyncProps[propId].dirtyState = fullUpdate ? DirtyState_NeedsUpdate : DirtyState_NeedsClearing;
     stateSyncProps[propId].defaultDirty = stateSyncProps[propId].dirtyState;
 
-    WAKE(stateSyncThreadLeftId);
+    WAKE(stateSyncThreadId);
 }
 
 void StateSync_Init() {
-    if (DEVICE_ID == DeviceId_Uhk80_Left || DEVICE_ID == DeviceId_Uhk80_Right) {
-        stateSyncThreadLeftId = k_thread_create(&thread_data_left, stack_area_left,
-            K_THREAD_STACK_SIZEOF(stack_area_left), updateLoopRightLeft, NULL, NULL, NULL,
+    stateSyncThreadId = k_thread_create(&thread_data, stack_area,
+            K_THREAD_STACK_SIZEOF(stack_area), updateLoop, NULL, NULL, NULL,
             THREAD_PRIORITY, 0, K_NO_WAIT);
-        k_thread_name_set(&thread_data_left, "state_sync_left_right");
-    }
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right || DEVICE_ID == DeviceId_Uhk_Dongle) {
-        stateSyncThreadDongleId = k_thread_create(&thread_data_dongle, stack_area_dongle,
-            K_THREAD_STACK_SIZEOF(stack_area_dongle), updateLoopRightDongle, NULL, NULL, NULL,
-            THREAD_PRIORITY, 0, K_NO_WAIT);
-        k_thread_name_set(&thread_data_dongle, "state_sync_dongle_right");
-    }
+    k_thread_name_set(&thread_data, "state_sync");
 }
 
 void StateSync_ResetRightLeftLink(bool bidirectional) {
@@ -951,6 +990,8 @@ void StateSync_ResetRightLeftLink(bool bidirectional) {
         invalidateProperty(StateSyncPropertyId_Battery);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftHalf);
         invalidateProperty(StateSyncPropertyId_ModuleStateLeftModule);
+        invalidateProperty(StateSyncPropertyId_ModuleGitRepo);
+        invalidateProperty(StateSyncPropertyId_ModuleGitTag);
         invalidateProperty(StateSyncPropertyId_KeyStatesDummy);
         invalidateProperty(StateSyncPropertyId_MergeSensor);
     }
