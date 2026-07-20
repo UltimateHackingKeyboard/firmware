@@ -151,10 +151,10 @@ bool Macros_CurrentMacroKeyIsActive()
 
 static macro_result_t writeNum(uint32_t a)
 {
-    char num[11];
-    num[10] = '\0';
+    char num[12];
+    num[11] = '\0';
     int at = 10;
-    while ((a > 0 || at == 10) && at > 0) {
+    while ((a > 0 || at == 10) && at > 1) {
         at--;
         num[at] = a % 10 + 48;
         a = a/10;
