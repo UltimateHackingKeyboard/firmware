@@ -28,6 +28,9 @@ extern "C" {
 #include "controls_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#if DEVICE_IS_UHK80_RIGHT
+    #include "ble_app.hpp"
+#endif
 
 #if defined(__ZEPHYR__) && (defined(CONFIG_DEBUG) == defined(NDEBUG))
     #error "Either CONFIG_DEBUG or NDEBUG must be defined"
@@ -118,6 +121,23 @@ extern "C" void Hid_TransportStateChanged([[maybe_unused]] bool enabled)
 #endif
 }
 
+#if DEVICE_IS_UHK80_RIGHT
+// Resolve the BLE HID session bound to the current host connection, if any.
+static ble_session *currentHostBleSession()
+{
+    connection_id_t connId = CurrentHostConnectionId;
+    if (connId <= ConnectionId_Invalid || connId >= ConnectionId_Count) {
+        return nullptr;
+    }
+    uint8_t peerId = Connections[connId].peerId;
+    if (peerId < PeerIdFirstHost || peerId > PeerIdLastHost) {
+        return nullptr;
+    }
+    struct bt_conn *conn = Peers[peerId].conn;
+    return conn ? ble_session::lookup_by_conn(conn) : nullptr;
+}
+#endif
+
 // TODO: when switching sinks, or when USB only and transport comes up
 // keyboard_buffer.reset_to(session->protocol(), (session->channel() == hid::channel::BLE) ? HID_ROLLOVER_N_KEY : HID_GetKeyboardRollover());
 
@@ -142,8 +162,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid: {
-        // TODO: select the BLE session by bt_conn pointer
-        hid::session *session = nullptr;
+        hid::session *session = currentHostBleSession();
 
         if (!session) {
             break;
@@ -230,8 +249,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid: {
-        // TODO: select the BLE session by bt_conn pointer
-        hid::session *session = nullptr;
+        hid::session *session = currentHostBleSession();
 
         if (!session) {
             break;
@@ -298,8 +316,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid: {
-        // TODO: select the BLE session by bt_conn pointer
-        hid::session *session = nullptr;
+        hid::session *session = currentHostBleSession();
 
         if (!session) {
             break;
@@ -394,7 +411,7 @@ extern "C" void Hid_UpdateKeyboardLedsState()
         break;
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
-        // TODO
+        session = currentHostBleSession();
         break;
     #endif
     case ConnectionType_NusDongle:
@@ -415,8 +432,16 @@ extern "C" void Hid_UpdateKeyboardLedsState()
 void keyboard_leds_changed_callback(keyboard_base_session &session)
 {
 #if DEVICE_IS_UHK80_RIGHT
-    // TODO: adapt connection check
-    connection_id_t connectionId = ConnectionId_UsbHidRight;
+    connection_id_t connectionId;
+    if (session.channel() == hid::channel::USB) {
+        connectionId = ConnectionId_UsbHidRight;
+    } else {
+        struct bt_conn *conn = static_cast<ble_session &>(session).get_conn();
+        int8_t peerId = conn ? GetPeerIdByConn(conn) : PeerIdUnknown;
+        connectionId = (peerId >= PeerIdFirstHost && peerId <= PeerIdLastHost)
+            ? (connection_id_t)Peers[peerId].connectionId
+            : ConnectionId_Invalid;
+    }
     if (Connections_IsCurrentHost(connectionId)) {
         setKeyboardLedsState(session.get_leds_report());
     }
@@ -441,7 +466,9 @@ extern "C" float VerticalScrollMultiplier(void)
     switch (Connections_Type(CurrentHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
-        // TODO: adapt to multiple BLE sessions
+        if (auto *session = currentHostBleSession(); session) {
+            return session->resolution_report().vertical_scroll_multiplier();
+        }
         return 1.f;
     #endif
     case ConnectionType_NusDongle:
@@ -468,7 +495,9 @@ extern "C" float HorizontalScrollMultiplier(void)
     switch (Connections_Type(CurrentHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
-        // TODO: adapt to multiple BLE sessions
+        if (auto *session = currentHostBleSession(); session) {
+            return session->resolution_report().horizontal_scroll_multiplier();
+        }
         return 1.f;
     #endif
     case ConnectionType_NusDongle:

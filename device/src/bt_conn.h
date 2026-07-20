@@ -28,6 +28,10 @@
     #define BLE_ADDR_LEN 6
     #define BLE_KEY_LEN 16
 
+    // Byte storage embedded in each host peer to hold its c2usb ble_session (a C++
+    // object, currently 144 bytes; a little headroom is left for growth).
+    #define BLE_HID_SESSION_STORAGE_SIZE 160
+
 
 // Typedefs:
 
@@ -46,6 +50,8 @@
         struct bt_conn* conn;
         uint32_t lastSwitchover;
         uint32_t bleReportIntervalMs;
+        bool hidSessionActive;
+        uint8_t hidSessionStorage[BLE_HID_SESSION_STORAGE_SIZE] __attribute__((aligned(8)));
     } peer_t;
 
 typedef enum {
