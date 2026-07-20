@@ -1,5 +1,4 @@
-#ifndef __COMMAND_APP_HEADER__
-#define __COMMAND_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "device.h"
@@ -23,15 +22,32 @@ enum class ugl : uint8_t {
     COMMAND_DATA_IN = 0x0002,
     COMMAND_DATA_OUT = 0x0003,
 };
-
 } // namespace hid::page
 
-class command_app : public hid::application {
-    command_app() : application(report_protocol()) {}
-
+class command_session : public hid::session {
   public:
     static constexpr size_t MESSAGE_SIZE = USB_COMMAND_BUFFER_LENGTH;
+    template <hid::report::type TYPE, hid::report::id::type ID>
+    struct report_base : public hid::report::base<TYPE, ID> {
+        std::array<uint8_t, MESSAGE_SIZE> payload{};
+    };
+    using report_in = report_base<hid::report::type::INPUT, report_ids::IN_COMMAND>;
+    using report_out = report_base<hid::report::type::OUTPUT, report_ids::OUT_COMMAND>;
 
+    command_session() { receive_report(&out_buffer_); }
+
+  private:
+    C2USB_USB_TRANSFER_ALIGN(report_in, in_buffer_) {};
+    C2USB_USB_TRANSFER_ALIGN(report_out, out_buffer_) {};
+
+    std::span<const uint8_t> get_report(
+        hid::report::selector select, const std::span<uint8_t> &buffer) override;
+
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
+};
+
+class command_app : public hid::application {
+  public:
     static constexpr auto report_desc()
     {
         using namespace hid::page;
@@ -44,7 +60,7 @@ class command_app : public hid::application {
             collection::application(
                 conditional_report_id<report_ids::IN_COMMAND>(),
                 report_size(8),
-                report_count(MESSAGE_SIZE),
+                report_count(command_session::MESSAGE_SIZE),
                 logical_limits<1, 1>(0, 0xff),
                 usage(ugl::COMMAND_DATA_IN),
                 input::buffered_variable(),
@@ -53,26 +69,14 @@ class command_app : public hid::application {
                 output::buffered_variable()
             )
         );
-        // clang-format off
+        // clang-format on
     }
 
-    template <hid::report::type TYPE, hid::report::id::type ID>
-    struct report_base : public hid::report::base<TYPE, ID>
+    static command_app &usb_handle()
     {
-        std::array<uint8_t, MESSAGE_SIZE> payload{};
-    };
-    using report_in = report_base<hid::report::type::INPUT, report_ids::IN_COMMAND>;
-    using report_out = report_base<hid::report::type::OUTPUT, report_ids::OUT_COMMAND>;
-
-    static command_app& usb_handle();
-#if DEVICE_IS_UHK80_RIGHT
-    static command_app& ble_handle();
-#endif
-
-    void start(hid::protocol prot) override;
-    void set_report(hid::report::type type, const std::span<const uint8_t>& data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t>& buffer) override;
-    void in_report_sent(const std::span<const uint8_t>& data) override;
+        static command_app app{};
+        return app;
+    }
 
   private:
     static hid::report_protocol report_protocol()
@@ -81,9 +85,9 @@ class command_app : public hid::application {
         constexpr hid::report_protocol rp{rd};
         return rp;
     }
+    std::optional<command_session> session_{};
 
-    double_buffer<report_in> in_buffer_{};
-    double_buffer<report_out> out_buffer_{};
+    command_app() : application(report_protocol()) {}
+    hid::session &start(const hid::session_params &params) override;
+    void stop(hid::session &sess) override;
 };
-
-#endif // __COMMAND_APP_HEADER__

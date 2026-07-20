@@ -10,7 +10,10 @@
             "cppStandard": "gnu++20",
             "configurationProvider": "nordic-semiconductor.nrf-connect",
             "browse": {
-                "limitSymbolsToIncludedHeaders": true
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "${workspaceFolder}/src/**"
+                ]
             }
         }
     ],

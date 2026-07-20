@@ -1,5 +1,4 @@
-#ifndef __HID_KEYBOARD_REPORT_H__
-#define __HID_KEYBOARD_REPORT_H__
+#pragma once
 
 #include "attributes.h"
 #include "lufa/HIDClassCommon.h"
@@ -73,5 +72,3 @@ bool KeyboardReport_FindFirstDifference(
 #define UsbBasicKeyboard_FindFirstDifference KeyboardReport_FindFirstDifference
 
 bool KeyboardReport_HasChange(const hid_keyboard_report_t buffers[2]);
-
-#endif // __HID_KEYBOARD_REPORT_H__

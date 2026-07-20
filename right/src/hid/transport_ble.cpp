@@ -1,80 +1,60 @@
-#include "command_app.hpp"
-#include "controls_app.hpp"
-#include "keyboard_app.hpp"
-#include "mouse_app.hpp"
-#include "port/zephyr/bluetooth/hid.hpp"
-#include <magic_enum.hpp>
+#include "ble_app.hpp"
+#include <bluetooth/hid_over_gatt.hpp>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/kernel.h>
 
 using namespace magic_enum::bitwise_operators;
 
-template <typename... Args>
-class multi_hid : public hid::multi_application {
-  public:
-    static constexpr auto report_desc() { return hid::rdf::descriptor((Args::report_desc(), ...)); }
-
-    static multi_hid &handle()
-    {
-        static multi_hid s;
-        return s;
-    }
-
-  private:
-    std::array<hid::application *, sizeof...(Args) + 1> app_array_{
-        (&Args::ble_handle())..., nullptr};
-    constexpr multi_hid()
-        : multi_application(hid::report_protocol::from_descriptor<report_desc()>(), app_array_)
-    {}
-};
-
-using multi_hid_nopad = multi_hid<keyboard_app, mouse_app, command_app, controls_app>;
-
-struct hogp_manager {
-    static hogp_manager &instance()
-    {
-        static hogp_manager hm;
-        return hm;
-    }
-
-    static bool active() { return instance().hogp_nopad_.active(); }
-
-    bluetooth::zephyr::hid::service &main_service() { return hogp_nopad_; }
-
-  private:
-    hogp_manager() {}
-
-    static const auto security = bluetooth::zephyr::hid::security::ENCRYPT;
-    static const auto features = bluetooth::zephyr::hid::flags::NORMALLY_CONNECTABLE |
-                                 bluetooth::zephyr::hid::flags::REMOTE_WAKE;
-
-    bluetooth::zephyr::hid::service_instance<multi_hid_nopad::report_desc(),
-        bluetooth::zephyr::hid::boot_protocol_mode::KEYBOARD>
-        hogp_nopad_{multi_hid_nopad::handle(), security, features};
-};
-
-extern "C" bool HOGP_Enable()
+static auto &hog_service()
 {
-    bool started = hogp_manager::instance().main_service().start();
-    return started;
+    using namespace magic_enum::bitwise_operators;
+    using namespace bluetooth::hid_over_gatt;
+
+    // TODO: set values as needed
+    const auto sec_lvl = bluetooth::security::L2_UNAUTH_ENC; // TODO: bump to L3_AUTH_ENC?
+    static constexpr auto features = flags::NORMALLY_CONNECTABLE | flags::REMOTE_WAKE;
+
+    using hogp_type = service_instance<ble_app::report_desc(), hid::boot::mode::KEYBOARD>;
+    static hogp_type hog{ble_app::handle(), sec_lvl, features};
+
+    static const STRUCT_SECTION_ITERABLE(bt_gatt_service_static, keyboard_hogp) =
+        hog.static_service();
+    return hog;
 }
 
-extern "C" void HOGP_Disable()
+ble_session *ble_session::lookup_by_conn(::bt_conn *conn)
 {
-    hogp_manager::instance().main_service().stop();
+    return static_cast<ble_session *>(hog_service().get_session(conn));
+}
+
+::bt_conn *ble_session::get_conn()
+{
+    return hog_service().get_session_conn(*this);
+}
+
+hid::session &ble_app::start(const hid::session_params &params)
+{
+    ::bt_conn *conn = static_cast<bluetooth::hid_over_gatt::session_params>(params).conn;
+    ble_session *sess;
+    // TODO
+    // create session from memory pool (allocate + construct)
+    // Connections_SetStateAsync
+
+    // mouse_resolution_changed_callback(*sess, sess->resolution_report());
+    return *sess;
+}
+
+void ble_app::stop(hid::session &sess)
+{
+    // TODO
+    // return session to memory pool (destruct + dealloc)
+    // Connections_SetStateAsync
 }
 
 extern "C" int HOGP_HealthCheck()
 {
-    auto &hm = hogp_manager::instance();
-    auto &svc = hm.main_service();
-
-    if (!hm.active()) {
-        printk("HOGP HealthCheck: GATT service NOT registered\n");
-        return -1;
-    }
-
-    struct bt_conn *peer = svc.peer();
+    // TODO: refactoring needed
+    struct bt_conn *peer = nullptr;
     if (!peer) {
         printk("HOGP HealthCheck: service registered, no active peer\n");
         return -2;

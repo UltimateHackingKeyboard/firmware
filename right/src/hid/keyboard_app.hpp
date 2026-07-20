@@ -1,5 +1,4 @@
-#ifndef __KEYBOARD_APP_HEADER__
-#define __KEYBOARD_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "hid/keyboard_report.h"
@@ -9,9 +8,29 @@ extern "C" {
 #include "double_buffer.hpp"
 #include <hid/app/keyboard.hpp>
 #include <hid/application.hpp>
-#include <usb/df/class/hid.hpp>
 
 using scancode = hid::page::keyboard_keypad;
+
+class keyboard_base_session : public hid::session {
+  public:
+    using leds_boot_report = hid::app::keyboard::output_report<0>;
+    using leds_report = hid::app::keyboard::output_report<report_ids::OUT_KEYBOARD_LEDS>;
+    virtual leds_boot_report get_leds_report() const = 0;
+};
+class keyboard_session : public keyboard_base_session {
+    C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_) {};
+
+  protected:
+    void report_sent(const std::span<const uint8_t> &data) override;
+    std::span<const uint8_t> get_report(
+        hid::report::selector select, const std::span<uint8_t> &buffer) override;
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
+
+  public:
+    keyboard_session() { receive_report(&leds_buffer_); }
+
+    leds_boot_report get_leds_report() const override;
+};
 
 class keyboard_app : public hid::application {
     static constexpr uint8_t KEYS_6KRO_REPORT_ID = report_ids::IN_KEYBOARD_6KRO;
@@ -21,13 +40,16 @@ class keyboard_app : public hid::application {
     static constexpr auto NKRO_FIRST_USAGE =
         (scancode)HID_KEYBOARD_MIN_BITFIELD_SCANCODE; // scancode::KEYBOARD_A;
     static constexpr auto NKRO_LAST_USAGE = (scancode)HID_KEYBOARD_MAX_BITFIELD_SCANCODE;
+
+  public:
     static constexpr auto LOWEST_SCANCODE = NKRO_FIRST_USAGE;
     static constexpr auto HIGHEST_SCANCODE = NKRO_LAST_USAGE;
-
     static constexpr auto NKRO_USAGE_COUNT =
         1 + static_cast<size_t>(HIGHEST_SCANCODE) - static_cast<size_t>(LOWEST_SCANCODE);
 
-  public:
+    using keys_boot_report = hid::app::keyboard::keys_input_report<0>;
+    using keys_6kro_report = hid::app::keyboard::keys_input_report<KEYS_6KRO_REPORT_ID>;
+
     static constexpr auto report_desc()
     {
         using namespace hid::page;
@@ -111,14 +133,6 @@ class keyboard_app : public hid::application {
             hid::app::keyboard::app_report_descriptor<KEYS_6KRO_REPORT_ID>()>();
     }
 
-    static keyboard_app &usb_handle();
-#if DEVICE_IS_UHK80_RIGHT
-    static keyboard_app &ble_handle();
-#endif
-
-    void set_rollover(rollover_t mode);
-    rollover_t get_rollover() const { return rollover_; }
-
     template <uint8_t REPORT_ID = 0>
     struct keys_nkro_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID> {
         hid::report_bitset<hid::page::keyboard_keypad,
@@ -152,45 +166,44 @@ class keyboard_app : public hid::application {
         bool operator==(const keys_nkro_report_base &other) const = default;
         bool operator!=(const keys_nkro_report_base &other) const = default;
     };
-
-    int send_report(const hid_keyboard_report_t &report);
-
-    using leds_boot_report = hid::app::keyboard::output_report<0>;
-    leds_boot_report get_leds() const;
-
-  private:
-    keyboard_app(const hid::report_protocol &rp) : hid::application(rp) {}
-
-    using keys_boot_report = hid::app::keyboard::keys_input_report<0>;
-    using keys_6kro_report = hid::app::keyboard::keys_input_report<KEYS_6KRO_REPORT_ID>;
-    using leds_report = hid::app::keyboard::output_report<LEDS_REPORT_ID>;
-
     using keys_nkro_report = keys_nkro_report_base<KEYS_NKRO_REPORT_ID>;
 
-    bool using_nkro() const;
-    void start(hid::protocol prot) override;
-    void stop() override;
-    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
-    void in_report_sent(const std::span<const uint8_t> &data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
-    hid::protocol get_protocol() const override { return prot_; }
-    std::span<const uint8_t> move_to_buffer(const hid_keyboard_report_t &report);
+    static keyboard_app &usb_handle()
+    {
+        static keyboard_app app{nkro_report_protocol()};
+        return app;
+    }
+    void set_rollover(rollover_t mode);
 
-    void send_6kro_buffer(uint8_t buf_idx);
-    void send_nkro_buffer(uint8_t buf_idx);
+    keyboard_session *session() { return session_.has_value() ? &*session_ : nullptr; }
 
-    void reset_keys();
+  private:
+    std::optional<keyboard_session> session_{};
 
-    C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_) {};
-    hid::protocol prot_{};
-    rollover_t rollover_{};
-    rollover_t rollover_override_{};
-    union keys_reports {
-        keys_nkro_report nkro{};
-        keys_boot_report boot;
-        keys_6kro_report sixkro;
-    };
-    double_buffer<keys_reports> keys_{};
+    keyboard_app(const hid::report_protocol &rp) : hid::application(rp) {}
+    hid::session &start(const hid::session_params &params) override;
+    void stop(hid::session &sess) override;
 };
 
-#endif // __KEYBOARD_APP_HEADER__
+union keys_report_variants {
+    keyboard_app::keys_nkro_report nkro{};
+    keyboard_app::keys_boot_report boot;
+    keyboard_app::keys_6kro_report sixkro;
+};
+
+struct key_report_buffer : double_buffer<keys_report_variants> {
+    static constexpr auto HIGHEST_SCANCODE = keyboard_app::HIGHEST_SCANCODE;
+    static constexpr auto LOWEST_SCANCODE = keyboard_app::LOWEST_SCANCODE;
+    enum mode_t {
+        MODE_BOOT,
+        MODE_NKRO,
+        MODE_6KRO,
+    } mode{MODE_NKRO};
+    key_report_buffer() = default;
+
+    void reset_to(hid::protocol prot, rollover_t override);
+    std::span<const uint8_t> insert(const hid_keyboard_report_t &report);
+};
+
+void keyboard_report_sent_callback(hid::session &session);
+void keyboard_leds_changed_callback(keyboard_base_session &session);

@@ -212,6 +212,7 @@ Places to reference if build fails:
 ### Node version troubleshooting notes
 
 - `scripts/.nvmrc` contains node version used by the CI.
+- `package.json` contains required npm version
 
 ### Debugging with VS Code
 
