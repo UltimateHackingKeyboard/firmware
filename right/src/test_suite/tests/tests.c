@@ -18,6 +18,7 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_Sticky,
     &TestModule_Playtime,
     &TestModule_Transport,
+    &TestModule_TapKeySeq,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);
