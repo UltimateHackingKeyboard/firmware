@@ -1,16 +1,9 @@
 #include "tests.h"
 
-// Regression test for a tapKeySeq bug: when a code-expansion command such as
-// hexCodeOf(...) sits in the middle of the sequence, the key that immediately
-// follows the expansion used to be dropped.
+// Regression test for a template expansion bug.
 //
-// `tapKeySeq x y hexCodeOf(!) x y` must type
-//     x y 2 1 x y
-// ('!' == U+0021, so hexCodeOf(!) expands to the key sequence `2 1`). The bug
-// dropped the final key of the whole sequence whenever a code-expansion command
-// preceded it, so the tail came out as `... x` instead of `... x y`. Distinct
-// keys (x/y) around the expansion make a dropped key surface as a wrong-char
-// mismatch rather than only a timeout.
+// `tapKeySeq x y hexCodeOf(!) x y` would produce "xy21y" due to wrong ConsumeWhite/isEnd expansion.
+
 static const test_action_t test_tapkeyseq_hexcode[] = {
     TEST_SET_MACRO("u",
         "tapKeySeq x y hexCodeOf(!) x y\n"
