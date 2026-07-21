@@ -18,12 +18,14 @@ void keyboard_app::set_rollover(rollover_t mode)
 hid::session &keyboard_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
+    UsbState_SetUsbTransportUp(true);
     return session_.emplace(params);
 }
 
 void keyboard_app::stop(hid::session &sess)
 {
     assert(&sess == &session_.value());
+    UsbState_SetUsbTransportUp(false);
     return session_.reset();
 }
 
