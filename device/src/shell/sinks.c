@@ -3,6 +3,7 @@
 #include "macros/status_buffer.h"
 #include "trace.h"
 #include "config_manager.h"
+#include <zephyr/logging/log_ctrl.h>
 
 bool ShellConfig_IsInPanicMode = false;
 
@@ -38,7 +39,12 @@ void ShellConfig_ActivatePanicMode(void)
 
         MacroStatusBuffer_Validate();
         printk("===== PANIC =====\n");
+
+        while (log_process()) {}
+
         Trace_Print(LogTarget_ErrorBuffer, "crash/panic");
+
+        while (log_process()) {}
     }
 }
 
