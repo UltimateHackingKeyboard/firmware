@@ -57,4 +57,7 @@ void USB_Reconfigure(void);
 bool USB_IsMsHost(void);
 
 // HOGP (BLE HID) management
+// Instantiates the HOGP GATT service; must be called before bt_enable() so the
+// static service entry is populated when Zephyr registers static services.
+void HOGP_Register(void);
 int HOGP_HealthCheck(void);
