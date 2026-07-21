@@ -5,10 +5,10 @@
     #include <zephyr/sys/printk.h>
 #endif
 
-hid::session &command_app::start(const hid::session_params &params)
+hid::session &command_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
-    return session_.emplace();
+    return session_.emplace(params);
 }
 
 void command_app::stop(hid::session &sess)

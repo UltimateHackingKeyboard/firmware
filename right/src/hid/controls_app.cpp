@@ -1,9 +1,9 @@
 #include "controls_app.hpp"
 
-hid::session &controls_app::start(const hid::session_params &params)
+hid::session &controls_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
-    auto &sess = session_.emplace();
+    auto &sess = session_.emplace(params);
     return sess;
 }
 

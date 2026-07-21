@@ -17,7 +17,7 @@ using consumer_code = hid::page::consumer;
 
 class controls_session : public hid::session {
   public:
-    controls_session() = default;
+    using hid::session::session;
 
   protected:
     void report_sent(const std::span<const uint8_t> &data) override;
@@ -91,7 +91,7 @@ class controls_app : public hid::application {
   private:
     controls_app() : hid::application(hid::report_protocol::from_descriptor<report_desc()>()) {}
 
-    hid::session &start(const hid::session_params &params) override;
+    hid::session &start(const hid::session::params &params) override;
     void stop(hid::session &sess) override;
 
     std::optional<controls_session> session_{};

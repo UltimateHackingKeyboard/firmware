@@ -2,10 +2,10 @@
 
 using mouse_report = mouse_app::mouse_report_base<report_ids::IN_MOUSE>;
 
-hid::session &mouse_app::start(const hid::session_params &params)
+hid::session &mouse_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
-    auto &sess = session_.emplace();
+    auto &sess = session_.emplace(params);
     mouse_resolution_changed_callback(sess, sess.resolution_report());
     return sess;
 }

@@ -34,7 +34,10 @@ class command_session : public hid::session {
     using report_in = report_base<hid::report::type::INPUT, report_ids::IN_COMMAND>;
     using report_out = report_base<hid::report::type::OUTPUT, report_ids::OUT_COMMAND>;
 
-    command_session() { receive_report(&out_buffer_); }
+    command_session(const hid::session::params &p) : hid::session(p)
+    {
+        receive_report(&out_buffer_);
+    }
 
   private:
     C2USB_USB_TRANSFER_ALIGN(report_in, in_buffer_) {};
@@ -88,6 +91,6 @@ class command_app : public hid::application {
     std::optional<command_session> session_{};
 
     command_app() : application(report_protocol()) {}
-    hid::session &start(const hid::session_params &params) override;
+    hid::session &start(const hid::session::params &params) override;
     void stop(hid::session &sess) override;
 };

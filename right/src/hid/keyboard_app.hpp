@@ -13,6 +13,7 @@ using scancode = hid::page::keyboard_keypad;
 
 class keyboard_base_session : public hid::session {
   public:
+    using hid::session::session;
     using leds_boot_report = hid::app::keyboard::output_report<0>;
     using leds_report = hid::app::keyboard::output_report<report_ids::OUT_KEYBOARD_LEDS>;
     virtual leds_boot_report get_leds_report() const = 0;
@@ -27,7 +28,10 @@ class keyboard_session : public keyboard_base_session {
     void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
 
   public:
-    keyboard_session() { receive_report(&leds_buffer_); }
+    keyboard_session(const hid::session::params &p) : keyboard_base_session(p)
+    {
+        receive_report(&leds_buffer_);
+    }
 
     leds_boot_report get_leds_report() const override;
 };
@@ -181,7 +185,7 @@ class keyboard_app : public hid::application {
     std::optional<keyboard_session> session_{};
 
     keyboard_app(const hid::report_protocol &rp) : hid::application(rp) {}
-    hid::session &start(const hid::session_params &params) override;
+    hid::session &start(const hid::session::params &params) override;
     void stop(hid::session &sess) override;
 };
 

@@ -17,7 +17,10 @@ class mouse_session : public hid::session {
         hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION,
             report_ids::FEATURE_MOUSE>;
 
-    mouse_session() { receive_report(&resolution_buffer_); }
+    mouse_session(const hid::session::params &p) : hid::session(p)
+    {
+        receive_report(&resolution_buffer_);
+    }
 
     const auto &resolution_report() const { return resolution_buffer_; }
 
@@ -97,7 +100,7 @@ class mouse_app : public hid::application {
   private:
     mouse_app() : application(hid::report_protocol::from_descriptor<report_desc()>()) {}
 
-    hid::session &start(const hid::session_params &params) override;
+    hid::session &start(const hid::session::params &params) override;
     void stop(hid::session &sess) override;
 
     std::optional<mouse_session> session_{};

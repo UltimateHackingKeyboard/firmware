@@ -15,10 +15,10 @@ void keyboard_app::set_rollover(rollover_t mode)
         mode == rollover_t::ROLLOVER_N_KEY ? nkro_report_protocol() : default_report_protocol();
 }
 
-hid::session &keyboard_app::start(const hid::session_params &params)
+hid::session &keyboard_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
-    return session_.emplace();
+    return session_.emplace(params);
 }
 
 void keyboard_app::stop(hid::session &sess)

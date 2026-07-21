@@ -13,7 +13,7 @@ class ble_session : public keyboard_base_session {
     using mouse_report = mouse_app::mouse_report_base<report_ids::IN_MOUSE>;
     using controls_report = controls_app::controls_report_base<report_ids::IN_CONTROLS>;
 
-    ble_session()
+    ble_session(const hid::session::params &p) : keyboard_base_session(p)
     {
         receive_report(&resolution_buffer_);
         receive_report(&out_buffer_);
@@ -56,6 +56,6 @@ class ble_app : public hid::application {
   private:
     ble_app(const hid::report_protocol &rp) : hid::application(rp) {}
 
-    hid::session &start(const hid::session_params &params) override;
+    hid::session &start(const hid::session::params &params) override;
     void stop(hid::session &sess) override;
 };

@@ -1,15 +1,16 @@
 #include "ble_app.hpp"
 #include <bluetooth/hid_over_gatt.hpp>
+#include <new>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/kernel.h>
-#include <new>
 extern "C" {
 #include "bt_conn.h"
 }
 
 using namespace magic_enum::bitwise_operators;
 
-static_assert(sizeof(ble_session) <= BLE_HID_SESSION_STORAGE_SIZE, "BLE_HID_SESSION_STORAGE_SIZE too small for ble_session");
+static_assert(sizeof(ble_session) <= BLE_HID_SESSION_STORAGE_SIZE,
+    "BLE_HID_SESSION_STORAGE_SIZE too small for ble_session");
 static_assert(alignof(ble_session) <= 8, "ble_session alignment exceeds peer storage alignment");
 
 static ble_session *peerSession(peer_t *peer)
@@ -44,14 +45,15 @@ ble_session *ble_session::lookup_by_conn(::bt_conn *conn)
     return hog_service().get_session_conn(*this);
 }
 
-hid::session &ble_app::start(const hid::session_params &params)
+hid::session &ble_app::start(const hid::session::params &params)
 {
     ::bt_conn *conn = static_cast<const bluetooth::hid_over_gatt::session_params &>(params).conn;
     int8_t peerId = GetPeerIdByConn(conn);
     if (peerId < PeerIdFirstHost || peerId > PeerIdLastHost) {
-        // A HOGP session should only ever start for a connected host peer 
+        // A HOGP session should only ever start for a connected host peer
         printk("ble_app::start: no host peer for conn (peerId %d)\n", peerId);
-        static ble_session fallback;
+        assert(false && "ble_app::start: no host peer for conn");
+        static ble_session fallback{params};
         return fallback;
     }
     peer_t *peer = &Peers[peerId];
@@ -62,15 +64,15 @@ hid::session &ble_app::start(const hid::session_params &params)
         peer->hidSessionActive = false;
     }
 
-    ble_session *sess = new (peer->hidSessionStorage) ble_session();
+    ble_session *sess = new (peer->hidSessionStorage) ble_session(params);
     peer->hidSessionActive = true;
 
     // Mirror mouse_app::start: initialise the scroll multiplier from the new session.
     mouse_resolution_changed_callback(*sess, sess->resolution_report());
 
     if (peer->connectionId != ConnectionId_Invalid) {
-        printk("ble_app::start: marking BtHid connection %d (peer %d) ready\n",
-            peer->connectionId, peerId);
+        printk("ble_app::start: marking BtHid connection %d (peer %d) ready\n", peer->connectionId,
+            peerId);
         Connections_SetStateAsync((connection_id_t)peer->connectionId, ConnectionState_Ready);
     } else {
         printk("ble_app::start: peer %d has invalid connectionId, cannot mark ready\n", peerId);
@@ -126,7 +128,8 @@ extern "C" int HOGP_HealthCheck()
         struct bt_conn_info info;
         int err = bt_conn_get_info(peer->conn, &info);
         if (err) {
-            printk("HOGP HealthCheck: peer %s has INVALID conn pointer (err %d)\n", peer->name, err);
+            printk(
+                "HOGP HealthCheck: peer %s has INVALID conn pointer (err %d)\n", peer->name, err);
             return -3;
         }
     }
