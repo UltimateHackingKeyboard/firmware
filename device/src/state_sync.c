@@ -924,7 +924,7 @@ static void updateLoop() {
                 updateStandbys();                                                                    \
             }
 
-            if (!isConnected2) {
+            if (isConnected2) {
                 res2 = handlePropertyUpdateRightToDongle();
             }
             isIdle2 = !isConnected2 || res2 == UpdateResult_AllUpToDate;
@@ -934,11 +934,11 @@ static void updateLoop() {
         if (DEVICE_ID == DeviceId_Uhk_Dongle) {
             isConnected1 = DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
             STATE_SYNC_LOG("--- Dongle update loop, connected: %i\n", isConnected1);
-            if (!isConnected1) {
+            if (isConnected1 && !DongleStandby) {
                 res1 = handlePropertyUpdateDongleToRight();
             }
 
-            isIdle1 = !isConnected1 || res1 == UpdateResult_AllUpToDate;
+            isIdle1 = !isConnected1 || DongleStandby || res1 == UpdateResult_AllUpToDate;
         }
 
         update_result_t mergedResult = MIN(res1, res2);
