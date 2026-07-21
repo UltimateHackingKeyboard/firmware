@@ -1107,6 +1107,25 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
     else if (ConsumeToken(ctx, "emergencyKey")) {
         ASSIGN_NO_LIMITS(key_state_t*, noneVar,, Cfg.EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
     }
+    else if (ConsumeToken(ctx, "recoveryKey")) {
+        if (action == SetCommandAction_Read) {
+            return intVar(Cfg.RecoveryKey);
+        }
+        CTX_COPY(argCtx, *ctx);
+        uint8_t keyId = Macros_TryConsumeKeyId(ctx);
+        if (keyId == 255) {
+            Macros_ReportErrorPos(ctx, "Failed to decode keyId.");
+            return noneVar();
+        }
+        if (keyId != 255 && keyId >= MAX_KEY_COUNT_PER_MODULE) {
+            Macros_ReportErrorTok(&argCtx, "recoveryKey has to be bound in the right half (or 255 to disable):");
+            return noneVar();
+        }
+        if (Macros_DryRun) {
+            return noneVar();
+        }
+        Cfg.RecoveryKey = keyId;
+    }
     else if (action == SetCommandAction_Write) {
         Macros_ReportErrorTok(ctx, "Parameter not recognized:");
     }

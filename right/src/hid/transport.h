@@ -37,6 +37,7 @@ typedef enum
 
 extern float HidReportBleLatencyAvgMs;
 extern bool UnreliableTransportTestMode;
+void Hid_DumpTransportState(void);
 
 void Hid_TransportStateChanged(hid_transport_t transport, bool enabled);
 

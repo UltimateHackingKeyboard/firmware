@@ -36,6 +36,7 @@
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
+#include "utils.h"
 #include "wormhole.h"
 #include "trace.h"
 #include "trace_reasons.h"
@@ -115,6 +116,7 @@ void CopyRightKeystateMatrix(void)
         }
 
         if (KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
+            DEBUG_KEY_LIFE(scan);
             KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
             stateChanged = true;
         }
@@ -194,9 +196,13 @@ static void checkSleepMode() {
 
 int main(void)
 {
+    Debug_InitStackCanary();
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        if (StateWormhole.wasReboot || Trace_ResetShouldBeIgnored()) {
+        if (StateWormhole.persistStatusBuffer) {
+            MacroStatusBuffer_InitFromWormhole();
+        }
+        else if (StateWormhole.wasReboot || Trace_ResetShouldBeIgnored()) {
             // Looks like a normal reboot or power on startup
             MacroStatusBuffer_InitNormal();
         }
@@ -238,7 +244,6 @@ int main(void)
         LOG_INF("Booted up.\n");
 
         while (1) {
-            Trace_Printc("{");
             if (TestHooks_Active) {
                 TestHooks_Tick();
             } else {
@@ -260,7 +265,6 @@ int main(void)
 
             UserLogic_LastEventloopTime = Timer_GetCurrentTime();
 
-            Trace_Printc("}");
             __WFI();
         }
     }

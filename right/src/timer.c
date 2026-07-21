@@ -4,6 +4,7 @@
 #include "peripherals/pit.h"
 #include "peripherals/test_led.h"
 #include "trace.h"
+#include "debug.h"
 #else
 #include <zephyr/kernel.h>
 #endif
@@ -14,13 +15,13 @@ static volatile uint32_t currentTime;
 
 void PIT_TIMER_HANDLER(void)
 {
-    Trace_Printc("<i4");
     currentTime++;
+    ISR_LIFE_START(pitTimer);
     if (delayLength) {
         --delayLength;
     }
     PIT_ClearStatusFlags(PIT, PIT_TIMER_CHANNEL, kPIT_TimerFlag);
-    Trace_Printc(">");
+    ISR_LIFE_END(pitTimer);
     SDK_ISR_EXIT_BARRIER;
 }
 

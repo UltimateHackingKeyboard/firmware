@@ -21,9 +21,11 @@
     macro_result_t Macros_ProcessStatsActiveKeysCommand();
     macro_result_t Macros_ProcessStatsPostponerStackCommand();
     macro_result_t Macros_ProcessStatsActiveMacrosCommand();
-    macro_result_t Macros_ProcessDiagnoseCommand();
+    macro_result_t Macros_ProcessDiagnoseCommand(parser_context_t* ctx);
     macro_result_t Macros_ProcessStatsRecordKeyTimingCommand();
     macro_result_t Macros_ProcessStatsRuntimeCommand();
     macro_result_t Macros_ProcessStatsBatteryCommand();
+
+    void Macros_RecoverDiagnostics(void);
 
 #endif

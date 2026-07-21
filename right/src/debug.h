@@ -16,6 +16,7 @@
 #define DEBUG_MODE false
 #define DEBUG_STRESS_UART false
 #define DEBUG_STRESS_GATT false
+#define DEBUG_STRESS_TRANSPORT false
 #define DEBUG_TEST_RTT false
 #define DEBUG_LOG_UART true
 #define DEBUG_LOG_MESSAGES false
@@ -27,6 +28,64 @@
 
 #define DEBUG_BLE_LATENCY_STATS false
 
+#include <stdint.h>
+#include <stdbool.h>
+#include "timer.h"
+
+// Last-seen timestamps of the key event pipeline stages; printed by Hid_DumpTransportState.
+typedef struct {
+    uint32_t scan;
+    uint32_t queued;
+    uint32_t forceQueued;
+    uint32_t applied;
+    uint32_t action;
+    uint32_t delivered;
+} key_life_times_t;
+
+extern key_life_times_t KeyLifeTimes;
+
+#define DEBUG_KEY_LIFE_ENABLED true
+#if DEBUG_KEY_LIFE_ENABLED
+#define DEBUG_KEY_LIFE(STAGE) (KeyLifeTimes.STAGE = Timer_GetCurrentTime())
+#else
+#define DEBUG_KEY_LIFE(STAGE)
+#endif
+
+// Last-seen state of blockedByReportThrottle(); printed by Hid_DumpTransportState.
+typedef struct {
+    uint32_t throttleTime;              // last blockedByReportThrottle() run
+    uint32_t throttleBlockedUntil;
+    uint32_t throttlePostponedMasks;
+    uint8_t throttleBlockReasons;       // bitmask, see THROTTLE_REASON_*
+    bool throttleBlocked;
+} main_life_times_t;
+
+#define THROTTLE_REASON_SEMAPHORE   (1 << 0)
+#define THROTTLE_REASON_KEY_DELAY   (1 << 1)
+#define THROTTLE_REASON_RETRY       (1 << 2)
+#define THROTTLE_REASON_WINDOW      (1 << 3)
+
+extern main_life_times_t MainLifeTimes;
+
+// Last-seen start/end timestamps of every (uhk60) ISR; printed by Hid_DumpTransportState.
+// A start newer than its end means the ISR is running or died mid-body.
+typedef struct {
+    uint32_t start;
+    uint32_t end;
+} isr_span_t;
+
+typedef struct {
+    isr_span_t usb;
+    isr_span_t pitTimer;
+    isr_span_t i2cWatchdog;
+    isr_span_t i2cMain;
+    isr_span_t resetButton;
+} isr_life_times_t;
+
+extern isr_life_times_t IsrLifeTimes;
+
+#define ISR_LIFE_START(FIELD) (IsrLifeTimes.FIELD.start = Timer_GetCurrentTime())
+#define ISR_LIFE_END(FIELD) (IsrLifeTimes.FIELD.end = Timer_GetCurrentTime())
 
 #ifdef __ZEPHYR__
     #include "logger.h"
@@ -179,5 +238,17 @@
 #endif
 
 void Debug_RecordBleSendResult(int ret);
+
+#ifndef __ZEPHYR__
+    // Fill the free main/MSP stack (and the unused gap below it) with a canary
+    // pattern; call as the first thing in main.
+    void Debug_InitStackCanary(void);
+    // Size of the MSP stack region (__StackTop - __StackLimit).
+    uint32_t Debug_StackSize(void);
+    // All-time peak stack usage of main + ISRs combined.
+    uint32_t Debug_StackUsed(void);
+    // Unused bytes below the peak; negative = overflowed past __StackLimit by that much.
+    int32_t Debug_StackHeadroom(void);
+#endif
 
 #endif // __DEBUG_H__

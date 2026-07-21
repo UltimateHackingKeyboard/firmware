@@ -27,8 +27,8 @@ static void addChar(char c) {
             buffer[POS(bufferLength)] = c;
             bufferLength++;
         } else {
-            buffer[bufferPosition++] = c;
-            bufferPosition %= USB_LOG_BUFFER_SIZE;
+            buffer[bufferPosition] = c;
+            bufferPosition = (bufferPosition + 1) % USB_LOG_BUFFER_SIZE;
         }
     }
 }
@@ -47,11 +47,9 @@ uint16_t UsbLogBuffer_Consume(uint8_t* outBuf, uint16_t outBufSize) {
     uint16_t copied = 0;
     uint16_t remaining = (bufferLength < outBufSize) ? bufferLength : outBufSize;
     while (remaining > 0) {
-        char a = buffer[bufferPosition++];
+        char a = buffer[bufferPosition];
+        bufferPosition = (bufferPosition + 1) % USB_LOG_BUFFER_SIZE;
         outBuf[copied++] = a;
-        if (bufferPosition >= USB_LOG_BUFFER_SIZE) {
-            bufferPosition = 0;
-        }
         remaining--;
         bufferLength--;
     }

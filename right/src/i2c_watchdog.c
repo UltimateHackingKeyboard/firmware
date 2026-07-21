@@ -6,6 +6,7 @@
 #include "i2c.h"
 #include "i2c_watchdog.h"
 #include "init_peripherals.h"
+#include "debug.h"
 #include "peripherals/test_led.h"
 #include "trace.h"
 #include "slave_protocol.h"
@@ -30,19 +31,18 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
         return;
     }
 
-    Trace_Printc("<i5");
+    ISR_LIFE_START(i2cWatchdog);
     I2cWatchdog_WatchCounter++;
 
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
         I2cWatchdog_RecoveryCounter++;
         ReinitI2cMainBus();
-        LOG_ERR("I2C bus unresponsive, reinitializing. Recovery count: %d\n", I2cWatchdog_RecoveryCounter);
     }
 
     prevWatchdogCounter = I2C_Watchdog;
     PIT_ClearStatusFlags(PIT, PIT_I2C_WATCHDOG_CHANNEL, PIT_TFLG_TIF_MASK);
 	TestLed_Toggle();
-    Trace_Printc(">");
+    ISR_LIFE_END(i2cWatchdog);
     SDK_ISR_EXIT_BARRIER;
 }
 

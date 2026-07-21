@@ -2143,7 +2143,7 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case CommandId_delayUntil:
             return processDelayUntilCommand(ctx);
         case CommandId_diagnose:
-            return Macros_ProcessDiagnoseCommand();
+            return Macros_ProcessDiagnoseCommand(ctx);
 
         // 'e' commands
         case CommandId_exec:

@@ -1,4 +1,5 @@
 #include "event_scheduler.h"
+#include "atomicity.h"
 #include "timer.h"
 #include "macros/core.h"
 #include "macro_recorder.h"
@@ -127,8 +128,16 @@ static inline heap_entry_t* heapPeek(void) {
     return heapSize > 0 ? &heap[0] : NULL;
 }
 
+// Must run inside the enclosing heap critical section: the heapSize read and
+// the vector update have to be atomic, and the nested guard of
+// EventVector_Set/Unset would re-enable irqs mid-section on MCUX.
 static void updateEventVector(void) {
-    EventVector_SetValue(EventVector_EventScheduler, heapSize > 0);
+    ASSERT_IRQS_DISABLED();
+    if (heapSize > 0) {
+        EventScheduler_Vector |= EventVector_EventScheduler;
+    } else {
+        EventScheduler_Vector &= ~EventVector_EventScheduler;
+    }
 }
 
 #define RETURN_IF_SPAM(EVT) if (isSpam(EVT)) { return; }
@@ -283,8 +292,8 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
     } else {
         heapInsert(evt, at, label);
     }
-    ENABLE_IRQ();
     updateEventVector();
+    ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
     Main_Wake();
@@ -309,8 +318,8 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
     } else {
         heapInsert(evt, at, label);
     }
-    ENABLE_IRQ();
     updateEventVector();
+    ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
     Main_Wake();
@@ -326,8 +335,8 @@ void EventScheduler_Unschedule(event_scheduler_event_t evt)
     if (idx != HEAP_INDEX_NONE) {
         heapRemove(idx);
     }
-    ENABLE_IRQ();
     updateEventVector();
+    ENABLE_IRQ();
 }
 
 uint32_t EventScheduler_Process()
@@ -343,9 +352,9 @@ uint32_t EventScheduler_Process()
         }
         heap_entry_t entry = heap[0];
         heapRemove(0);
+        updateEventVector();
         ENABLE_IRQ();
 
-        updateEventVector();
 
         LOG_SCHEDULE(
             if (entry.label != NULL) {

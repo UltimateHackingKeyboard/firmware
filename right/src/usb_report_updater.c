@@ -75,6 +75,10 @@ static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 uint32_t UsbReportUpdater_LastActivityTime;
 uint32_t UsbReportUpdater_LastMouseActivityTime;
 
+key_life_times_t KeyLifeTimes;
+main_life_times_t MainLifeTimes;
+isr_life_times_t IsrLifeTimes;
+
 
 
 
@@ -638,7 +642,13 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
 
     if (PostponerCore_EventsShouldBeQueued() || forcePostponer) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
+        if (forcePostponer) {
+            DEBUG_KEY_LIFE(forceQueued);
+        } else {
+            DEBUG_KEY_LIFE(queued);
+        }
     } else {
+        DEBUG_KEY_LIFE(applied);
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
         keyState->current = active;
     }
@@ -750,6 +760,11 @@ static void updateActionStates() {
 
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
+
+                if (KeyState_ActivatedNow(keyState) || KeyState_DeactivatedNow(keyState)) {
+                    DEBUG_KEY_LIFE(action);
+                }
+
                 if (KeyState_ActivatedNow(keyState)) {
                     // cache action so that key's meaning remains the same as long
                     // as it is pressed

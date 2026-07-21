@@ -284,6 +284,7 @@ const config_t DefaultCfg = (config_t){
         .Bt_DirectedAdvertisingAllowed = false,
         .DevMode = false,
         .EmergencyKey = NULL,
+        .RecoveryKey = 255,
         .UiStyle = UiStyle_Classic,
         .DeviceName = { .offset = 0, .len = 0 },
         .KeyActionColors = {

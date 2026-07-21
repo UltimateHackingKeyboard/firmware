@@ -1,6 +1,9 @@
 #include "command_app.hpp"
 #include <hid/rdf/descriptor.hpp>
 #include <hid/report_protocol.hpp>
+extern "C" {
+#include "logger.h"
+}
 #if __has_include(<zephyr/sys/printk.h>)
     #include <zephyr/sys/printk.h>
 #endif
@@ -45,9 +48,7 @@ void command_app::set_report(hid::report::type type, const std::span<const uint8
     if (err == hid::result::ok) {
         in_buffer_.swap_sides();
     } else {
-#if __has_include(<zephyr/sys/printk.h>)
-        printk("Command app failed to send report with: %d\n", std::bit_cast<int>(err));
-#endif
+        c2usb_log("command app failed to send report: %d\n", std::bit_cast<int>(err));
     }
 }
 
