@@ -14,7 +14,7 @@ manifest:
     - name: mcuxsdk-manifests
       remote: nxp-mcuxpresso
       path: mcuxsdk/manifest_int
-      revision: v26.03.00
+      revision: v26.06.00-LTS
       clone-depth: 1
       import:
         name-allowlist:

@@ -10,35 +10,41 @@ extern "C" {
 #endif
 #include "debug.h"
 #include "event_scheduler.h"
+#include "jitter_test.h"
 #include "key_states.h"
+#include "led_display.h"
 #include "logger.h"
 #include "macro_events.h"
+#include "test_suite/test_hooks.h"
 #include "timer.h"
 #include "trace.h"
 #include "usb_report_updater.h"
-#include "usb_semaphore.h"
 #include "usb_scheduler.h"
-#include "led_display.h"
-#include "jitter_test.h"
+#include "usb_semaphore.h"
 #include "usb_state.h"
 #include "utils.h"
-#include "test_suite/test_hooks.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
-// #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
+#if DEVICE_IS_UHK80_RIGHT
+    #include "ble_app.hpp"
+#endif
 
 #if defined(__ZEPHYR__) && (defined(CONFIG_DEBUG) == defined(NDEBUG))
     #error "Either CONFIG_DEBUG or NDEBUG must be defined"
 #endif
 
 #ifdef __ZEPHYR__
-#include <zephyr/logging/log.h>
+    #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(Transport, LOG_LEVEL_INF);
 #endif
 // On mcux, logger.h provides the LOG_WRN / LOG_ERR / ... redirects.
+
+static key_report_buffer keyboard_buffer;
+static double_buffer<mouse_app::mouse_report_base<report_ids::IN_MOUSE>> mouse_buffer;
+static double_buffer<controls_app::controls_report_base<report_ids::IN_CONTROLS>> controls_buffer;
 
 // Exponential moving average (alpha=1/8) of the measured delay between a
 // BLE HID report being handed to the stack and the corresponding sent callback
@@ -55,6 +61,7 @@ extern "C" void HidTransport_NoteNusReportSent(void)
     UsbScheduler_ReportDelivered(ReportSink_Dongle);
 }
 
+// TODO: maybe not only return the sink type, but also the session / conn pointer
 static report_sink_t determineSink()
 {
     if (TestHooks_Active) {
@@ -93,55 +100,68 @@ static report_sink_t determineSink()
 #endif
 }
 
-#ifdef __ZEPHYR__
-static inline connection_id_t hidConnId(hid_transport_t transport)
+#if DEVICE_IS_UHK80_RIGHT
+// Resolve the BLE HID session bound to the current host connection, if any.
+static ble_session *currentHostBleSession()
 {
-    if (transport == HID_TRANSPORT_USB) {
-        if (DEVICE_IS_UHK80_LEFT) {
-            return ConnectionId_UsbHidLeft;
-        }
-        return ConnectionId_UsbHidRight;
+    connection_id_t connId = ActiveHostConnectionId;
+    if (connId <= ConnectionId_Invalid || connId >= ConnectionId_Count) {
+        return nullptr;
     }
-    return ConnectionId_BtHid;
+    uint8_t peerId = Connections[connId].peerId;
+    if (peerId < PeerIdFirstHost || peerId > PeerIdLastHost) {
+        return nullptr;
+    }
+    struct bt_conn *conn = Peers[peerId].conn;
+    return conn ? ble_session::lookup_by_conn(conn) : nullptr;
 }
 #endif
 
-extern "C" void Hid_TransportStateChanged(
-    [[maybe_unused]] hid_transport_t transport, [[maybe_unused]] bool enabled)
-{
-#ifdef __ZEPHYR__
-    connection_id_t connId = hidConnId(transport);
-    if (connId == ConnectionId_UsbHidRight) {
-        UsbState_SetUsbTransportUp(enabled);
-    } else {
-        Connections_SetStateAsync( hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
-    }
-#else
-    UsbState_SetUsbTransportUp(enabled);
-#endif
-}
+// TODO: when switching sinks, or when USB only and transport comes up
+// keyboard_buffer.reset_to(session->protocol(), (session->channel() == hid::channel::BLE) ? HID_ROLLOVER_N_KEY : HID_GetKeyboardRollover());
+// Deferred: this hooks into the switchover path, which is being reworked in a separate PR - do it there.
 
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
+    // TODO: not needed when dongle is sink
+    auto payload = keyboard_buffer.insert(*report);
+
     report_sink_t sink = determineSink();
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z11,%d", sink);
-    errno_t err;
+    errno_t err = -ECONNRESET;
     if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
         return -EAGAIN;
     }
     switch (sink) {
     case ReportSink_Usb:
-        err = keyboard_app::usb_handle().send_report(*report);
+        if (auto session = keyboard_app::usb_handle().session(); session) {
+            err = session->send_report(payload).to_int();
+        }
         break;
 #if DEVICE_IS_UHK80_RIGHT
-    case ReportSink_BleHid:
-        err = keyboard_app::ble_handle().send_report(*report);
+    case ReportSink_BleHid: {
+        hid::session *session = currentHostBleSession();
+
+        if (!session) {
+            break;
+        }
+        err = session->send_report(payload).to_int();
+        if (err == -ENOMEM) {
+            // this only happens on Android with NKRO mode when the transport MTU is too small
+            printk("keyboard NKRO mode fails, falling back to 6KRO\n");
+
+            keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_6_KEY);
+            payload = keyboard_buffer.insert(*report);
+            err = session->send_report(payload).to_int();
+        }
         break;
+    }
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
-        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
+        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
+            SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
             printk("Failed to send keyboard report to dongle: %d\n", err);
         } else {
@@ -152,7 +172,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     case ReportSink_TestSuite:
         err = 0;
         TestHooks_CaptureReport(report);
-        Hid_KeyboardReportSentCallback(HID_TRANSPORT_USB);
+        Hid_KeyboardReportSentCallback(ReportSink_Usb);
         break;
     default:
 #ifdef __ZEPHYR__
@@ -162,39 +182,61 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         break;
     }
     Trace_Printf("z12,%d", err);
+    if (err == 0) {
+        // not needed when dongle is sink
+        keyboard_buffer.swap_sides();
+    }
     return err;
 }
 
-extern "C" void Hid_KeyboardReportSentCallback(hid_transport_t transport)
+extern "C" void Hid_KeyboardReportSentCallback(report_sink_t transport)
 {
     if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
         return;
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
-    UsbScheduler_ReportDelivered(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbScheduler_ReportDelivered(transport);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
 }
 
+void keyboard_report_sent_callback(hid::session &session)
+{
+    Hid_KeyboardReportSentCallback(
+        session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
+}
+
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 {
+    // TODO: not needed when dongle is sink
+    auto payload = mouse_buffer.insert(*report);
+
     report_sink_t sink = determineSink();
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z21,%d", sink);
-    errno_t err;
+    errno_t err = -ECONNRESET;
     switch (sink) {
     case ReportSink_Usb:
-        err = mouse_app::usb_handle().send_report(*report);
+        if (auto session = mouse_app::usb_handle().session(); session) {
+            err = session->send_report(payload).to_int();
+        }
         break;
 #if DEVICE_IS_UHK80_RIGHT
-    case ReportSink_BleHid:
-        err = mouse_app::ble_handle().send_report(*report);
+    case ReportSink_BleHid: {
+        hid::session *session = currentHostBleSession();
+
+        if (!session) {
+            break;
+        }
+        err = session->send_report(payload).to_int();
         break;
+    }
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
-        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
+        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
+            SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
             printk("Failed to send mouse report to dongle: %d\n", err);
         } else {
@@ -212,14 +254,17 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     Trace_Printf("z22,%d", err);
     if (err == 0) {
         JitterTest_RecordMouseX(report->x);
+        // not needed when dongle is sink
+        mouse_buffer.swap_sides();
     }
     return err;
 }
 
-extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
+void mouse_report_sent_callback(hid::session &session)
 {
     UsbSemaphore_Release(&UsbSemaphore.mouse);
-    UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbScheduler_ReportDelivered(
+        session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -227,22 +272,34 @@ extern "C" void Hid_MouseReportSentCallback(hid_transport_t transport)
 
 extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 {
+    // TODO: not needed when dongle is sink
+    auto payload = controls_buffer.insert(*report);
+
     report_sink_t sink = determineSink();
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z31,%d", sink);
-    errno_t err;
+    errno_t err = -ECONNRESET;
     switch (sink) {
     case ReportSink_Usb:
-        err = controls_app::usb_handle().send_report(*report);
+        if (auto session = controls_app::usb_handle().session(); session) {
+            err = session->send_report(payload).to_int();
+        }
         break;
 #if DEVICE_IS_UHK80_RIGHT
-    case ReportSink_BleHid:
-        err = controls_app::ble_handle().send_report(*report);
+    case ReportSink_BleHid: {
+        hid::session *session = currentHostBleSession();
+
+        if (!session) {
+            break;
+        }
+        err = session->send_report(payload).to_int();
         break;
+    }
 #endif
 #if DEVICE_IS_UHK80
     case ReportSink_Dongle:
-        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
+        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
+            SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
             printk("Failed to send controls report to dongle: %d\n", err);
         } else {
@@ -258,13 +315,18 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         break;
     }
     Trace_Printf("z32,%d", err);
+    if (err == 0) {
+        // not needed when dongle is sink
+        controls_buffer.swap_sides();
+    }
     return err;
 }
 
-extern "C" void Hid_ControlsReportSentCallback(hid_transport_t transport)
+void controls_report_sent_callback(hid::session &session)
 {
     UsbSemaphore_Release(&UsbSemaphore.controls);
-    UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbScheduler_ReportDelivered(
+        session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -308,15 +370,16 @@ static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
 
 extern "C" void Hid_UpdateKeyboardLedsState()
 {
+    keyboard_base_session *session = nullptr;
 #ifdef __ZEPHYR__
     switch (Connections_Type(ActiveHostConnectionId)) {
     case ConnectionType_UsbHidRight:
     case ConnectionType_UsbHidLeft:
-        setKeyboardLedsState(keyboard_app::usb_handle().get_leds());
+        session = keyboard_app::usb_handle().session();
         break;
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
-        setKeyboardLedsState(keyboard_app::ble_handle().get_leds());
+        session = currentHostBleSession();
         break;
     #endif
     case ConnectionType_NusDongle:
@@ -327,30 +390,40 @@ extern "C" void Hid_UpdateKeyboardLedsState()
         break;
     }
 #else
-    setKeyboardLedsState(keyboard_app::usb_handle().get_leds());
+    session = keyboard_app::usb_handle().session();
 #endif
+    if (session) {
+        setKeyboardLedsState(session->get_leds_report());
+    }
 }
 
-extern "C" void Hid_KeyboardLedsStateChanged(hid_transport_t transport)
+void keyboard_leds_changed_callback(keyboard_base_session &session)
 {
 #if DEVICE_IS_UHK80_RIGHT
-    auto value = (transport == HID_TRANSPORT_USB) ? keyboard_app::usb_handle().get_leds()
-                                                  : keyboard_app::ble_handle().get_leds();
-    connection_id_t connectionId = hidConnId(transport);
+    connection_id_t connectionId;
+    if (session.channel() == hid::channel::USB) {
+        connectionId = ConnectionId_UsbHidRight;
+    } else {
+        struct bt_conn *conn = static_cast<ble_session &>(session).get_conn();
+        int8_t peerId = conn ? GetPeerIdByConn(conn) : PeerIdUnknown;
+        connectionId = (peerId >= PeerIdFirstHost && peerId <= PeerIdLastHost)
+            ? (connection_id_t)Peers[peerId].connectionId
+            : ConnectionId_Invalid;
+    }
     if (Connections_IsActiveHostConnection(connectionId)) {
-        setKeyboardLedsState(value);
+        setKeyboardLedsState(session.get_leds_report());
     }
 #else
-    setKeyboardLedsState(keyboard_app::usb_handle().get_leds());
+    setKeyboardLedsState(session.get_leds_report());
 #endif
 }
 
-extern "C" void Hid_MouseScrollResolutionsChanged(
-    hid_transport_t transport, float verticalMultiplier, float horizontalMultiplier)
+void mouse_resolution_changed_callback(
+    hid::session &session, const mouse_session::scroll_resolution_report &report)
 {
 #if DEVICE_IS_UHK_DONGLE
-    DongleScrollMultipliers.vertical = verticalMultiplier;
-    DongleScrollMultipliers.horizontal = horizontalMultiplier;
+    DongleScrollMultipliers.vertical = report.vertical_scroll_multiplier();
+    DongleScrollMultipliers.horizontal = report.horizontal_scroll_multiplier();
     StateSync_UpdateProperty(StateSyncPropertyId_DongleScrollMultipliers, NULL);
 #endif
 }
@@ -361,7 +434,10 @@ extern "C" float VerticalScrollMultiplier(void)
     switch (Connections_Type(ActiveHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
-        return mouse_app::ble_handle().resolution_report().vertical_scroll_multiplier();
+        if (auto *session = currentHostBleSession(); session) {
+            return session->resolution_report().vertical_scroll_multiplier();
+        }
+        return 1.f;
     #endif
     case ConnectionType_NusDongle:
         return DongleScrollMultipliers.vertical;
@@ -375,7 +451,10 @@ extern "C" float VerticalScrollMultiplier(void)
     if (USB_IsMsHost()) {
         return mouse_app::MAX_SCROLL_RESOLUTION;
     }
-    return mouse_app::usb_handle().resolution_report().vertical_scroll_multiplier();
+    if (auto session = mouse_app::usb_handle().session(); session) {
+        return session->resolution_report().vertical_scroll_multiplier();
+    }
+    return 1.f;
 }
 
 extern "C" float HorizontalScrollMultiplier(void)
@@ -384,7 +463,10 @@ extern "C" float HorizontalScrollMultiplier(void)
     switch (Connections_Type(ActiveHostConnectionId)) {
     #if DEVICE_IS_UHK80_RIGHT
     case ConnectionType_BtHid:
-        return mouse_app::ble_handle().resolution_report().horizontal_scroll_multiplier();
+        if (auto *session = currentHostBleSession(); session) {
+            return session->resolution_report().horizontal_scroll_multiplier();
+        }
+        return 1.f;
     #endif
     case ConnectionType_NusDongle:
         return DongleScrollMultipliers.horizontal;
@@ -398,34 +480,24 @@ extern "C" float HorizontalScrollMultiplier(void)
     if (USB_IsMsHost()) {
         return mouse_app::MAX_SCROLL_RESOLUTION;
     }
-    return mouse_app::usb_handle().resolution_report().horizontal_scroll_multiplier();
-}
-
-static bool gamepadActive = false;
-
-extern "C" bool HID_GetGamepadActive()
-{
-    return gamepadActive;
+    if (auto session = mouse_app::usb_handle().session(); session) {
+        return session->resolution_report().horizontal_scroll_multiplier();
+    }
+    return 1.f;
 }
 
 extern "C" void USB_Reconfigure(void);
 
-extern "C" void HID_SetGamepadActive(bool active)
-{
-    gamepadActive = active;
-    USB_Reconfigure();
-}
+static rollover_t keyboardRollover = rollover_t::ROLLOVER_N_KEY;
 
 extern "C" rollover_t HID_GetKeyboardRollover()
 {
-    return keyboard_app::usb_handle().get_rollover();
+    return keyboardRollover;
 }
 
 extern "C" void HID_SetKeyboardRollover(rollover_t mode)
 {
+    keyboardRollover = mode;
     keyboard_app::usb_handle().set_rollover(mode);
-#if DEVICE_IS_UHK80_RIGHT
-    keyboard_app::ble_handle().set_rollover(mode);
-#endif
     USB_Reconfigure();
 }

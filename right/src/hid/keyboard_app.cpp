@@ -1,114 +1,56 @@
 #include "keyboard_app.hpp"
 extern "C" {
 #include "hid/transport.h"
+#include "usb_state.h"
 #include "utils.h"
 #if __has_include(<zephyr/sys/printk.h>)
     #include <zephyr/sys/printk.h>
 #endif
 }
 
-keyboard_app &keyboard_app::usb_handle()
-{
-    static keyboard_app app{nkro_report_protocol()};
-    return app;
-}
-#if DEVICE_IS_UHK80_RIGHT
-keyboard_app &keyboard_app::ble_handle()
-{
-    static keyboard_app ble_app{hid::report_protocol::from_descriptor<report_desc()>()};
-    return ble_app;
-}
-#endif
-
 void keyboard_app::set_rollover(rollover_t mode)
 {
-    if (rollover_ == mode) {
-        return;
-    }
-
-    rollover_ = mode;
-    if (this == &usb_handle()) {
-        // swap the HID report descriptor, which needs USB re-enumeration
-        report_info_ =
-            mode == rollover_t::ROLLOVER_N_KEY ? nkro_report_protocol() : default_report_protocol();
-    }
-    if (prot_ == hid::protocol::BOOT) {
-        return;
-    }
-    reset_keys();
+    // swap the HID report descriptor, which needs USB re-enumeration
+    report_info_ =
+        mode == rollover_t::ROLLOVER_N_KEY ? nkro_report_protocol() : default_report_protocol();
 }
 
-void keyboard_app::reset_keys()
+hid::session &keyboard_app::start(const hid::session::params &params)
 {
-    keys_.reset();
-    // TODO: make sure that no keys are pressed when this happens
+    assert(!session_.has_value());
+    UsbState_SetUsbTransportUp(true);
+    return session_.emplace(params);
+}
+
+void keyboard_app::stop(hid::session &sess)
+{
+    assert(&sess == &session_.value());
+    UsbState_SetUsbTransportUp(false);
+    return session_.reset();
+}
+
+void key_report_buffer::reset_to(hid::protocol prot, rollover_t rollover)
+{
+    reset();
+    // make sure that no keys are pressed when this happens
     // or send an empty report on the virtual keyboard that is deactivated by this switch?
-    if ((rollover_ == rollover_t::ROLLOVER_N_KEY) &&
-        (rollover_override_ == rollover_t::ROLLOVER_N_KEY)) {
-        keys_[0].nkro = {};
-        keys_[1].nkro = {};
+    if (prot == hid::protocol::BOOT) {
+        (*this)[0].boot = {};
+        (*this)[1].boot = {};
+    } else if (rollover == rollover_t::ROLLOVER_N_KEY) {
+        (*this)[0].nkro = {};
+        (*this)[1].nkro = {};
     } else {
-        keys_[0].sixkro = {};
-        keys_[1].sixkro = {};
+        (*this)[0].sixkro = {};
+        (*this)[1].sixkro = {};
     }
 }
 
-void keyboard_app::start(hid::protocol prot)
+std::span<const uint8_t> key_report_buffer::insert(const hid_keyboard_report_t &report)
 {
-    prot_ = prot;
-    rollover_override_ = {};
-
-    // start receiving reports
-    receive_report(&leds_buffer_);
-
-    reset_keys();
-
-    Hid_TransportStateChanged(
-        (this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE, true);
-}
-
-void keyboard_app::stop()
-{
-    Hid_TransportStateChanged(
-        (this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE, false);
-}
-
-bool keyboard_app::using_nkro() const
-{
-    return (prot_ == hid::protocol::REPORT) && (rollover_ == rollover_t::ROLLOVER_N_KEY) &&
-           (rollover_override_ == rollover_t::ROLLOVER_N_KEY);
-}
-
-int keyboard_app::send_report(const hid_keyboard_report_t &report)
-{
-    if (!has_transport()) {
-        return hid::result(hid::result::not_connected).to_int();
-    }
-    auto buf = move_to_buffer(report);
-    auto result = application::send_report(buf, hid::report::type::INPUT);
-
-#if DEVICE_IS_UHK80_RIGHT
-    if (result == hid::result::not_enough_memory) {
-        // this only happens on Android with NKRO mode when the transport MTU is too small
-        assert(using_nkro() and (this == &ble_handle()));
-        printk("keyboard NKRO mode fails, falling back to 6KRO\n");
-
-        rollover_override_ = rollover_t::ROLLOVER_6_KEY;
-        buf = move_to_buffer(report);
-        result = application::send_report(buf, hid::report::type::INPUT);
-    }
-#endif
-    if (result == hid::result::ok) {
-        keys_.swap_sides();
-    }
-    return result.to_int();
-}
-
-std::span<const uint8_t> keyboard_app::move_to_buffer(const hid_keyboard_report_t &report)
-{
-    auto buf_idx = keys_.active_side();
-    if (using_nkro()) {
-        auto &keys_nkro = keys_[buf_idx].nkro;
+    auto buf_idx = active_side();
+    if (mode == MODE_NKRO) {
+        auto &keys_nkro = (*this)[buf_idx].nkro;
 
         ::memcpy(&keys_nkro.modifiers, &report.modifiers, sizeof(report.modifiers));
         ::memcpy(
@@ -118,8 +60,8 @@ std::span<const uint8_t> keyboard_app::move_to_buffer(const hid_keyboard_report_
             reinterpret_cast<const uint8_t *>(&keys_nkro), sizeof(keys_nkro));
     }
 
-    if (prot_ == hid::protocol::BOOT) {
-        auto &keys_6kro = keys_[buf_idx].boot;
+    if (mode == MODE_BOOT) {
+        auto &keys_6kro = (*this)[buf_idx].boot;
 
         ::memcpy(&keys_6kro.modifiers, &report.modifiers, sizeof(report.modifiers));
         keys_6kro.scancodes.reset();
@@ -133,7 +75,7 @@ std::span<const uint8_t> keyboard_app::move_to_buffer(const hid_keyboard_report_
     }
 
     {
-        auto &keys_6kro = keys_[buf_idx].sixkro;
+        auto &keys_6kro = (*this)[buf_idx].sixkro;
 
         ::memcpy(&keys_6kro.modifiers, &report.modifiers, sizeof(report.modifiers));
         keys_6kro.scancodes.reset();
@@ -147,100 +89,82 @@ std::span<const uint8_t> keyboard_app::move_to_buffer(const hid_keyboard_report_
     }
 }
 
-keyboard_app::leds_boot_report keyboard_app::get_leds() const
+keyboard_session::leds_boot_report keyboard_session::get_leds_report() const
 {
     auto *ptr = reinterpret_cast<const uint8_t *>(&leds_buffer_);
-    if ((prot_ != hid::protocol::BOOT) and (sizeof(leds_report) > sizeof(leds_boot_report))) {
+    if ((protocol() != hid::protocol::BOOT) and (sizeof(leds_report) > sizeof(leds_boot_report))) {
         ptr += sizeof(leds_report) - sizeof(leds_boot_report);
     }
     return reinterpret_cast<const leds_boot_report &>(*ptr);
 }
 
-void keyboard_app::set_report(hid::report::type type, const std::span<const uint8_t> &data)
+void keyboard_session::set_report(hid::report::type type, const std::span<const uint8_t> &data)
 {
+    // only one report is receivable, the LEDs
     if (type != hid::report::type::OUTPUT) {
         return;
     }
-    if ((prot_ == hid::protocol::REPORT) && (LEDS_REPORT_ID != 0) &&
-        (data.front() != LEDS_REPORT_ID)) {
-        return;
-    }
-    // only one report is receivable, the LEDs
-    // offset it if report ID is not present due to BOOT protocol
-    [[maybe_unused]] auto &leds =
-        *reinterpret_cast<const uint8_t *>(data.data() + static_cast<size_t>(prot_));
 
-    Hid_KeyboardLedsStateChanged((this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE);
+    keyboard_leds_changed_callback(*this);
 
     // always keep receiving new reports
     // if the report data is processed immediately, the same buffer can be used
     receive_report(&leds_buffer_);
 }
 
-void keyboard_app::in_report_sent(const std::span<const uint8_t> &data)
+void keyboard_session::report_sent(const std::span<const uint8_t> &data)
 {
-#if DEVICE_IS_UHK80_RIGHT
-    if ((this == &ble_handle()) && (prot_ == hid::protocol::REPORT) &&
-        (data.front() != KEYS_NKRO_REPORT_ID) && (data.front() != KEYS_6KRO_REPORT_ID)) {
-        return;
-    }
-#endif
-    Hid_KeyboardReportSentCallback((this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE);
+    keyboard_report_sent_callback(*this);
 }
 
-void keyboard_app::get_report(hid::report::selector select, const std::span<uint8_t> &buffer)
+std::span<const uint8_t> keyboard_session::get_report(
+    hid::report::selector select, const std::span<uint8_t> &buffer)
 {
-    if (prot_ == hid::protocol::REPORT) {
-        if ((select != keys_6kro_report::selector()) && (select != keys_nkro_report::selector())) {
-            return;
+    if (protocol() == hid::protocol::BOOT) {
+        if (select == keyboard_app::keys_boot_report::selector()) {
+            assert(buffer.size() >= sizeof(keyboard_app::keys_boot_report));
+            std::ignore = new (buffer.data()) keyboard_app::keys_boot_report{};
+            return buffer.subspan(0, sizeof(keyboard_app::keys_boot_report));
         }
-    } else {
-        if (select != keys_boot_report::selector()) {
-            return;
+        if (select == leds_boot_report::selector()) {
+            assert(buffer.size() >= sizeof(leds_boot_report));
+            auto *ptr = new (buffer.data()) leds_boot_report{};
+            ptr->leds = leds_buffer_.leds;
+            return buffer.subspan(0, sizeof(leds_boot_report));
         }
+        return {};
     }
 
-    // copy to buffer to avoid overwriting data in transit
-    const auto &keys = keys_[keys_.inactive_side()];
-#if DEVICE_IS_UHK60
-    if (using_nkro()) {
-        auto *report = reinterpret_cast<keys_nkro_report *>(buffer.data());
-        *report = keys.nkro;
-        application::send_report(report);
+    if (select == leds_report::selector()) {
+        assert(buffer.size() >= sizeof(leds_report));
+        auto *ptr = new (buffer.data()) leds_report{};
+        ptr->leds = leds_buffer_.leds;
+        return buffer.subspan(0, sizeof(leds_report));
+    }
+    if constexpr (report_ids::IN_KEYBOARD_NKRO == 0) {
+        // no report ID, use the rollover mode to determine which report to send
+        if (select.type() == hid::report::type::INPUT) {
+            if (HID_GetKeyboardRollover() == rollover_t::ROLLOVER_N_KEY) {
+                assert(buffer.size() >= sizeof(keyboard_app::keys_nkro_report));
+                std::ignore = new (buffer.data()) keyboard_app::keys_nkro_report{};
+                return buffer.subspan(0, sizeof(keyboard_app::keys_nkro_report));
+            } else {
+                assert(buffer.size() >= sizeof(keyboard_app::keys_6kro_report));
+                std::ignore = new (buffer.data()) keyboard_app::keys_6kro_report{};
+                return buffer.subspan(0, sizeof(keyboard_app::keys_6kro_report));
+            }
+        }
     } else {
-        static_assert(KEYS_6KRO_REPORT_ID == 0);
-        auto *report = reinterpret_cast<keys_6kro_report *>(buffer.data());
-        *report = keys.sixkro;
-        application::send_report(report);
-    }
-#else
-    switch (select.id()) {
-    case KEYS_6KRO_REPORT_ID: {
-        auto *report = reinterpret_cast<keys_6kro_report *>(buffer.data());
-        if (using_nkro()) {
-            *report = {};
-        } else {
-            *report = keys.sixkro;
+        if (select == keyboard_app::keys_6kro_report::selector()) {
+            assert(buffer.size() >= sizeof(keyboard_app::keys_6kro_report));
+            std::ignore = new (buffer.data()) keyboard_app::keys_6kro_report{};
+            return buffer.subspan(0, sizeof(keyboard_app::keys_6kro_report));
         }
-        application::send_report(report);
-        break;
-    }
-    case KEYS_NKRO_REPORT_ID: {
-        auto *report = reinterpret_cast<keys_nkro_report *>(buffer.data());
-        if (using_nkro()) {
-            *report = keys.nkro;
-        } else {
-            *report = {};
+        if (select == keyboard_app::keys_nkro_report::selector()) {
+            assert(buffer.size() >= sizeof(keyboard_app::keys_nkro_report));
+            std::ignore = new (buffer.data()) keyboard_app::keys_nkro_report{};
+            return buffer.subspan(0, sizeof(keyboard_app::keys_nkro_report));
         }
-        application::send_report(report);
-        break;
     }
-    default: {
-        auto *report = reinterpret_cast<keys_boot_report *>(buffer.data());
-        *report = keys.boot;
-        application::send_report(report);
-        break;
-    }
-    }
-#endif
+    return {};
 }
