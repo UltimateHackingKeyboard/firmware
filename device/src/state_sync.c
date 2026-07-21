@@ -574,6 +574,11 @@ void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t *data, uint8_t 
     ATTR_UNUSED message_id_t messageId = *(data++);
     ATTR_UNUSED state_sync_prop_id_t propId = *(data++);
 
+    if (propId >= StateSyncPropertyId_Count) {
+        LOG_WRN("Ignoring unknown state sync property id %d from %s", propId, Utils_DeviceIdToString(src));
+        return;
+    }
+
     receiveProperty(src, propId, data, len - 2);
 }
 
