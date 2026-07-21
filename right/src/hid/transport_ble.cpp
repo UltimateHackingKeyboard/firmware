@@ -24,7 +24,7 @@ static auto &hog_service()
     using namespace bluetooth::hid_over_gatt;
 
     // TODO: set values as needed
-    const auto sec_lvl = bluetooth::security::L2_UNAUTH_ENC; // TODO: bump to L3_AUTH_ENC?
+    const auto sec_lvl = bluetooth::security::L4_LE_SC;
     static constexpr auto features = flags::NORMALLY_CONNECTABLE | flags::REMOTE_WAKE;
 
     using hogp_type = service_instance<ble_app::report_desc(), hid::boot::mode::KEYBOARD>;
