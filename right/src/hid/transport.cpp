@@ -23,11 +23,8 @@ extern "C" {
 #include "usb_semaphore.h"
 #include "usb_state.h"
 #include "utils.h"
-<<<<<<< HEAD
 #include "test_suite/test_hooks.h"
 #include "usb_state.h"
-=======
->>>>>>> multi-hogp
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -80,10 +77,9 @@ static report_sink_t determineSink()
     connection_type_t connectionType = Connections_Type(CurrentHostConnectionId);
 
     if (!Connections_IsReady(CurrentHostConnectionId)) {
-        printk("Can't send report - selected connection is not ready!\n");
+        LOG_WRN("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
         if (!Connections_IsReady(CurrentHostConnectionId)) {
-            // printk("Giving report to c2usb anyways!\n");
             return ReportSink_Usb;
         }
     }
@@ -98,14 +94,13 @@ static report_sink_t determineSink()
             return ReportSink_Dongle;
         }
     default:
-        printk("Unhandled sink type %d. Is this connection really meant to be a report target?\n",
+        LOG_WRN("Unhandled sink type %d. Is this connection really meant to be a report target?\n",
             connectionType);
         return ReportSink_Usb;
     }
 #endif
 }
 
-<<<<<<< HEAD
 static void wakeUsbHostIfNeeded()
 {
     if (!UsbState_Awake) {
@@ -115,15 +110,9 @@ static void wakeUsbHostIfNeeded()
     }
 }
 
-#ifdef __ZEPHYR__
-static inline connection_id_t hidConnId(hid_transport_t transport)
-=======
-#if DEVICE_IS_UHK80_RIGHT
-// Resolve the BLE HID session bound to the current host connection, if any.
 static ble_session *currentHostBleSession()
->>>>>>> multi-hogp
 {
-    connection_id_t connId = ActiveHostConnectionId;
+    connection_id_t connId = CurrentHostConnectionId;
     if (connId <= ConnectionId_Invalid || connId >= ConnectionId_Count) {
         return nullptr;
     }
@@ -134,22 +123,10 @@ static ble_session *currentHostBleSession()
     struct bt_conn *conn = Peers[peerId].conn;
     return conn ? ble_session::lookup_by_conn(conn) : nullptr;
 }
-#endif
 
-<<<<<<< HEAD
-extern "C" void Hid_TransportStateChanged(
-    [[maybe_unused]] hid_transport_t transport, [[maybe_unused]] bool enabled)
-{
-    UsbState_SetUsbTransportUp(enabled);
-#ifdef __ZEPHYR__
-    Connections_SetStateAsync(hidConnId(transport), enabled ? ConnectionState_Ready : ConnectionState_Disconnected);
-#endif
-}
-=======
 // TODO: when switching sinks, or when USB only and transport comes up
 // keyboard_buffer.reset_to(session->protocol(), (session->channel() == hid::channel::BLE) ? HID_ROLLOVER_N_KEY : HID_GetKeyboardRollover());
 // Deferred: this hooks into the switchover path, which is being reworked in a separate PR - do it there.
->>>>>>> multi-hogp
 
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
@@ -165,14 +142,10 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     }
     switch (sink) {
     case ReportSink_Usb:
-<<<<<<< HEAD
-        wakeUsbHostIfNeeded();
-        err = keyboard_app::usb_handle().send_report(*report);
-=======
         if (auto session = keyboard_app::usb_handle().session(); session) {
+            wakeUsbHostIfNeeded();
             err = session->send_report(payload).to_int();
         }
->>>>>>> multi-hogp
         break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid: {
@@ -184,7 +157,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         err = session->send_report(payload).to_int();
         if (err == -ENOMEM) {
             // this only happens on Android with NKRO mode when the transport MTU is too small
-            printk("keyboard NKRO mode fails, falling back to 6KRO\n");
+            LOG_WRN("keyboard NKRO mode fails, falling back to 6KRO\n");
 
             keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_6_KEY);
             payload = keyboard_buffer.insert(*report);
@@ -192,13 +165,11 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         }
         break;
     }
-#endif
-#if DEVICE_IS_UHK80
     case ReportSink_Dongle:
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
-            printk("Failed to send keyboard report to dongle: %d\n", err);
+            LOG_WRN("Failed to send keyboard report to dongle: %d\n", err);
         } else {
             UsbSemaphore_Release(&UsbSemaphore.keyboard);
         }
@@ -210,9 +181,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         Hid_KeyboardReportSentCallback(ReportSink_Usb);
         break;
     default:
-#ifdef __ZEPHYR__
-        printk("Unhandled and unexpected switch state!\n");
-#endif
+        LOG_WRN("Unhandled and unexpected switch state!\n");
         err = -EHOSTUNREACH;
         break;
     }
@@ -224,20 +193,16 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     return err;
 }
 
-extern "C" void Hid_KeyboardReportSentCallback(report_sink_t transport)
+extern "C" void Hid_KeyboardReportSentCallback(report_sink_t sink)
 {
     if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
         return;
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
-<<<<<<< HEAD
-    UsbScheduler_ReportDelivered(transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
-    if (transport == HID_TRANSPORT_USB) {
+    UsbScheduler_ReportDelivered(sink);
+    if (sink == ReportSink_Usb) {
         UsbState_Delivered();
     }
-=======
-    UsbScheduler_ReportDelivered(transport);
->>>>>>> multi-hogp
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -260,14 +225,10 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     errno_t err = -ECONNRESET;
     switch (sink) {
     case ReportSink_Usb:
-<<<<<<< HEAD
-        wakeUsbHostIfNeeded();
-        err = mouse_app::usb_handle().send_report(*report);
-=======
         if (auto session = mouse_app::usb_handle().session(); session) {
+            wakeUsbHostIfNeeded();
             err = session->send_report(payload).to_int();
         }
->>>>>>> multi-hogp
         break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid: {
@@ -279,22 +240,18 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         err = session->send_report(payload).to_int();
         break;
     }
-#endif
-#if DEVICE_IS_UHK80
     case ReportSink_Dongle:
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
-            printk("Failed to send mouse report to dongle: %d\n", err);
+            LOG_WRN("Failed to send mouse report to dongle: %d\n", err);
         } else {
             UsbSemaphore_Release(&UsbSemaphore.mouse);
         }
         break;
 #endif
     default:
-#ifdef __ZEPHYR__
-        printk("Unhandled and unexpected switch state!\n");
-#endif
+        LOG_WRN("Unhandled and unexpected switch state!\n");
         err = -EHOSTUNREACH;
         break;
     }
@@ -309,16 +266,12 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 void mouse_report_sent_callback(hid::session &session)
 {
+    report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
     UsbSemaphore_Release(&UsbSemaphore.mouse);
-<<<<<<< HEAD
-    UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
-    if (transport == HID_TRANSPORT_USB) {
+    UsbScheduler_ReportDelivered(sink);
+    if (sink == ReportSink_Usb) {
         UsbState_Delivered();
     }
-=======
-    UsbScheduler_ReportDelivered(
-        session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
->>>>>>> multi-hogp
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -335,14 +288,10 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     errno_t err = -ECONNRESET;
     switch (sink) {
     case ReportSink_Usb:
-<<<<<<< HEAD
-        wakeUsbHostIfNeeded();
-        err = controls_app::usb_handle().send_report(*report);
-=======
         if (auto session = controls_app::usb_handle().session(); session) {
+            wakeUsbHostIfNeeded();
             err = session->send_report(payload).to_int();
         }
->>>>>>> multi-hogp
         break;
 #if DEVICE_IS_UHK80_RIGHT
     case ReportSink_BleHid: {
@@ -354,22 +303,18 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         err = session->send_report(payload).to_int();
         break;
     }
-#endif
-#if DEVICE_IS_UHK80
     case ReportSink_Dongle:
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
-            printk("Failed to send controls report to dongle: %d\n", err);
+            LOG_WRN("Failed to send controls report to dongle: %d\n", err);
         } else {
             UsbSemaphore_Release(&UsbSemaphore.controls);
         }
         break;
 #endif
     default:
-#ifdef __ZEPHYR__
-        printk("Unhandled and unexpected switch state!\n");
-#endif
+        LOG_WRN("Unhandled and unexpected switch state!\n");
         err = -EHOSTUNREACH;
         break;
     }
@@ -383,16 +328,12 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 
 void controls_report_sent_callback(hid::session &session)
 {
+    report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
     UsbSemaphore_Release(&UsbSemaphore.controls);
-<<<<<<< HEAD
-    UsbScheduler_ReportDelivered( transport == HID_TRANSPORT_USB ? ReportSink_Usb : ReportSink_BleHid);
-    if (transport == HID_TRANSPORT_USB) {
+    UsbScheduler_ReportDelivered(sink);
+    if (sink == ReportSink_Usb) {
         UsbState_Delivered();
     }
-=======
-    UsbScheduler_ReportDelivered(
-        session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
->>>>>>> multi-hogp
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -452,7 +393,7 @@ extern "C" void Hid_UpdateKeyboardLedsState()
         StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
         break;
     default:
-        printk("Unhandled connection type %d\n", Connections_Type(CurrentHostConnectionId));
+        LOG_WRN("Unhandled connection type %d\n", Connections_Type(CurrentHostConnectionId));
         break;
     }
 #else
@@ -466,13 +407,6 @@ extern "C" void Hid_UpdateKeyboardLedsState()
 void keyboard_leds_changed_callback(keyboard_base_session &session)
 {
 #if DEVICE_IS_UHK80_RIGHT
-<<<<<<< HEAD
-    auto value = (transport == HID_TRANSPORT_USB) ? keyboard_app::usb_handle().get_leds()
-                                                  : keyboard_app::ble_handle().get_leds();
-    connection_id_t connectionId = hidConnId(transport);
-    if (Connections_IsCurrentHost(connectionId)) {
-        setKeyboardLedsState(value);
-=======
     connection_id_t connectionId;
     if (session.channel() == hid::channel::USB) {
         connectionId = ConnectionId_UsbHidRight;
@@ -483,9 +417,8 @@ void keyboard_leds_changed_callback(keyboard_base_session &session)
             ? (connection_id_t)Peers[peerId].connectionId
             : ConnectionId_Invalid;
     }
-    if (Connections_IsActiveHostConnection(connectionId)) {
+    if (Connections_IsCurrentHost(connectionId)) {
         setKeyboardLedsState(session.get_leds_report());
->>>>>>> multi-hogp
     }
 #else
     setKeyboardLedsState(session.get_leds_report());
