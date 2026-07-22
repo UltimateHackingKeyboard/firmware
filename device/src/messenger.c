@@ -228,7 +228,7 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
     }
 
 #if DEVICE_IS_UHK_DONGLE
-    if (!Connections_IsConnectionAwake(ConnectionId_UsbHidRight)) {
+    if (!Connections_IsCurrentHostAwake()) {
         // We received a report to relay but our USB host is suspended - ask it
         // to wake up instead of just failing to deliver.
         USB_RemoteWakeup();

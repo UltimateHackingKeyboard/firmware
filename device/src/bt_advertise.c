@@ -62,8 +62,7 @@ static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80 BLE")};
 
 // Fast advertisement makes mouse key movement jittery as it makes us miss transports
 static void applyAdvInterval(struct bt_le_adv_param* param) {
-    bool fast = BtConn_UnusedPeripheralConnectionCount() == ACTUAL_PERIPHERAL_CONNECTION_COUNT
-        || Connections_IsSelectedConnecting() || !DEVICE_IS_UHK80_LEFT;
+    bool fast = BtConn_UnusedPeripheralConnectionCount() == ACTUAL_PERIPHERAL_CONNECTION_COUNT || Connections_IsSelectedConnecting() || !DEVICE_IS_UHK80_RIGHT;
     if (fast) {
         param->interval_min = BT_GAP_ADV_FAST_INT_MIN_1;
         param->interval_max = BT_GAP_ADV_FAST_INT_MAX_1;

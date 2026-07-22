@@ -100,7 +100,7 @@ static string_segment_t getSlotText(uint8_t connId, bool empty) {
     return (string_segment_t){ .start = buffer, .end = NULL };
 }
 
-static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
+static string_segment_t getTargetText_(uint8_t connId) {
     switch (connId) {
         case ConnectionId_UsbHidRight:
             return (string_segment_t){ .start = "USB Cable", .end = NULL };
@@ -142,10 +142,6 @@ static string_segment_t getTargetText_(uint8_t connId, bool shortVersion) {
     }
 }
 
-string_segment_t WidgetStore_GetHostConnectionName(uint8_t connId, bool shortVersion) {
-    return getTargetText_(connId, shortVersion);
-}
-
 static string_segment_t getTargetText() {
     static char buffer [64] = {};
     buffer[63] = 0;
@@ -156,11 +152,11 @@ static string_segment_t getTargetText() {
         // Current is a single sticky target now (it may be an explicitly
         // selected host that is not connected yet). Show its name; append an
         // ellipsis while we are still trying to (re)connect to it.
-        string_segment_t currentConnection = getTargetText_(CurrentHostConnectionId, false);
+        string_segment_t currentConnection = getTargetText_(CurrentHostConnectionId);
         size_t offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
 
         connection_state_t connectionState = Connections_GetState(CurrentHostConnectionId);
-        bool isAwake = Connections_IsConnectionAwake(CurrentHostConnectionId);
+        bool isAwake = Connections_IsCurrentHostAwake();
         if (connectionState == ConnectionState_Disconnected) {
             snprintf(buffer+offset, sizeof(buffer)-1-offset, " (not connected)");
         } else if (!isAwake && connectionState >= ConnectionState_Connected) {

@@ -1,6 +1,6 @@
 #include "ble_app.hpp"
 #include <bluetooth/hid_over_gatt.hpp>
-#include <new>
+#include <optional>
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/kernel.h>
 extern "C" {
@@ -9,13 +9,14 @@ extern "C" {
 
 using namespace magic_enum::bitwise_operators;
 
-static_assert(sizeof(ble_session) <= BLE_HID_SESSION_STORAGE_SIZE,
-    "BLE_HID_SESSION_STORAGE_SIZE too small for ble_session");
-static_assert(alignof(ble_session) <= 8, "ble_session alignment exceeds peer storage alignment");
+// One HOGP session per host peer. Kept here rather than in peer_t so that the C
+// header stays free of C++ layout requirements, and so the left/dongle builds -
+// which never instantiate a ble_session - don't carry the storage.
+static std::optional<ble_session> hidSessions[PeerIdLastHost - PeerIdFirstHost + 1];
 
-static ble_session *peerSession(peer_t *peer)
+static std::optional<ble_session> &sessionSlot(int8_t peerId)
 {
-    return std::launder(reinterpret_cast<ble_session *>(peer->hidSessionStorage));
+    return hidSessions[peerId - PeerIdFirstHost];
 }
 
 static auto &hog_service()
@@ -59,13 +60,9 @@ hid::session &ble_app::start(const hid::session::params &params)
     peer_t *peer = &Peers[peerId];
 
     // destroy any stale session left in this slot
-    if (peer->hidSessionActive) {
-        peerSession(peer)->~ble_session();
-        peer->hidSessionActive = false;
-    }
-
-    ble_session *sess = new (peer->hidSessionStorage) ble_session(params);
-    peer->hidSessionActive = true;
+    auto &slot = sessionSlot(peerId);
+    slot.reset();
+    ble_session *sess = &slot.emplace(params);
 
     // Mirror mouse_app::start: initialise the scroll multiplier from the new session.
     mouse_resolution_changed_callback(*sess, sess->resolution_report());
@@ -83,12 +80,12 @@ hid::session &ble_app::start(const hid::session::params &params)
 void ble_app::stop(hid::session &sess)
 {
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
-        peer_t *peer = &Peers[peerId];
-        if (!peer->hidSessionActive) {
+        auto &slot = sessionSlot(peerId);
+        if (!slot.has_value()) {
             continue;
         }
-        ble_session *ps = peerSession(peer);
-        if (static_cast<hid::session *>(ps) == &sess) {
+        if (static_cast<hid::session *>(&*slot) == &sess) {
+            peer_t *peer = &Peers[peerId];
             // On a real disconnect bt_conn.c may already have cleared connectionId.
             if (peer->connectionId != ConnectionId_Invalid) {
                 printk("ble_app::stop: marking BtHid connection %d (peer %d) disconnected\n",
@@ -98,8 +95,7 @@ void ble_app::stop(hid::session &sess)
             } else {
                 printk("ble_app::stop: peer %d has invalid connectionId\n", peerId);
             }
-            ps->~ble_session();
-            peer->hidSessionActive = false;
+            slot.reset();
             return;
         }
     }
@@ -117,7 +113,7 @@ extern "C" int HOGP_HealthCheck()
     int activeSessions = 0;
     for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
         peer_t *peer = &Peers[peerId];
-        if (!peer->hidSessionActive) {
+        if (!sessionSlot(peerId).has_value()) {
             continue;
         }
         activeSessions++;

@@ -71,7 +71,7 @@ static bool isSomeoneAwake() {
         someoneAwake = DeviceState_IsTargetConnected(ourMaster);
     }
     if (DEVICE_IS_UHK80_RIGHT) {
-        someoneAwake = Connections_IsConnectionAwake(CurrentHostConnectionId);
+        someoneAwake = Connections_IsCurrentHostAwake();
     }
 #else
     bool someoneAwake = UsbState_Awake && UsbState_TransportUp;

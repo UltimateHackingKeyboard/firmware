@@ -19,9 +19,8 @@
 // USB transport and host-awake states are kept separately and the derived
 // connection state is recalculated whenever either of them changes.
 //
-// - transport up, but host asleep -> Connected
-// - transport up and host awake    -> Ready
-// - otherwise                      -> Disconnected
+// - host awake -> Ready
+// - otherwise  -> Disconnected
 //
 // C2usb doesn't report the transport as not available when the host is asleep,
 // so the awake state is tracked here on top of the transport state.
@@ -56,12 +55,16 @@ static void probeHostWithReport(void) {
 }
 
 void UsbState_SetUsbAwake(bool awake) {
-    if (UsbState_Awake != awake && !awake) {
-        UsbState_Awake = awake;
-        recalculateConnectionState();
+    if (UsbState_Awake == awake) {
+        return;
     }
-    if (UsbState_Awake != awake && awake) {
+    if (awake) {
+        // Don't trust the wakeup event - only a delivered report proves the host is
+        // listening. Probe it and let UsbState_Delivered() set the flag.
         probeHostWithReport();
+    } else {
+        UsbState_Awake = false;
+        recalculateConnectionState();
     }
 }
 

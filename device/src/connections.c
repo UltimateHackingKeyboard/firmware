@@ -30,7 +30,7 @@ connection_t Connections[ConnectionId_Count] = {
 };
 
 connection_id_t LastHostConnectionId = ConnectionId_Invalid;
-connection_id_t CurrentHostConnectionId = ConnectionId_HostConnectionFirst;
+connection_id_t CurrentHostConnectionId = DEVICE_IS_UHK_DONGLE ? ConnectionId_UsbHidRight : ConnectionId_HostConnectionFirst;
 connection_id_t LastSelectedHostConnectionId = ConnectionId_Invalid;
 
 // The old SelectedHostConnectionId carried an implicit "the user explicitly
@@ -528,16 +528,7 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
     DeviceState_Update(Connections_Target(connectionId));
 }
 
-void Connections_ClearExplicitSelection(void) {
-    if (currentHostConnectionIsExplicit) {
-        currentHostConnectionIsExplicit = false;
-        // Now that the explicit pursuit is dropped, let the automatic fallback
-        // rules run (they will take over if Current is not connected).
-        Connections_HandleSwitchover(CurrentHostConnectionId, false);
-    }
-}
-
-bool Connections_IsConnectionAwake(connection_id_t connectionId) {
+bool Connections_IsCurrentHostAwake(void) {
     switch (Connections_Type(CurrentHostConnectionId)) {
         case ConnectionType_NusDongle:
             return DongleHostAwake;

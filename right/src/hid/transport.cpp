@@ -23,8 +23,6 @@ extern "C" {
 #include "usb_semaphore.h"
 #include "usb_state.h"
 #include "utils.h"
-#include "test_suite/test_hooks.h"
-#include "usb_state.h"
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
