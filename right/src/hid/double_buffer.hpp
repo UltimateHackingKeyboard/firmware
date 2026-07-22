@@ -1,5 +1,4 @@
-#ifndef _DOUBLE_BUFFER_HPP_
-#define _DOUBLE_BUFFER_HPP_
+#pragma once
 
 #include <array>
 #include <atomic>
@@ -9,7 +8,7 @@
 template <typename T>
 class double_buffer {
     struct aligned_storage {
-        C2USB_USB_TRANSFER_ALIGN(T, m_){};
+        C2USB_USB_TRANSFER_ALIGN(T, m_) {};
         constexpr bool operator==(const aligned_storage &other) const = default;
         constexpr bool operator!=(const aligned_storage &other) const = default;
     };
@@ -60,9 +59,19 @@ class double_buffer {
     // bool differs() const { return std::memcmp(&buffers_[0] != &buffers_[1], sizeof(T)) != 0; }
     bool differs() const { return buffers_[0] != buffers_[1]; }
 
+    // API specific to hid::report::base types
+    template <typename TArg>
+    std::span<const uint8_t> insert(const TArg &report)
+    {
+        auto buf_idx = active_side();
+        memcpy(reinterpret_cast<uint8_t *>(&buffers_[buf_idx].m_) +
+                   ((T::selector().id() != 0) ? 1 : 0),
+            &report, sizeof(report));
+        return std::span<const uint8_t>(
+            reinterpret_cast<const uint8_t *>(&buffers_[buf_idx].m_), sizeof(T));
+    }
+
   private:
     std::array<aligned_storage, 2> buffers_{};
     std::atomic_uint8_t select_{};
 };
-
-#endif // _DOUBLE_BUFFER_HPP_

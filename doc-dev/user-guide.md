@@ -852,10 +852,16 @@ One way is to use the npm script that is packed with agent source code:
 
 Or, in linux, you can put the following script into your path... and then use it as `uhkcmd "write hello world!"`:
 
+uhk60:
 ```
 #!/bin/bash
-hidraw="hidraw`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | sed -nE 's/.*hidraw([0-9]+)\/.*/\1/p' | sort -rn | head -n 1`"
-echo -e "\x14$*\x00" > "/dev/$hidraw"
+hidraw=`grep 'UHK 60' /sys/class/hidraw/hidraw*/device/uevent | grep -o 'hidraw[0-9][0-9]*' | grep -o '[0-9][0-9]*' | LC_ALL=C sort -h | head -n 3 | tail -n 1`
+echo -e "\x14$*\x00" > "/dev/hidraw$hidraw"
+```
+
+#!/bin/bash
+hidraw=`grep 'UHK 80 Right' /sys/class/hidraw/hidraw*/device/uevent | grep -o 'hidraw[0-9][0-9]*' | grep -o '[0-9][0-9]*' | LC_ALL=C sort -h | head -n 3 | tail -n 1`
+echo -e "\x04\x14$*\x00" > "/dev/hidraw$hidraw"
 ```
 
 

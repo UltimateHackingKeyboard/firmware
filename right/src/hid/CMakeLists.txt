@@ -10,8 +10,9 @@ target_sources(${PROJECT_NAME} PRIVATE
     transport_usb.cpp
 )
 
-if(CONFIG_C2USB_BLUETOOTH)
+if(CONFIG_C2USB_HOGP)
     target_sources(${PROJECT_NAME} PRIVATE
+        ble_app.cpp
         transport_ble.cpp
     )
 endif()
