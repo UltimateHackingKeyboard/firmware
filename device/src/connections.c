@@ -491,7 +491,9 @@ static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
         Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
     }
 
+    Hid_UpdateKeyboardProtocol();
     Hid_UpdateKeyboardLedsState();
+
     WIDGET_REFRESH(&TargetWidget);
     // The advertising icon depends on the current connection's type.
     WIDGET_REFRESH(&StatusWidget);

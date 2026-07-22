@@ -110,6 +110,7 @@ static void wakeUsbHostIfNeeded()
     }
 }
 
+#if DEVICE_IS_UHK80_RIGHT
 static ble_session *currentHostBleSession()
 {
     connection_id_t connId = CurrentHostConnectionId;
@@ -123,10 +124,34 @@ static ble_session *currentHostBleSession()
     struct bt_conn *conn = Peers[peerId].conn;
     return conn ? ble_session::lookup_by_conn(conn) : nullptr;
 }
+#endif
 
-// TODO: when switching sinks, or when USB only and transport comes up
-// keyboard_buffer.reset_to(session->protocol(), (session->channel() == hid::channel::BLE) ? HID_ROLLOVER_N_KEY : HID_GetKeyboardRollover());
-// Deferred: this hooks into the switchover path, which is being reworked in a separate PR - do it there.
+extern "C" void Hid_UpdateKeyboardProtocol()
+{
+#if !DEVICE_IS_UHK80_RIGHT
+    if (auto *session = keyboard_app::usb_handle().session(); session) {
+        keyboard_buffer.reset_to(session->protocol(), HID_GetKeyboardRollover());
+    }
+#else
+    switch (Connections_Type(CurrentHostConnectionId)) {
+    case ConnectionType_BtHid:
+        if (auto *session = currentHostBleSession(); session) {
+            keyboard_buffer.reset_to(session->protocol(), rollover_t::ROLLOVER_N_KEY);
+        }
+        break;
+    case ConnectionType_NusDongle:
+        keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_N_KEY);
+        break;
+    case ConnectionType_UsbHidRight:
+        if (auto *session = keyboard_app::usb_handle().session(); session) {
+            keyboard_buffer.reset_to(session->protocol(), HID_GetKeyboardRollover());
+        }
+        break;
+    default:
+        break;
+    }
+#endif
+}
 
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {

@@ -49,6 +49,8 @@ void Hid_UpdateKeyboardLedsState(void);
 rollover_t HID_GetKeyboardRollover(void);
 void HID_SetKeyboardRollover(rollover_t mode);
 
+void Hid_UpdateKeyboardProtocol(void);
+
 // USB management
 void USB_SetSerialNumber(uint32_t serialNumber);
 void USB_Enable(void);

@@ -1,5 +1,6 @@
 #include "keyboard_app.hpp"
 extern "C" {
+#include "connections.h"
 #include "hid/transport.h"
 #include "usb_state.h"
 #include "utils.h"
@@ -19,7 +20,12 @@ hid::session &keyboard_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
     UsbState_SetUsbTransportUp(true);
-    return session_.emplace(params);
+    auto &session = session_.emplace(params);
+    // has to run after the session is in place - the protocol is read off it
+    if (Connections_IsCurrentHost(ConnectionId_UsbHidRight)) {
+        Hid_UpdateKeyboardProtocol();
+    }
+    return session;
 }
 
 void keyboard_app::stop(hid::session &sess)
@@ -35,12 +41,15 @@ void key_report_buffer::reset_to(hid::protocol prot, rollover_t rollover)
     // make sure that no keys are pressed when this happens
     // or send an empty report on the virtual keyboard that is deactivated by this switch?
     if (prot == hid::protocol::BOOT) {
+        mode = MODE_BOOT;
         (*this)[0].boot = {};
         (*this)[1].boot = {};
     } else if (rollover == rollover_t::ROLLOVER_N_KEY) {
+        mode = MODE_NKRO;
         (*this)[0].nkro = {};
         (*this)[1].nkro = {};
     } else {
+        mode = MODE_6KRO;
         (*this)[0].sixkro = {};
         (*this)[1].sixkro = {};
     }
