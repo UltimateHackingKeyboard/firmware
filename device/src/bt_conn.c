@@ -485,24 +485,10 @@ void BtConn_ListAllBonds() {
 static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
 
-    bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
-
-    // We only reserve the last free slot when Current is a BLE host we are still
-    // trying to reach; otherwise we accept freely. We never refuse a connection
-    // merely for not being Current - only when slots are actually scarce.
     bool isSelectedConnection = BtAddrEq(addr, &HostConnection(CurrentHostConnectionId)->bleAddress);
-    // The Current host / slot-reservation concept only exists on the right half.
-    // On the dongle (and left) CurrentHostConnectionId stays at its unused
-    // Disconnected default, so never reserve there - accept freely.
     bool reserveForCurrent = DEVICE_IS_UHK80_RIGHT && Connections_GetState(CurrentHostConnectionId) == ConnectionState_Disconnected;
     bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !reserveForCurrent;
     bool isLeftConnection = connectionType == ConnectionType_NusLeft;
-
-    if (isHidCollision) {
-        // We can get here during pairing where the connection collides with itself.
-        LOG_INF("    Not wanted: this is HID collision");
-        return false;
-    }
 
     bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
     if (!result) {
