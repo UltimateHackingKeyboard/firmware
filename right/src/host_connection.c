@@ -218,13 +218,20 @@ static void allocateUnregisteredHidId(const bt_addr_le_t *addr, connection_id_t 
 
 /*
  * - Try to find existing allocation by Connections_GetConnectionIdByBtAddr(addr);
- * - If not found, search for a host connection slot of type Empty.
+ * - If the current (active) host connection is an empty slot, use that. This
+ *   lets the user pick the slot: switch into an empty slot, then pair.
+ * - If not, search for the first host connection slot of type Empty.
  * - If not found, return ConnectionId_Invalid.
  */
 uint8_t HostConnections_AllocateConnectionIdForUnregisteredHid(const bt_addr_le_t *addr) {
     connection_id_t existingConnId = Connections_GetConnectionIdByHostAddr(addr);
     if (existingConnId != ConnectionId_Invalid) {
         return existingConnId;
+    }
+
+    if (Connections_IsHostConnection(CurrentHostConnectionId) && HostConnection(CurrentHostConnectionId)->type == HostConnectionType_Empty) {
+        allocateUnregisteredHidId(addr, CurrentHostConnectionId);
+        return CurrentHostConnectionId;
     }
 
     for (uint8_t connectionId = ConnectionId_HostConnectionFirst; connectionId <= ConnectionId_HostConnectionLast; connectionId++) {
