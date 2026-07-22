@@ -13,8 +13,11 @@
 
     // modules have very limited RAM, so keep low; Also, keep it
     #define UART_MAX_MODULE_PAYLOAD_LENGTH SLAVE_PROTOCOL_MAX_PAYLOAD_LENGTH
-    // 244 = max BLE payload length
-    #define UART_MAX_BRIDGE_PAYLOAD_LENGTH 244
+    // Max deserialized bridge message length. Must equal MAX_LINK_PACKET_LENGTH
+    // (link_protocol.h) - the bridge rx buffer is a messenger-queue region of
+    // that size, and messages travel interchangeably over UART and BLE. Kept
+    // small (rather than the BLE-max 244) to save RAM and cut BLE latency.
+    #define UART_MAX_BRIDGE_PAYLOAD_LENGTH 128
 
     #define UART_CRC_LEN 2
 

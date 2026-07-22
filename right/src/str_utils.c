@@ -136,11 +136,15 @@ bool IsEnd(parser_context_t* ctx) {
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
-        while (*ctx->at <= 32 && !isEnd(ctx)) {
+        // isEnd() may pop an exhausted parser context (e.g. an expandCodes/
+        // template expansion), moving ctx->at to the parent's next token. It
+        // must be checked *before* dereferencing ctx->at, otherwise a ctx->at++
+        // here would step over that token's first character and drop it.
+        while (!isEnd(ctx) && *ctx->at <= 32) {
             ctx->at++;
         }
         if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
-            while (*ctx->at != '\n' && !isEnd(ctx)) {
+            while (!isEnd(ctx) && *ctx->at != '\n') {
                 ctx->at++;
             }
         }
@@ -322,7 +326,7 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
 
 void ConsumeUntilDot(parser_context_t* ctx)
 {
-    while(*ctx->at > 32 && *ctx->at != '.' && !isEnd(ctx))    {
+    while(!isEnd(ctx) && *ctx->at > 32 && *ctx->at != '.') {
         ctx->at++;
     }
     if (*ctx->at != '.') {

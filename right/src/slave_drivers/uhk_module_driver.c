@@ -458,6 +458,8 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 #ifdef __ZEPHYR__
             if (DEVICE_ID == DeviceId_Uhk80_Left && uhkModuleDriverId == UhkModuleDriverId_LeftModule) {
                 StateSync_UpdateProperty(StateSyncPropertyId_ModuleStateLeftModule, NULL);
+                StateSync_UpdateProperty(StateSyncPropertyId_ModuleGitRepo, NULL);
+                StateSync_UpdateProperty(StateSyncPropertyId_ModuleGitTag, NULL);
             }
 #endif
             LogU("Module %d initialized: protocol version %d.%d.%d, firmware version %d.%d.%d, git tag %s, git repo %s, firmware checksum %s\n",

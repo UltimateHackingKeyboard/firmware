@@ -95,7 +95,6 @@
         key_state_t* EmergencyKey;
 
         // bluetooth
-        bool Bt_AllowUnsecuredConnections;
         bool Bt_AlwaysAdvertise;
         bool Bt_DirectedAdvertisingAllowed;
         bool Bt_Enabled;

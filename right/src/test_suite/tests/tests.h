@@ -32,5 +32,6 @@ extern const test_module_t TestModule_ParserBenevolence;
 extern const test_module_t TestModule_Sticky;
 extern const test_module_t TestModule_Playtime;
 extern const test_module_t TestModule_Transport;
+extern const test_module_t TestModule_TapKeySeq;
 
 #endif
