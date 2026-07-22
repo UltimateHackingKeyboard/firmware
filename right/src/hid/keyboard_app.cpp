@@ -1,11 +1,13 @@
 #include "keyboard_app.hpp"
 extern "C" {
-#include "connections.h"
 #include "hid/transport.h"
 #include "usb_state.h"
 #include "utils.h"
 #if __has_include(<zephyr/sys/printk.h>)
     #include <zephyr/sys/printk.h>
+#endif
+#ifdef __ZEPHYR__
+#include "connections.h"
 #endif
 }
 
@@ -22,9 +24,13 @@ hid::session &keyboard_app::start(const hid::session::params &params)
     UsbState_SetUsbTransportUp(true);
     auto &session = session_.emplace(params);
     // has to run after the session is in place - the protocol is read off it
+#ifdef __ZEPHYR__
     if (Connections_IsCurrentHost(ConnectionId_UsbHidRight)) {
         Hid_UpdateKeyboardProtocol();
     }
+#else
+    Hid_UpdateKeyboardProtocol();
+#endif
     return session;
 }
 

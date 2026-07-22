@@ -31,10 +31,12 @@ bool UsbState_Awake = true;
 static void recalculateConnectionState(void) {
 #if DEVICE_IS_UHK_DONGLE
     StateSync_UpdateProperty(StateSyncPropertyId_DongleHostAwake, &UsbState_Awake);
-#else
+#elif defined(__ZEPHYR__)
     Connections_SetStateAsync(ConnectionId_UsbHidRight, UsbState_Awake ? ConnectionState_Ready : ConnectionState_Disconnected);
     EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
     WIDGET_REFRESH(&TargetWidget);
+#else
+    EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
 #endif
 }
 
