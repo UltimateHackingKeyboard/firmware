@@ -247,7 +247,11 @@ adv_config_t BtAdvertise_Config() {
             }
 
             if (Connections_IsReady(CurrentHostConnectionId)) {
-                return ADVERTISEMENT( 0 );
+                if (Cfg.Bt_AlwaysAdvertise) {
+                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                } else {
+                    return ADVERTISEMENT( 0 );
+                }
             }
 
             connection_type_t currentConnectionType = Connections_Type(CurrentHostConnectionId);

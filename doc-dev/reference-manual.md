@@ -319,6 +319,7 @@ COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
+COMMAND = set bluetooth.alwaysAdvertise BOOL
 COMMAND = set devMode BOOL
 COMMAND = set log.sink.usb BOOL
 COMMAND = set log.sink.oled BOOL

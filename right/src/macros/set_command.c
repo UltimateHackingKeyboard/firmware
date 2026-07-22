@@ -390,6 +390,11 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
     } else if (ConsumeToken(ctx, "minAdvertisingDelay")) {
         DEFINE_INT_LIMITS(0, 5000);
         ASSIGN_INT(Cfg.Bt_MinAdvertisingDelay);
+    } else if (ConsumeToken(ctx, "alwaysAdvertise")) {
+        ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertise);
+#ifdef __ZEPHYR__
+        BtManager_StartScanningAndAdvertisingAsync(false, "set_command - alwaysAdvertise changed");
+#endif
     } else if (ConsumeToken(ctx, "directedAdvertisingAllowed")) {
         ASSIGN_BOOL(Cfg.Bt_DirectedAdvertisingAllowed);
 #ifdef __ZEPHYR__
