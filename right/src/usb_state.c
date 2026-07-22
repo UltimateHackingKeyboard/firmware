@@ -48,7 +48,7 @@ void UsbState_SetUsbTransportUp(bool up) {
 }
 
 static void probeHostWithReport(void) {
-#if !DEVICE_IS_UHK_DONGLE
+#if DEVICE_IS_MASTER
     GetInactiveKeyboardReport()->modifiers = ~ActiveKeyboardReport->modifiers;
 
     EventVector_Set(EventVector_SendUsbReports);
