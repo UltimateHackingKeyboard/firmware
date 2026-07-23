@@ -193,6 +193,7 @@ void InitLogLevels() {
     setLevel("udc", LOG_LEVEL_WRN);
     setLevel("udc_nrf", LOG_LEVEL_WRN);
     setLevel("c2usb", LOG_LEVEL_WRN);
+    setLevel("Battery", LOG_LEVEL_WRN);
 }
 
 #endif
