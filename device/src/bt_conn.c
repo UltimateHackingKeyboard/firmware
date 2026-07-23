@@ -484,19 +484,31 @@ void BtConn_ListAllBonds() {
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
+static bool shouldReserveForCurrentConnection() {
+    connection_type_t connType = Connections_Type(CurrentHostConnectionId);
+    bool isBluetoothConnection = connType == ConnectionType_BtHid || connType == ConnectionType_NusDongle;
+
+    return DEVICE_IS_UHK80_RIGHT && Connections_GetState(CurrentHostConnectionId) == ConnectionState_Disconnected && isBluetoothConnection;
+}
+
 // If last available slot is reserved for the current connection, refuse other connections
 static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
 
     bool isSelectedConnection = BtAddrEq(addr, &HostConnection(CurrentHostConnectionId)->bleAddress);
-    bool reserveForCurrent = DEVICE_IS_UHK80_RIGHT && Connections_GetState(CurrentHostConnectionId) == ConnectionState_Disconnected;
-    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !reserveForCurrent;
-    bool isLeftConnection = connectionType == ConnectionType_NusLeft;
+    bool isSelectedSlotEmpty = Connections_Type(CurrentHostConnectionId) == ConnectionType_Empty;
+    bool isPeerConnection = connectionType == ConnectionType_NusLeft || connectionType == ConnectionType_NusRight;
+    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !shouldReserveForCurrentConnection();
 
-    bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
+    bool result = false;
+    if (Cfg.Bt_AlwaysAdvertise) {
+        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty || weHaveSlotToSpare;
+    } else {
+        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty;
+    }
+
     if (!result) {
-        LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (selected %d, this %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
-            CurrentHostConnectionId, connectionId, connectionType, isLeftConnection);
+        LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (selected %d, this %d (%d)), isPeer: %d, isEmptySlot: %d", weHaveSlotToSpare, isSelectedConnection, CurrentHostConnectionId, connectionId, connectionType, isPeerConnection, isSelectedSlotEmpty);
     }
     return result;
 }
