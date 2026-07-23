@@ -22,7 +22,7 @@
 #include "battery_unloaded_calculator.h"
 #include <zephyr/logging/log_ctrl.h>
 
-LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
 
 /**
  * chargerStatDt == 1 => (actually) not charging (e.g., fully charged, or no power provided)
