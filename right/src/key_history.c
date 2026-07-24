@@ -120,3 +120,11 @@ bool KeyHistory_WasLastMultitap()
 {
     return lastPress.multiTapCount > 1;
 }
+
+uint8_t KeyHistory_GetChordActivationIdOfLastAction()
+{
+    if (lastPress.eventType != HistoryEventType_Chord) {
+        return CHORDS_INVALID_ACTIVATION_ID;
+    }
+    return lastPress.event.chord.chord->activationId;
+}

@@ -138,6 +138,9 @@ bool Macros_CurrentMacroKeyIsActive()
     if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShot == 1;
     }
+    if (S->ms.chordActivationId != CHORDS_INVALID_ACTIVATION_ID && Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
+        return (S->ms.oneShot == 1) || Chords_IsChordActivationActive(S->ms.chordActivationId, isCurrentMacroPostponing());
+    }
     if (isCurrentMacroPostponing()) {
         bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));

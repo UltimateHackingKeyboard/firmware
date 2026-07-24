@@ -84,7 +84,7 @@
 // Functions (Basic Query APIs):
 
     uint8_t PostponerQuery_PendingKeypressCount();
-    bool PostponerQuery_IsKeyReleased(key_state_t* key);
+    bool PostponerQuery_IsKeyReleased(const key_state_t* key);
     bool PostponerQuery_IsActiveEventually(key_state_t* key);
     void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
     bool PostponerQuery_ContainsKeyId(uint8_t keyid);

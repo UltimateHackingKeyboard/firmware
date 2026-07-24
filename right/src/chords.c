@@ -18,18 +18,26 @@ typedef enum {
 
 chord_def_t Chords[MAX_CHORDS_COUNT];
 uint8_t ChordCount = 0;
+uint8_t NextActivationId = CHORDS_INVALID_ACTIVATION_ID + 1;
+
+// Not sure how nice or not this is.  I like named parameters rather than just true/false in calls.
+// I also don't like the all-caps of macros, this C doesn't have consexpr, and I don't know if global consts will get optimized.
+typedef enum {
+    KeyReleased = false,
+    KeyPressed = true,
+} key_pressed_state_t;
 
 static struct {
     const key_state_t *initialKey;
     uint32_t pressTime;
     uint32_t releaseTime;
     uint8_t unrollingKeysCount;
-    const chord_def_t *unrollingChord;
+    chord_def_t *unrollingChord;
 } ResolutionState;
 
 static inline void sortKeys(chord_keys_t keys, uint8_t keyCount)
 {
-    // Some kind of bubblesort, I dunno
+    // Some kind of bubblesort, I dunno, 5 keys max, don't care about optimal algorithm
     bool recheck = true;
     while ( recheck ) {
         recheck = false;
@@ -114,6 +122,11 @@ static inline int16_t compareToChord(const chord_def_t *left, layer_id_t layer, 
     return memcmp(left->keys, keys, keyCount);
 }
 
+/*
+Search here is implemented as just iteration over the list.
+One could do a binary search instead, for a minor speed increase.
+I might do that later.
+*/
 bool Chords_TryAddChord(layer_id_t layer, chord_keys_t keys, uint8_t keyCount, key_action_t *action)
 {
     sortKeys(keys, keyCount);
@@ -178,7 +191,8 @@ static bool isPartialOfChord(const chord_def_t *large, chord_keys_t keys, uint8_
     return true;
 }
 
-chord_search_result_t searchForChordAction(const chord_def_t **out_matchedChord, layer_id_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
+// Again linear search, not binary
+chord_search_result_t searchForChordAction(chord_def_t **out_matchedChord, layer_id_t layer, chord_keys_t keys, uint8_t keyCount, bool noPartial)
 {
     sortKeys(keys, keyCount);
 
@@ -237,12 +251,25 @@ void Chords_ResetChords() {
     ChordCount = 0;
 }
 
+bool setKeyHoldingChord(chord_def_t *chord, uint8_t keyId, key_pressed_state_t pressed) {
+    for (uint8_t i = 0; i < chord->keyCount; ++i) {
+        if (chord->keys[i] == keyId) {
+            if (pressed) chord->pressedStates |= 1 << i;
+            else chord->pressedStates &= ~(1 << i);
+
+            return true;
+        }
+    }
+    return false;
+}
+
 chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const chord_def_t **out_matchedChord)
 {
     const uint8_t thisKeyId = Utils_KeyStateToKeyId(keyState);
     if (KeyState_ActivatedNow(keyState) && ResolutionState.unrollingKeysCount > 0) {
         --ResolutionState.unrollingKeysCount;
         *out_matchedChord = ResolutionState.unrollingChord;
+        setKeyHoldingChord(ResolutionState.unrollingChord, thisKeyId, KeyPressed);
         // Since the chord is unrolling, initial action on the keystroke should already have taken effect on the first key.
         // We set the chord action, but block the initial effect.  This allows the effect of keys to linger until release.
         // Except with macros, where we specifically want the initial effect on the last key.
@@ -275,7 +302,8 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
 
     const bool pressIntervalIsOver = ResolutionState.pressTime + Cfg.Chords_Timeout <= Timer_GetCurrentTime();
 
-    chord_search_result_t searchRes = searchForChordAction(out_matchedChord, layer, pressedKeys, keyCount, pressIntervalIsOver || hasDuplicate);
+    chord_def_t * matchedChord = NULL;
+    chord_search_result_t searchRes = searchForChordAction(&matchedChord, layer, pressedKeys, keyCount, pressIntervalIsOver || hasDuplicate);
 
     if (searchRes & ChordSearch_Partial) {
         EventScheduler_Schedule(ResolutionState.pressTime + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Press Interval");
@@ -288,11 +316,35 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
     keyState->previous = false;
 
     if (searchRes & ChordSearch_Exact) {
+        *out_matchedChord = matchedChord;
+        // Check that next acitvation id does not collide with an existing one since we use the activationId to identify chords.
+        // Collision can cause the following
+        //  - Chord activated macro checks for release may use the wrong chord and be incorrect
+        //  - If colliding chords share keyIds, one will not be registered as released until pressed and released again
+        //PR Maybe not worth the cost?  It's highly unlikely and currently only affects macro checks for release if a macro is kept active for more than 60 chord presses.
+        bool collision;
+        do {
+            collision = false;
+            if (NextActivationId == CHORDS_INVALID_ACTIVATION_ID) ++NextActivationId;
+            for (uint8_t i = 0; i < ChordCount; ++i) {
+                if (Chords[i].activationId == NextActivationId) {
+                    if (++NextActivationId == CHORDS_INVALID_ACTIVATION_ID) {
+                        ++NextActivationId;
+                    }
+                    // Recheck from begining
+                    collision = true;
+                }
+            }
+        } while (collision);
+
+        matchedChord->activationId = NextActivationId++;
+        matchedChord->pressedStates = 0;
+        setKeyHoldingChord(matchedChord, thisKeyId, KeyPressed);
         if (Cfg.Chords_ApplicationType == ChordApplicationType_LeadingKey) {
             PostponerExtended_ConsumePendingKeypresses(keyCount - 1);
         }
         else if (Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
-            if ((*out_matchedChord)->action.type == KeyActionType_PlayMacro) {
+            if (matchedChord->action.type == KeyActionType_PlayMacro) {
                 // Do not activate on the first key, but rather on the last.
                 // This is to prevent the following issues:
                 //  - activateKeyPostponed with prepend, or consumePending modifying the roll-out
@@ -301,16 +353,46 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
                 // likely be used while postponeKeys is active, meaning we would not be resolving anyway.
                 keyState->previous = true;
             }
-            // TODO:
-            //  - Somehow ensure that macro related release detections work with the idea of chord release rather than just the leading key.
-            //      In the macro engine, could grab chord key list from key history on launch, and then perform the existing released check on all
-            //          Costs some RAM to make room for 4 additional keyStates and activationIds in macro engine
-            //          Paves the way for ifChord and chordKey.n commands
             ResolutionState.unrollingKeysCount = keyCount - 1;
-            ResolutionState.unrollingChord = *out_matchedChord;
+            ResolutionState.unrollingChord = matchedChord;
         }
         return ChordResolution_Resolved;
     }
 
     return ChordResolution_Failed;
+}
+
+void Chords_KeyReleased(const key_state_t *keyState)
+{
+    for (uint8_t i = 0; i < ChordCount; ++i) {
+        if (Chords[i].pressedStates == 0) continue;
+        if (setKeyHoldingChord(&Chords[i], Utils_KeyStateToKeyId(keyState), KeyReleased) ) {
+            if (Chords[i].pressedStates == 0) {
+                Chords[i].activationId = 0;
+            }
+            return;
+        }
+    }
+}
+
+bool Chords_IsChordActivationActive(uint8_t activationId, bool checkPostponer)
+{
+    if (activationId == CHORDS_INVALID_ACTIVATION_ID) {
+        return false;
+    }
+    for (uint8_t i = 0; i < ChordCount; ++i) {
+        if (Chords[i].activationId == activationId) {
+            for (uint8_t j = 0; j < Chords[i].keyCount; ++j) {
+                if (Chords[i].pressedStates & (1 << j)) {
+                    const key_state_t * const keyState = Utils_KeyIdToKeyState(Chords[i].keys[j]);
+                    // Since we catch releases, if it's active, it's still the same activation.
+                    // Check keystate because releases are registered after macro has it's go, so otherwise, this release would not get registered
+                    if (KeyState_Active(keyState) && (!checkPostponer || !PostponerQuery_IsKeyReleased(keyState))) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }

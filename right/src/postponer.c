@@ -361,7 +361,7 @@ uint8_t PostponerQuery_PendingKeypressCount()
 }
 
 
-bool PostponerQuery_IsKeyReleased(key_state_t* key)
+bool PostponerQuery_IsKeyReleased(const key_state_t* key)
 {
     if (key == NULL) {
         return false;

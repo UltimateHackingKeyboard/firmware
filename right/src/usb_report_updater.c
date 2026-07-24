@@ -538,7 +538,7 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, us
         case KeyActionType_PlayMacro:
             if (KeyState_ActivatedNow(keyState)) {
                 StickyMods_ResetLater(cachedAction);
-                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationId, 255, true, NULL);
+                Macros_StartMacro(action->playMacro.macroId, keyState, action->playMacro.offset, keyState->activationId, true, NULL);
             }
             break;
         case KeyActionType_InlineMacro:
@@ -824,6 +824,11 @@ static void updateActionStates() {
                 ApplyKeyAction(keyState, cachedAction, &NativeKeyboardReports);
 
                 if (KeyState_DeactivatedNow(keyState)) {
+                    // I kind of want to only trigger chord releases for chord-holding keys.
+                    // It's safe as it is, but it is not exactly free if there are chords.
+                    // Maybe grab a bit in the keyState for isHoldingChord?
+                    // I could also get rid of the need to do this by storing activationIds for the holding keys, costing memory per chord.
+                    Chords_KeyReleased(keyState);
                     KeyHistory_RecordRelease(keyState);
                     keyState->secondaryState = SecondaryRoleState_DontKnowYet;
                 }
