@@ -12,6 +12,7 @@
 #include "state_sync.h"
 #include "thread_stats.h"
 #include "hid/transport.h"
+#include "usb_state.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "module.h"
@@ -87,8 +88,8 @@ static connection_id_t determineChannel(device_id_t dst) {
     if (DEVICE_IS_UHK80_RIGHT) {
         switch (dst) {
             case DeviceId_Uhk_Dongle:
-                if (Connections_IsReady(ActiveHostConnectionId) && Connections_Type(ActiveHostConnectionId) == ConnectionType_NusDongle) {
-                    return ActiveHostConnectionId;
+                if (Connections_IsReady(CurrentHostConnectionId) && Connections_Type(CurrentHostConnectionId) == ConnectionType_NusDongle) {
+                    return CurrentHostConnectionId;
                 }
                 break;
             case DeviceId_Uhk80_Left:
@@ -226,6 +227,14 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
             return;
     }
 
+#if DEVICE_IS_UHK_DONGLE
+    if (!Connections_IsCurrentHostAwake()) {
+        // We received a report to relay but our USB host is suspended - ask it
+        // to wake up instead of just failing to deliver.
+        USB_RemoteWakeup();
+    }
+#endif
+
     errno_t ATTR_UNUSED ret = sendDongleReport(propertyId, message);
 
 #if DEVICE_IS_UHK_DONGLE
@@ -299,7 +308,7 @@ static bool isSpam(const uint8_t* data, connection_id_t connectionId) {
     if (data[MessageOffset_MsgId1] == MessageId_StateSync && data[MessageOffset_MsgId1+1] == StateSyncPropertyId_Battery) {
         return DEBUG_EVENTLOOP_SCHEDULE;
     }
-    if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != ActiveHostConnectionId) {
+    if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != CurrentHostConnectionId) {
         StateSync_UpdateProperty(StateSyncPropertyId_DongleStandby, NULL);
         return true;
     }

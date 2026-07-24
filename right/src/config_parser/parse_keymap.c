@@ -114,12 +114,18 @@ static parser_error_t parseConnectionsAction(key_definition_t *keyDefinition, co
             keyAction->connections.command = ConnectionAction_Previous;
             keyAction->connections.hostConnectionId = 0;
             break;
-        case SerializedConnectionAction_ToggleAdvertisement:
-            keyAction->connections.command = ConnectionAction_ToggleAdvertisement;
+        case SerializedConnectionAction_RemovedToggleAdvertisement:
+        case SerializedConnectionAction_RemovedTogglePairing:
+            // Advertising and pairing now follow the current host connection.
+            // These actions were never used by Agent, so we have not bumped
+            // the UserConfig version.
+            break;
+        case SerializedConnectionAction_NextActive:
+            keyAction->connections.command = ConnectionAction_NextActive;
             keyAction->connections.hostConnectionId = 0;
             break;
-        case SerializedConnectionAction_TogglePairing:
-            keyAction->connections.command = ConnectionAction_TogglePairing;
+        case SerializedConnectionAction_PreviousActive:
+            keyAction->connections.command = ConnectionAction_PreviousActive;
             keyAction->connections.hostConnectionId = 0;
             break;
         default:

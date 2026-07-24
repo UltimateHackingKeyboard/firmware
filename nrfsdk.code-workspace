@@ -9,8 +9,13 @@
 			"path": "."
 		},
 		{
-			"name": "workspace",
-			"path": ".."
+			"path": "../zephyr"
+		},
+		{
+			"path": "../c2usb/c2usb"
+		},
+		{
+			"path": "../modules/lib/hid-rp/hid-rp"
 		}
 	],
 	"settings": {
@@ -32,6 +37,9 @@
 			"*.c": "c",
 			"*.hpp": "cpp",
 			"*.cpp": "cpp"
+		},
+		"C_Cpp.files.exclude": {
+			"${workspaceFolder:c2usb}/c2usb/**/*.test.cpp": true
 		},
 		"C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
 		"C_Cpp.workspaceParsingPriority": "high",

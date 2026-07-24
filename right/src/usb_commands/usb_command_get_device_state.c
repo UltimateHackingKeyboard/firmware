@@ -33,7 +33,7 @@
 #else
     #include "usb_report_updater.h"
     #include "slave_scheduler.h"
-    #define BtPair_PairingMode PairingMode_Off
+    #define BtPair_OobPairingInProgress false
     #define Bt_NewPairedDevice 0
 #endif
 
@@ -82,7 +82,7 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
 
     uint8_t byte2 = 0
         | (MergeSensor_IsMerged() == MergeSensorState_Joined ? GetDeviceStateByte2_HalvesMerged : 0)
-        | (BtPair_PairingMode == PairingMode_Oob ? GetDeviceStateByte2_PairingInProgress : 0)
+        | (BtPair_OobPairingInProgress ? GetDeviceStateByte2_PairingInProgress : 0)
         | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0)
         | (UsbLogBuffer_HasLog ? GetDeviceStateByte2_ZephyrLog : 0);
     SetUsbTxBufferUint8(2, byte2);

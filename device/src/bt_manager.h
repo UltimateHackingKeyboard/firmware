@@ -25,7 +25,6 @@
     void BtManager_RestartBt();
     void BtManager_StartScanningAndAdvertising();
     void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel);
-    void BtManager_EnterMode(pairing_mode_t mode, bool toggle);
 
     void BtManager_CheckLeftBleVsUart();
 

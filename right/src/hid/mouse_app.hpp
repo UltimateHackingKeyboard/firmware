@@ -1,5 +1,4 @@
-#ifndef __MOUSE_APP_HEADER__
-#define __MOUSE_APP_HEADER__
+#pragma once
 
 extern "C" {
 #include "hid/mouse_report.h"
@@ -11,13 +10,38 @@ extern "C" {
 #include <hid/application.hpp>
 #include <hid/page/consumer.hpp>
 
+class mouse_session : public hid::session {
+  public:
+    static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
+    using scroll_resolution_report =
+        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION,
+            report_ids::FEATURE_MOUSE>;
+
+    mouse_session(const hid::session::params &p) : hid::session(p)
+    {
+        receive_report(&resolution_buffer_);
+    }
+
+    const auto &resolution_report() const { return resolution_buffer_; }
+
+  protected:
+    C2USB_USB_TRANSFER_ALIGN(scroll_resolution_report, resolution_buffer_) {};
+
+    void report_sent(const std::span<const uint8_t> &data) override;
+
+    std::span<const uint8_t> get_report(
+        hid::report::selector select, const std::span<uint8_t> &buffer) override;
+
+    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
+};
+
 class mouse_app : public hid::application {
     static constexpr auto LAST_BUTTON = hid::page::button(HID_MOUSE_BUTTON_COUNT);
     static constexpr int16_t AXIS_LIMIT = 4096;
     static constexpr int16_t WHEEL_LIMIT = 32767;
 
   public:
-    static constexpr int16_t MAX_SCROLL_RESOLUTION = 120;
+    static constexpr int16_t MAX_SCROLL_RESOLUTION = mouse_session::MAX_SCROLL_RESOLUTION;
 
     static constexpr auto report_desc()
     {
@@ -65,32 +89,23 @@ class mouse_app : public hid::application {
         bool operator!=(const mouse_report_base &other) const = default;
     };
 
-    static mouse_app &usb_handle();
-#if DEVICE_IS_UHK80_RIGHT
-    static mouse_app &ble_handle();
-#endif
+    static mouse_app &usb_handle()
+    {
+        static mouse_app app{};
+        return app;
+    }
 
-    int send_report(const hid_mouse_report_t &report);
+    mouse_session *session() { return session_.has_value() ? &*session_ : nullptr; }
 
   private:
-    mouse_app() : hid::application(hid::report_protocol::from_descriptor<report_desc()>()) {}
+    mouse_app() : application(hid::report_protocol::from_descriptor<report_desc()>()) {}
 
-    void start(hid::protocol prot) override;
-    void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
-    void get_report(hid::report::selector select, const std::span<uint8_t> &buffer) override;
-    void in_report_sent(const std::span<const uint8_t> &data) override;
+    hid::session &start(const hid::session::params &params) override;
+    void stop(hid::session &sess) override;
 
-    using mouse_report = mouse_report_base<report_ids::IN_MOUSE>;
-    double_buffer<mouse_report> report_buffer_{};
-    using scroll_resolution_report =
-        hid::app::mouse::resolution_multiplier_report<MAX_SCROLL_RESOLUTION,
-            report_ids::FEATURE_MOUSE>;
-    C2USB_USB_TRANSFER_ALIGN(scroll_resolution_report, resolution_buffer_) {};
-
-  public:
-    const auto &resolution_report() const { return resolution_buffer_; }
+    std::optional<mouse_session> session_{};
 };
 
-using mouse_buffer = mouse_app::mouse_report_base<>;
-
-#endif // __KEYBOARD_APP_HEADER__
+void mouse_report_sent_callback(hid::session &session);
+void mouse_resolution_changed_callback(
+    hid::session &session, const mouse_session::scroll_resolution_report &report);
