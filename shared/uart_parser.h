@@ -47,6 +47,7 @@
 
         bool escaping;
         bool receivingMessage;
+        bool rxTooLong;
 
     } uart_parser_t;
 

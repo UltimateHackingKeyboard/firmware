@@ -452,6 +452,16 @@ int Messenger_SendMessage(message_t* message) {
     connection_id_t connectionId = message->connectionId;
     device_id_t dst = message->dst;
 
+    uint16_t totalLen = 3 + message->idsUsed + message->len;
+    if (totalLen > MAX_LINK_PACKET_LENGTH) {
+        const char *desc1, *desc2;
+        getMessageDescription(message->messageId[0], message->messageId[1], &desc1, &desc2);
+        LogU("Refusing to send over-long message (%d > %d bytes) to %s: %s %s\n",
+            totalLen, MAX_LINK_PACKET_LENGTH, Utils_DeviceIdToString(dst),
+            desc1 == NULL ? "" : desc1, desc2 == NULL ? "" : desc2);
+        return -1;
+    }
+
     int err = 0;
 
     switch (connectionId) {
