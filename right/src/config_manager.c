@@ -272,6 +272,7 @@ const config_t DefaultCfg = (config_t){
         .AutoShiftDelay = 0,
         .ChordingDelay = 0,
         .Chords_Timeout = 75,
+        .Chords_MinimumIdleTime = 70,
         .Chords_ApplicationType = ChordApplicationType_LeadingKey,
         .BatteryStationaryMode = false,
 #ifdef __ZEPHYR__

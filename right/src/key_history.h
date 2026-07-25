@@ -23,6 +23,7 @@ void KeyHistory_RecordRelease(const key_state_t *keyState);
 bool KeyHistory_WasLastDoubletap();
 bool KeyHistory_WasLastMultitap();
 uint8_t KeyHistory_GetChordActivationIdOfLastAction();
+uint32_t KeyHistory_GetLastActivationTime();
 
 
 #endif

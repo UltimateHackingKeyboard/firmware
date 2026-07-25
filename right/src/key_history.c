@@ -128,3 +128,7 @@ uint8_t KeyHistory_GetChordActivationIdOfLastAction()
     }
     return lastPress.event.chord.chord->activationId;
 }
+
+uint32_t KeyHistory_GetLastActivationTime() {
+    return lastPress.timestamp;
+}

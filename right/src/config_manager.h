@@ -95,6 +95,7 @@
         uint8_t ChordingDelay;
         uint8_t Chords_Timeout;
         uint8_t Chords_ApplicationType;
+        uint16_t Chords_MinimumIdleTime;
         
         key_state_t* EmergencyKey;
 

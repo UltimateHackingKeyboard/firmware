@@ -1,6 +1,7 @@
 #include "chords.h"
 #include "config_manager.h"
 #include "event_scheduler.h"
+#include "key_history.h"
 #include "keymap.h"
 #include "layer.h"
 #include "macros/status_buffer.h"
@@ -277,6 +278,9 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
             keyState->previous = true;
         }
         return ChordResolution_Resolved;
+    }
+    if (Cfg.Chords_MinimumIdleTime + KeyHistory_GetLastActivationTime() > CurrentPostponedTime) {
+        return ChordResolution_Failed;
     }
     if (KeyState_ActivatedNow(keyState) && ResolutionState.initialKey == NULL) {
         ResolutionState.initialKey = keyState;

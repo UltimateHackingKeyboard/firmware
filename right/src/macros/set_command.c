@@ -1153,6 +1153,10 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 255);
         ASSIGN_INT(Cfg.Chords_Timeout);    
     }
+    else if (ConsumeToken(ctx, "chordPriorIdleTime")) {
+        DEFINE_INT_LIMITS(0, 65535);
+        ASSIGN_INT(Cfg.Chords_MinimumIdleTime);
+    }
     else if (ConsumeToken(ctx, "chordApplication")) {
         if (ConsumeToken(ctx, "leadingKey")) {
             DEFINE_NONE_LIMITS();
