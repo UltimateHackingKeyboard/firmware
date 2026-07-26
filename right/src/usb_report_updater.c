@@ -747,7 +747,7 @@ static void updateActionStates() {
                 continue;
             }
              
-            preprocessKeyState(keyState);
+            preprocessKeyState(keyState, false);
         }
     }
 
