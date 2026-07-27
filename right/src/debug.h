@@ -40,6 +40,7 @@ typedef struct {
     uint32_t applied;
     uint32_t action;
     uint32_t delivered;
+    uint8_t scanActive;  // target state (1=press, 0=release) of the last scan change
 } key_life_times_t;
 
 extern key_life_times_t KeyLifeTimes;
@@ -47,8 +48,15 @@ extern key_life_times_t KeyLifeTimes;
 #define DEBUG_KEY_LIFE_ENABLED true
 #if DEBUG_KEY_LIFE_ENABLED
 #define DEBUG_KEY_LIFE(STAGE) (KeyLifeTimes.STAGE = Timer_GetCurrentTime())
+// Like DEBUG_KEY_LIFE(scan), but also records whether the change was into an
+// active (pressed) or inactive (released) state.
+#define DEBUG_KEY_LIFE_SCAN(ACTIVE) do { \
+    KeyLifeTimes.scan = Timer_GetCurrentTime(); \
+    KeyLifeTimes.scanActive = (ACTIVE) ? 1 : 0; \
+} while (0)
 #else
 #define DEBUG_KEY_LIFE(STAGE)
+#define DEBUG_KEY_LIFE_SCAN(ACTIVE)
 #endif
 
 // Last-seen state of blockedByReportThrottle(); printed by Hid_DumpTransportState.
