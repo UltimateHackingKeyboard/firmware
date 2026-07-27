@@ -104,10 +104,12 @@ static void updateMaxCharge() {
 static bool updateBatteryPresent() {
     uint32_t statPeriod = MIN((uint32_t)(lastStatZeroTime - lastStatOneTime), (uint32_t)(lastStatOneTime-lastStatZeroTime));
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
+    bool lastStatValue = lastStatOneTime > lastStatZeroTime;
     bool batteryOscilates = statPeriod < CHARGER_STAT_PERIOD;
     bool changedRecently = (Timer_GetCurrentTime() - lastStat) < CHARGER_STAT_PERIOD;
     bool batteryMissing = (changedRecently && batteryOscilates);
     bool batteryPresent = !batteryMissing;
+    LOG_INF("Stat: %d, Battery present: %d, batteryOscilates: %d, changedRecently: %d, lastStatZeroTime: %d, lastStatOneTime: %d\n", lastStat, batteryPresent, batteryOscilates, changedRecently, lastStatZeroTime, lastStatOneTime);
     return setBatteryPresent(batteryPresent);
 }
 
@@ -133,7 +135,9 @@ static uint16_t getVoltage() {
     adc_read(adc_channel.dev, &sequence);
     int32_t val_mv = (int32_t)buf;
     adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
-    return (uint16_t)(VOLTAGE_DIVIDER_MULTIPLIER*val_mv);
+    uint16_t result = (uint16_t)(VOLTAGE_DIVIDER_MULTIPLIER*val_mv);
+    LOG_INF("Raw voltage: %d mV", result);
+    return result;
 }
 
 static void printState(battery_state_t* state) {
@@ -434,9 +438,6 @@ void InitCharger_Min(void) {
 }
 
 void InitCharger(void) {
-    log_filter_set(NULL, 0, log_source_id_get("Battery"), LOG_LEVEL_WRN);
-
-
     InitCharger_Min();
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);
