@@ -1,4 +1,5 @@
 #include "power_mode.h"
+#include "attributes.h"
 #include "timer.h"
 #include "event_scheduler.h"
 #include "led_manager.h"
@@ -9,6 +10,7 @@
 #ifdef __ZEPHYR__
     #include "device_state.h"
     #include "connections.h"
+    #include "bt_conn.h"
     #include "keyboard/key_scanner.h"
     #include "keyboard/charger.h"
     #include "keyboard/leds.h"
@@ -147,6 +149,8 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
         return;
     }
 
+    ATTR_UNUSED bool wasAwake = CurrentPowerMode <= PowerMode_LastAwake;
+
     switch (mode) {
         case PowerMode_Awake:
             wake();
@@ -173,6 +177,13 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
 #else
     if (DEBUG_UHK60_SLEEPS) {
         Macros_Printf("Entered %s power mode, because: %s\n", PowerModeConfig[CurrentPowerMode].name, reason);
+    }
+#endif
+
+#ifdef __ZEPHYR__
+    // On an awake<->sleep transition, recompute BLE intervals (everything relaxes while asleep).
+    if ((CurrentPowerMode <= PowerMode_LastAwake) != wasAwake) {
+        BtConn_UpdateConnectionLatencies();
     }
 #endif
 

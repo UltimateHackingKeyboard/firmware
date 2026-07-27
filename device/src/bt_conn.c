@@ -19,6 +19,7 @@
 #include "keyboard/oled/widgets/widget.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
+#include "power_mode.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "device.h"
@@ -364,6 +365,54 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 setLatency(conn, &conn_params);
              }
             break;
+        case LatencyMode_Idle: {
+                // ~40-60ms with slave latency 6 is ~6x fewer radio events than the active
+                // ~11ms interval, yet a keypress still goes out at the next event, because
+                // slave latency only skips *empty* ones. (1+lat)*max*2 = 840ms stays under
+                // the 1000ms supervision timeout.
+                const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+                    32, 48,
+                    6,
+                    100
+                );
+                setLatency(conn, &conn_params);
+             }
+            break;
+    }
+}
+
+static latency_mode_t desiredLatencyMode(connection_id_t connectionId) {
+    connection_type_t connectionType = Connections_Type(connectionId);
+    if (connectionType != ConnectionType_BtHid && connectionType != ConnectionType_NusDongle) {
+        // don't sleep right-left link
+        return LatencyMode_NUS;
+    }
+    bool awake = CurrentPowerMode <= PowerMode_LastAwake;
+    if (awake && connectionId == ActiveHostConnectionId) {
+        return LatencyMode_BleHid;
+    }
+    return LatencyMode_Idle;
+}
+
+// Last mode actually applied per peer, so that the recompute is idempotent - every
+// configureLatency triggers an on-air renegotiation. -1 = none yet.
+static int8_t appliedLatencyMode[PeerCount];
+
+void BtConn_UpdateConnectionLatencies(void) {
+    // Host switchover and power modes are a right-half concept.
+    if (!DEVICE_IS_UHK80_RIGHT) {
+        return;
+    }
+    for (uint8_t i = PeerIdFirst; i < PeerCount; i++) {
+        if (Peers[i].conn == NULL) {
+            appliedLatencyMode[i] = -1;
+            continue;
+        }
+        latency_mode_t mode = desiredLatencyMode(Peers[i].connectionId);
+        if ((int8_t)mode != appliedLatencyMode[i]) {
+            appliedLatencyMode[i] = (int8_t)mode;
+            configureLatency(Peers[i].conn, mode);
+        }
     }
 }
 
@@ -581,7 +630,7 @@ static void connectNus(struct bt_conn *conn, connection_id_t connectionId, conne
 static void connectHid(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     assignPeer(conn, connectionId, connectionType);
 
-    configureLatency(conn, LatencyMode_NUS);
+    configureLatency(conn, LatencyMode_BleHid);
 
     // Assume that HOGP is ready
     LOG_INF("Established HID connection with %s", GetPeerStringByConn(conn));
@@ -876,8 +925,8 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
     LOG_DBG("%s conn params: interval=%u ms, latency=%u, timeout=%u ms", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
     int8_t peerId = GetPeerIdByConn(conn);
-    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
-    bool isUhkPeer = isUhkDeviceConnection(connectionType);
+    connection_id_t connectionId = Peers[peerId].connectionId;
+    connection_type_t connectionType = Connections_Type(connectionId);
 
     if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NusDongle) {
         uint32_t intervalMs = (interval * 5 + 3) / 4;
@@ -887,8 +936,12 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
         Peers[peerId].bleReportIntervalMs = intervalMs;
     }
 
-    if (interval > 10) {
-        configureLatency(conn, isUhkPeer ? LatencyMode_NUS : LatencyMode_BleHid);
+    // Re-force our interval if the peer negotiated a long one - unless a long one is what
+    // we asked for, in which case accept whatever was granted rather than fight over it.
+    latency_mode_t mode = desiredLatencyMode(connectionId);
+    if (mode != LatencyMode_Idle && interval > 10) {
+        appliedLatencyMode[peerId] = (int8_t)mode;
+        configureLatency(conn, mode);
     }
 }
 
