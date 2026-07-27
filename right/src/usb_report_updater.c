@@ -741,7 +741,6 @@ static void updateActionStates() {
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
         for (uint8_t keyId=0; keyId<MAX_KEY_COUNT_PER_MODULE; keyId++) {
             key_state_t *keyState = &KeyStates[slotId][keyId];
-            //key_action_cached_t *cachedAction;
 
             if(KEYSTATE_KEYINACTIVE(keyState)) {
                 continue;
@@ -814,7 +813,8 @@ static void updateActionStates() {
                 cachedAction = &actionCache[slotId][keyId];
 
                 Trace_Printc("w3");
-                //apply base-layer holds, but only if the key is not currenty applying another action
+                // apply base-layer holds, but only if the key is not currenty applying another action
+                // Also, don't apply layers from keys currently undergoing chord evaluation
                 if (chordRes != ChordResolution_Wait && cachedAction->action.type == KeyActionType_None) {
                     applyLayerHolds(keyState, &CurrentKeymap[LayerId_Base][slotId][keyId].action);
                 }

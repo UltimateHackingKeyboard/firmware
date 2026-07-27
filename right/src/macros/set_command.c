@@ -1157,7 +1157,7 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.Chords_MinimumIdleTime);
     }
-    else if (ConsumeToken(ctx, "chordApplication")) {
+    else if (ConsumeToken(ctx, "chordLifetime")) {
         if (ConsumeToken(ctx, "leadingKey")) {
             DEFINE_NONE_LIMITS();
             ASSIGN_CUSTOM(int32_t, intVar, Cfg.Chords_ApplicationType, ChordApplicationType_LeadingKey);

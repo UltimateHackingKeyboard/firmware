@@ -10,11 +10,10 @@
 
 #define MAX_CHORDS_COUNT 64
 
+// Not sure if this should be an enum or just macros.
 typedef enum {
-    ChordSearch_Nothing = 0b00, // There is no chord which could match provided data
     ChordSearch_Partial = 0b01, // There was no exact match, but there were chords eligible with more keys
     ChordSearch_Exact = 0b10, // There was an exact match and no other potential matches
-    ChordSearch_ExactAndPartial = 0b11, // There was a match, but there are potentially longer chords
 } chord_search_result_t;
 
 chord_def_t Chords[MAX_CHORDS_COUNT];
@@ -83,8 +82,8 @@ void handleUpdateKeysOfDeletedChordOnLayer(layer_id_t layer, chord_keys_t keys, 
 
 void handleUpdateKeysOfDeletedChord(layer_id_t layer, chord_keys_t keys, uint8_t keyCount) {
     if (layer == LayerId_None) {
-        for (layer_id_t laier = LayerId_Base; laier < LayerId_Count; ++laier) {
-            handleUpdateKeysOfDeletedChordOnLayer(laier, keys, keyCount);
+        for (layer_id_t loopLayer = LayerId_Base; loopLayer < LayerId_Count; ++loopLayer) {
+            handleUpdateKeysOfDeletedChordOnLayer(loopLayer, keys, keyCount);
         }
     }
     else {
@@ -109,7 +108,7 @@ void markKeysAsPartsOfChord(chord_def_t *chord) {
 /*
 Chords are stored sorted as follows:
 First by layer, ascending to put the any layer (255) last
-Then ascending by key count - ascending, this matters
+Then ascending by key count - ascending so we know that chord size within a layer's chords increases
 Then by key id list, direction doesn't matter, only that they're sorted consistently
 */
 static inline int16_t compareToChord(const chord_def_t *left, layer_id_t layer, uint8_t keyCount, const chord_keys_t keys) {
@@ -294,11 +293,15 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
     uint8_t keyCount = PostponerQuery_GetPendingKeypresses(pressedKeys + 1, MAX_CHORD_KEYS - 1, ResolutionState.pressTime + Cfg.Chords_Timeout) + 1;
 
     pressedKeys[0] = thisKeyId;
+
+    // It is interesting to know if we have duplicates because we cannot have chords with duplicates,
+    // and the duplicate will prevent any future events from completing a chord.
     bool hasDuplicate = PostponerQuery_ContainsKeyId(pressedKeys[0]);
     for (uint8_t i = 1; i < keyCount; ++i) {
         for (uint8_t j = 0; j < i; ++j) {
             if (pressedKeys[i] == pressedKeys[j]) {
                 keyCount = i;
+                hasDuplicate = true;
                 break;
             }
         }
@@ -310,10 +313,16 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
     chord_search_result_t searchRes = searchForChordAction(&matchedChord, layer, pressedKeys, keyCount, pressIntervalIsOver || hasDuplicate);
 
     if (searchRes & ChordSearch_Partial) {
+        // There is an unhandled edge case here:  If two chords are defined, one being a subset of the other, the smaller one cannot trigger instantly,
+        // but has to wait to see if the larger one is pressed instead.  So far so good, but if a key outside the larger chord is pressed before timeout,
+        // the smaller chord won't trigger at all because there is now no match anymore, with the unchorded key.
+        // This could be dealt with by creeping up on the chord size every check, possibly with a cached size checked stored in ResolutionState,
+        // but it's complex for a pretty limited edge case.
         EventScheduler_Schedule(ResolutionState.pressTime + Cfg.Chords_Timeout, EventSchedulerEvent_NativeActions, "NativeActions - Chord Press Interval");
         return ChordResolution_Wait;
     }
-    
+
+    // No reason to wait anymore, we resolve one way or the other.    
     memset((void *)&ResolutionState, 0, sizeof(ResolutionState));
     // Fake activation of the key now.
     keyState->current = true;
@@ -325,7 +334,7 @@ chord_resolution_t Chords_Driver(key_state_t *keyState, layer_id_t layer, const 
         // Collision can cause the following
         //  - Chord activated macro checks for release may use the wrong chord and be incorrect
         //  - If colliding chords share keyIds, one will not be registered as released until pressed and released again
-        //PR Maybe not worth the cost?  It's highly unlikely and currently only affects macro checks for release if a macro is kept active for more than 60 chord presses.
+        // Maybe not worth the cost?  It's highly unlikely and currently only affects macro checks for release if a macro is kept active for more than 60 chord presses.
         bool collision;
         do {
             collision = false;
@@ -390,7 +399,8 @@ bool Chords_IsChordActivationActive(uint8_t activationId, bool checkPostponer)
                 if (Chords[i].pressedStates & (1 << j)) {
                     const key_state_t * const keyState = Utils_KeyIdToKeyState(Chords[i].keys[j]);
                     // Since we catch releases, if it's active, it's still the same activation.
-                    // Check keystate because releases are registered after macro has it's go, so otherwise, this release would not get registered
+                    // Check keystate because releases are registered after macro has it's go, so otherwise,
+                    // release would not get registered for the key which applied the macro.
                     if (KeyState_Active(keyState) && (!checkPostponer || !PostponerQuery_IsKeyReleased(keyState))) {
                         return true;
                     }

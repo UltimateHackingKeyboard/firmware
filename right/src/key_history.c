@@ -50,7 +50,7 @@ void KeyHistory_RecordChordPress(const key_state_t *keyState, const chord_def_t 
         lastPress.eventType == HistoryEventType_Chord
         && lastPress.event.chord.chord == chord;
 
-    if (Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
+    if (isSameChord && Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
         // There is a chance that the key press is one from the same chord activation
         // This will be the case if we can see it's the same chord as last, but we haven't seen that key
         // for that chord for that event.
