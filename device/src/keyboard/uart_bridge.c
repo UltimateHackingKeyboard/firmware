@@ -212,11 +212,11 @@ static void updateConnectionState(uart_state_t *uartState) {
         Connections_SetStateAsync(connectionId, newIsConnected ? ConnectionState_Ready : ConnectionState_Disconnected);
         k_sem_give(&uartState->txBufferBusy);
         k_sem_give(&uartState->core.txControlBusy);
-        if (DEVICE_IS_UHK80_LEFT) {
+        if (DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT) {
             if (newIsConnected) {
-                EventScheduler_Reschedule( Timer_GetCurrentTime() + 10000, EventSchedulerEvent_CheckLeftBleVsUart, "Left UART up — schedule BLE vs UART check");
+                EventScheduler_Reschedule( Timer_GetCurrentTime() + 5000, EventSchedulerEvent_CheckBleVsUart, "Left UART up — schedule BLE vs UART check");
             } else {
-                BtManager_CheckLeftBleVsUart();
+                EventScheduler_Reschedule( Timer_GetCurrentTime() + 0, EventSchedulerEvent_CheckBleVsUart, "Left UART down — restart advertising");
             }
         }
     }

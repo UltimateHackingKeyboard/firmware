@@ -249,9 +249,9 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_SendUsbReports:
             EventVector_Set(EventVector_SendUsbReports);
             break;
-        case EventSchedulerEvent_CheckLeftBleVsUart:
-#if DEVICE_IS_UHK80_LEFT
-            BtManager_CheckLeftBleVsUart();
+        case EventSchedulerEvent_CheckBleVsUart:
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
+            BtManager_CheckBleVsUart();
 #endif
             break;
         case EventSchedulerEvent_ConnectionsUpdateState:

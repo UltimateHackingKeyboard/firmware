@@ -835,20 +835,24 @@ static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id
     k_work_submit(&btDeferredWork);
 }
 
+static bool pairingInProgress(struct bt_conn *conn) {
+    return conn == auth_conn || BtPair_PairingMode == PairingMode_Oob;
+}
+
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     BT_TRACE_AND_ASSERT("bc3");
-    // In case of failure, disconnect
-    if (err || level < BT_SECURITY_L4) {
-        LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting", GetPeerStringByConn(conn), level, err);
 
-        struct bt_conn_info info;
-        int err = bt_conn_get_info(conn, &info);
-        if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
-            bt_conn_auth_cancel(conn);
-            // bt_conn_disconnect(conn, BT_REASON_PERMANENT);
+    if (err || level < BT_SECURITY_L4) {
+        if (pairingInProgress(conn)) {
+            LOG_WRN("Bt security failed: %s, level %u, err %d - pairing in progress, keeping", GetPeerStringByConn(conn), level, err);
         } else {
-            // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
-            LOG_WRN("The connection (%s) isn't even connected! Ignoring.", GetPeerStringByConn(conn));
+            struct bt_conn_info info;
+            int err = bt_conn_get_info(conn, &info);
+            if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
+                uint8_t reason = err == BT_SECURITY_ERR_PIN_OR_KEY_MISSING ? BT_REASON_PERMANENT : BT_REASON_TEMPORARY;
+                LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting with reason %u", GetPeerStringByConn(conn), level, err, reason);
+                bt_conn_disconnect(conn, reason);
+            }
         }
         return;
     }

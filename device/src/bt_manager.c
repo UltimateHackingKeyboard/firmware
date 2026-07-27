@@ -114,7 +114,7 @@ void BtManager_StopBt() {
     LOG_INF("OOB: Bluetooth stopped");
 }
 
-void BtManager_CheckLeftBleVsUart() {
+void BtManager_CheckBleVsUart() {
     if (DEVICE_IS_UHK80_LEFT) {
         bool uartReady = Connections_IsReady(ConnectionId_UartRight);
 
@@ -127,6 +127,8 @@ void BtManager_CheckLeftBleVsUart() {
         } else {
             BtManager_StartScanningAndAdvertisingAsync(false, "Left UART not ready — resume BLE");
         }
+    } else if (DEVICE_IS_UHK80_RIGHT) {
+        BtManager_StartScanningAndAdvertisingAsync(false, "BridgeVsUart check");
     }
 }
 
