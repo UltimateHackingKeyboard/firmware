@@ -15,7 +15,7 @@
 
 // Thread definitions
 
-#define THREAD_STACK_SIZE 1000
+#define THREAD_STACK_SIZE 2048
 #define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
@@ -44,6 +44,7 @@ typedef struct {
     volatile uart_tx_state_t txState;
     volatile uart_rx_state_t rxState;
     volatile uint32_t lastMessageSentTime;
+    volatile uint32_t lastLinkActivity;
     uint32_t lastPingTime;
     uint16_t invalidMessagesCounter;
     uint8_t resendTries;
@@ -79,6 +80,40 @@ static void wakeControlThread(uart_state_t *uartState) {
     k_sem_give(&uartState->controlThreadSleeper);
 }
 
+static void bridgeOnWakeCallback(void *arg) {
+    uart_state_t *uartState = (uart_state_t *)arg;
+    uartState->lastLinkActivity = k_uptime_get();
+    wakeControlThread(uartState);
+}
+
+static bool bridgeCanSleep(void *arg) {
+    uart_state_t *uartState = (uart_state_t *)arg;
+    return uartState->txState == UartTxState_Idle && uartState->rxState == UartRxState_Idle
+        && (k_uptime_get() - uartState->lastLinkActivity) >= UART_LP_IDLE_HOLDOFF_MS;
+}
+
+static void bridgeReceiveBytes(void *state, const uint8_t* data, uint16_t len) {
+    uart_state_t *uartState = (uart_state_t *)state;
+    uartState->lastLinkActivity = k_uptime_get();
+    UartParser_ProcessIncomingBytes(&uartState->parser, data, len);
+}
+
+// UART_RX_DISABLED hook (ISR context), fired on every RX teardown - ours and the
+// driver's. Resyncs the parser to prevent frame corruption. Then, unless we slept RX on purpose,
+// kicks the control thread to re-arm it behind WakeRx's idle-line gate - re-arming here
+// in ISR context used to land mid-stream and cascade framing errors.
+static void bridgeOnRxDisabled(void *arg) {
+    uart_state_t *uartState = (uart_state_t *)arg;
+
+    UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer, UART_MAX_BRIDGE_PAYLOAD_LENGTH);
+
+    if (UartLink_IsAsleep(&uartState->core)) {
+        return;
+    }
+
+    wakeControlThread(uartState);
+}
+
 static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
     uartState->rxState = state;
     wakeControlThread(uartState);
@@ -87,6 +122,7 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
 
 static void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
+    uartState->lastLinkActivity = k_uptime_get();
     switch (messageKind) {
         case UartControl_Ack:
             if (uartState->txState == UartTxState_WaitingForAck) {
@@ -139,7 +175,15 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
             }
             break;
         case UartControl_Unexpected:
+#if UART_LOWPOWER
+            // Out-of-frame garbage is expected here: enabling RX mid-byte after a GPIO wake
+            // yields a partial byte or the tail of the wake byte. The parser resyncs on the
+            // next Start byte, whereas resetting RX (10ms of deafness, wake sense unarmed)
+            // exactly when the real frame is inbound turns one garbled byte into a resend storm.
+            BridgeDbg("BRIDGE RX unexpected byte\n");
+#else
             UartLink_Reset(&uartState->core);
+#endif
             break;
     }
 }
@@ -157,33 +201,52 @@ int UartBridge_SendMessage(message_t* msg) {
         LogUOS("Uart: failed to take txBufferBusy semaphore.\n");
     }
 
+    // Mark the exchange outstanding before waking, so the control thread's sleep gate
+    // (txState==Idle) doesn't re-sleep our RX from under us mid-send.
+    uartState->lastMessageSentTime = k_uptime_get();
+    uartState->lastLinkActivity = uartState->lastMessageSentTime;
+    uartState->txState = UartTxState_WaitingForAck;
+
+    // Wake handshake - our RX up to hear the ack, then the peer - inline on the caller
+    // thread, whose stack has to be sized for it.
+    UartLink_WakeRx(&uartState->core);
+    UartLink_SendWakeByte(&uartState->core);
     UartLink_LockBusy(&uartState->core);
 
-    // Call this only after we have taken the semaphore.
     Messenger_UpdateWatermarks(msg);
-
     UartParser_StartMessage(&uartState->parser);
-
     UartParser_AppendEscapedTxBytes(&uartState->parser, (uint8_t[]){msg->src, msg->dst, msg->wm}, 3);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->messageId, msg->idsUsed);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->data, msg->len);
-
     UartParser_FinalizeMessage(&uartState->parser);
 
     err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+    if (err != 0) {
+        k_sem_give(&uartState->core.txControlBusy);
+    }
 
     uartState->lastMessageSentTime = k_uptime_get();
-    uartState->txState = UartTxState_WaitingForAck;
+    uartState->lastLinkActivity = uartState->lastMessageSentTime;
+    wakeControlThread(uartState);
 
     return err;
 }
 
 static void sendControl(uart_state_t *uartState, uint8_t byte) {
     UartLink_LockBusy(&uartState->core);
-    UartLink_Send(&uartState->core, &byte, 1);
+    int err = UartLink_Send(&uartState->core, &byte, 1);
+    if (err != 0) {
+        // No transfer started -> no TX_DONE -> return the slot ourselves.
+        k_sem_give(&uartState->core.txControlBusy);
+    }
 }
 
-static void resend(uart_state_t *uartState) {
+// wakePeer: a nack-triggered resend skips the wake handshake, since the peer just parsed
+// our garbled frame and is provably awake; a timeout-triggered one redoes it, because
+// after 64ms+ of silence the peer has almost certainly slept again. This must not
+// k_sleep - it runs on the control thread, where blocking makes us blind to wake edges,
+// acks and pings, which used to cascade into a disconnect + BLE-fallback feedback loop.
+static void resend(uart_state_t *uartState, bool wakePeer) {
     if (uartState->resendTries++ > UART_RESEND_COUNT) {
         LogU("Repeatedly failed to send a message! ");
         for (uint16_t i = 0; i < uartState->parser.txPosition; i++) {
@@ -196,10 +259,18 @@ static void resend(uart_state_t *uartState) {
         k_sem_give(&uartState->txBufferBusy);
     } else {
         uartState->txState = UartTxState_WaitingForAck;
-        k_sleep(K_MSEC(13));
+        if (wakePeer) {
+            UartLink_WakeRx(&uartState->core);
+            UartLink_SendWakeByte(&uartState->core);
+        }
         UartLink_LockBusy(&uartState->core);
-        UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+        int err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+        if (err != 0) {
+            // No transfer started -> no TX_DONE -> return the slot ourselves.
+            k_sem_give(&uartState->core.txControlBusy);
+        }
         uartState->lastMessageSentTime = k_uptime_get();
+        uartState->lastLinkActivity = uartState->lastMessageSentTime;
     }
 }
 
@@ -227,14 +298,29 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
     uint32_t lastPingSentTime = 0;
     uint32_t currentTime = 0;
     while (1) {
+        currentTime = k_uptime_get();
+
+        // If a GPIO edge woke us out of RX-sleep, bring RX back before doing anything and
+        // hold off re-sleeping, so the frame that follows the wake byte lands on live RX.
+        if (UartLink_IsAsleep(&uartState->core)) {
+            UartLink_WakeRx(&uartState->core);
+            uartState->lastLinkActivity = currentTime;
+        } else if (!uartState->core.enabled) {
+            // RX went down without us asking for it and bridgeOnRxDisabled kicked us.
+            // Re-arm behind WakeRx's idle-line gate so we never come up mid-stream.
+            UartLink_WakeRx(&uartState->core);
+        }
+
         updateConnectionState(uartState);
 
-        if (currentTime >= lastPingSentTime + UART_PING_DELAY) {
+        if (currentTime >= lastPingSentTime + UART_BRIDGE_PING_INTERVAL) {
+            UartLink_WakeRx(&uartState->core);
+            UartLink_SendWakeByte(&uartState->core);
             sendControl(uartState, UartControlByte_Ping);
             lastPingSentTime = currentTime;
         }
 
-        uint32_t wakeTime = lastPingSentTime + UART_PING_DELAY;
+        uint32_t wakeTime = lastPingSentTime + UART_BRIDGE_PING_INTERVAL;
 
         if (Connections_IsReady(uartState->connectionId)) {
             switch (uartState->rxState) {
@@ -252,7 +338,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
 
             if (uartState->txState == UartTxState_Resend) {
                 LogU("Uart: received Nack, resending\n");
-                resend(uartState);
+                resend(uartState, false);
             }
 
             currentTime = k_uptime_get();
@@ -260,8 +346,8 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
                 uint32_t resendDelay = (UART_RESEND_DELAY << uartState->resendTries);
                 uint32_t resendTime = uartState->lastMessageSentTime + resendDelay;
                 if (currentTime >= resendTime) {
-                    LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime);
-                    resend(uartState);
+                    LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
+                    resend(uartState, true);
                 } else {
                     wakeTime = MIN(wakeTime, resendTime);
                 }
@@ -273,7 +359,16 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
 
         currentTime = k_uptime_get();
 
+        uint32_t sleepEligibleAt = uartState->lastLinkActivity + UART_LP_IDLE_HOLDOFF_MS;
+        bool idle = uartState->txState == UartTxState_Idle && uartState->rxState == UartRxState_Idle;
+        if (idle && currentTime < sleepEligibleAt) {
+            wakeTime = MIN(wakeTime, sleepEligibleAt);
+        }
+
         if (wakeTime > currentTime) {
+            if (idle && currentTime >= sleepEligibleAt) {
+                UartLink_SleepRx(&uartState->core);
+            }
             k_sem_take(&uartState->controlThreadSleeper, K_MSEC(wakeTime - currentTime));
         }
     }
@@ -311,7 +406,7 @@ static void initUart(
     uartState->connectionId = DEVICE_IS_UHK80_LEFT ? ConnectionId_UartRight : ConnectionId_UartLeft;
     uartState->remoteDeviceId = DEVICE_IS_UHK80_LEFT ? DeviceId_Uhk80_Right : DeviceId_Uhk80_Left;
 
-    UartLink_Init(&uartState->core, device->device, UartParser_ProcessIncomingBytes, (void*)&uartState->parser);
+    UartLink_Init(&uartState->core, device->device, bridgeReceiveBytes, (void*)uartState);
     UartParser_InitParser(&uartState->parser, &receivePacket, (void*)uartState);
 
     uartState->rxBuffer = MessengerQueue_AllocateMemory();
@@ -327,6 +422,16 @@ void InitUartBridge(void) {
                 &bridgeState,
                 PinWiringConfig->device_uart_bridge
                 );
+
+        // Low-power: RXD wake pin (no-op / empty spec when UART_LOWPOWER is off or the
+        // board defines no bridge-rx-gpios).
+        UartLink_InitWake(
+                &bridgeState.core,
+                (struct gpio_dt_spec)GPIO_DT_SPEC_GET_OR(DT_PATH(zephyr_user), bridge_rx_gpios, {0}),
+                bridgeOnWakeCallback,
+                &bridgeState,
+                bridgeCanSleep,
+                bridgeOnRxDisabled);
 
         k_thread_create(
                 &thread_data, stack_area,

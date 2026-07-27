@@ -29,7 +29,7 @@
 
 // Thread definitions
 
-#define THREAD_STACK_SIZE 1000
+#define THREAD_STACK_SIZE 2048
 #define THREAD_PRIORITY -1
 
 #define USE_QUICK_SCAN true
@@ -353,5 +353,3 @@ void InitKeyScanner(void)
             );
     k_thread_name_set(&thread_data, "key_scanner");
 }
-
-

@@ -10,8 +10,6 @@
 
 // Macros:
 
-    #define UART_PING_DELAY 100
-
 // Variables:
 
     extern const struct device *uart_dev;

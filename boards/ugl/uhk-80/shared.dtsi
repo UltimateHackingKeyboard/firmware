@@ -18,6 +18,14 @@
     sense-edge-mask = <0xffffffff>;
 };
 
+/* Same SENSE/DETECT-based edge detection as gpio0. Without it, edge interrupts on port 1
+ * each consume one of the 8 GPIOTE channels, which the bridge RX wake (RXD is P1.8 on the
+ * left half) exhausted after a few thousand re-arms and then silently stopped waking. */
+&gpio1 {
+    status = "okay";
+    sense-edge-mask = <0xffffffff>;
+};
+
 &uart0 {
     compatible = "nordic,nrf-uarte";
     status = "okay";
