@@ -2,6 +2,13 @@
     gpio-as-nreset;
 };
 
+/* Use the internal DC/DC converter for the main (REG1) regulator instead of the LDO. It
+ * roughly halves the SoC supply current, and requires the DC/DC inductor to be populated
+ * on the DCC pins, which it is on the UHK80 halves. */
+&reg1 {
+    regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
 &gpiote {
     status = "okay";
 };
