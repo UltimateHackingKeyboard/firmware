@@ -1032,7 +1032,6 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk_Dongle) {
         setDongleStandby(false);
-        DongleHostAwake = true;
         invalidateProperty(StateSyncPropertyId_KeyboardLedsState);
         invalidateProperty(StateSyncPropertyId_DongleProtocolVersion);
         invalidateProperty(StateSyncPropertyId_DongleScrollMultipliers);
@@ -1040,6 +1039,7 @@ void StateSync_ResetRightDongleLink(bool bidirectional) {
     }
     if (DEVICE_ID == DeviceId_Uhk80_Right) {
         RemoteDongleProtocolVersion = (version_t){0, 0, 0};
+        DongleHostAwake = true;
         EventScheduler_Reschedule(Timer_GetCurrentTime()+1000, EventSchedulerEvent_CheckDongleProtocolVersion, "state sync - reset right dongle link");
     }
 }
