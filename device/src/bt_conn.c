@@ -1156,10 +1156,7 @@ void BtConn_ReserveConnections() {
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
         bool selectedConnectionIsBleHid = Connections_Type(CurrentHostConnectionId) == ConnectionType_BtHid;
 
-        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
-            disconnectAllHids();
-            // Advertising will get started when the host actually gets disconnected
-        } else if (unusedConnectionCount == 0) {
+        if (unusedConnectionCount == 0) {
             disconnectOldestHost();
             // Advertising will get started when the host actually gets disconnected
         } else {
