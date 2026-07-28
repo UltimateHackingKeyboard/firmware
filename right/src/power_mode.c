@@ -6,6 +6,7 @@
 #include "stubs.h"
 #include "hid/transport.h"
 #include "usb_state.h"
+#include "usb_report_updater.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -91,10 +92,11 @@ void PowerMode_Update() {
         }
 
         if (newPowerMode == PowerMode_LightSleep && CurrentPowerMode < PowerMode_LightSleep) {
-            if (Timer_GetCurrentTime() - lastWakeEvent >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
+            uint32_t baseTime = MAX(lastWakeEvent, UsbReportUpdater_LastActivityTime);
+            if (Timer_GetCurrentTime() - baseTime >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
                 PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
             } else {
-                EventScheduler_Schedule(lastWakeEvent + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
+                EventScheduler_Schedule(baseTime + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
             }
         }
     }
