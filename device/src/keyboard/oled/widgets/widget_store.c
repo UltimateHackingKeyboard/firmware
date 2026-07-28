@@ -114,7 +114,9 @@ static string_segment_t getTargetText_(uint8_t connId) {
                 return (string_segment_t){ .start = NULL, .end = NULL };
             }
 
-            if (SegmentLen(hostConnection->name) > 0) {
+            bool isUnregisteredOrEmpty = hostConnection->type == HostConnectionType_UnregisteredBtHid || hostConnection->type == HostConnectionType_Empty;
+
+            if (SegmentLen(hostConnection->name) > 0 && !isUnregisteredOrEmpty) {
                 return hostConnection->name;
             }
 
