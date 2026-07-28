@@ -60,6 +60,16 @@ static char getBlinkingColor() {
     return color;
 }
 
+static const char* getRollingEllipsis() {
+    static uint16_t period = 1024;
+    static const char* phases[] = { "   ", ".  ", ".. ", "..." };
+
+    uint32_t state = (Timer_GetCurrentTime() / period) % 4;
+    uint32_t nextTime = ((Timer_GetCurrentTime() / period) + 1) * period;
+    EventScheduler_Schedule(nextTime + 1, EventSchedulerEvent_RollTargetEllipsis, "target ellipsis roll");
+
+    return phases[state];
+}
 
 static string_segment_t getLayerText() {
     if ( Macros_DisplayStringsBuffs.layer[0] != 0) {
@@ -155,16 +165,18 @@ static string_segment_t getTargetText() {
         // selected host that is not connected yet). Show its name; append an
         // ellipsis while we are still trying to (re)connect to it.
         string_segment_t currentConnection = getTargetText_(CurrentHostConnectionId);
-        size_t offset = snprintf(buffer, sizeof(buffer)-1, "%.*s", SegmentLen(currentConnection), currentConnection.start);
+        size_t offset = snprintf(buffer, sizeof(buffer)-1, "   %.*s", SegmentLen(currentConnection), currentConnection.start);
 
         connection_state_t connectionState = Connections_GetState(CurrentHostConnectionId);
         bool isAwake = Connections_IsCurrentHostAwake();
         if (connectionState == ConnectionState_Disconnected) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, "%s", getRollingEllipsis());
         } else if (!isAwake && connectionState >= ConnectionState_Connected) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)   ");
         } else if (connectionState == ConnectionState_Connected) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (configuring)");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)   ");
+        } else {
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, "   ");
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };
