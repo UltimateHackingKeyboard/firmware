@@ -1,5 +1,6 @@
 #include <string.h>
 #include "str_utils.h"
+#include "attributes.h"
 #include "debug.h"
 #include "config_parser/config_globals.h"
 #include "macros/status_buffer.h"
@@ -694,4 +695,5 @@ const char* DeviceModelName(device_id_t device) {
             return "Unknown device";
     }
 }
+
 
