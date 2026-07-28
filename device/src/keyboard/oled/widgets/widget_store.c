@@ -160,11 +160,11 @@ static string_segment_t getTargetText() {
         connection_state_t connectionState = Connections_GetState(CurrentHostConnectionId);
         bool isAwake = Connections_IsCurrentHostAwake();
         if (connectionState == ConnectionState_Disconnected) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (not connected)");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)");
         } else if (!isAwake && connectionState >= ConnectionState_Connected) {
             snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)");
         } else if (connectionState == ConnectionState_Connected) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (configuring)");
         }
 
         return (string_segment_t){ .start = buffer, .end = NULL };
