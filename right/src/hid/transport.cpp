@@ -249,7 +249,9 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     switch (sink) {
     case ReportSink_Usb:
         if (auto session = mouse_app::usb_handle().session(); session) {
-            wakeUsbHostIfNeeded();
+            if (report->buttons != 0) {
+                wakeUsbHostIfNeeded();
+            }
             err = session->send_report(payload).to_int();
         }
         break;
