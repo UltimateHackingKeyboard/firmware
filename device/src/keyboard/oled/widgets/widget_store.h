@@ -27,8 +27,6 @@
 
     void WidgetStore_Init();
 
-    string_segment_t WidgetStore_GetHostConnectionName(uint8_t connId, bool shortVersion);
-
 #endif
 
 

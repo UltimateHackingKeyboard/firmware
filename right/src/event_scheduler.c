@@ -235,8 +235,8 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_BlinkStatusIcons:
             WIDGET_REFRESH(&StatusWidget);
             break;
-        case EventSchedulerEvent_UnselectHostConnection:
-            HostConnection_Unselect(true);
+        case EventSchedulerEvent_RollTargetEllipsis:
+            WIDGET_REFRESH(&TargetWidget);
             break;
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();

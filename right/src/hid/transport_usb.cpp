@@ -3,12 +3,11 @@ extern "C" {
 #include "key_states.h"
 #include "logger.h"
 #include "power_mode.h"
-#include "usb_state.h"
 #include "timer.h"
 #include "usb_report_updater.h"
 #include "usb_semaphore.h"
+#include "usb_state.h"
 #include "user_logic.h"
-#include "logger.h"
 #ifdef __ZEPHYR__
     #include "device_state.h"
     #include <nrfx_power.h>
@@ -25,7 +24,6 @@ extern "C" {
 #endif
 #include "command_app.hpp"
 #include "controls_app.hpp"
-// #include "gamepad_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
 #include "usb/df/class/hid.hpp"
@@ -55,16 +53,17 @@ struct usb_manager {
         return um;
     }
 
-    void select_config([[maybe_unused]] bool gamepad_active)
+    void select_config()
     {
         // pretend that the device is disconnected
         if (device().is_open()) {
+            const unsigned bus_reset_delay_ms = 100;
             device().close();
 #ifdef __ZEPHYR__
-            k_msleep(100);
+            k_msleep(bus_reset_delay_ms);
 #else
             // TODO: use non-blocking delay
-            SDK_DelayAtLeastUs(100000, SystemCoreClock);
+            SDK_DelayAtLeastUs(bus_reset_delay_ms * 1000, SystemCoreClock);
 #endif
         }
 
@@ -80,30 +79,13 @@ struct usb_manager {
         const auto shared_config_elems = usb::df::config::join_elements(
             usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
             usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
-            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 10),
+            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 8),
             usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1));
 
         static const auto base_config =
             usb::df::config::make_config(config_header, shared_config_elems);
-#if 0 // gamepad support disabled
-        static const auto gamepad_config =
-            usb::df::config::make_config(config_header, shared_config_elems,
-                usb::df::hid::config(usb_gamepad, speed, usb::endpoint::address(0x85), 1));
 
-        static const auto xpad_config =
-            usb::df::config::make_config(config_header, shared_config_elems,
-                usb::df::microsoft::xconfig(
-                    usb_xpad, usb::endpoint::address(0x85), 1, usb::endpoint::address(0x05), 255));
-
-        if (conf != Hid_NoGamepad) {
-            ms_enum_.set_config(xpad_config);
-            device_.set_config(gamepad_config);
-        } else
-#endif
-        {
-            ms_enum_.set_config({});
-            device_.set_config(base_config);
-        }
+        device_.set_config(base_config);
         device_.open();
     }
 
@@ -114,7 +96,6 @@ struct usb_manager {
             if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
                 switch (dev.power_state()) {
                 case usb::power::state::L2_SUSPEND:
-                    // TODO: use a common API instead of device specific
 #if DEVICE_IS_UHK60
                     if (dev.configured()) {
                         UsbState_SetUsbAwake(false);
@@ -167,13 +148,13 @@ extern "C" void USB0_IRQHandler(void)
 extern "C" void USB_Enable()
 {
     assert(!usb_manager::active());
-    usb_manager::instance().select_config(HID_GetGamepadActive());
+    usb_manager::instance().select_config();
 }
 
 extern "C" void USB_Reconfigure()
 {
     if (usb_manager::active()) {
-        usb_manager::instance().select_config(HID_GetGamepadActive());
+        usb_manager::instance().select_config();
     }
 }
 
@@ -181,7 +162,7 @@ extern "C" bool USB_RemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
     if (err != usb::result::ok) {
-        LogErr("USB: remote wakeup request failed: %d\n", std::bit_cast<int>(err));
+        LogErr("USB: remote wakeup request failed: %d\n", err.to_int());
     } else {
         LogInf("USB: remote wakeup request succeeded\n");
     }

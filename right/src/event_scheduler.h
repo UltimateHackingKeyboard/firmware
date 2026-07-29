@@ -46,12 +46,12 @@
         EventSchedulerEvent_CheckDongleProtocolVersion,
         EventSchedulerEvent_PutBackToShutDown,
         EventSchedulerEvent_BlinkStatusIcons,
-        EventSchedulerEvent_UnselectHostConnection,
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
         EventSchedulerEvent_CheckLeftBleVsUart,
         EventSchedulerEvent_ConnectionsUpdateState,
+        EventSchedulerEvent_RollTargetEllipsis,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

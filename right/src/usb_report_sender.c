@@ -91,7 +91,7 @@ static void handleUltimateFail(errno_t errorCode) {
     EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
 
 #ifdef __ZEPHYR__
-    if (ActiveHostConnectionId == ConnectionId_Invalid) {
+    if (CurrentHostConnectionId == ConnectionId_Invalid) {
         LOG_WRN("Send failed: no connection selected: %d (%s)\n", errorCode, ErrToStr(errorCode));
     } else {
         LOG_ERR("Send failed (gave up resending): %d (%s)\n", errorCode, ErrToStr(errorCode));

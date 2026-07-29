@@ -196,6 +196,10 @@ void mainRuntime(void) {
 
     }
 
+#if DEVICE_IS_UHK80_RIGHT
+    HOGP_Register(); // must be before bt_enable() registers static GATT services
+#endif
+
     bt_enable(NULL); // has to be before InitSettings
 
     // has to be after bt_enable; has to be before ApplyConfig
@@ -250,7 +254,6 @@ void mainRuntime(void) {
 
     // 6.6mA
 
-    HID_SetGamepadActive(false);
     USB_Enable(); // +2.2mA, 8.8mA; has to be after USB_SetSerialNumber
 
     // 8.8mA

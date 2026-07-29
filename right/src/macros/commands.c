@@ -35,7 +35,6 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "usb_commands/usb_command_reenumerate.h"
-#include "bt_defs.h"
 #include "trace.h"
 #include "peripherals/leakage_test.h"
 #include "oneshot.h"
@@ -43,7 +42,6 @@
 
 #ifdef __ZEPHYR__
 #include "connections.h"
-#include "bt_pair.h"
 #include "shell/shell_uhk.h"
 #include "host_connection.h"
 #else
@@ -760,39 +758,6 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
 
     // Takes care of break in root scope
     S->ms.macroBroken = true;
-    return MacroResult_Finished;
-}
-
-static macro_result_t processBluetoothCommand(parser_context_t *ctx)
-{
-    ATTR_UNUSED bool toggle = false;
-    ATTR_UNUSED pairing_mode_t mode = PairingMode_Off;
-    if (ConsumeToken(ctx, "toggle")) {
-        toggle = true;
-    }
-
-    if (ConsumeToken(ctx, "pair")) {
-        mode = PairingMode_PairHid;
-    } else if (ConsumeToken(ctx, "advertise")) {
-        mode = PairingMode_Advertise;
-    } else if (ConsumeToken(ctx, "noadvertise") || ConsumeToken(ctx, "noAdvertise")) {
-        mode = PairingMode_Off;
-    } else {
-        Macros_ReportErrorTok(ctx, "Unrecognized argument:");
-        return MacroResult_Finished;
-    }
-
-    if (Macros_ParserError || Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-
-    if (mode == PairingMode_Off) {
-        Cfg.Bt_AlwaysAdvertiseHid = false;
-    }
-#ifdef __ZEPHYR__
-    BtManager_EnterMode(mode, toggle);
-#endif
-
     return MacroResult_Finished;
 }
 
@@ -2030,6 +1995,14 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
         DRY_RUN_FINISH();
         HostConnections_SelectPreviousConnection();
     }
+    else if (ConsumeToken(ctx, "nextActive")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectNextActiveConnection();
+    }
+    else if (ConsumeToken(ctx, "prevActive") || ConsumeToken(ctx, "previousActive")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectPreviousActiveConnection();
+    }
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
         HostConnections_SelectLastConnection();
@@ -2125,7 +2098,8 @@ static macro_result_t processCommand(parser_context_t* ctx)
         case CommandId_break:
             return processBreakCommand(ctx);
         case CommandId_bluetooth:
-            return processBluetoothCommand(ctx);
+            Macros_ReportErrorPos(ctx, "Command was removed. Advertising is now driven by the current host connection - use `switchHost` to advertise for (and pair with) a specific host slot.");
+            return MacroResult_Finished;
 
         // 'c' commands
         case CommandId_consumePending:
