@@ -598,7 +598,18 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
     uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
 
     if (IS_VALID_MODULE_SLOT(slotId)) {
-        memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
+        bool stateChanged = false;
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            if (KeyStates[slotId][keyId].hardwareSwitchState) {
+                DEBUG_KEY_LIFE_SCAN(0);
+                KeyStates[slotId][keyId].hardwareSwitchState = false;
+                stateChanged = true;
+            }
+        }
+        if (stateChanged) {
+            EventVector_Set(EventVector_StateMatrix);
+            EventVector_WakeMain();
+        }
     }
 
     EventScheduler_Schedule(Timer_GetCurrentTime() + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");
