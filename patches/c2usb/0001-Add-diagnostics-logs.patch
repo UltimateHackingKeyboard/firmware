@@ -1,0 +1,627 @@
+From e7cf160c348be1acc663701205be97e4cd9bc090 Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Sat, 11 Jul 2026 13:05:57 +0200
+Subject: [PATCH] Add diagnostics logs.
+
+---
+ c2usb/CMakeLists.txt          |   1 +
+ c2usb/port/nxp/mcux_mac.cpp   |  43 +++++++-
+ c2usb/port/zephyr/udc_mac.cpp |  62 +++++++++++
+ c2usb/usb/df/device.cpp       |   3 +
+ c2usb/usb/df/mac_diag.cpp     | 191 ++++++++++++++++++++++++++++++++++
+ c2usb/usb/df/mac_diag.hpp     |  84 +++++++++++++++
+ 6 files changed, 381 insertions(+), 3 deletions(-)
+ create mode 100644 c2usb/usb/df/mac_diag.cpp
+ create mode 100644 c2usb/usb/df/mac_diag.hpp
+
+diff --git a/c2usb/CMakeLists.txt b/c2usb/CMakeLists.txt
+index 4d79132..92b61f0 100644
+--- a/c2usb/CMakeLists.txt
++++ b/c2usb/CMakeLists.txt
+@@ -70,6 +70,7 @@ target_sources(c2usb
+         usb/df/device.cpp
+         usb/df/function.cpp
+         usb/df/mac.cpp
++        usb/df/mac_diag.cpp
+         usb/df/message.cpp
+         usb/standard/descriptors.cpp
+ )
+diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
+index 8331fa1..b4c435c 100644
+--- a/c2usb/port/nxp/mcux_mac.cpp
++++ b/c2usb/port/nxp/mcux_mac.cpp
+@@ -18,6 +18,9 @@
+ #include <usb_device_lpcip3511.h>
+ #endif
+ 
++// UHK patch: anomaly diagnostics, see usb/df/mac_diag.hpp.
++#include "usb/df/mac_diag.hpp"
++
+ namespace usb::df::nxp
+ {
+ struct controller_interface : public ::_usb_device_controller_interface_struct
+@@ -128,6 +131,8 @@ void mcux_mac::init(const speeds& speeds)
+     [[maybe_unused]] auto status = driver_.deviceInit(index_, this, &handle_);
+     assert(status == kStatus_USB_Success);
+ 
++    diag::set_mac(this);
++
+     EnableIRQ(usb_irqn(index_));
+ }
+ 
+@@ -193,6 +198,7 @@ void mcux_mac::control_ep_open()
+ 
+ void mcux_mac::control_ep_stall()
+ {
++    diag::record(diag::CTRL_STALL, 0, 0);
+     auto addr = endpoint::address::control_out();
+     [[maybe_unused]] auto status =
+         driver_.device_control(handle(), kUSB_DeviceControlEndpointStall, &addr);
+@@ -223,14 +229,21 @@ usb::result mcux_mac::ep_send(ep_handle eph, const std::span<const uint8_t>& dat
+     auto addr = ep_handle_to_address(eph);
+     if (power_state() != power::state::L0_ON)
+     {
++        diag::record(diag::EP_NO_POWER, addr, (int)power_state());
+         return result::network_down;
+     }
+     if (busy_flags_.test_and_set(addr))
+     {
++        diag::record(diag::EP_BUSY, addr, 0);
+         return usb::result::device_or_resource_busy;
+     }
+-    return to_result(
+-        driver_.deviceSend(handle(), addr, const_cast<uint8_t*>(data.data()), data.size()));
++    auto status =
++        driver_.deviceSend(handle(), addr, const_cast<uint8_t*>(data.data()), data.size());
++    if (status != kStatus_USB_Success)
++    {
++        diag::record(diag::ENQUEUE_FAIL, addr, status);
++    }
++    return to_result(status);
+ }
+ 
+ usb::result mcux_mac::ep_receive(ep_handle eph, const std::span<uint8_t>& data)
+@@ -238,9 +251,15 @@ usb::result mcux_mac::ep_receive(ep_handle eph, const std::span<uint8_t>& data)
+     auto addr = ep_handle_to_address(eph);
+     if (busy_flags_.test_and_set(addr))
+     {
++        diag::record(diag::EP_BUSY, addr, 0);
+         return usb::result::device_or_resource_busy;
+     }
+-    return to_result(driver_.deviceRecv(handle(), addr, data.data(), data.size()));
++    auto status = driver_.deviceRecv(handle(), addr, data.data(), data.size());
++    if (status != kStatus_USB_Success)
++    {
++        diag::record(diag::ENQUEUE_FAIL, addr, status);
++    }
++    return to_result(status);
+ }
+ 
+ usb::result mcux_mac::ep_cancel(ep_handle eph)
+@@ -345,6 +364,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+         busy_flags_.clear(addr);
+ 
+         bool success = (message.length != USB_CANCELLED_TRANSFER_LENGTH);
++        if (success)
++        {
++            diag::success(addr);
++        }
++        else
++        {
++            // cancelled transfer: a report that was handed to the controller
++            // never reached the host (dropped)
++            diag::record(diag::EP_ERROR, message.code, 0);
++            c2usb_log("HID report dropped: EP %02x transfer cancelled\n", message.code);
++        }
+         ep_transfer_complete(addr, transfer(message.buffer, message.length * success, success,
+                                             ep_address_to_handle(addr)));
+     }
+@@ -362,28 +392,35 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+     switch (message.code)
+     {
+     case kUSB_DeviceNotifyBusReset:
++        diag::bus(diag::bus_event::RESET);
+         driver_.device_control(handle(), kUSB_DeviceControlSetDefaultStatus);
+         bus_reset();
+         control_ep_open();
+         break;
+     case kUSB_DeviceNotifySuspend:
++        diag::bus(diag::bus_event::SUSPEND);
+         set_power_state(power::state::L2_SUSPEND);
+         break;
+     case kUSB_DeviceNotifyResume:
++        diag::bus(diag::bus_event::RESUME);
+         set_power_state(power::state::L0_ON);
+         break;
+     case kUSB_DeviceNotifyLPMSleep:
++        diag::bus(diag::bus_event::SLEEP);
+         set_power_state(power::state::L1_SLEEP);
+         break;
+ 
+     case kUSB_DeviceNotifyDetach:
++        diag::bus(diag::bus_event::VBUS_OFF);
+         set_power_state(power::state::L3_OFF);
+         break;
+     case kUSB_DeviceNotifyAttach:
++        diag::bus(diag::bus_event::VBUS_ON);
+         set_power_state(power::state::L2_SUSPEND);
+         break;
+         // case kUSB_DeviceNotifyDcdDetectFinished:
+     case kUSB_DeviceNotifyError:
++        diag::bus(diag::bus_event::ERROR);
+         break;
+     default:
+         process_ep_notification(message);
+diff --git a/c2usb/port/zephyr/udc_mac.cpp b/c2usb/port/zephyr/udc_mac.cpp
+index 03fc6f3..a1f48c9 100644
+--- a/c2usb/port/zephyr/udc_mac.cpp
++++ b/c2usb/port/zephyr/udc_mac.cpp
+@@ -11,6 +11,7 @@
+ #include "port/zephyr/udc_mac.hpp"
+ #include <atomic>
+ #include "compatibility_helper.hpp"
++#include <zephyr/kernel.h>
+ #include <zephyr/logging/log.h>
+ #include <zephyr/message_queue.hpp>
+ extern "C"
+@@ -18,6 +19,19 @@ extern "C"
+ #include <zephyr/drivers/usb/udc.h>
+ }
+ 
++// UHK patch: anomaly diagnostics, see usb/df/mac_diag.hpp.
++#include "usb/df/mac_diag.hpp"
++
++extern "C" uint32_t c2usb_diag_time_ms(void)
++{
++    return k_uptime_get_32();
++}
++
++namespace
++{
++uint32_t diag_msgq_min_free = UINT32_MAX;
++} // namespace
++
+ #if defined(CONFIG_DEBUG) == defined(NDEBUG)
+ // for assert() to be active in debug configuration only, this is necessary
+ #error "Either CONFIG_DEBUG or NDEBUG must be defined"
+@@ -113,6 +127,7 @@ static int udc_buf_enqueue(const ::device* dev, ::net_buf* buf)
+     if (ret != 0)
+     {
+         LOG_ERR("Failed to enqueue ep 0x%02x: %d", udc_get_buf_info(buf)->ep, ret);
++        diag::record(diag::ENQUEUE_FAIL, udc_get_buf_info(buf)->ep, ret);
+     }
+     return ret;
+ }
+@@ -151,6 +166,7 @@ udc_mac::udc_mac(const ::device* dev, size_t ctrl_ep_buf_size, usb::power::state
+     }
+     set_control_buffer(std::span<uint8_t>(ctrl_buf_->data, ctrl_buf_->size));
+ 
++    diag::set_mac(this);
+     set_driver_ctx();
+ }
+ 
+@@ -230,9 +246,14 @@ static int udc_mac_event_dispatch(const ::device*, const udc_event* event)
+     last_full = !message_queue().try_post(*event);
+     if (last_full)
+     {
++        diag::record(diag::EVENT_DROPPED, 0, event->type);
+         __ASSERT_PRINT("udc_mac_msgq full\n");
+         __ASSERT_POST_ACTION();
+     }
++    if (auto free_space = message_queue().free_space(); free_space < diag_msgq_min_free)
++    {
++        diag_msgq_min_free = free_space;
++    }
+ #if CONFIG_C2USB_UDC_MAC_LOG_LEVEL >= LOG_LEVEL_DBG
+     static auto min_free_msgq_space = message_queue().free_space();
+     if (auto free_space = message_queue().free_space(); free_space < min_free_msgq_space)
+@@ -351,6 +372,7 @@ uint16_t udc_mac::control_ep_max_packet_size(usb::speed speed) const
+ 
+ void udc_mac::ctrl_stall(net_buf* buf, int err)
+ {
++    diag::record(diag::CTRL_STALL, 0, err);
+     auto addr = endpoint::address::control_in();
+     if ((request().direction() == usb::direction::OUT) and request().wLength and (err == -ENOMEM))
+     {
+@@ -514,6 +536,7 @@ void udc_mac::process_ctrl_ep_event(net_buf* buf, const udc_buf_info& info)
+         net_buf_unref(buf);
+         LOG_WRN("CTRL EP %x (stage %d) error: %d", info.ep,
+                 info.setup * 0 + info.data * 1 + info.status * 2, info.err);
++        diag::record(diag::CTRL_ERROR, info.ep, info.err);
+     }
+ }
+ 
+@@ -541,6 +564,29 @@ int udc_mac::event_callback(const udc_event& event)
+ 
+ int udc_mac::process_event(const udc_event& event)
+ {
++    switch (event.type)
++    {
++    case UDC_EVT_RESET:
++        diag::bus(diag::bus_event::RESET);
++        break;
++    case UDC_EVT_SUSPEND:
++        diag::bus(diag::bus_event::SUSPEND);
++        break;
++    case UDC_EVT_RESUME:
++        diag::bus(diag::bus_event::RESUME);
++        break;
++    case UDC_EVT_VBUS_READY:
++        diag::bus(diag::bus_event::VBUS_ON);
++        break;
++    case UDC_EVT_VBUS_REMOVED:
++        diag::bus(diag::bus_event::VBUS_OFF);
++        break;
++    case UDC_EVT_ERROR:
++        diag::bus(diag::bus_event::ERROR);
++        break;
++    default:
++        break;
++    }
+     if ((power_state() == power::state::L3_OFF) and (event.type != UDC_EVT_VBUS_READY)) [[unlikely]]
+     {
+         // flush late events after Vbus removal
+@@ -619,6 +665,7 @@ void udc_mac::process_ctrl_ep(net_buf* buf, const udc_buf_info& info)
+     {
+         LOG_WRN("CTRL EP %x (stage %d) error: %d", info.ep,
+                 info.setup * 0 + info.data * 1 + info.status * 2, info.err);
++        diag::record(diag::CTRL_ERROR, info.ep, info.err);
+ 
+         if (info.setup or (info.data and (dir == direction::OUT)))
+         {
+@@ -742,6 +789,12 @@ void udc_mac::process_ep_event(net_buf* buf)
+         if (info.err != 0)
+         {
+             LOG_ERR("EP %x error:%d", info.ep, info.err);
++            diag::record(diag::EP_ERROR, info.ep, info.err);
++            c2usb_log("HID report dropped: EP %02x transfer error %d\n", info.ep, info.err);
++        }
++        else
++        {
++            diag::success(info.ep);
+         }
+         for (uint8_t i = 0; i < ep_bufs_.size(); ++i)
+         {
+@@ -864,10 +917,12 @@ usb::result udc_mac::ep_transfer(usb::df::ep_handle eph, const transfer& t, usb:
+ #endif
+     if ((dir == direction::IN) and (power_state() != power::state::L0_ON))
+     {
++        diag::record(diag::EP_NO_POWER, addr, (int)power_state());
+         return result::network_down;
+     }
+     if (busy_flags_.test_and_set(addr))
+     {
++        diag::record(diag::EP_BUSY, addr, 0);
+         return result::device_or_resource_busy;
+     }
+ 
+@@ -878,6 +933,7 @@ usb::result udc_mac::ep_transfer(usb::df::ep_handle eph, const transfer& t, usb:
+     auto ret = udc_ep_enqueue(dev_, buf);
+     if (ret != 0)
+     {
++        diag::record(diag::ENQUEUE_FAIL, addr, ret);
+         busy_flags_.clear(addr);
+     }
+     return usb::result(ret);
+@@ -965,4 +1021,10 @@ usb::result udc_mac::ep_change_stall(usb::df::ep_handle eph, bool stall)
+     }
+ }
+ 
++extern "C" void c2usb_diag_dump_port(void)
++{
++    c2usb_log("  evt queue free=%u min=%u\n", (unsigned)message_queue().free_space(),
++              (unsigned)diag_msgq_min_free);
++}
++
+ } // namespace usb::zephyr
+diff --git a/c2usb/usb/df/device.cpp b/c2usb/usb/df/device.cpp
+index 5e2a088..de24e11 100644
+--- a/c2usb/usb/df/device.cpp
++++ b/c2usb/usb/df/device.cpp
+@@ -11,6 +11,8 @@
+ #include "usb/df/device.hpp"
+ #include "usb/df/function.hpp"
+ #include "usb/standard/descriptors.hpp"
++// UHK patch: anomaly diagnostics, see usb/df/mac_diag.hpp.
++#include "usb/df/mac_diag.hpp"
+ 
+ using namespace magic_enum::bitwise_operators;
+ 
+@@ -174,6 +176,7 @@ void device::set_configuration(message& msg)
+         }
+     }
+ 
++    diag::bus(config_index ? diag::bus_event::SET_CONFIG : diag::bus_event::DECONFIG);
+     set_config(config);
+ 
+     return msg.confirm();
+diff --git a/c2usb/usb/df/mac_diag.cpp b/c2usb/usb/df/mac_diag.cpp
+new file mode 100644
+index 0000000..243d1ed
+--- /dev/null
++++ b/c2usb/usb/df/mac_diag.cpp
+@@ -0,0 +1,191 @@
++/// @file
++///
++/// UHK patch: port-agnostic MAC anomaly diagnostics, see mac_diag.hpp.
++///
++#include "usb/df/mac_diag.hpp"
++#include "usb/df/mac.hpp"
++
++extern "C" __attribute__((weak)) void c2usb_log(const char*, ...) {}
++extern "C" __attribute__((weak)) uint32_t c2usb_diag_time_ms(void)
++{
++    return 0;
++}
++extern "C" __attribute__((weak)) void c2usb_diag_dump_port(void) {}
++
++using namespace usb::df;
++
++namespace
++{
++const char* const category_names[diag::CATEGORY_COUNT] = {
++    "enqueue fail", "EP error",       "ctrl error",      "ctrl stall",
++    "evt dropped",  "EP busy reject", "no-power reject",
++};
++
++struct diag_stat
++{
++    uint32_t total;     // since boot / reset
++    uint32_t since_ok;  // since last successful data EP transfer
++    uint32_t last_time; // ms
++    int last_err;
++    uint8_t last_ep;
++};
++
++struct diag_bus_entry
++{
++    uint32_t time;
++    uint32_t count; // consecutive events of the same type are collapsed
++    diag::bus_event type;
++};
++
++constexpr size_t BUS_RING_SIZE = 16;
++
++struct
++{
++    diag_stat stats[diag::CATEGORY_COUNT];
++    diag_bus_entry bus_ring[BUS_RING_SIZE];
++    uint8_t bus_ring_next;
++    uint32_t last_ok_time;
++    uint8_t last_ok_ep;
++    uint32_t ok_count;
++    mac* mac_;
++} state;
++
++const char* bus_name(diag::bus_event type)
++{
++    switch (type)
++    {
++    case diag::bus_event::RESET:
++        return "reset";
++    case diag::bus_event::SUSPEND:
++        return "suspend";
++    case diag::bus_event::RESUME:
++        return "resume";
++    case diag::bus_event::SLEEP:
++        return "sleep";
++    case diag::bus_event::VBUS_ON:
++        return "vbus-on";
++    case diag::bus_event::VBUS_OFF:
++        return "vbus-off";
++    case diag::bus_event::ERROR:
++        return "error";
++    case diag::bus_event::SET_CONFIG:
++        return "set-config";
++    case diag::bus_event::DECONFIG:
++        return "deconfig";
++    default:
++        return "?";
++    }
++}
++
++const char* power_name(usb::power::state s)
++{
++    switch (s)
++    {
++    case usb::power::state::L0_ON:
++        return "L0-on";
++    case usb::power::state::L1_SLEEP:
++        return "L1-sleep";
++    case usb::power::state::L2_SUSPEND:
++        return "L2-suspend";
++    case usb::power::state::L3_OFF:
++        return "L3-off";
++    default:
++        return "?";
++    }
++}
++} // namespace
++
++namespace usb::df::diag
++{
++void record(category cat, uint8_t ep, int err)
++{
++    auto& s = state.stats[cat];
++    s.total++;
++    s.since_ok++;
++    s.last_time = c2usb_diag_time_ms();
++    s.last_err = err;
++    s.last_ep = ep;
++}
++
++void success(uint8_t ep)
++{
++    state.ok_count++;
++    state.last_ok_time = c2usb_diag_time_ms();
++    state.last_ok_ep = ep;
++    for (auto& s : state.stats)
++    {
++        s.since_ok = 0;
++    }
++}
++
++void bus(bus_event event)
++{
++    auto& last = state.bus_ring[(state.bus_ring_next + BUS_RING_SIZE - 1) % BUS_RING_SIZE];
++    if (last.count and (last.type == event))
++    {
++        last.count++;
++        last.time = c2usb_diag_time_ms();
++        return;
++    }
++    state.bus_ring[state.bus_ring_next] = {c2usb_diag_time_ms(), 1, event};
++    state.bus_ring_next = (state.bus_ring_next + 1) % BUS_RING_SIZE;
++}
++
++void set_mac(mac* m)
++{
++    state.mac_ = m;
++}
++} // namespace usb::df::diag
++
++extern "C" void c2usb_diag_reset(void)
++{
++    auto* mac_ = state.mac_;
++    state = {};
++    state.mac_ = mac_;
++}
++
++extern "C" void c2usb_diag_dump(void)
++{
++    auto* mac_ = state.mac_;
++    uint32_t now = c2usb_diag_time_ms();
++
++    c2usb_log("c2usb diag (t=%u ms):\n", (unsigned)now);
++    if (mac_)
++    {
++        c2usb_log("  power=%s configured=%d active=%d\n", power_name(mac_->power_state()),
++                  (int)mac_->configured(), (int)mac_->active());
++    }
++    else
++    {
++        c2usb_log("  no MAC instance\n");
++    }
++    c2usb_diag_dump_port();
++    if (state.ok_count)
++    {
++        c2usb_log("  last ok transfer: EP %02x, %u ms ago (%u total)\n", state.last_ok_ep,
++                  (unsigned)(now - state.last_ok_time), (unsigned)state.ok_count);
++    }
++    else
++    {
++        c2usb_log("  no successful data EP transfer yet\n");
++    }
++    for (uint8_t i = 0; i < diag::CATEGORY_COUNT; i++)
++    {
++        const auto& s = state.stats[i];
++        if (s.total)
++        {
++            c2usb_log("  %s: total=%u sinceOk=%u, last: EP %02x err=%d %u ms ago\n",
++                      category_names[i], (unsigned)s.total, (unsigned)s.since_ok, s.last_ep,
++                      s.last_err, (unsigned)(now - s.last_time));
++        }
++    }
++    for (size_t i = 0; i < BUS_RING_SIZE; i++)
++    {
++        const auto& e = state.bus_ring[(state.bus_ring_next + i) % BUS_RING_SIZE];
++        if (e.count)
++        {
++            c2usb_log("  bus event: %s x%u, last %u ms ago\n", bus_name(e.type), (unsigned)e.count,
++                      (unsigned)(now - e.time));
++        }
++    }
++}
+diff --git a/c2usb/usb/df/mac_diag.hpp b/c2usb/usb/df/mac_diag.hpp
+new file mode 100644
+index 0000000..d240521
+--- /dev/null
++++ b/c2usb/usb/df/mac_diag.hpp
+@@ -0,0 +1,84 @@
++/// @file
++///
++/// UHK patch: injectable logging + port-agnostic anomaly diagnostics for MACs.
++///
++/// MAC ports record every anomaly (enqueue failures, EP errors, control errors,
++/// stalls, dropped events, rejected transfers) together with bus-level events
++/// (reset/suspend/resume/Vbus). Counters distinguish totals since boot from
++/// occurrences since the last successful data-endpoint transfer, so a dump
++/// answers "what went wrong since USB last worked".
++///
++/// The host application may provide a printf-like `c2usb_log()` and a
++/// millisecond time source `c2usb_diag_time_ms()`; weak defaults keep c2usb
++/// standalone-linkable.
++///
++#ifndef __USB_DF_MAC_DIAG_HPP_
++#define __USB_DF_MAC_DIAG_HPP_
++
++#include <stdint.h>
++
++#ifdef __cplusplus
++extern "C"
++{
++#endif
++
++    /// Printf-like log output, overridable by the application (weak no-op default).
++    void c2usb_log(const char* fmt, ...);
++
++    /// Millisecond timestamp source, overridable by the application or port
++    /// (weak default returns 0).
++    uint32_t c2usb_diag_time_ms(void);
++
++    /// Dump current MAC state and all recorded anomalies via c2usb_log().
++    void c2usb_diag_dump(void);
++
++    /// Clear all recorded diagnostics.
++    void c2usb_diag_reset(void);
++
++    /// Port-specific extra dump output (weak no-op default).
++    void c2usb_diag_dump_port(void);
++
++#ifdef __cplusplus
++}
++
++namespace usb::df
++{
++class mac;
++
++namespace diag
++{
++enum category : uint8_t
++{
++    ENQUEUE_FAIL = 0, // handing a transfer to the controller driver failed
++    EP_ERROR,         // data endpoint transfer failed / was cancelled
++    CTRL_ERROR,       // control endpoint event with error
++    CTRL_STALL,       // control pipeline stalled by the MAC
++    EVENT_DROPPED,    // driver event lost (e.g. queue full)
++    EP_BUSY,          // transfer rejected: endpoint busy
++    EP_NO_POWER,      // transfer rejected: bus not in L0
++    CATEGORY_COUNT
++};
++
++enum class bus_event : uint8_t
++{
++    RESET = 0,
++    SUSPEND,
++    RESUME,
++    SLEEP,
++    VBUS_ON,
++    VBUS_OFF,
++    ERROR,
++    SET_CONFIG,   // host-initiated SET_CONFIGURATION with a nonzero config
++    DECONFIG,     // host-initiated SET_CONFIGURATION 0 (configuration cleared)
++};
++
++// all callable from any context including ISR - they must not log
++void record(category cat, uint8_t ep, int err);
++void success(uint8_t ep);
++void bus(bus_event event);
++void set_mac(mac* m);
++} // namespace diag
++} // namespace usb::df
++#endif
++
++#endif // __USB_DF_MAC_DIAG_HPP_
+-- 
+2.51.0
+
