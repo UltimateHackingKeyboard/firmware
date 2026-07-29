@@ -1,7 +1,6 @@
 #include <math.h>
 #include <errno.h>
 #include "atomicity.h"
-#include "bt_defs.h"
 #include "chords.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
@@ -56,7 +55,6 @@
 #include "shell.h"
 #include "keyboard/charger.h"
 #include "logger.h"
-#include "bt_pair.h"
 #include "connections.h"
 #include "keyboard/oled/screens/pairing_screen.h"
 #include "keyboard/input_interceptor.h"
@@ -75,6 +73,10 @@ static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
 uint32_t UsbReportUpdater_LastActivityTime;
 uint32_t UsbReportUpdater_LastMouseActivityTime;
+
+key_life_times_t KeyLifeTimes;
+main_life_times_t MainLifeTimes;
+isr_life_times_t IsrLifeTimes;
 
 
 
@@ -428,12 +430,7 @@ static void applySwitchHostPress(key_state_t* keyState, uint8_t hostConnectionId
     if (KeyState_DeactivatedNow(keyState)) {
         if (inProgress == keyState && currentTime - startTime < unpairTimeout) {
             inProgress = NULL;
-            uint8_t connId = hostConnectionIdx + ConnectionId_HostConnectionFirst;
-            if (connId == SelectedHostConnectionId) {
-                HostConnection_Unselect(false);
-            } else {
-                HostConnections_SelectByHostConnIndex(hostConnectionIdx);
-            }
+            HostConnections_SelectByHostConnIndex(hostConnectionIdx);
         }
     }
 
@@ -461,17 +458,17 @@ static void applyConnectionActionPress(connection_action_t command, uint8_t host
         case ConnectionAction_Previous:
             HostConnections_SelectPreviousConnection();
             break;
+        case ConnectionAction_NextActive:
+            HostConnections_SelectNextActiveConnection();
+            break;
+        case ConnectionAction_PreviousActive:
+            HostConnections_SelectPreviousActiveConnection();
+            break;
         case ConnectionAction_LastSelected:
             HostConnections_SelectLastSelectedConnection();
             break;
         case ConnectionAction_SwitchByHostConnectionId:
             //handled elsewhere
-            break;
-        case ConnectionAction_ToggleAdvertisement:
-            BtManager_EnterMode(PairingMode_Advertise, true);
-            break;
-        case ConnectionAction_TogglePairing:
-            BtManager_EnterMode(PairingMode_PairHid, true);
             break;
     }
 #endif
@@ -639,7 +636,13 @@ static void commitKeyState(key_state_t *keyState, bool active, uint8_t pressTime
 
     if (PostponerCore_EventsShouldBeQueued() || forcePostponer) {
         PostponerCore_TrackKeyEvent(keyState, active, 255);
+        if (forcePostponer) {
+            DEBUG_KEY_LIFE(forceQueued);
+        } else {
+            DEBUG_KEY_LIFE(queued);
+        }
     } else {
+        DEBUG_KEY_LIFE(applied);
         KEY_TIMING(KeyTiming_RecordKeystroke(keyState, active, Timer_GetCurrentTime(), Timer_GetCurrentTime()));
         keyState->current = active;
         EventVector_Set(EventVector_NativeActionsPostponing);
@@ -763,6 +766,10 @@ static void updateActionStates() {
             if (KeyState_NonZero(keyState)) {
                 Trace_Printc("w2");
 
+                if (KeyState_ActivatedNow(keyState) || KeyState_DeactivatedNow(keyState)) {
+                    DEBUG_KEY_LIFE(action);
+                }
+
                 // Here we handle the chords
                 uint8_t layerInEffect = Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()
                     ? Postponer_LastKeyLayer : ActiveLayer;
@@ -784,10 +791,7 @@ static void updateActionStates() {
                     KeyHistory_RecordPress(keyState);
 
                     if (CurrentPowerMode > PowerMode_LastAwake && CurrentPowerMode <= PowerMode_LightSleep) {
-                        Trace_Printf("y1.%d", CurrentPowerMode);
-                        PowerMode_WakeHost();
                         PowerMode_ActivateMode(PowerMode_Awake, false, true, "key action wakeup");
-                        Trace_Printc("y4");
                     }
 
                     if (Postponer_LastKeyLayer != 255 && PostponerCore_IsActive()) {

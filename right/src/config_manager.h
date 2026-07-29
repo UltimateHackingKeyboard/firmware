@@ -98,11 +98,12 @@
         uint16_t Chords_MinimumIdleTime;
         
         key_state_t* EmergencyKey;
+        uint8_t RecoveryKey;
 
         // bluetooth
+        bool Bt_AlwaysAdvertise;
         bool Bt_DirectedAdvertisingAllowed;
         bool Bt_Enabled;
-        bool Bt_AlwaysAdvertiseHid;
 
         // others
         bool DevMode;

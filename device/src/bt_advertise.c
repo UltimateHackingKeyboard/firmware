@@ -21,7 +21,7 @@ LOG_MODULE_DECLARE(Bt);
 
 #define LEN(NAME) (sizeof(NAME) - 1)
 
-pairing_mode_t AdvertisingHid = false;
+bool BtAdvertise_IsAdvertising = false;
 
 // Advertisement packets
 
@@ -62,8 +62,7 @@ static const struct bt_data sdHid[] = {SD_HID_DATA("UHK 80 BLE")};
 
 // Fast advertisement makes mouse key movement jittery as it makes us miss transports
 static void applyAdvInterval(struct bt_le_adv_param* param) {
-    bool fast = BtConn_UnusedPeripheralConnectionCount() == ACTUAL_PERIPHERAL_CONNECTION_COUNT
-        || SelectedHostConnectionId != ConnectionId_Invalid;
+    bool fast = BtConn_UnusedPeripheralConnectionCount() == ACTUAL_PERIPHERAL_CONNECTION_COUNT || Connections_IsSelectedConnecting() || !DEVICE_IS_UHK80_RIGHT;
     if (fast) {
         param->interval_min = BT_GAP_ADV_FAST_INT_MIN_1;
         param->interval_max = BT_GAP_ADV_FAST_INT_MAX_1;
@@ -118,10 +117,8 @@ ATTR_UNUSED static void setFilters(adv_config_t advConfig) {
 }
 
 static void updateAdvertisingIcon(bool newAdvertising) {
-    pairing_mode_t actualMode = newAdvertising ? (BtPair_PairingMode == PairingMode_PairHid ? PairingMode_PairHid : PairingMode_Advertise) : PairingMode_Off;
-
-    if (DEVICE_ID == DeviceId_Uhk80_Right && AdvertisingHid != actualMode) {
-        AdvertisingHid = actualMode;
+    if (DEVICE_ID == DeviceId_Uhk80_Right && BtAdvertise_IsAdvertising != newAdvertising) {
+        BtAdvertise_IsAdvertising = newAdvertising;
 #if DEVICE_HAS_OLED
         Widget_Refresh(&StatusWidget);
 #endif
@@ -147,7 +144,7 @@ uint8_t BtAdvertise_Start(adv_config_t advConfig)
     // to clear filters
     BtAdvertise_Stop();
 
-    updateAdvertisingIcon(advConfig.advType & ADVERTISE_HID);
+    updateAdvertisingIcon(advConfig.advType != 0);
 
     // Start advertising
     static struct bt_le_adv_param advParam;
@@ -223,7 +220,7 @@ void BtAdvertise_Stop(void) {
 adv_config_t BtAdvertise_Config() {
     switch (DEVICE_ID) {
         case DeviceId_Uhk80_Left:
-            if (BtPair_PairingMode == PairingMode_Oob) {
+            if (BtPair_OobPairingInProgress) {
                 return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
                 // Fails handshake with "RF Noise?"
                 // struct bt_le_oob* oob = BtPair_GetRemoteOob();
@@ -237,41 +234,34 @@ adv_config_t BtAdvertise_Config() {
 
         case DeviceId_Uhk80_Right: {
             bool freeSlots = BtConn_UnusedPeripheralConnectionCount();
-            if (freeSlots > 0) {
-                if (BtPair_PairingMode == PairingMode_Oob) {
-                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
-                    // Fails handshake with "RF Noise?"
-                    // struct bt_le_oob* oob = BtPair_GetRemoteOob();
-                    // return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
-                }
-                else if (freeSlots == 1 && SelectedHostConnectionId != ConnectionId_Invalid) {
-                    /* we need to reserve last peripheral slot for a specific target */
-                    connection_type_t selectedConnectionType = Connections_Type(SelectedHostConnectionId);
-                    if (selectedConnectionType == ConnectionType_NusDongle) {
-                        return ADVERTISEMENT_DIRECT_NUS(&HostConnection(SelectedHostConnectionId)->bleAddress);
-                    } else if (selectedConnectionType == ConnectionType_BtHid) {
-                        return ADVERTISEMENT(ADVERTISE_HID);
-                    } else {
-                        LOG_INF("Adv: Selected connection is neither BLE HID nor NUS. Can't advertise!");
-                        return ADVERTISEMENT( 0 );
-                    }
-                }
-                else if (BtConn_ConnectedHidCount(NULL) > 0) {
-                    /** we can't handle multiple HID connections, so don't advertise it when one HID is already connected */
-                    return ADVERTISEMENT(ADVERTISE_NUS);
-                } else {
-                    /** we can connect both NUS and HID */
-                    if (Cfg.Bt_AlwaysAdvertiseHid || BtPair_PairingMode == PairingMode_Advertise || BtPair_PairingMode == PairingMode_PairHid) {
-                        return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
-                    } else {
-                        return ADVERTISEMENT(ADVERTISE_NUS);
-                    }
-                }
-            } else {
-                /** advertising needs a peripheral slot. When it is not free and we try to advertise, it will fail, and our code will try to
-                 *  disconnect other devices in order to restore proper function. */
+            if (freeSlots == 0) {
                 LOG_INF("Adv: Current slot count is zero, not advertising!");
-                // BtConn_ListCurrentConnections();
+                return ADVERTISEMENT( 0 );
+            }
+
+            if (BtPair_OobPairingInProgress) {
+                return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                // Fails handshake with "RF Noise?"
+                // struct bt_le_oob* oob = BtPair_GetRemoteOob();
+                // return ADVERTISEMENT_DIRECT_NUS(&oob->addr);
+            }
+
+            if (Connections_IsReady(CurrentHostConnectionId)) {
+                if (Cfg.Bt_AlwaysAdvertise) {
+                    return ADVERTISEMENT(ADVERTISE_NUS | ADVERTISE_HID);
+                } else {
+                    return ADVERTISEMENT( 0 );
+                }
+            }
+
+            connection_type_t currentConnectionType = Connections_Type(CurrentHostConnectionId);
+            if (currentConnectionType == ConnectionType_NusDongle) {
+                return ADVERTISEMENT_DIRECT_NUS(&HostConnection(CurrentHostConnectionId)->bleAddress);
+            } else if (currentConnectionType == ConnectionType_BtHid) {
+                return ADVERTISEMENT(ADVERTISE_HID);
+            } else if (currentConnectionType == ConnectionType_Empty) {
+                return ADVERTISEMENT(ADVERTISE_HID);
+            } else {
                 return ADVERTISEMENT( 0 );
             }
         }

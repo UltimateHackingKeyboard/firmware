@@ -19,6 +19,8 @@
 #include "event_scheduler.h"
 #include "timer.h"
 #include <zephyr/logging/log.h>
+#include "usb_state.h"
+#include "bt_manager.h"
 
 LOG_MODULE_REGISTER(Conn, LOG_LEVEL_INF);
 
@@ -27,10 +29,18 @@ connection_t Connections[ConnectionId_Count] = {
     [ConnectionId_BtHid] = { .isAlias = true },
 };
 
-connection_id_t LastActiveHostConnectionId = ConnectionId_Invalid;
-connection_id_t ActiveHostConnectionId = ConnectionId_Invalid;
-connection_id_t SelectedHostConnectionId = ConnectionId_Invalid;
+connection_id_t LastHostConnectionId = ConnectionId_Invalid;
+connection_id_t CurrentHostConnectionId = DEVICE_IS_UHK_DONGLE ? ConnectionId_UsbHidRight : ConnectionId_HostConnectionFirst;
 connection_id_t LastSelectedHostConnectionId = ConnectionId_Invalid;
+
+// The old SelectedHostConnectionId carried an implicit "the user explicitly
+// asked for this host" intent. Folding Selected into CurrentHostConnectionId
+// (which is now also set automatically by fallback/boot) would lose that, so we
+// track it separately. It is transient: set when the user explicitly selects a
+// host, and cleared once that host becomes Ready or Current changes for any
+// non-explicit reason. Its only role is protecting an explicit pick from being
+// stolen by the automatic fallback.
+static bool currentHostConnectionIsExplicit = false;
 
 static connection_id_t resolveAliases(connection_id_t connectionId) {
     if (!Connections[connectionId].isAlias) {
@@ -117,14 +127,14 @@ static void reportConnectionState(connection_id_t connectionId) {
         peerString = Peers[peerId].name;
     }
 
-    const char* activeLabel = connectionId == ActiveHostConnectionId ? ", Active" : "";
-    const char* selectedLabel = connectionId == SelectedHostConnectionId ? ", Selected" : "";
+    const char* currentLabel = connectionId == CurrentHostConnectionId ? ", Current" : "";
+    const char* explicitLabel = (connectionId == CurrentHostConnectionId && currentHostConnectionIsExplicit) ? ", Explicit" : "";
 
     if (isHostConnection) {
         host_connection_t* hc = HostConnection(connectionId);
-        LOG_INF("%s: %d(%.*s, %s)%s%s%s%s", name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LOG_INF("%s: %d(%.*s, %s)%s%s%s%s", name, connectionId - ConnectionId_HostConnectionFirst, hc->name.end - hc->name.start, hc->name.start, getStateString(Connections[connectionId].state), peerLabel, peerString, currentLabel, explicitLabel);
     } else {
-        LOG_INF("%s: (%s)%s%s%s%s", name, getStateString(Connections[connectionId].state), peerLabel, peerString, activeLabel, selectedLabel);
+        LOG_INF("%s: (%s)%s%s%s%s", name, getStateString(Connections[connectionId].state), peerLabel, peerString, currentLabel, explicitLabel);
     }
 }
 
@@ -162,6 +172,10 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
             // Connections_HandleSwitchover calls DeviceState_Update for us
         } else {
             DeviceState_Update(Connections_Target(connectionId));
+        }
+
+        if (connectionId == CurrentHostConnectionId) {
+            WIDGET_REFRESH(&TargetWidget);
         }
     }
 }
@@ -351,10 +365,8 @@ connection_id_t Connections_GetNewBtHidConnectionId() {
 }
 
 void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId, connection_id_t newConnectionId) {
-    bool isOldActive = oldConnectionId == ActiveHostConnectionId;
-    bool isOldSelected = oldConnectionId == SelectedHostConnectionId;
-    bool isNewActive = newConnectionId == ActiveHostConnectionId;
-    bool isNewSelected = newConnectionId == SelectedHostConnectionId;
+    bool isOldCurrent = oldConnectionId == CurrentHostConnectionId;
+    bool isNewCurrent = newConnectionId == CurrentHostConnectionId;
 
     // Save both connection states
     uint8_t oldPeerId = Connections[oldConnectionId].peerId;
@@ -385,22 +397,17 @@ void Connections_MoveConnection(uint8_t peerId, connection_id_t oldConnectionId,
         Peers[newPeerId].connectionId = oldConnectionId;
     }
 
-    // Update active connection ID
-    if (isOldActive) {
-        ActiveHostConnectionId = newConnectionId;
-    } else if (isNewActive) {
-        ActiveHostConnectionId = oldConnectionId;
+    // Update current connection ID
+    if (isOldCurrent) {
+        CurrentHostConnectionId = newConnectionId;
+    } else if (isNewCurrent) {
+        CurrentHostConnectionId = oldConnectionId;
     }
 
-    // Update selected connection ID
-    if (isOldSelected) {
-        SelectedHostConnectionId = newConnectionId;
-    } else if (isNewSelected) {
-        SelectedHostConnectionId = oldConnectionId;
-    }
-
-    if (isOldActive || isNewActive) {
+    if (isOldCurrent || isNewCurrent) {
         WIDGET_REFRESH(&TargetWidget);
+        // The advertising icon depends on the current connection's type.
+        WIDGET_REFRESH(&StatusWidget);
     }
 }
 
@@ -413,8 +420,31 @@ bool Connections_IsReady(connection_id_t connectionId) {
     return Connections[connectionId].state == ConnectionState_Ready;
 }
 
-bool Connections_IsActiveHostConnection(connection_id_t connectionId) {
-    return resolveAliases(connectionId) == ActiveHostConnectionId;
+bool Connections_IsCurrentHost(connection_id_t connectionId) {
+    return resolveAliases(connectionId) == CurrentHostConnectionId;
+}
+
+// True when Current points at a real (configured) host that is not connected yet
+// - i.e. we are actively trying to (re)connect to it. Unlike the old
+// "SelectedHostConnectionId != Invalid" test, Current is always a valid id, so
+// we must exclude empty/unknown slots (e.g. the boot default when unconfigured).
+// The Current/switchover concept only exists on the right half; on other
+// devices Current stays at its unused default, so report "not connecting".
+bool Connections_IsSelectedConnecting(void) {
+    if (!DEVICE_IS_UHK80_RIGHT) {
+        return false;
+    }
+    if (Connections_GetState(CurrentHostConnectionId) >= ConnectionState_Connected) {
+        return false;
+    }
+    switch (Connections_Type(CurrentHostConnectionId)) {
+        case ConnectionType_BtHid:
+        case ConnectionType_NusDongle:
+        case ConnectionType_Empty:
+            return true;
+        default:
+            return false;
+    }
 }
 
 static void setDongleToStandby(connection_id_t connectionId) {
@@ -426,64 +456,92 @@ static void setDongleToStandby(connection_id_t connectionId) {
 
 static void updateLastConnection(connection_id_t lastConnId, connection_id_t newConnId) {
     if (
-            LastActiveHostConnectionId != lastConnId
+            LastHostConnectionId != lastConnId
             && lastConnId != ConnectionId_Invalid
             && lastConnId != newConnId
        ) {
-        LastActiveHostConnectionId = lastConnId;
+        LastHostConnectionId = lastConnId;
     }
 }
 
-static void switchOver(connection_id_t connectionId) {
-    updateLastConnection(ActiveHostConnectionId, connectionId);
+// Find the first ready switchover-marked host - the fallback target used when
+// an automatic Current connection is lost.
+static connection_id_t findReadySwitchoverHost(void) {
+    for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
+        if (Connections[i].state == ConnectionState_Ready && HostConnection(i)->switchover) {
+            return i;
+        }
+    }
+    return ConnectionId_Invalid;
+}
 
-    ActiveHostConnectionId = connectionId;
-    Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
-
-    if (connectionId == SelectedHostConnectionId) {
-        HostConnection_SetSelectedConnection(ConnectionId_Invalid);
+static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
+    if (connectionId != CurrentHostConnectionId) {
+        setDongleToStandby(CurrentHostConnectionId);
     }
 
+    updateLastConnection(CurrentHostConnectionId, connectionId);
+
+    CurrentHostConnectionId = connectionId;
+    currentHostConnectionIsExplicit = explicitlySelected;
+
+    // The target may not be connected yet (explicit selection of an offline
+    // host), in which case it has no peer to stamp.
+    if (Connections[connectionId].peerId != PeerIdUnknown) {
+        Peers[Connections[connectionId].peerId].lastSwitchover = k_uptime_get_32();
+    }
+
+    Hid_UpdateKeyboardProtocol();
     Hid_UpdateKeyboardLedsState();
+
+    WIDGET_REFRESH(&TargetWidget);
+    // The advertising icon depends on the current connection's type.
+    WIDGET_REFRESH(&StatusWidget);
+    BtManager_StartScanningAndAdvertisingAsync(false, "switchover");
 }
 
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
     connectionId = resolveAliases(connectionId);
-    bool isReady = Connections_IsReady(connectionId);
 
-    // Unset if disconnected
-    if (connectionId == ActiveHostConnectionId && !isReady) {
-        updateLastConnection(ActiveHostConnectionId, ConnectionId_Invalid);
-        ActiveHostConnectionId = ConnectionId_Invalid;
+    // Once the explicitly-requested host is up, drop the "actively pursuing"
+    // intent so the normal automatic fallback rules apply again.
+    if (currentHostConnectionIsExplicit && Connections_IsReady(CurrentHostConnectionId)) {
+        currentHostConnectionIsExplicit = false;
     }
 
-    // Decide whether to switch to the supplied connection
-    if (isReady && Connections_IsHostConnection(connectionId)) {
-        host_connection_t *hostConnection = HostConnection(connectionId);
-        bool connectionIsSelected = SelectedHostConnectionId == connectionId;
-        bool noHostIsConnected = ActiveHostConnectionId == ConnectionId_Invalid;
-        if (hostConnection->switchover || noHostIsConnected || forceSwitch || connectionIsSelected) {
-            if (connectionId != ActiveHostConnectionId) {
-                setDongleToStandby(ActiveHostConnectionId);
-            }
-            switchOver(connectionId);
-            reportConnectionState(connectionId);
-        }
-    }
-
-    // If current target is not usable
-    if (ActiveHostConnectionId == ConnectionId_Invalid) {
-        // Find the first ready host connection
-        for (uint8_t i = ConnectionId_HostConnectionFirst; i <= ConnectionId_HostConnectionLast; i++) {
-            if (Connections[i].state == ConnectionState_Ready) {
-                switchOver(i);
-                reportConnectionState(i);
-                break;
-            }
+    if (forceSwitch && Connections_IsHostConnection(connectionId)) {
+        // Explicit user selection: adopt as Current even if it is not (yet)
+        // connected; BLE will keep trying to reach it.
+        switchOver(connectionId, true);
+        reportConnectionState(connectionId);
+    } else if (!currentHostConnectionIsExplicit && Connections_GetState(CurrentHostConnectionId) < ConnectionState_Connected) {
+        // An automatic Current connection is not connected: a ready
+        // switchover-marked host may take over. An explicitly-selected Current
+        // is protected and keeps being pursued.
+        connection_id_t fallback = findReadySwitchoverHost();
+        if (fallback != ConnectionId_Invalid && fallback != CurrentHostConnectionId) {
+            switchOver(fallback, false);
+            reportConnectionState(fallback);
         }
     }
 
     DeviceState_Update(Connections_Target(connectionId));
+}
+
+bool Connections_IsCurrentHostAwake(void) {
+    switch (Connections_Type(CurrentHostConnectionId)) {
+        case ConnectionType_NusDongle:
+            return DongleHostAwake;
+        case ConnectionType_UsbHidRight:
+            return DEVICE_IS_UHK80_RIGHT && UsbState_Awake && UsbState_TransportUp;
+        case ConnectionType_UsbHidLeft:
+            return DEVICE_IS_UHK80_LEFT && UsbState_Awake && UsbState_TransportUp;
+        case ConnectionType_Unknown:
+        case ConnectionType_Empty:
+            return false;
+        default:
+            return true;
+    }
 }
 
 connection_target_t Connections_DeviceToTarget(device_id_t deviceId) {
@@ -504,7 +562,7 @@ void Connections_PrintInfo(log_target_t target) {
     LogTo(DEVICE_ID, target, "----------------------\n");
     LogTo(DEVICE_ID, target, "Compiled   peripheral count: %d\n", CONFIG_BT_CTLR_SDC_PERIPHERAL_COUNT);
     LogTo(DEVICE_ID, target, "Configured peripheral count: %d\n", Cfg.Bt_MaxPeripheralConnections);
-    LogTo(DEVICE_ID, target, "Pairing mode: %d\n", BtPair_PairingMode);
+    LogTo(DEVICE_ID, target, "Oob pairing in progress: %d\n", BtPair_OobPairingInProgress);
     LogTo(DEVICE_ID, target, "Directed advertising enabled: %d\n", Cfg.Bt_DirectedAdvertisingAllowed);
     LogTo(DEVICE_ID, target, "New connection: %d\n", Bt_NewPairedDevice);
 

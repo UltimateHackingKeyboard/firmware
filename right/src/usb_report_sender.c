@@ -91,7 +91,7 @@ static void handleUltimateFail(errno_t errorCode) {
     EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
 
 #ifdef __ZEPHYR__
-    if (ActiveHostConnectionId == ConnectionId_Invalid) {
+    if (CurrentHostConnectionId == ConnectionId_Invalid) {
         LOG_WRN("Send failed: no connection selected: %d (%s)\n", errorCode, ErrToStr(errorCode));
     } else {
         LOG_ERR("Send failed (gave up resending): %d (%s)\n", errorCode, ErrToStr(errorCode));
@@ -223,6 +223,7 @@ static bool blockedByReportThrottle() {
     uint32_t currentTime = Timer_GetCurrentTime();
     uint32_t blockedUntil = 0;
     bool blocked = false;
+    uint8_t blockReasons = 0;
 
     // UsbReportSemaphore - make sure:
     // - we are not sending reports until last report is sent
@@ -230,6 +231,7 @@ static bool blockedByReportThrottle() {
     if (!UsbSemaphore_RecalculateIsReady()) {
         blockedUntil = MAX(blockedUntil, currentTime + USB_SEMAPHORE_TIMEOUT);
         blocked = true;
+        blockReasons |= THROTTLE_REASON_SEMAPHORE;
     }
 
     // Configured delay - prevent firmware (macros and similar) from sending reports too fast -
@@ -237,12 +239,14 @@ static bool blockedByReportThrottle() {
     if (currentTime < lastBasicReportTime + Cfg.KeystrokeDelay) {
         blockedUntil = lastBasicReportTime + Cfg.KeystrokeDelay;
         blocked = true;
+        blockReasons |= THROTTLE_REASON_KEY_DELAY;
     }
 
     // If we are retrying too agressively, we may clog some USB hubs, so add a throttle in that case as well.
     if (currentTime < retryThrottleTime) {
         blockedUntil = MAX(retryThrottleTime, blockedUntil);
         blocked = true;
+        blockReasons |= THROTTLE_REASON_RETRY;
     }
 
     // To reduce mouse latency, don't construct report until we are close enough to transport window.
@@ -250,13 +254,21 @@ static bool blockedByReportThrottle() {
         uint32_t throttleUntil = UsbReportWindowEstimate - USB_REPORT_WINDOW_LOOKAHEAD_MS;
         blockedUntil = MAX(throttleUntil, blockedUntil);
         blocked = true;
+        blockReasons |= THROTTLE_REASON_WINDOW;
     }
+
+    MainLifeTimes.throttleTime = currentTime;
+    MainLifeTimes.throttleBlocked = blocked;
+    MainLifeTimes.throttleBlockReasons = blockReasons;
+    MainLifeTimes.throttleBlockedUntil = blockedUntil;
 
     if (blocked) {
         DISABLE_IRQ();
         postponedMasks |= EventScheduler_Vector & EventVector_MainTriggers;
         EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_MainTriggers) | EventVector_KeystrokeDelayPostponing;
         ENABLE_IRQ();
+
+        MainLifeTimes.throttlePostponedMasks = postponedMasks;
 
         // Make sure to wake up postponer so that it can process the events.
         // Don't reschedule here - it is unsafe because of races.
@@ -267,6 +279,7 @@ static bool blockedByReportThrottle() {
         EventScheduler_Vector = (EventScheduler_Vector & ~EventVector_KeystrokeDelayPostponing) | postponedMasks;
         postponedMasks = 0;
         ENABLE_IRQ();
+        MainLifeTimes.throttlePostponedMasks = 0;
     }
     return false;
 }

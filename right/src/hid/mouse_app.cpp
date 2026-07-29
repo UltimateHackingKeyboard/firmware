@@ -1,79 +1,49 @@
 #include "mouse_app.hpp"
 
-mouse_app &mouse_app::usb_handle()
-{
-    static mouse_app app{};
-    return app;
-}
-#if DEVICE_IS_UHK80_RIGHT
-mouse_app &mouse_app::ble_handle()
-{
-    static mouse_app ble_app{};
-    return ble_app;
-}
-#endif
+using mouse_report = mouse_app::mouse_report_base<report_ids::IN_MOUSE>;
 
-void mouse_app::start(hid::protocol prot)
+hid::session &mouse_app::start(const hid::session::params &params)
 {
-    report_buffer_.reset();
-    resolution_buffer_ = {};
-    receive_report(&resolution_buffer_);
+    assert(!session_.has_value());
+    auto &sess = session_.emplace(params);
+    mouse_resolution_changed_callback(sess, sess.resolution_report());
+    return sess;
 }
 
-int mouse_app::send_report(const hid_mouse_report_t &report)
+void mouse_app::stop(hid::session &sess)
 {
-    auto &buf = report_buffer_[report_buffer_.active_side()];
-    buf.data = report;
-    auto result = hid::application::send_report(
-        std::span<const uint8_t>(reinterpret_cast<const uint8_t *>(&buf), sizeof(buf)));
-    if (result == hid::result::ok) {
-        report_buffer_.swap_sides();
-    }
-    return result.to_int();
+    assert(&sess == &session_.value());
+    return session_.reset();
 }
 
-void mouse_app::in_report_sent(const std::span<const uint8_t> &data)
+void mouse_session::report_sent(const std::span<const uint8_t> &data)
 {
-#if DEVICE_IS_UHK80_RIGHT
-    // On BLE all apps share one merged HOGP interface, so in_report_sent is broadcast
-    // to every app for every sent report. Act only on our own (mouse) report ID. The
-    // USB handle is a standalone interface that only ever receives mouse completions,
-    // so the filter must not be applied there.
-    if ((this == &ble_handle()) && (data.front() != report_ids::IN_MOUSE)) {
-        return;
-    }
-#endif
-    Hid_MouseReportSentCallback((this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE);
+    mouse_report_sent_callback(*this);
 }
 
-void mouse_app::set_report(hid::report::type type, const std::span<const uint8_t> &data)
+void mouse_session::set_report(hid::report::type type, const std::span<const uint8_t> &data)
 {
     if (hid::report::selector(type, data.front()) != resolution_buffer_.selector()) {
         return;
     }
-    resolution_buffer_ = *reinterpret_cast<const decltype(resolution_buffer_) *>(data.data());
+    // data is already received to this buffer
+    // resolution_buffer_ = *reinterpret_cast<const decltype(resolution_buffer_) *>(data.data());
+    mouse_resolution_changed_callback(*this, resolution_report());
     receive_report(&resolution_buffer_);
-
-    Hid_MouseScrollResolutionsChanged(
-        (this == &usb_handle()) ? HID_TRANSPORT_USB : HID_TRANSPORT_BLE,
-        resolution_buffer_.vertical_scroll_multiplier(),
-        resolution_buffer_.horizontal_scroll_multiplier());
 }
 
-void mouse_app::get_report(hid::report::selector select, const std::span<uint8_t> &buffer)
+std::span<const uint8_t> mouse_session::get_report(
+    hid::report::selector select, const std::span<uint8_t> &buffer)
 {
     if (select == resolution_buffer_.selector()) {
-        hid::application::send_report(&resolution_buffer_);
-        return;
+        return std::span<const uint8_t>(resolution_buffer_.data(), sizeof(resolution_buffer_));
     }
 
-    if (select != mouse_report::selector()) {
-        return;
+    if (select == hid::report::selector(hid::report::type::INPUT, report_ids::IN_MOUSE)) {
+        assert(buffer.size() >= sizeof(mouse_report));
+        std::ignore = new (buffer.data()) mouse_report{};
+        return buffer.subspan(0, sizeof(mouse_report));
     }
 
-    // copy to buffer to avoid overwriting data in transit
-    auto &report = report_buffer_[report_buffer_.inactive_side()];
-    assert(buffer.size() >= sizeof(report));
-    memcpy(buffer.data(), &report, sizeof(report));
-    hid::application::send_report(buffer.subspan(0, sizeof(report)));
+    return {};
 }

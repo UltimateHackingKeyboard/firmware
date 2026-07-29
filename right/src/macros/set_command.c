@@ -379,11 +379,10 @@ static macro_variable_t bluetooth(parser_context_t* ctx, set_command_action_t ac
     } else if (ConsumeToken(ctx, "minAdvertisingDelay")) {
         DEFINE_INT_LIMITS(0, 5000);
         ASSIGN_INT(Cfg.Bt_MinAdvertisingDelay);
-    } else if (ConsumeToken(ctx, "alwaysAdvertiseHid")) {
-        ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertiseHid);
-#if DEVICE_IS_UHK80_RIGHT
-        BtManager_EnterMode(PairingMode_Default, false);
-        BtManager_StartScanningAndAdvertisingAsync(false, "set_command - alwaysAdvertiseHid changed");
+    } else if (ConsumeToken(ctx, "alwaysAdvertise")) {
+        ASSIGN_BOOL(Cfg.Bt_AlwaysAdvertise);
+#ifdef __ZEPHYR__
+        BtManager_StartScanningAndAdvertisingAsync(false, "set_command - alwaysAdvertise changed");
 #endif
     } else if (ConsumeToken(ctx, "directedAdvertisingAllowed")) {
         ASSIGN_BOOL(Cfg.Bt_DirectedAdvertisingAllowed);
@@ -1193,6 +1192,25 @@ static macro_variable_t root(parser_context_t* ctx, set_command_action_t action)
 #endif
     else if (ConsumeToken(ctx, "emergencyKey")) {
         ASSIGN_NO_LIMITS(key_state_t*, noneVar,, Cfg.EmergencyKey, Utils_KeyIdToKeyState(Macros_ConsumeInt(ctx)));
+    }
+    else if (ConsumeToken(ctx, "recoveryKey")) {
+        if (action == SetCommandAction_Read) {
+            return intVar(Cfg.RecoveryKey);
+        }
+        CTX_COPY(argCtx, *ctx);
+        uint8_t keyId = Macros_TryConsumeKeyId(ctx);
+        if (keyId == 255) {
+            Macros_ReportErrorPos(ctx, "Failed to decode keyId.");
+            return noneVar();
+        }
+        if (keyId != 255 && keyId >= MAX_KEY_COUNT_PER_MODULE) {
+            Macros_ReportErrorTok(&argCtx, "recoveryKey has to be bound in the right half (or 255 to disable):");
+            return noneVar();
+        }
+        if (Macros_DryRun) {
+            return noneVar();
+        }
+        Cfg.RecoveryKey = keyId;
     }
     else if (action == SetCommandAction_Write) {
         Macros_ReportErrorTok(ctx, "Parameter not recognized:");
