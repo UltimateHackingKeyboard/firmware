@@ -26,6 +26,7 @@
 #include "power_mode.h"
 #include "keyboard/leds.h"
 #include "test_suite/test_hooks.h"
+#include "macros/debug_commands.h"
 
 // Thread definitions
 
@@ -281,6 +282,9 @@ static void scanAllKeys() {
                 }
 
                 if (DEVICE_IS_UHK80_RIGHT) {
+                    if (targetKeyId == Cfg.RecoveryKey && keyStateBuffer[sourceIndex] && !KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState) {
+                        Macros_RecoverDiagnostics();
+                    }
                     KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState = keyStateBuffer[sourceIndex];
                 }
 

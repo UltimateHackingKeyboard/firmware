@@ -18,11 +18,15 @@ extern "C" {
 #include "test_suite/test_hooks.h"
 #include "timer.h"
 #include "trace.h"
+#include "usb_report_sender.h"
 #include "usb_report_updater.h"
 #include "usb_scheduler.h"
 #include "usb_semaphore.h"
 #include "usb_state.h"
 #include "utils.h"
+#if DEVICE_IS_UHK60
+#include "i2c_watchdog.h"
+#endif
 }
 #include "command_app.hpp"
 #include "controls_app.hpp"
@@ -54,7 +58,52 @@ extern "C" {
 float HidReportBleLatencyAvgMs = 0;
 }
 
-bool UnreliableTransportTestMode = false;
+bool UnreliableTransportTestMode = DEBUG_STRESS_TRANSPORT;
+
+extern "C" void Hid_DumpTransportState(void)
+{
+#if DEVICE_IS_UHK60
+    // snapshot before our own logging deepens the stack
+    uint32_t stackUsed = Debug_StackUsed();
+    int32_t stackHeadroom = Debug_StackHeadroom();
+#endif
+    c2usb_log("hid state (t=%u ms):\n", (unsigned)Timer_GetCurrentTime());
+    c2usb_log("  sessions: kb=%d mouse=%d controls=%d cmd=%d\n",
+        (int)(keyboard_app::usb_handle().session() != nullptr),
+        (int)(mouse_app::usb_handle().session() != nullptr),
+        (int)(controls_app::usb_handle().session() != nullptr),
+        (int)(command_app::usb_handle().session() != nullptr));
+    c2usb_log("  powerMode=%d usbUp=%d usbAwake=%d\n",
+        (int)CurrentPowerMode, (int)UsbState_TransportUp, (int)UsbState_Awake);
+    uint32_t now = Timer_GetCurrentTime();
+    c2usb_log("  key life (ms ago): scan(%d)=%u queued=%u/forceQueued=%u/applied=%u action=%u delivered=%u\n",
+        (int)KeyLifeTimes.scanActive, now - KeyLifeTimes.scan, now - KeyLifeTimes.queued,
+        now - KeyLifeTimes.forceQueued, now - KeyLifeTimes.applied, now - KeyLifeTimes.action,
+        now - KeyLifeTimes.delivered);
+    c2usb_log("  inactive kb report: %s\n", Utils_GetUsbReportString(GetInactiveKeyboardReport()));
+    c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d givenUp=%d\n",
+        (int)UsbSemaphore.keyboard.inFlight, (int)UsbSemaphore.keyboard.retries, (int)UsbSemaphore.keyboard.needsResending,
+        (int)UsbSemaphore.controls.inFlight, (int)UsbSemaphore.controls.retries, (int)UsbSemaphore.controls.needsResending,
+        (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending,
+        (int)UsbReportSender_GivenUp);
+    c2usb_log("  throttle: %u ms ago blocked=%d reasons=0x%x until=in %d ms postponed=0x%x\n",
+        now - MainLifeTimes.throttleTime,
+        (int)MainLifeTimes.throttleBlocked, MainLifeTimes.throttleBlockReasons,
+        (int)(MainLifeTimes.throttleBlockedUntil - now), (unsigned)MainLifeTimes.throttlePostponedMasks);
+#if DEVICE_IS_UHK60
+    c2usb_log("  isr (start/end ms ago): usb=%u/%u pit=%u/%u wdog=%u/%u i2c=%u/%u btn=%u/%u\n",
+        now - IsrLifeTimes.usb.start, now - IsrLifeTimes.usb.end,
+        now - IsrLifeTimes.pitTimer.start, now - IsrLifeTimes.pitTimer.end,
+        now - IsrLifeTimes.i2cWatchdog.start, now - IsrLifeTimes.i2cWatchdog.end,
+        now - IsrLifeTimes.i2cMain.start, now - IsrLifeTimes.i2cMain.end,
+        now - IsrLifeTimes.resetButton.start, now - IsrLifeTimes.resetButton.end);
+    c2usb_log("  i2c watchdog: watch=%u recoveries=%u\n",
+        (unsigned)I2cWatchdog_WatchCounter, (unsigned)I2cWatchdog_RecoveryCounter);
+    c2usb_log("  stack: used=%u/%u headroom=%d%s\n",
+        (unsigned)stackUsed, (unsigned)Debug_StackSize(), (int)stackHeadroom,
+        stackHeadroom < 0 ? " (OVERFLOW)" : "");
+#endif
+}
 
 extern "C" void HidTransport_NoteNusReportSent(void)
 {
@@ -291,6 +340,9 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 void mouse_report_sent_callback(hid::session &session)
 {
+    if (UnreliableTransportTestMode && (Utils_Random() % 7 == 0 || Timer_GetCurrentTime() / (1024*32) == 0)) {
+        return;
+    }
     report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
     UsbSemaphore_Release(&UsbSemaphore.mouse);
     UsbScheduler_ReportDelivered(sink);

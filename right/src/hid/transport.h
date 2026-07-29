@@ -30,6 +30,7 @@ typedef enum
 
 extern float HidReportBleLatencyAvgMs;
 extern bool UnreliableTransportTestMode;
+void Hid_DumpTransportState(void);
 
 // report sending
 errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t* report);
