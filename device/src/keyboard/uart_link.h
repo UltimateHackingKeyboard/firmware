@@ -12,7 +12,7 @@
     // Master switch for the low-power scheme: RX is disabled while the link is idle and
     // woken by a GPIO edge on RXD, senders prepend a sacrificial wake byte.
     #ifndef UART_LOWPOWER
-        #define UART_LOWPOWER 1
+        #define UART_LOWPOWER 0
     #endif
 
     #ifndef UART_BRIDGE_DEBUG
