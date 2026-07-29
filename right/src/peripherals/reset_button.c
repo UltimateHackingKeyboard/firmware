@@ -14,7 +14,6 @@
 void RESET_BUTTON_IRQ_HANDLER(void)
 {
     ISR_LIFE_START(resetButton);
-    Macros_RecoverDiagnostics();
 
     if (Cfg.DevMode) {
         Macros_ReportErrorPrintf(NULL, "Uptime: %d. Rebooting because reset button got activated. Reporting as a crash because dev mode is on.", Timer_GetCurrentTime());

@@ -74,7 +74,7 @@ extern "C" void Hid_DumpTransportState(void)
         (int)(controls_app::usb_handle().session() != nullptr),
         (int)(command_app::usb_handle().session() != nullptr));
     c2usb_log("  powerMode=%d usbUp=%d usbAwake=%d\n",
-        (int)CurrentPowerMode, (int)UsbState_IsTransportUp(), (int)UsbState_IsAwake());
+        (int)CurrentPowerMode, (int)UsbState_TransportUp, (int)UsbState_Awake);
     uint32_t now = Timer_GetCurrentTime();
     c2usb_log("  key life (ms ago): scan(%d)=%u queued=%u/forceQueued=%u/applied=%u action=%u delivered=%u\n",
         (int)KeyLifeTimes.scanActive, now - KeyLifeTimes.scan, now - KeyLifeTimes.queued,

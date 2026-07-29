@@ -79,11 +79,3 @@ void UsbState_Delivered(void) {
         recalculateConnectionState();
     }
 }
-
-bool UsbState_IsTransportUp(void) {
-    return usbTransportUp;
-}
-
-bool UsbState_IsAwake(void) {
-    return usbAwake;
-}
