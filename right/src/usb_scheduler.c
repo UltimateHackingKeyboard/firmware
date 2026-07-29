@@ -30,7 +30,7 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
     case ReportSink_BleHid:
     case ReportSink_Dongle:
 #if DEVICE_IS_UHK80_RIGHT
-        return BtConn_GetReportIntervalMs(ActiveHostConnectionId);
+        return BtConn_GetReportIntervalMs(CurrentHostConnectionId);
 #else
         return 11;
 #endif

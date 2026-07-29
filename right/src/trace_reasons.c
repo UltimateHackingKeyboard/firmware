@@ -3,6 +3,7 @@
 #include "MK22F51212.h"
 #include "config_manager.h"
 #include "logger.h"
+#include "macros/status_buffer.h"
 #include "trace.h"
 
 // RCM (Reset Control Module) registers - K22P121M120SF7

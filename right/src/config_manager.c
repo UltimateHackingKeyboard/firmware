@@ -278,12 +278,13 @@ const config_t DefaultCfg = (config_t){
         .I2cBaudRate = I2C_MAIN_BUS_NORMAL_BAUD_RATE,
 #endif
         .Bt_Enabled = true,
+        .Bt_AlwaysAdvertise = false,
         .Bt_MaxPeripheralConnections = 3,
         .Bt_MinAdvertisingDelay = 250,
-        .Bt_AlwaysAdvertiseHid = true,
         .Bt_DirectedAdvertisingAllowed = false,
         .DevMode = false,
         .EmergencyKey = NULL,
+        .RecoveryKey = 255,
         .UiStyle = UiStyle_Classic,
         .DeviceName = { .offset = 0, .len = 0 },
         .KeyActionColors = {

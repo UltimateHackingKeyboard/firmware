@@ -1,5 +1,4 @@
-#ifndef __HID_MOUSE_REPORT_H__
-#define __HID_MOUSE_REPORT_H__
+#pragma once
 
 #include "attributes.h"
 #include <stddef.h>
@@ -21,5 +20,3 @@ float HorizontalScrollMultiplier(void);
 
 void MouseReport_MergeReports(hid_mouse_report_t *sourceReport, hid_mouse_report_t *targetReport);
 bool MouseReport_HasChanges(const hid_mouse_report_t buffer[2], const hid_mouse_report_t *active);
-
-#endif // __HID_MOUSE_REPORT_H__

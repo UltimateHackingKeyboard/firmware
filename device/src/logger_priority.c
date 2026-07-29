@@ -49,10 +49,22 @@ int set_thread_priority_by_name(const char *thread_name, int new_priority) {
     return -ENOENT; // Thread not found
 }
 
+// The logging thread has to stay *strictly* above the shell threads that feed it.
+// If they share a priority, a shell command can emit a whole burst of printks (e.g.
+// `uhk connections`) without the logging thread ever getting scheduled; the deferred
+// log buffer then overflows and its oldest messages are overwritten, so the dump
+// comes out truncated at the beginning.
+#define SHELL_THREAD_PRIORITY K_PRIO_PREEMPT(K_LOWEST_APPLICATION_THREAD_PRIO)
+
+// High: cooperative, so that logging preempts even the main thread (used during boot).
+// Low: preemptible, just above the shell threads, so that it stays out of the way of
+// the event loop while still being able to drain shell output as it is produced.
+#define LOG_THREAD_PRIORITY_HIGH K_PRIO_COOP(CONFIG_NUM_COOP_PRIORITIES - 1)
+#define LOG_THREAD_PRIORITY_LOW K_PRIO_PREEMPT(K_LOWEST_APPLICATION_THREAD_PRIO - 1)
+
 void Logger_SetPriority(bool high) {
-    int8_t priority = high ? -1 : 14;
-    set_thread_priority_by_name("logging", K_PRIO_PREEMPT(priority));
-    set_thread_priority_by_name("UhkShell", K_PRIO_PREEMPT(priority));
-    set_thread_priority_by_name("shell_rtt", K_PRIO_PREEMPT(priority));
+    set_thread_priority_by_name("logging", high ? LOG_THREAD_PRIORITY_HIGH : LOG_THREAD_PRIORITY_LOW);
+    set_thread_priority_by_name("UhkShell", SHELL_THREAD_PRIORITY);
+    set_thread_priority_by_name("shell_rtt", SHELL_THREAD_PRIORITY);
 }
 

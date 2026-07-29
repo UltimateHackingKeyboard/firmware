@@ -1,5 +1,4 @@
-#ifndef __REPORT_IDS__
-#define __REPORT_IDS__
+#pragma once
 
 #include "device.h"
 
@@ -9,8 +8,10 @@ enum report_ids {
     IN_KEYBOARD_NKRO = 0,
     OUT_KEYBOARD_LEDS = 0,
 
-    IN_MOUSE = 3,
-    FEATURE_MOUSE = 3, // mouse needs nonzero report ID as workaround for Linux high-res scrolling bug
+    IN_MOUSE = 1,
+    FEATURE_MOUSE =
+        1, // mouse needs nonzero report ID as workaround for Linux high-res scrolling bug
+    // https://bugzilla.kernel.org/show_bug.cgi?id=220144
 
     IN_CONTROLS = 0,
 
@@ -39,5 +40,3 @@ enum report_ids {
     IN_GAMEPAD = 6,
 #endif
 };
-
-#endif // __REPORT_IDS__

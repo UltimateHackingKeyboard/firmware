@@ -65,14 +65,6 @@ void BtManager_StartBt() {
         return;
     }
 
-    if (DEVICE_IS_UHK80_RIGHT) {
-        if (HOGP_Enable()) {
-            LOG_INF("HOGP service enabled successfully");
-        } else {
-            LOG_ERR("Failed to enable HOGP service");
-        }
-    }
-
     BtManager_StartScanningAndAdvertising();
 }
 
@@ -102,12 +94,6 @@ void BtManager_StopBt() {
     BtConn_DisconnectAll();
 
     k_sleep(K_MSEC(10));
-
-
-    if (DEVICE_IS_UHK80_RIGHT) {
-        LOG_WRN("Disabling HOGP service.");
-        HOGP_Disable();
-    }
 
     BtAdvertise_DisableAdvertisingIcon();
 
@@ -140,14 +126,13 @@ void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* e
     uint32_t expDelay;
     static int8_t aggressiveTries = 0;
 
-    if (BtPair_PairingMode == PairingMode_Oob) {
+    if (BtPair_OobPairingInProgress) {
         return;
     }
 
-    bool weArePairing = BtPair_PairingMode == PairingMode_PairHid;
-    bool weAreSwitching = SelectedHostConnectionId != ConnectionId_Invalid;
+    bool weAreSwitching = Connections_IsSelectedConnecting();
 
-    if (weArePairing || weAreSwitching) {
+    if (weAreSwitching) {
         expDelay = minDelay;
     } else {
         if (wasAggresive) {
@@ -200,10 +185,10 @@ void BtManager_StartScanningAndAdvertising() {
     bool rightShouldAdvertise = DEVICE_IS_UHK80_RIGHT && true;
     bool shouldAdvertise = leftShouldAdvertise || rightShouldAdvertise;
 
-    bool rightShouldScanForPeer = DEVICE_IS_UHK80_RIGHT && BtPair_PairingMode != PairingMode_Oob && !DeviceState_IsTargetConnected(ConnectionTarget_Left);
-    bool rightShouldScanForOob = DEVICE_IS_UHK80_RIGHT && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
-    bool dongleShouldScanForPeer = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode != PairingMode_Oob && Peers[PeerIdRight].conn == NULL;
-    bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_PairingMode == PairingMode_Oob && BtPair_PairingAsCentral;
+    bool rightShouldScanForPeer = DEVICE_IS_UHK80_RIGHT && !BtPair_OobPairingInProgress && !DeviceState_IsTargetConnected(ConnectionTarget_Left);
+    bool rightShouldScanForOob = DEVICE_IS_UHK80_RIGHT && BtPair_OobPairingInProgress && BtPair_PairingAsCentral;
+    bool dongleShouldScanForPeer = DEVICE_IS_UHK_DONGLE && !BtPair_OobPairingInProgress && Peers[PeerIdRight].conn == NULL;
+    bool dongleShouldScanForOob = DEVICE_IS_UHK_DONGLE && BtPair_OobPairingInProgress && BtPair_PairingAsCentral;
     bool shouldScan = rightShouldScanForPeer || rightShouldScanForOob || dongleShouldScanForPeer || dongleShouldScanForOob;
 
     if (shouldAdvertise || shouldScan) {

@@ -6,6 +6,8 @@
 #include "wormhole.h"
 #include "stubs.h"
 #include "hid/transport.h"
+#include "usb_state.h"
+#include "usb_report_updater.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
@@ -61,15 +63,21 @@ static uint32_t lastWakeEvent = 0;
 
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
-#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10*1000
+#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 5*1000
 
 
 static bool isSomeoneAwake() {
 #ifdef __ZEPHYR__
-    connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
-    bool someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    bool someoneAwake = false;
+    if (DEVICE_IS_UHK80_LEFT) {
+        connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
+        someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    }
+    if (DEVICE_IS_UHK80_RIGHT) {
+        someoneAwake = Connections_IsCurrentHostAwake();
+    }
 #else
-    bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
+    bool someoneAwake = UsbState_Awake && UsbState_TransportUp;
 #endif
     return someoneAwake;
 }
@@ -86,10 +94,11 @@ void PowerMode_Update() {
         }
 
         if (newPowerMode == PowerMode_LightSleep && CurrentPowerMode < PowerMode_LightSleep) {
-            if (Timer_GetCurrentTime() - lastWakeEvent >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
+            uint32_t baseTime = MAX(lastWakeEvent, UsbReportUpdater_LastActivityTime);
+            if (Timer_GetCurrentTime() - baseTime >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
                 PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
             } else {
-                EventScheduler_Schedule(lastWakeEvent + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
+                EventScheduler_Schedule(baseTime + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
             }
         }
     }
@@ -192,9 +201,6 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
     }
 }
 
-void PowerMode_WakeHost() {
-    USB_RemoteWakeup();
-}
 
 void PowerMode_Restart() {
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)

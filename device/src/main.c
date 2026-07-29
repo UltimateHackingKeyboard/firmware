@@ -195,6 +195,10 @@ void mainRuntime(void) {
         // 0.75mA
     }
 
+#if DEVICE_IS_UHK80_RIGHT
+    HOGP_Register(); // must be before bt_enable() registers static GATT services
+#endif
+
     bt_enable(NULL); // has to be before InitSettings
 
     // 0.75mA
@@ -253,7 +257,6 @@ void mainRuntime(void) {
 
     // 0.75mA
 
-    HID_SetGamepadActive(false);
     USB_Enable();
 
     // 0.75mA
@@ -344,7 +347,7 @@ int main(void) {
             mode = StateWormhole.restartPowerMode;
             StateWormhole.restartPowerMode = PowerMode_Awake;
         }
-        if (WormCfg->devMode) {
+        if (WormCfg->devMode || StateWormhole.persistStatusBuffer) {
             MacroStatusBuffer_InitFromWormhole();
         } else {
             MacroStatusBuffer_InitNormal();
