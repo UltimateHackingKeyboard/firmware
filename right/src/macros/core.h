@@ -280,6 +280,7 @@
     uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationId, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
     uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
+    uint8_t Macros_ConsumeKeyId(parser_context_t* ctx);
     void Macros_ContinueMacro(void);
     void Macros_Initialize();
     bool Macros_AnyMacroRunning();

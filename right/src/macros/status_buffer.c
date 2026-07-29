@@ -385,6 +385,16 @@ void Macros_ReportWarn(const char* err, const char* arg, const char *argEnd)
     reportError(err, arg, argEnd, NULL);
 }
 
+// stack-light variant of Macros_PrintfWithPos(NULL, "%s", text) - safe to call
+// from shallow-stack threads (e.g. the key scanner's recovery path)
+void Macros_PrintConstant(const char* text)
+{
+    REENTRANCY_GUARD_BEGIN;
+    indicateOut();
+    Macros_SetStatusString(text, NULL);
+    REENTRANCY_GUARD_END;
+}
+
 void Macros_PrintfWithPos(parser_context_t* ctx, const char *fmt, ...)
 {
     REENTRANCY_GUARD_BEGIN;

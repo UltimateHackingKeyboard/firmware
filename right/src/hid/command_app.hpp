@@ -81,6 +81,8 @@ class command_app : public hid::application {
         return app;
     }
 
+    command_session *session() { return session_.has_value() ? &*session_ : nullptr; }
+
   private:
     static hid::report_protocol report_protocol()
     {

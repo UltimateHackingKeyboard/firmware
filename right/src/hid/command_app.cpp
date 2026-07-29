@@ -1,6 +1,9 @@
 #include "command_app.hpp"
 #include <hid/rdf/descriptor.hpp>
 #include <hid/report_protocol.hpp>
+extern "C" {
+#include "logger.h"
+}
 #if __has_include(<zephyr/sys/printk.h>)
     #include <zephyr/sys/printk.h>
 #endif
@@ -28,9 +31,7 @@ void command_session::set_report(hid::report::type type, const std::span<const u
     UsbProtocolHandler(out_buffer_.payload.data(), in_buffer_.payload.data());
     auto err = send_report(&in_buffer_);
     if (err != c2usb::result::ok) {
-#if __has_include(<zephyr/sys/printk.h>)
-        printk("Command response failed to send (%d)\n", std::bit_cast<int>(err));
-#endif
+        c2usb_log("command app failed to send report: %d\n", std::bit_cast<int>(err));
     }
     receive_report(&out_buffer_);
 }

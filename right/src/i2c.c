@@ -1,6 +1,7 @@
 #include "i2c.h"
 #include "crc16.h"
 #include "stubs.h"
+#include "debug.h"
 
 #ifdef __ZEPHYR__
 #include "keyboard/i2c.h"
@@ -63,8 +64,10 @@ extern void I2C0_DriverIRQHandler(void);
 volatile uint32_t I2C_Watchdog = 0;
 void I2C0_IRQHandler(void)
 {
+    ISR_LIFE_START(i2cMain);
     I2C_Watchdog++;
     I2C0_DriverIRQHandler();
+    ISR_LIFE_END(i2cMain);
 }
 #endif
 
