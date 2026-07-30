@@ -127,7 +127,7 @@ static report_sink_t determineSink()
         LOG_WRN("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
         if (!Connections_IsReady(CurrentHostConnectionId)) {
-            return ReportSink_Usb;
+            return ReportSink_BlackHole;
         }
     }
 
@@ -252,6 +252,9 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         TestHooks_CaptureReport(report);
         Hid_KeyboardReportSentCallback(ReportSink_Usb);
         break;
+    case ReportSink_BlackHole:
+        err = -EHOSTUNREACH;
+        break;
     default:
         LOG_WRN("Unhandled and unexpected switch state!\n");
         err = -EHOSTUNREACH;
@@ -324,6 +327,9 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         }
         break;
 #endif
+    case ReportSink_BlackHole:
+        err = -EHOSTUNREACH;
+        break;
     default:
         LOG_WRN("Unhandled and unexpected switch state!\n");
         err = -EHOSTUNREACH;
@@ -390,6 +396,9 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         }
         break;
 #endif
+    case ReportSink_BlackHole:
+        err = -EHOSTUNREACH;
+        break;
     default:
         LOG_WRN("Unhandled and unexpected switch state!\n");
         err = -EHOSTUNREACH;
