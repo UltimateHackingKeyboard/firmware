@@ -1,5 +1,6 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/pm/device.h>
 #include "attributes.h"
 #include "uart_bridge.h"
 #include "messenger.h"
@@ -66,6 +67,9 @@ static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
 struct k_thread thread_data;
 
 uart_state_t bridgeState = {0};
+
+static bool bridgeSuspended = false;
+static bool bridgeTxSlotHeld = false;
 
 /* UART message format:
  * [START_BYTE,crc16,escaped(messengerPacket), ENDBYTE]
@@ -300,6 +304,14 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
     while (1) {
         currentTime = k_uptime_get();
 
+        // Suspended for deep sleep: park until resume kicks us. Pinging or re-arming RX
+        // here would run straight into a pm-suspended UARTE.
+        if (bridgeSuspended) {
+            k_sem_take(&uartState->controlThreadSleeper, K_FOREVER);
+            lastPingSentTime = k_uptime_get();
+            continue;
+        }
+
         // If a GPIO edge woke us out of RX-sleep, bring RX back before doing anything and
         // hold off re-sleeping, so the frame that follows the wake byte lands on live RX.
         if (UartLink_IsAsleep(&uartState->core)) {
@@ -448,5 +460,53 @@ void InitUartBridge(void) {
 
 
 void UartBridge_Enable() {
+    // While suspended, ignore re-arm requests - in particular the ReenableUart event that
+    // our own uart_rx_disable schedules - so RX is never armed on a suspended UARTE.
+    if (bridgeSuspended) {
+        return;
+    }
     UartLink_Enable(&bridgeState.core);
+}
+
+void UartBridge_Suspend(void) {
+    uart_state_t *uartState = &bridgeState;
+    if (uartState->core.device == NULL || bridgeSuspended) {
+        return;
+    }
+
+    bridgeSuspended = true;
+
+    // Every send takes the TX slot before uart_tx and only the UART_TX_DONE callback
+    // returns it, so taking it here both waits out any in-flight TX and blocks new ones -
+    // the control thread simply parks on its next send. On timeout we hold no slot and
+    // must not hand one back on resume.
+    bridgeTxSlotHeld = (k_sem_take(&uartState->core.txControlBusy, K_MSEC(200)) == 0);
+
+    // The disable completes asynchronously in the UART_RX_DISABLED callback; suspending
+    // while RX is still armed asserts in the driver.
+    uart_rx_disable(uartState->core.device);
+    k_msleep(20);
+
+    pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_SUSPEND);
+
+    Connections_SetStateAsync(uartState->connectionId, ConnectionState_Disconnected);
+}
+
+void UartBridge_Resume(void) {
+    uart_state_t *uartState = &bridgeState;
+    if (uartState->core.device == NULL || !bridgeSuspended) {
+        return;
+    }
+
+    pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_RESUME);
+
+    bridgeSuspended = false;
+    UartBridge_Enable();
+
+    if (bridgeTxSlotHeld) {
+        k_sem_give(&uartState->core.txControlBusy);
+        bridgeTxSlotHeld = false;
+    }
+
+    wakeControlThread(uartState);
 }

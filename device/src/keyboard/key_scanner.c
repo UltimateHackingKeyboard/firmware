@@ -135,7 +135,7 @@ static sfjl_scan_result_t scanSfjl(bool fullScan) {
 
 static sfjl_scan_result_t scanKeysOnce(sfjl_scan_result_t defaultResult, bool fullScan) {
     // In the lock mode, do both scans
-    if (CurrentPowerMode < PowerMode_SfjlSleep) {
+    if (CurrentPowerMode < PowerMode_DeepSleep) {
         scanAllKeys();
     }
 

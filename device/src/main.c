@@ -338,15 +338,9 @@ void mainRuntime(void) {
 }
 
 int main(void) {
-    power_mode_t mode = PowerMode_Awake;
-
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        printk("Wormhole is open, reboot to power mode %d %d\n", StateWormhole.rebootToPowerMode, StateWormhole.restartPowerMode);
-        if (StateWormhole.rebootToPowerMode) {
-            mode = StateWormhole.restartPowerMode;
-            StateWormhole.restartPowerMode = PowerMode_Awake;
-        }
+        printk("Wormhole is open\n");
         if (WormCfg->devMode || StateWormhole.persistStatusBuffer) {
             MacroStatusBuffer_InitFromWormhole();
         } else {
@@ -360,14 +354,6 @@ int main(void) {
         StateWormhole_Clean();
         StateWormhole_Open();
     }
-
-    if (mode != PowerMode_Awake) {
-        LogU("Restarted, sinking into mode %d!\n", mode);
-        k_sleep(K_MSEC(1000));
-        PowerMode_RestartedTo(mode);
-    }
-
-    LogU("Going to resume!\n");
 
     mainRuntime();
 }

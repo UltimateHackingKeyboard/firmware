@@ -34,7 +34,7 @@
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_PowerModeUpdate,
-        EventSchedulerEvent_PowerModeRestart,
+        EventSchedulerEvent_EnterDeepSleep,
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,
         EventSchedulerEvent_BtStartScanningAndAdvertising,

@@ -22,4 +22,10 @@
     void UartBridge_Enable();
     void InitUartBridge(void);
 
+    // Take the bridge down for deep sleep: drain any in-flight TX, tear RX down and
+    // pm-suspend the UARTE, which otherwise holds HFCLK for as long as RX is armed.
+    // No-op when this routing has no bridge uart.
+    void UartBridge_Suspend(void);
+    void UartBridge_Resume(void);
+
 #endif // __UART_H__

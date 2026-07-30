@@ -490,7 +490,7 @@ static void applyOtherAction(other_action_t actionSubtype)
             PowerMode_ActivateMode(PowerMode_Lock, false, false, "lock key action");
             break;
         case OtherAction_Sleep:
-            PowerMode_ActivateMode(PowerMode_SfjlSleep, false, false, "sleep key action");
+            PowerMode_ActivateMode(PowerMode_DeepSleep, false, false, "sleep key action");
             break;
     }
 }

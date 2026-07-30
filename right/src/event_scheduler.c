@@ -206,8 +206,10 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PowerModeUpdate:
             PowerMode_Update();
             break;
-        case EventSchedulerEvent_PowerModeRestart:
-            PowerMode_Restart();
+        case EventSchedulerEvent_EnterDeepSleep:
+#ifdef __ZEPHYR__
+            PowerMode_EnterDeepSleep();
+#endif
             break;
         case EventSchedulerEvent_EndBtPairing:
             BtPair_EndPairing(false, "Pairing timeout");
