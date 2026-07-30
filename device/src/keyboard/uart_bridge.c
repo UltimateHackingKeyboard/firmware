@@ -90,10 +90,16 @@ static void bridgeOnWakeCallback(void *arg) {
     wakeControlThread(uartState);
 }
 
+static uint32_t bridgeHoldoffMs(uart_state_t *uartState) {
+    return Connections_IsReady(uartState->connectionId)
+        ? UART_LP_IDLE_HOLDOFF_MS
+        : UART_LP_DISCONNECTED_HOLDOFF_MS;
+}
+
 static bool bridgeCanSleep(void *arg) {
     uart_state_t *uartState = (uart_state_t *)arg;
     return uartState->txState == UartTxState_Idle && uartState->rxState == UartRxState_Idle
-        && (k_uptime_get() - uartState->lastLinkActivity) >= UART_LP_IDLE_HOLDOFF_MS;
+        && (k_uptime_get() - uartState->lastLinkActivity) >= bridgeHoldoffMs(uartState);
 }
 
 static void bridgeReceiveBytes(void *state, const uint8_t* data, uint16_t len) {
@@ -371,7 +377,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
 
         currentTime = k_uptime_get();
 
-        uint32_t sleepEligibleAt = uartState->lastLinkActivity + UART_LP_IDLE_HOLDOFF_MS;
+        uint32_t sleepEligibleAt = uartState->lastLinkActivity + bridgeHoldoffMs(uartState);
         bool idle = uartState->txState == UartTxState_Idle && uartState->rxState == UartRxState_Idle;
         if (idle && currentTime < sleepEligibleAt) {
             wakeTime = MIN(wakeTime, sleepEligibleAt);

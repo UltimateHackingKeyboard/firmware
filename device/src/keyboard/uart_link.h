@@ -33,7 +33,8 @@
 
     // How long the link stays awake after any activity, so that the receiver doesn't
     // re-sleep in the wake-byte -> frame gap.
-    #define UART_LP_IDLE_HOLDOFF_MS 10
+    #define UART_LP_IDLE_HOLDOFF_MS 1000
+    #define UART_LP_DISCONNECTED_HOLDOFF_MS 0
 
 // Typedefs:
 
