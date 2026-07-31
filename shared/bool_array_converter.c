@@ -24,3 +24,8 @@ void BoolBitToBytes(bool srcVal, uint8_t srcPos, uint8_t *dstBytes)
     uint8_t resultByte = (dstBytes[srcPos/8] & (~bitMask)) | resultBit;
     dstBytes[srcPos/8] = resultByte;
 }
+
+bool BoolBitFromBytes(uint8_t pos, uint8_t *bytes)
+{
+    return !!(bytes[pos/8] & (1 << (pos % 8)));
+}
