@@ -127,7 +127,11 @@ static report_sink_t determineSink()
         LOG_WRN("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
         if (!Connections_IsReady(CurrentHostConnectionId)) {
-            return ReportSink_BlackHole;
+            if (connectionType == ConnectionType_UsbHidRight) {
+                return ReportSink_Usb;
+            } else {
+                return ReportSink_BlackHole;
+            }
         }
     }
 
