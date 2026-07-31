@@ -1212,7 +1212,6 @@ void BtConn_ReserveConnections() {
         BtConn_DisconnectAllUnidentified();
 
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
-        bool selectedConnectionIsBleHid = Connections_Type(CurrentHostConnectionId) == ConnectionType_BtHid;
 
         if (unusedConnectionCount == 0) {
             disconnectOldestHost();
