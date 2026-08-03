@@ -91,6 +91,8 @@ uint32_t Bt_LastConnectedTime = 0;
 
 static void disconnectAllHids();
 static void auth_cancel(struct bt_conn *conn);
+static void watchSecurity(struct bt_conn* conn);
+static void securityEstablished(struct bt_conn* conn);
 
 // BLE APIs that allocate HCI/ATT buffers (data length update, MTU exchange,
 // GATT discovery, security elevation) must not run directly in connection
@@ -366,13 +368,10 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
              }
             break;
         case LatencyMode_Idle: {
-                // ~40-60ms with slave latency 6 is ~6x fewer radio events than the active
-                // ~11ms interval, yet a keypress still goes out at the next event, because
-                // slave latency only skips *empty* ones. (1+lat)*max*2 = 840ms stays under
-                // the 1000ms supervision timeout.
+                // i.e., at most 240ms windows
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     32, 48,
-                    6,
+                    3,
                     100
                 );
                 setLatency(conn, &conn_params);
@@ -680,6 +679,8 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     LOG_INF("Disconnected from %s, reason %u", GetPeerStringByConn(conn), reason);
 
+    securityEstablished(conn);
+
     if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
         NusServer_Disconnected();
     }
@@ -782,6 +783,7 @@ static void connectedFlow(struct bt_conn *conn) {
     } else {
         if (isWanted(conn, connectionId, connectionType)) {
             bt_conn_set_security(conn, BT_SECURITY_L4);
+            watchSecurity(conn);
             // advertising/scanning needs to be started only after peers are assigned :-/
         } else {
             youAreNotWanted(conn);
@@ -836,27 +838,82 @@ static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id
     k_work_submit(&btDeferredWork);
 }
 
-static bool pairingInProgress(struct bt_conn *conn) {
-    return conn == auth_conn || BtPair_OobPairingInProgress;
+// A peer can connect, ignore our security request and simply sit there. It can read
+// nothing (every characteristic requires authentication) but it holds a peripheral slot
+// and keeps the radio busy, and no callback ever tells us: no pairing starts, so
+// pairing_failed does not fire, and no security change happens, so security_changed does
+// not either. The stack will not time it out for us - bt_conn_set_security only emits an
+// SMP Security Request, and smp_send_security_req deliberately does not arm the SMP timer
+// ("SMP timer is not restarted for SecRequest"). So we have to watch it ourselves.
+#define SECURITY_ESTABLISHMENT_TIMEOUT 30000
+
+static struct bt_conn* pendingSecurityConns[PeerCount];
+static uint32_t pendingSecurityDeadlines[PeerCount];
+
+static void watchSecurity(struct bt_conn* conn) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        if (pendingSecurityConns[i] == NULL || pendingSecurityConns[i] == conn) {
+            pendingSecurityConns[i] = conn;
+            pendingSecurityDeadlines[i] = Timer_GetCurrentTime() + SECURITY_ESTABLISHMENT_TIMEOUT;
+            EventScheduler_Reschedule(pendingSecurityDeadlines[i], EventSchedulerEvent_CheckConnectionSecurity, "security establishment timeout");
+            return;
+        }
+    }
+}
+
+static void securityEstablished(struct bt_conn* conn) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        if (pendingSecurityConns[i] == conn) {
+            pendingSecurityConns[i] = NULL;
+        }
+    }
+}
+
+void BtConn_CheckConnectionSecurity(void) {
+    uint32_t now = Timer_GetCurrentTime();
+
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        struct bt_conn* conn = pendingSecurityConns[i];
+        if (conn == NULL) {
+            continue;
+        }
+
+        struct bt_conn_info info;
+        if (bt_conn_get_info(conn, &info) != 0 || info.state != BT_CONN_STATE_CONNECTED) {
+            pendingSecurityConns[i] = NULL;
+            continue;
+        }
+
+        if (info.security.level >= BT_SECURITY_L4) {
+            pendingSecurityConns[i] = NULL;
+            continue;
+        }
+
+        if (now >= pendingSecurityDeadlines[i]) {
+            LOG_WRN("No security established within timeout - disconnecting %s", GetPeerStringByConn(conn));
+            pendingSecurityConns[i] = NULL;
+            bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
+        } else {
+            EventScheduler_Reschedule(pendingSecurityDeadlines[i], EventSchedulerEvent_CheckConnectionSecurity, "security establishment timeout");
+        }
+    }
 }
 
 static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
     BT_TRACE_AND_ASSERT("bc3");
 
+    // Report only - do NOT disconnect here. This fires on every security failure, including
+    // bonded reconnects where no pairing was attempted (smp.c:3112), and it runs just before
+    // smp_pairing_complete's automatic bt_smp_start_security retry. Disconnecting here
+    // suppresses that retry, so transient failures that used to self-heal become full
+    // reconnect cycles. Enforcement belongs to CONFIG_BT_SMP_SC_ONLY plus the attribute
+    // permissions; a genuinely failed pairing is dropped in pairing_failed instead.
     if (err || level < BT_SECURITY_L4) {
-        if (pairingInProgress(conn)) {
-            LOG_WRN("Bt security failed: %s, level %u, err %d - pairing in progress, keeping", GetPeerStringByConn(conn), level, err);
-        } else {
-            struct bt_conn_info info;
-            int err = bt_conn_get_info(conn, &info);
-            if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
-                uint8_t reason = err == BT_SECURITY_ERR_PIN_OR_KEY_MISSING ? BT_REASON_PERMANENT : BT_REASON_TEMPORARY;
-                LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting with reason %u", GetPeerStringByConn(conn), level, err, reason);
-                bt_conn_disconnect(conn, reason);
-            }
-        }
+        LOG_WRN("Bt security not established: %s, level %u, err %d", GetPeerStringByConn(conn), level, err);
         return;
     }
+
+    securityEstablished(conn);
 
 
     // Ignore connection that is being paired. At this point, the central is
@@ -1098,10 +1155,18 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         PairingScreen_Feedback("Pairing failed!");
     }
 
-    // TODO: should we here?
-    //safeDisconnect(conn, BT_REASON_PERMANENT);
+    LOG_WRN("Pairing failed: %s, reason %d - disconnecting", GetPeerStringByConn(conn), reason);
 
-    LOG_WRN("Pairing failed: %s, reason %d", GetPeerStringByConn(conn), reason);
+    // Unlike security_changed, this only fires when a pairing procedure was actually
+    // underway (guarded by SMP_FLAG_PAIRING), so it cannot catch a bonded reconnect that
+    // merely failed to encrypt. A pairing that failed will not succeed by itself - with
+    // SC_ONLY the peer has been told why - so drop the link rather than leave it parked
+    // at the aggressive interval. PIN_OR_KEY_MISSING means our bond is stale and every
+    // retry fails identically, so report that as permanent.
+    uint8_t disconnectReason = reason == BT_SECURITY_ERR_PIN_OR_KEY_MISSING
+        ? BT_REASON_PERMANENT
+        : BT_REASON_TEMPORARY;
+    bt_conn_disconnect(conn, disconnectReason);
 }
 
 

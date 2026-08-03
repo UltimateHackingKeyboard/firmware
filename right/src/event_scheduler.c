@@ -270,6 +270,11 @@ static void processEvt(event_scheduler_event_t evt)
             Connections_UpdateStates();
 #endif
             break;
+        case EventSchedulerEvent_CheckConnectionSecurity:
+#ifdef __ZEPHYR__
+            BtConn_CheckConnectionSecurity();
+#endif
+            break;
         default:
             return;
     }
