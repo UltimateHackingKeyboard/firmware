@@ -546,17 +546,18 @@ static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connect
     bool isSelectedConnection = BtAddrEq(addr, &HostConnection(CurrentHostConnectionId)->bleAddress);
     bool isSelectedSlotEmpty = Connections_Type(CurrentHostConnectionId) == ConnectionType_Empty;
     bool isPeerConnection = connectionType == ConnectionType_NusLeft || connectionType == ConnectionType_NusRight;
+    bool isOobPairingPeer = BtPair_OobPairingInProgress && BtAddrEq(addr, &BtPair_GetRemoteOob()->addr);
     bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !shouldReserveForCurrentConnection();
 
     bool result = false;
     if (Cfg.Bt_AlwaysAdvertise) {
-        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty || weHaveSlotToSpare;
+        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty || isOobPairingPeer || weHaveSlotToSpare;
     } else {
-        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty;
+        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty || isOobPairingPeer;
     }
 
     if (!result) {
-        LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (selected %d, this %d (%d)), isPeer: %d, isEmptySlot: %d", weHaveSlotToSpare, isSelectedConnection, CurrentHostConnectionId, connectionId, connectionType, isPeerConnection, isSelectedSlotEmpty);
+        LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (selected %d, this %d (%d)), isPeer: %d, isEmptySlot: %d, isOobPeer: %d", weHaveSlotToSpare, isSelectedConnection, CurrentHostConnectionId, connectionId, connectionType, isPeerConnection, isSelectedSlotEmpty, isOobPairingPeer);
     }
     return result;
 }
@@ -1276,7 +1277,6 @@ void BtConn_ReserveConnections() {
         BtConn_DisconnectAllUnidentified();
 
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
-        bool selectedConnectionIsBleHid = Connections_Type(CurrentHostConnectionId) == ConnectionType_BtHid;
 
         if (unusedConnectionCount == 0) {
             disconnectOldestHost();
