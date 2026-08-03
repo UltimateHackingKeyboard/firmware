@@ -52,6 +52,7 @@
         EventSchedulerEvent_CheckBleVsUart,
         EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_RollTargetEllipsis,
+        EventSchedulerEvent_CheckConnectionSecurity,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 
