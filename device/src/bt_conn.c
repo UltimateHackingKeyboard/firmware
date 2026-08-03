@@ -368,13 +368,10 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
              }
             break;
         case LatencyMode_Idle: {
-                // ~40-60ms with slave latency 6 is ~6x fewer radio events than the active
-                // ~11ms interval, yet a keypress still goes out at the next event, because
-                // slave latency only skips *empty* ones. (1+lat)*max*2 = 840ms stays under
-                // the 1000ms supervision timeout.
+                // i.e., at most 240ms windows
                 const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
                     32, 48,
-                    6,
+                    3,
                     100
                 );
                 setLatency(conn, &conn_params);
