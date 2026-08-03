@@ -192,6 +192,8 @@ COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set battery.chargeLimit { full | optimizeHealth }
 COMMAND = set bluetooth.enabled BOOL
+COMMAND = set bluetooth.alwaysAdvertise BOOL
+COMMAND = set bluetooth.keepConnectionsAlive BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 COMMAND = &macroArg.<macro argument index (INT)>
 CONDITION = <condition>
@@ -319,7 +321,6 @@ COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
-COMMAND = set bluetooth.alwaysAdvertise BOOL
 COMMAND = set devMode BOOL
 COMMAND = set log.sink.usb BOOL
 COMMAND = set log.sink.oled BOOL
@@ -764,6 +765,10 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
   - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
   - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
   - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
+
+- bluetooth:
+  - `set bluetooth.alwaysAdvertise BOOL` makes uhk keep advertising even when the current host is already connected, as long as there is a free peripheral connection slot. This lets other configured hosts (dongles, ble hids) connect in the background, so that switching to them later is instantaneous. Default is off. Implies `bluetooth.keepConnectionsAlive`.
+  - `set bluetooth.keepConnectionsAlive BOOL` keeps the old host connected when you switch away from it. By default, switching hosts disconnects the previous ble host or dongle in order to free its peripheral connection slot for the new host. Default is off.
 
 - modifier layer triggers:
   - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
