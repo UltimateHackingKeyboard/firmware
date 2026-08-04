@@ -97,6 +97,7 @@
 
         // bluetooth
         bool Bt_AlwaysAdvertise;
+        bool Bt_KeepConnectionsAlive;
         bool Bt_DirectedAdvertisingAllowed;
         bool Bt_Enabled;
 
