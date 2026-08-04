@@ -543,6 +543,10 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
     }
 
     DeviceState_Update(Connections_Target(connectionId));
+
+    // TODO: revise this after switchover merge
+    // The active host may have changed: give it the low-latency interval and relax the rest.
+    BtConn_UpdateConnectionLatencies();
 }
 
 bool Connections_IsCurrentHostAwake(void) {

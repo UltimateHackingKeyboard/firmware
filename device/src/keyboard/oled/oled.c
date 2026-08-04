@@ -86,6 +86,7 @@ static void setPositionTo(uint16_t x, uint16_t y, uint16_t lastWrittenPixelX, ui
 }
 
 static bool oledNeedsRedraw = false;
+static bool lastOledNeedsRedraw = false;
 static k_tid_t oledThreadId = 0;
 
 static widget_t* currentScreen = NULL;
@@ -186,6 +187,32 @@ static void setOledBrightness(uint8_t brightness) {
     lastBrightness = brightness;
 }
 
+// Cutting oled_en powers the panel and its charge pump down (~0.3mA); merely turning the
+// display off keeps them supplied. The controller loses its state, so bringing it back up
+// repeats the initial configuration and redraws.
+static void powerOled(bool up) {
+    if (up) {
+        gpio_pin_set_dt(&oledEn, true);
+        gpio_pin_set_dt(&oledResetDt, true);
+
+        k_mutex_lock(&SpiMutex, K_FOREVER);
+        setOledBrightness(0);
+        oledCommand1(0, OledCommand_SetScanDirectionDown);
+        k_mutex_unlock(&SpiMutex);
+
+        performScreenShift();
+        currentScreen->draw(currentScreen, OledBuffer);
+        forceRedraw();
+
+        lastOledNeedsRedraw = true;
+    } else {
+        gpio_pin_set_dt(&oledEn, false);
+        gpio_pin_set_dt(&oledResetDt, false);
+        gpio_pin_set_dt(&oledA0Dt, false);
+        gpio_pin_set_dt(&oledCsDt, false);
+    }
+}
+
 static void adjustBrightness() {
     uint8_t targetBrightness = computeBrightness();
 
@@ -260,22 +287,17 @@ static void diffUpdate() {
 }
 
 void sleepDisplay() {
+    powerOled(false);
+    Spi_SetDisplayIdle(true);
     while (computeBrightness() == 0 && lastBrightness == 0) {
         k_sleep(K_FOREVER);
     }
+    Spi_SetDisplayIdle(false);
+    powerOled(true);
 }
 
 void oledUpdater() {
-    k_mutex_lock(&SpiMutex, K_FOREVER);
-    setOledBrightness(0);
-    oledCommand1(0, OledCommand_SetScanDirectionDown);
-    k_mutex_unlock(&SpiMutex);
-
-    performScreenShift();
-    currentScreen->draw(currentScreen, OledBuffer);
-    forceRedraw();
-
-    bool lastOledNeedsRedraw = true;
+    powerOled(true);
 
     while (true) {
         {
@@ -293,7 +315,9 @@ void oledUpdater() {
             k_mutex_unlock(&SpiMutex);
         }
 
-        if (!oledNeedsRedraw && lastBrightness == computeBrightness()) {
+        // lastBrightness > 0: at zero brightness we must fall through to sleepDisplay
+        // instead of parking here, which used to leave the panel powered.
+        if (!oledNeedsRedraw && lastBrightness == computeBrightness() && lastBrightness > 0) {
             k_sleep(K_FOREVER);
         } else {
             k_sleep(K_MSEC(OLED_FADE_TIME / (255/OLED_FADE_STEP)));

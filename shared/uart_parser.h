@@ -29,6 +29,8 @@
         UartControlByte_Ack = 0b01010111,
         UartControlByte_Nack = 0b01011000,
         UartControlByte_Ping = 0b01011001,
+        // Sacrificial byte sent to wake a sleeping (RX-disabled) peer.
+        UartControlByte_Wake = 0b01011010,
     } uart_control_byte_t;
 
     typedef struct {

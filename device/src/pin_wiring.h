@@ -40,6 +40,7 @@
 // Functions:
 
     void PinWiring_UninitShell();
+    void PinWiring_SetShellUartEnabled(bool enabled);
     void PinWiring_SelectRouting();
     void PinWiring_Suspend();
     void PinWiring_ConfigureRouting();

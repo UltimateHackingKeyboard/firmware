@@ -252,6 +252,10 @@
         uart-modules-sleep = <&uart2_sleep>;
         i2c-modules-default = <&i2c2_default>;
         i2c-modules-sleep = <&i2c2_sleep>;
+
+        /* Bridge UART RXD as a plain GPIO, used as a wake-on-edge source while the
+         * bridge is RX-disabled for low power (matches uart1_default RX = P0.11). */
+        bridge-rx-gpios = <&gpio0 11 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
     };
 
     aliases {

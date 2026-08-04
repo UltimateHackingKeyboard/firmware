@@ -30,7 +30,7 @@
 
 // Thread definitions
 
-#define THREAD_STACK_SIZE 1000
+#define THREAD_STACK_SIZE 2048
 #define THREAD_PRIORITY -1
 
 #define USE_QUICK_SCAN true
@@ -135,7 +135,7 @@ static sfjl_scan_result_t scanSfjl(bool fullScan) {
 
 static sfjl_scan_result_t scanKeysOnce(sfjl_scan_result_t defaultResult, bool fullScan) {
     // In the lock mode, do both scans
-    if (CurrentPowerMode < PowerMode_SfjlSleep) {
+    if (CurrentPowerMode < PowerMode_DeepSleep) {
         scanAllKeys();
     }
 
@@ -344,6 +344,8 @@ void InitKeyScanner_Min(void) {
     }
 }
 
+static void InitBridgeStress(void);
+
 void InitKeyScanner(void)
 {
     InitKeyScanner_Min();
@@ -356,6 +358,47 @@ void InitKeyScanner(void)
             THREAD_PRIORITY, 0, K_NO_WAIT
             );
     k_thread_name_set(&thread_data, "key_scanner");
+
+    InitBridgeStress();
 }
 
+// TEMP - bridge stress harness, remove after the low-power uart is validated.
+// On the left half, pushes an all-zero LeftHalfKeyStates to the right at roughly typing
+// cadence, so the left->right direction (where keys were reported lost) is exercised
+// without anyone holding a key down. The payload is all-zero on purpose: it keeps the
+// exchange realistic while never injecting a phantom keypress.
+#define UART_BRIDGE_STRESS_TEST 0
 
+#if UART_BRIDGE_STRESS_TEST
+#define STRESS_INTERVAL_MS 131
+
+static K_THREAD_STACK_DEFINE(stress_stack_area, 2048);
+static struct k_thread stress_thread_data;
+
+static void bridgeStress(void *a1, void *a2, void *a3) {
+    ARG_UNUSED(a1); ARG_UNUSED(a2); ARG_UNUSED(a3);
+    uint8_t len = MAX_KEY_COUNT_PER_MODULE/8+1;
+    uint8_t buf[len];
+    memset(buf, 0, len);
+    while (true) {
+        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, buf, len);
+        k_msleep(STRESS_INTERVAL_MS);
+    }
+}
+
+static void InitBridgeStress(void) {
+    if (!DEVICE_IS_UHK80_LEFT) {
+        return;
+    }
+    k_thread_create(
+            &stress_thread_data, stress_stack_area,
+            K_THREAD_STACK_SIZEOF(stress_stack_area),
+            bridgeStress,
+            NULL, NULL, NULL,
+            THREAD_PRIORITY, 0, K_NO_WAIT
+            );
+    k_thread_name_set(&stress_thread_data, "bridge_stress");
+}
+#else
+static void InitBridgeStress(void) {}
+#endif

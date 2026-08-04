@@ -165,9 +165,6 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
-                // LOG_INF("Going to shut down. Measured voltage %d, computed voltage %d, powered %d\n", rawVoltage, batteryState->batteryVoltage, batteryState->powered);
-                // PowerMode_ActivateMode(PowerMode_AutoShutDown, false, false);
-                // break;
             case BatteryManagerAutomatonState_Powersaving:
                 stateChanged |= setPowersaving(true);
                 break;

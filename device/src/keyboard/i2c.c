@@ -1,5 +1,6 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/sys/printk.h>
+#include <zephyr/pm/device.h>
 #include "device.h"
 #include "i2c_compatibility.h"
 #include "timer.h"
@@ -10,6 +11,10 @@
 #include "keyboard/i2c.h"
 #include "peripherals/merge_sensor.h"
 #include "pin_wiring.h"
+#include "slave_drivers/kboot_driver.h"
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(I2c, LOG_LEVEL_INF);
 
 // Thread definitions
 
@@ -78,6 +83,19 @@ status_t processMasterTransfer() {
     return kStatus_Fail;
 }
 
+static void setBusAwake(bool awake) {
+    int err = pm_device_action_run(i2c0_dev, awake ? PM_DEVICE_ACTION_RESUME : PM_DEVICE_ACTION_SUSPEND);
+    if (err != 0) {
+        LOG_ERR("Failed to %s I2C bus\n", awake ? "resume" : "suspend");
+    }
+}
+
+static bool shouldSleep() {
+    bool moduleConnected = ModuleConnectionStates[UhkModuleDriverId_RightModule].moduleId != 0;
+    bool kbootActive = KbootDriverState.command != KbootCommand_Idle;
+    return !moduleConnected && !kbootActive;
+}
+
 void i2cPoller() {
     InitSlaveScheduler();
 
@@ -87,7 +105,13 @@ void i2cPoller() {
         SlaveSchedulerCallback(lastStatus);
 
         if (masterTransfer->direction == kI2C_Write) {
-            k_msleep(1);
+            if (shouldSleep()) {
+                setBusAwake(false);
+                k_msleep(20);
+                setBusAwake(true);
+            } else {
+                k_msleep(1);
+            }
         }
 
         if (masterTransferInProgress) {

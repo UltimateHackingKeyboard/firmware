@@ -25,8 +25,6 @@
         bool wasReboot;
         trace_buffer_t traceBuffer;
 
-        bool rebootToPowerMode;
-        power_mode_t restartPowerMode;
 
         bool persistStatusBuffer;
         macro_status_buffer_t statusBuffer;

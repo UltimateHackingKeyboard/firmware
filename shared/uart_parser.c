@@ -125,6 +125,14 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
             uartState->rxPosition = 0;
             uartState->rxTooLong = false;
             break;
+        case UartControlByte_Wake:
+            // Carries no meaning and must be swallowed silently - reporting it as
+            // Unexpected would tear RX down exactly when the frame behind it is arriving.
+            // It is escaped on TX, so an unescaped one here is never payload.
+            if (uartState->escaping) {
+                goto msg_byte;
+            }
+            break;
 msg_byte:
         default:
             uartState->escaping = false;
@@ -167,6 +175,7 @@ static void escapeAndAppend(uart_parser_t *uartState, uint8_t byte) {
         case UartControlByte_Ack:
         case UartControlByte_Nack:
         case UartControlByte_Ping:
+        case UartControlByte_Wake:
             appendByte(uartState, UartControlByte_Escape);
             appendByte(uartState, byte);
             break;

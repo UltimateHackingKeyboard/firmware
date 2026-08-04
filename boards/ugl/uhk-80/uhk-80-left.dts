@@ -202,6 +202,10 @@
 
     zephyr,user {
         io-channels = <&adc 1>;
+
+        /* Bridge UART RXD as a plain GPIO, used as a wake-on-edge source while the
+         * bridge is RX-disabled for low power (matches uart1_default RX = P1.8). */
+        bridge-rx-gpios = <&gpio1 8 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
     };
 
     aliases {

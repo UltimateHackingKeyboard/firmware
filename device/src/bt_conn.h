@@ -51,6 +51,7 @@
 typedef enum {
     LatencyMode_NUS,
     LatencyMode_BleHid,
+    LatencyMode_Idle,
 } latency_mode_t;
 
 // Variables:
@@ -73,6 +74,9 @@ typedef enum {
     void BtConn_DisconnectAll();
     void BtConn_DisconnectOne(connection_id_t connectionId);
 
+    void BtConn_UpdateConnectionLatencies(void);
+
+    void BtConn_CheckConnectionSecurity(void);
     void BtConn_ReserveConnections();
     void Bt_SetConnectionConfigured(struct bt_conn* conn);
     uint8_t BtConn_UnusedPeripheralConnectionCount();

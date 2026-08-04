@@ -325,7 +325,6 @@ COMMAND = set devMode BOOL
 COMMAND = set log.sink.usb BOOL
 COMMAND = set log.sink.oled BOOL
 COMMAND = set maxVoltage INT
-COMMAND = powerMode autoShutdown
 COMMAND = testLeakage
 COMMAND = zephyr ZEPHYR_COMMAND
 COMMAND = testSuite [ <moduleName (STRING)> | all ] [ <testName (STRING)> ]
@@ -368,6 +367,7 @@ COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
 COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
 COMMAND = setEmergencyKey KEYID
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
+COMMAND = powerMode [toggle] { shutdown | shutDown | autoShutdown }
 ```
 
 ### Uncategorized commands
@@ -383,10 +383,9 @@ COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
-- `powerMode [toggle] { wake | lock | sleep | shutdown }`
+- `powerMode [toggle] { wake | lock | sleep }`
   - `lock` disables all leds, disables USB output. Connections remain active. Device can be woken up by either pressing s+f and j+l keys, or by another macro call. This mode is experimental.
-  - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
-  - `shutdown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable. It is not designed to be used directly.
+  - `sleep` is the deepest sleep mode. Bluetooth and the left-right link are shut down, and the key matrix is scanned at a low rate. Each half is woken separately, by pressing s+f or j+l keys on it.
   - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
   - Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
