@@ -237,6 +237,24 @@ void PinWiring_UninitShell(void) {
     uninitUart(&uart0);
 }
 
+// The debug UART keeps HFCLK running (~0.6mA of the idle draw) for as long as its RX is
+// armed, so it has to be torn down at the driver level, not just silenced.
+void PinWiring_SetShellUartEnabled(bool enabled) {
+    const pin_wiring_dev_t* dev = PinWiringConfig->device_uart_shell;
+    if (dev == NULL) {
+        return;
+    }
+
+    if (enabled) {
+        resumeDevice(dev);
+        ShellUartTransport_Reinit();
+    } else {
+        ShellUartTransport_Uninit();
+        uninitUart(dev);
+        suspendDevice(dev);
+    }
+}
+
 void PinWiring_Suspend(void) {
     suspendDevice(&uart0);
     suspendDevice(&uart1);

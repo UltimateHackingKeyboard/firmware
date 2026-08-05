@@ -206,8 +206,10 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PowerModeUpdate:
             PowerMode_Update();
             break;
-        case EventSchedulerEvent_PowerModeRestart:
-            PowerMode_Restart();
+        case EventSchedulerEvent_EnterDeepSleep:
+#ifdef __ZEPHYR__
+            PowerMode_EnterDeepSleep();
+#endif
             break;
         case EventSchedulerEvent_EndBtPairing:
             BtPair_EndPairing(false, "Pairing timeout");
@@ -258,14 +260,19 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_SendUsbReports:
             EventVector_Set(EventVector_SendUsbReports);
             break;
-        case EventSchedulerEvent_CheckLeftBleVsUart:
-#if DEVICE_IS_UHK80_LEFT
-            BtManager_CheckLeftBleVsUart();
+        case EventSchedulerEvent_CheckBleVsUart:
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
+            BtManager_CheckBleVsUart();
 #endif
             break;
         case EventSchedulerEvent_ConnectionsUpdateState:
 #ifdef __ZEPHYR__
             Connections_UpdateStates();
+#endif
+            break;
+        case EventSchedulerEvent_CheckConnectionSecurity:
+#ifdef __ZEPHYR__
+            BtConn_CheckConnectionSecurity();
 #endif
             break;
         default:

@@ -282,6 +282,7 @@ const config_t DefaultCfg = (config_t){
 #endif
         .Bt_Enabled = true,
         .Bt_AlwaysAdvertise = false,
+        .Bt_KeepConnectionsAlive = false,
         .Bt_MaxPeripheralConnections = 3,
         .Bt_MinAdvertisingDelay = 250,
         .Bt_DirectedAdvertisingAllowed = false,

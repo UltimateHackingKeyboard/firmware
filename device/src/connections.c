@@ -454,6 +454,18 @@ static void setDongleToStandby(connection_id_t connectionId) {
     }
 }
 
+static void disconnectOldHost(connection_id_t oldConnectionId) {
+    switch (Connections_Type(oldConnectionId)) {
+        case ConnectionType_BtHid:
+        case ConnectionType_NusDongle:
+            LOG_INF("Switchover: disconnecting the old host %d", oldConnectionId);
+            BtConn_DisconnectOne(oldConnectionId);
+            break;
+        default:
+            break;
+    }
+}
+
 static void updateLastConnection(connection_id_t lastConnId, connection_id_t newConnId) {
     if (
             LastHostConnectionId != lastConnId
@@ -477,7 +489,12 @@ static connection_id_t findReadySwitchoverHost(void) {
 
 static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
     if (connectionId != CurrentHostConnectionId) {
-        setDongleToStandby(CurrentHostConnectionId);
+        if (Cfg.Bt_KeepConnectionsAlive || Cfg.Bt_AlwaysAdvertise) {
+            setDongleToStandby(CurrentHostConnectionId);
+        } else {
+            // The old host occupies a peripheral slot that the new host may need.
+            disconnectOldHost(CurrentHostConnectionId);
+        }
     }
 
     updateLastConnection(CurrentHostConnectionId, connectionId);
@@ -526,6 +543,10 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
     }
 
     DeviceState_Update(Connections_Target(connectionId));
+
+    // TODO: revise this after switchover merge
+    // The active host may have changed: give it the low-latency interval and relax the rest.
+    BtConn_UpdateConnectionLatencies();
 }
 
 bool Connections_IsCurrentHostAwake(void) {

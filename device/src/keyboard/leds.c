@@ -52,9 +52,13 @@ static void sleepLeds() {
     setOperationMode(0);
     k_mutex_unlock(&SpiMutex);
 
+    Spi_SetLedsIdle(true);
+
     while (KeyBacklightBrightness == 0) {
         k_sleep(K_FOREVER);
     }
+
+    Spi_SetLedsIdle(false);
 }
 
 static void recalculateScaling() {

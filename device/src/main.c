@@ -57,20 +57,6 @@
 #include "logger_priority.h"
 #include "keyboard/uart_modules.h"
 
-/**
- * 5.1mA - base. Isn't that quite a lot? (Although this is on 5V usb - will be less on battery)
- *-----------
- * uart shell  +???
- * Leds        +1.5mA
- * USB         +2.2mA
- * bridge uart +1.6mA
- * i2c         +0.6mA
- *------------
- * total 11 mA
- * -----------
- *  This was measured on usb, right half, without module, jtag connected (and adding some 1-2 mA to the draw)
- */
-
 k_tid_t Main_ThreadId = 0;
 
 static void sleepTillNextMs() {
@@ -172,28 +158,41 @@ static void detectSpinningEventLoop() {
 void mainRuntime(void) {
     Main_ThreadId = k_current_get();
     printk("----------\n" DEVICE_NAME " started\n");
-    // 5.1mA
+
+    // NEW measured with disconnected usb, over battery lines powered by the ppk on 4000mV
+    // NEW - absolute floor is 0.2mA - measured with an empty firmware. The 0.6 mA is probably caused by uart shell
+    // NEW - 0.84mA / 1.2mA
+    // NEW (uninitializing uart doesn't seem to have further effect)
 
     {
         flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
         flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
     }
 
+    // 0.83mA
+
     if (!DEVICE_IS_UHK_DONGLE) {
+
         InitSpi();
 
-        InitLeds(); // +1.5mA; 6.6mA
+        InitLeds();
+
+        // 0.68mA
+        // why the drop? Something is enabled in the devicetree by default?
 
 #if DEVICE_HAS_OLED
         InitOled();
 #endif // DEVICE_HAS_OLED
 
+        // 0.68mA
+
 #if DEVICE_HAS_MERGE_SENSOR
         MergeSensor_Init();
 #endif // DEVICE_HAS_MERGE_SENSOR
 
-        InitKeyScanner();
+        InitKeyScanner(); // +300 uA @ 1ms; +63 @ 5ms; Continue measuring with 5ms interval
 
+        // 0.75mA
     }
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -201,6 +200,8 @@ void mainRuntime(void) {
 #endif
 
     bt_enable(NULL); // has to be before InitSettings
+
+    // 0.75mA
 
     // has to be after bt_enable; has to be before ApplyConfig
     InitSettings();
@@ -223,6 +224,8 @@ void mainRuntime(void) {
     Shell_WaitUntilInitialized();
     InitLogLevels();
     Logger_SetPriority(true);
+
+    // 0.75mA
 
     // read configurations
     {
@@ -252,27 +255,25 @@ void mainRuntime(void) {
         }
     }
 
-    // 6.6mA
+    // 0.75mA
 
-    USB_Enable(); // +2.2mA, 8.8mA; has to be after USB_SetSerialNumber
+    USB_Enable();
 
-    // 8.8mA
+    // 0.75mA
 
     if (LastRunWasCrash) {
         printk("CRASH DETECTED, waiting for 5 seconds to allow Agent to reenumerate\n");
         k_sleep(K_MSEC(5*1000));
     }
 
-    // 8.8mA
-
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     if (!DEVICE_IS_UHK_DONGLE) {
-        InitUartModules(); // +1.6mA
-        InitUartBridge(); // +1.6mA
-        InitZephyrI2c(); // +0.6mA
+        InitUartModules(); // +0.0mA - not active in i2c setup
+        InitUartBridge(); // +0.09mA (when bridge cable connected; 0 when not)
+        InitZephyrI2c(); // +0.03mA (when module not connected; irrelevant when active, as it consumes much more)
     }
 
-    // 11mA
+    // 0.83mA
 
     // Uart has to be enabled only after we have given Agent a chance to reenumarate into bootloader after a crash
     // has to be after InitSettings
@@ -337,15 +338,9 @@ void mainRuntime(void) {
 }
 
 int main(void) {
-    power_mode_t mode = PowerMode_Awake;
-
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        printk("Wormhole is open, reboot to power mode %d %d\n", StateWormhole.rebootToPowerMode, StateWormhole.restartPowerMode);
-        if (StateWormhole.rebootToPowerMode) {
-            mode = StateWormhole.restartPowerMode;
-            StateWormhole.restartPowerMode = PowerMode_Awake;
-        }
+        printk("Wormhole is open\n");
         if (WormCfg->devMode || StateWormhole.persistStatusBuffer) {
             MacroStatusBuffer_InitFromWormhole();
         } else {
@@ -359,14 +354,6 @@ int main(void) {
         StateWormhole_Clean();
         StateWormhole_Open();
     }
-
-    if (mode != PowerMode_Awake) {
-        LogU("Restarted, sinking into mode %d!\n", mode);
-        k_sleep(K_MSEC(1000));
-        PowerMode_RestartedTo(mode);
-    }
-
-    LogU("Going to resume!\n");
 
     mainRuntime();
 }

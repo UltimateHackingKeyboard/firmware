@@ -23,6 +23,7 @@
 #include "logger.h"
 #include "keyid_parser.h"
 #include "utils.h"
+#include "bool_array_converter.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution and inline macros
@@ -32,6 +33,8 @@ macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     }
 };
 uint8_t AllMacrosCount;
+
+uint8_t macroDoesntNeedPerKeyPass[MAX_MACRO_NUM / 8] = {0};
 
 
 bool Macros_WakedBecauseOfOneShot = false;
@@ -560,6 +563,15 @@ uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t
 
 void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx) {
     bool wasValid = true;
+    bool skippedSomething = false;
+    bool isGlobalPass = keyIdx == 255 && keymapIdx == 255 && layerIdx == 255;
+    bool isBindingSitePass = !isGlobalPass;
+
+    // If the macro already thrown in global pass, don't throw per every binding site.
+    if (isBindingSitePass && BoolBitFromBytes(macroIndex, macroDoesntNeedPerKeyPass)) {
+        return;
+    }
+
     uint8_t slotIndex = initMacro(macroIndex, NULL, argumentOffset, 255, 255, NULL, NULL);
 
     if (slotIndex == 255) {
@@ -578,7 +590,9 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t m
             const char* cmdEnd = cmdText + S->ms.currentMacroAction.cmd.textLen;
             bool skipCommand = argumentOffset == 0 && StrContains(cmdText, cmdEnd, "macroArg");
 
-            if (!skipCommand) {
+            if (skipCommand) {
+                skippedSomething = true;
+            } else {
                 processCurrentMacroAction();
                 wasValid &= !Macros_ParserError;
                 Macros_ParserError = false;
@@ -590,7 +604,12 @@ void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t m
     endMacro();
     S = NULL;
 
-    if (!wasValid && moduleId != 255 && keyIdx != 255 && keymapIdx != 255) {
+    // If macro thrown in global pass, mark it down.
+    if (isGlobalPass && (!wasValid || !skippedSomething)) {
+        BoolBitToBytes(true, macroIndex, macroDoesntNeedPerKeyPass);
+    }
+
+    if (isBindingSitePass && !wasValid) {
         const char *name, *nameEnd;
         FindMacroName(&AllMacros[macroIndex], &name, &nameEnd);
         uint8_t keyId = Utils_KeyCoordinatesToKeyId(ModuleIdToSlotId(moduleId), keyIdx);
@@ -616,10 +635,8 @@ void Macros_ValidateAllMacros()
     Macros_ValidationInProgress = true;
     uint32_t t1 = Timer_GetCurrentTime();
 
-    // Validate macros in binding site contexts (with arguments)
-    LogU("Validating macros with arguments...\n");
-    for (uint8_t keymapIndex = 0; keymapIndex < AllKeymapsCount; keymapIndex++) {
-        DryParseKeymap(keymapIndex);
+    for (uint8_t i = 0; i < sizeof(macroDoesntNeedPerKeyPass); i++) {
+        macroDoesntNeedPerKeyPass[i] = 0;
     }
 
     // Validate all macros in general context (without arguments)
@@ -628,6 +645,13 @@ void Macros_ValidateAllMacros()
     for (uint8_t macroIndex = 0; macroIndex < AllMacrosCount; macroIndex++) {
         Macros_ValidateMacro(macroIndex, 0, 255, 255, 255, 255);
     }
+
+    // Validate macros in binding site contexts (with arguments)
+    LogU("Validating macros with arguments...\n");
+    for (uint8_t keymapIndex = 0; keymapIndex < AllKeymapsCount; keymapIndex++) {
+        DryParseKeymap(keymapIndex);
+    }
+
 
     MacroEvent_ValidateEventNames();
 

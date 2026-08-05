@@ -9,7 +9,10 @@
 // Macros:
 
     #define POWER_MODE_UPDATE_DELAY 500
-    #define POWER_MODE_RESTART_DELAY 2500
+
+    // Grace period between entering deep sleep and actually cutting the radio and the
+    // inter-half link, so that the mode change still reaches the other half.
+    #define POWER_MODE_DEEP_SLEEP_DELAY 2500
 
 // Typedefs:
 
@@ -26,9 +29,7 @@
         PowerMode_LightSleep,
         PowerMode_Uhk60Sleep = PowerMode_LightSleep,
         PowerMode_Lock,
-        PowerMode_SfjlSleep,
-        PowerMode_AutoShutDown,
-        PowerMode_ManualShutDown,
+        PowerMode_DeepSleep,
         PowerMode_Count,
     } power_mode_t;
 
@@ -44,7 +45,11 @@
 
 
     void PowerMode_PutBackToSleepMaybe(void);
-    void PowerMode_RestartedTo(power_mode_t mode);
-    void PowerMode_Restart();
+
+#ifdef __ZEPHYR__
+    // Bluetooth and the inter-half uart bridge; both go down in deep sleep.
+    void PowerMode_SetLinksEnabled(bool enabled);
+    void PowerMode_EnterDeepSleep(void);
+#endif
 
 #endif

@@ -2,11 +2,26 @@
     gpio-as-nreset;
 };
 
+/* Use the internal DC/DC converter for the main (REG1) regulator instead of the LDO. It
+ * roughly halves the SoC supply current, and requires the DC/DC inductor to be populated
+ * on the DCC pins, which it is on the UHK80 halves. */
+&reg1 {
+    regulator-initial-mode = <NRF5X_REG_MODE_DCDC>;
+};
+
 &gpiote {
     status = "okay";
 };
 
 &gpio0 {
+    status = "okay";
+    sense-edge-mask = <0xffffffff>;
+};
+
+/* Same SENSE/DETECT-based edge detection as gpio0. Without it, edge interrupts on port 1
+ * each consume one of the 8 GPIOTE channels, which the bridge RX wake (RXD is P1.8 on the
+ * left half) exhausted after a few thousand re-arms and then silently stopped waking. */
+&gpio1 {
     status = "okay";
     sense-edge-mask = <0xffffffff>;
 };

@@ -196,6 +196,8 @@ COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set battery.chargeLimit { full | optimizeHealth }
 COMMAND = set bluetooth.enabled BOOL
+COMMAND = set bluetooth.alwaysAdvertise BOOL
+COMMAND = set bluetooth.keepConnectionsAlive BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 COMMAND = &macroArg.<macro argument index (INT)>
 CONDITION = <condition>
@@ -323,12 +325,10 @@ COMMAND = set leds.alwaysOn BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
-COMMAND = set bluetooth.alwaysAdvertise BOOL
 COMMAND = set devMode BOOL
 COMMAND = set log.sink.usb BOOL
 COMMAND = set log.sink.oled BOOL
 COMMAND = set maxVoltage INT
-COMMAND = powerMode autoShutdown
 COMMAND = testLeakage
 COMMAND = zephyr ZEPHYR_COMMAND
 COMMAND = testSuite [ <moduleName (STRING)> | all ] [ <testName (STRING)> ]
@@ -371,6 +371,7 @@ COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
 COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
 COMMAND = setEmergencyKey KEYID
 COMMAND = set bluetooth.allowUnsecuredConnections BOOL
+COMMAND = powerMode [toggle] { shutdown | shutDown | autoShutdown }
 ```
 
 ### Uncategorized commands
@@ -386,10 +387,9 @@ COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
-- `powerMode [toggle] { wake | lock | sleep | shutdown }`
+- `powerMode [toggle] { wake | lock | sleep }`
   - `lock` disables all leds, disables USB output. Connections remain active. Device can be woken up by either pressing s+f and j+l keys, or by another macro call. This mode is experimental.
-  - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
-  - `shutdown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable. It is not designed to be used directly.
+  - `sleep` is the deepest sleep mode. Bluetooth and the left-right link are shut down, and the key matrix is scanned at a low rate. Each half is woken separately, by pressing s+f or j+l keys on it.
   - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
   - Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
@@ -777,6 +777,10 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
   - `leds.enabled BOOL` turns on/off all keyboard leds: i.e., backlight, indicator leds, segment display
   - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
   - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
+
+- bluetooth:
+  - `set bluetooth.alwaysAdvertise BOOL` makes uhk keep advertising even when the current host is already connected, as long as there is a free peripheral connection slot. This lets other configured hosts (dongles, ble hids) connect in the background, so that switching to them later is instantaneous. Default is off. Implies `bluetooth.keepConnectionsAlive`.
+  - `set bluetooth.keepConnectionsAlive BOOL` keeps the old host connected when you switch away from it. By default, switching hosts disconnects the previous ble host or dongle in order to free its peripheral connection slot for the new host. Default is off.
 
 - modifier layer triggers:
   - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.

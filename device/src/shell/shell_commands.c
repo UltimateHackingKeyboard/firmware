@@ -23,6 +23,7 @@
 #include "wormhole.h"
 #include "stubs.h"
 #include "slave_drivers/kboot_driver.h"
+#include "pin_wiring.h"
 #include "slot.h"
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
@@ -103,6 +104,7 @@ static int cmd_uhk_charger(const struct shell *shell, size_t argc, char *argv[])
     }
     return 0;
 }
+
 #endif // !DEVICE_IS_UHK_DONGLE
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -137,6 +139,14 @@ static int cmd_uhk_kboot_flash(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
+// Once disabled, the shell is gone until something else (USB shell, macro) enables it again.
+static int cmd_uhk_power_debugShell(const struct shell *shell, size_t argc, char *argv[])
+{
+    bool enabled = argv[1][0] == '1';
+    shell_fprintf(shell, SHELL_NORMAL, "debug shell uart: %d\n", enabled);
+    PinWiring_SetShellUartEnabled(enabled);
+    return 0;
+}
 
 static int cmd_uhk_testSwitches(const struct shell *shell, size_t argc, char *argv[])
 {
@@ -540,6 +550,10 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(flash, NULL, "flash firmware uploaded to the module-firmware buffer", cmd_uhk_kboot_flash, 1, 0),
         SHELL_CMD_ARG(reset, NULL, "send kboot reset to right module", cmd_uhk_kboot_reset, 1, 0),
         SHELL_SUBCMD_SET_END);
+
+    SHELL_STATIC_SUBCMD_SET_CREATE(uhk_power_cmds,
+        SHELL_CMD_ARG(debugShell, NULL, "enable/disable the debug shell uart", cmd_uhk_power_debugShell, 2, 0),
+        SHELL_SUBCMD_SET_END);
 #endif
 
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
@@ -552,6 +566,7 @@ void InitShellCommands(void)
 #endif // !DEVICE_IS_UHK_DONGLE
 #if DEVICE_IS_UHK80_RIGHT
         SHELL_CMD(kboot, &uhk_kboot_cmds, "kboot module flashing commands", NULL),
+        SHELL_CMD(power, &uhk_power_cmds, "power management commands", NULL),
         SHELL_CMD_ARG(testled, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
         SHELL_CMD_ARG(ledtest, NULL, "enable led test mode", cmd_uhk_testled, 0, 1),
         SHELL_CMD_ARG(testSwitches, NULL, "get/set switch test mode", cmd_uhk_testSwitches, 1, 1),

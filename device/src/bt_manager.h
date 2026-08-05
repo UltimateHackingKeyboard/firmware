@@ -26,6 +26,6 @@
     void BtManager_StartScanningAndAdvertising();
     void BtManager_StartScanningAndAdvertisingAsync(bool wasAggresive, const char* eventLabel);
 
-    void BtManager_CheckLeftBleVsUart();
+    void BtManager_CheckBleVsUart();
 
 #endif // __BT_MANAGER_H__
