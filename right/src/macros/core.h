@@ -18,7 +18,6 @@
 
     #define MAX_MACRO_NUM 255
     #define MACRO_STATE_POOL_SIZE 16
-    #define MACRO_HISTORY_POOL_SIZE 16
     #define MACRO_SCOPE_STATE_POOL_SIZE (MACRO_STATE_POOL_SIZE*2)
     #define MAX_REG_COUNT 32
 
@@ -130,11 +129,6 @@
 
     typedef struct macro_state_t macro_state_t;
 
-    typedef struct {
-        uint32_t macroStartTime;
-        uint8_t macroIndex;
-    } macro_history_t;
-
     struct macro_state_t {
         // local scope data
         macro_scope_state_t *ls;
@@ -239,7 +233,6 @@
     extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
-    extern macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
     extern macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
     extern macro_state_t *S;
     extern bool MacroPlaying;

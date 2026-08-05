@@ -60,9 +60,6 @@ macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
 macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
 macro_state_t *S = NULL;
 
-macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
-uint8_t MacroHistoryPosition = 0;
-
 static void checkSchedulerHealth(const char* tag);
 static void wakeMacroInSlot(uint8_t slotIdx);
 static void scheduleSlot(uint8_t slotIdx);
@@ -303,9 +300,6 @@ static macro_result_t endMacro(void)
     S->ms.macroSleeping = false;
     S->ms.macroPlaying = false;
     S->ms.macroBroken = false;
-    MacroHistoryPosition = (MacroHistoryPosition + 1) % MACRO_HISTORY_POOL_SIZE;
-    MacroHistory[MacroHistoryPosition].macroIndex = S->ms.currentMacroIndex;
-    MacroHistory[MacroHistoryPosition].macroStartTime = S->ms.currentMacroStartTime;
     unscheduleCurrentSlot();
     if (S->ms.parentMacroSlot != 255) {
         //resume our calee, if this macro was called by another macro
