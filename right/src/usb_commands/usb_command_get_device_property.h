@@ -21,6 +21,7 @@
         DevicePropertyId_PairedRightPeerBleAddress            = 10,
         DevicePropertyId_PairingStatus                        = 11,
         DevicePropertyId_NewPairings                          = 12,
+        DevicePropertyId_NewPairingsWithSlots                 = 13,
     } device_property_t;
 
     typedef enum {
