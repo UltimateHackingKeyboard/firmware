@@ -336,7 +336,7 @@ static void handleNewCaretModeAction(caret_axis_t axis, uint8_t resultSign, int1
             caret_dir_action_t* dirActions = &currentCaretConfig->axisActions[ks->caretAxis];
             ks->caretAction.action = resultSign > 0 ? dirActions->positiveAction : dirActions->negativeAction;
             ks->caretFakeKeystate.current = true;
-            ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+            ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &MouseControllerKeyboardReports);
             Macros_WakeBecauseOfKeystateChange();
             EventVector_Set(EventVector_MouseController);
             break;
@@ -359,7 +359,7 @@ static void handleSimpleRunningAction(module_kinetic_state_t* ks) {
     bool tmp = ks->caretFakeKeystate.current;
     ks->caretFakeKeystate.current = !ks->caretFakeKeystate.previous;
     ks->caretFakeKeystate.previous = tmp;
-    ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &ks->caretAction.action, &MouseControllerKeyboardReports);
+    ApplyKeyAction(&ks->caretFakeKeystate, &ks->caretAction, &MouseControllerKeyboardReports);
     Macros_WakeBecauseOfKeystateChange();
     EventVector_Set(EventVector_MouseController);
 }
