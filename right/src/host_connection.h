@@ -67,6 +67,7 @@
 // Functions:
 
     host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+    host_known_t HostConnections_LookupBleAddress(const bt_addr_le_t *address, uint8_t *outConnectionId);
     host_connection_t* HostConnection(uint8_t connectionId);
 
     void HostConnections_ListKnownBleConnections();

@@ -31,7 +31,11 @@ host_connection_t HostConnections[HOST_CONNECTION_COUNT_MAX] = {
     },
 };
 
-host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
+host_known_t HostConnections_LookupBleAddress(const bt_addr_le_t *address, uint8_t *outConnectionId) {
+    if (outConnectionId) {
+        *outConnectionId = ConnectionId_Invalid;
+    }
+
     for (int i = 0; i < HOST_CONNECTION_COUNT_MAX; i++) {
         host_connection_type_t type = HostConnections[i].type;
         switch (type) {
@@ -43,12 +47,18 @@ host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
                 break;
             case HostConnectionType_UnregisteredBtHid:
                 if (BtAddrEq(address, &HostConnections[i].bleAddress)) {
+                    if (outConnectionId) {
+                        *outConnectionId = ConnectionId_HostConnectionFirst + i;
+                    }
                     return HostKnown_Unregistered;
                 }
                 break;
             case HostConnectionType_Dongle:
             case HostConnectionType_BtHid:
                 if (BtAddrEq(address, &HostConnections[i].bleAddress)) {
+                    if (outConnectionId) {
+                        *outConnectionId = ConnectionId_HostConnectionFirst + i;
+                    }
                     return HostKnown_Registered;
                 }
                 break;
@@ -64,6 +74,10 @@ host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
     }
 
     return HostKnown_Unknown;
+}
+
+host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address) {
+    return HostConnections_LookupBleAddress(address, NULL);
 }
 
 host_connection_t* HostConnection(uint8_t connectionId) {

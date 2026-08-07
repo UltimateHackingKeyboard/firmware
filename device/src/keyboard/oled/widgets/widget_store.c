@@ -174,7 +174,7 @@ static string_segment_t getTargetText() {
         } else if (!isAwake && connectionState >= ConnectionState_Connected) {
             snprintf(buffer+offset, sizeof(buffer)-1-offset, " (asleep)   ");
         } else if (connectionState == ConnectionState_Connected) {
-            snprintf(buffer+offset, sizeof(buffer)-1-offset, " (connecting)   ");
+            snprintf(buffer+offset, sizeof(buffer)-1-offset, "... %s", getRollingEllipsis());
         } else {
             snprintf(buffer+offset, sizeof(buffer)-1-offset, "   ");
         }

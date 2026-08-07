@@ -2,9 +2,13 @@
 #include "usb_protocol_handler.h"
 #include "bt_conn.h"
 #include <zephyr/bluetooth/addr.h>
+#include "connections.h"
 #include "host_connection.h"
 
 #define ADDRESS_COUNT_PER_PAGE 10
+#define ADDRESS_AND_SLOT_COUNT_PER_PAGE 8
+
+#define HEADER_LENGTH 2
 
 typedef struct {
     const uint8_t *OutBuffer;
@@ -12,31 +16,52 @@ typedef struct {
     uint8_t pageIdxOffset;
     uint8_t writeOffset;
     uint8_t addressCount;
+    bool withSlots;
     bool dryRun;
 } CommandUserData;
+
+static uint8_t entryLength(bool withSlots) {
+    return withSlots ? BLE_ADDR_LEN + 1 : BLE_ADDR_LEN;
+}
+
+static uint8_t entriesPerPage(bool withSlots) {
+    return withSlots ? ADDRESS_AND_SLOT_COUNT_PER_PAGE : ADDRESS_COUNT_PER_PAGE;
+}
 
 static void bt_foreach_bond_cb(const struct bt_bond_info *info, void *user_data)
 {
     CommandUserData *data = (CommandUserData *)user_data;
     uint8_t *GenericHidInBuffer = data->InBuffer;
 
-    if ((data->writeOffset + BLE_ADDR_LEN + 1) >= USB_COMMAND_BUFFER_LENGTH) {
-        return;
-    }
+    uint8_t connectionId;
 
-    if (HostConnections_IsKnownBleAddress(&info->addr) != HostKnown_Unregistered) {
+    if (HostConnections_LookupBleAddress(&info->addr, &connectionId) != HostKnown_Unregistered) {
         return;
     }
 
     Bt_NewPairedDevice = true;
 
-    data->addressCount++;
+    uint8_t addressIdx = data->addressCount++;
 
-    if (!data->dryRun && data->addressCount >= data->pageIdxOffset && data->addressCount < data->pageIdxOffset+ADDRESS_COUNT_PER_PAGE) {
-        SetUsbTxBufferBleAddress(data->writeOffset, &info->addr);
-        data->writeOffset += BLE_ADDR_LEN;
+    if (data->dryRun) {
+        return;
     }
 
+    if (addressIdx < data->pageIdxOffset || addressIdx >= data->pageIdxOffset + entriesPerPage(data->withSlots)) {
+        return;
+    }
+
+    if (data->writeOffset + entryLength(data->withSlots) > USB_COMMAND_BUFFER_LENGTH) {
+        return;
+    }
+
+    SetUsbTxBufferBleAddress(data->writeOffset, &info->addr);
+    data->writeOffset += BLE_ADDR_LEN;
+
+    if (data->withSlots) {
+        SetUsbTxBufferUint8(data->writeOffset, connectionId - ConnectionId_HostConnectionFirst);
+        data->writeOffset += 1;
+    }
 }
 
 void UsbCommand_UpdateNewPairingsFlag() {
@@ -46,21 +71,23 @@ void UsbCommand_UpdateNewPairingsFlag() {
         .OutBuffer = NULL,
         .InBuffer = NULL,
         .pageIdxOffset = 0,
-        .writeOffset = 2,
+        .writeOffset = HEADER_LENGTH,
         .addressCount = 0,
+        .withSlots = false,
         .dryRun = true,
     };
 
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_bond_cb, &data);
 }
 
-void UsbCommand_GetNewPairings(uint8_t page, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
+void UsbCommand_GetNewPairings(uint8_t page, bool withSlots, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     CommandUserData data = {
         .OutBuffer = GenericHidOutBuffer,
         .InBuffer = GenericHidInBuffer,
-        .pageIdxOffset = ADDRESS_COUNT_PER_PAGE*page,
-        .writeOffset = 2,
+        .pageIdxOffset = entriesPerPage(withSlots)*page,
+        .writeOffset = HEADER_LENGTH,
         .addressCount = 0,
+        .withSlots = withSlots,
         .dryRun = false,
     };
 

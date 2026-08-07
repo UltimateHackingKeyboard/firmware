@@ -36,6 +36,7 @@
 
 #ifdef __ZEPHYR__
 #include "usb_commands/usb_command_get_new_pairings.h"
+#include "bt_manager.h"
 #include "bt_pair.h"
 #include "state_sync.h"
 #else
@@ -257,6 +258,16 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         secondaryRoles_AdvancedStrategyTimeoutType = ReadUInt8(buffer);
     }
 
+    // Version 15:
+
+    bool bt_AlwaysAdvertise = Cfg.Bt_AlwaysAdvertise;
+    bool bt_KeepConnectionsAlive = Cfg.Bt_KeepConnectionsAlive;
+
+    if (DataModelVersion.major >= 15) {
+        bt_AlwaysAdvertise = ReadBool(buffer);
+        bt_KeepConnectionsAlive = ReadBool(buffer);
+    }
+
     // HostConnection configuration
 
     if (VERSION_AT_LEAST(DataModelVersion, 8, 1, 0)) {
@@ -418,6 +429,13 @@ parser_error_t parseConfig(config_buffer_t *buffer)
             }
         }
 
+        // Version 15
+
+        if (DataModelVersion.major >= 15) {
+            Cfg.Bt_AlwaysAdvertise = bt_AlwaysAdvertise;
+            Cfg.Bt_KeepConnectionsAlive = bt_KeepConnectionsAlive;
+        }
+
         // Version 8
 
 
@@ -439,6 +457,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         BtPair_AllocateUnregisteredBonds();
         BtConn_UpdateHostConnectionPeerAllocations();
         UsbCommand_UpdateNewPairingsFlag();
+        BtManager_StartScanningAndAdvertisingAsync(false, "parse_config - bluetooth settings applied");
 #endif
         WormCfg->devMode = Cfg.DevMode;
         LedManager_FullUpdate();
