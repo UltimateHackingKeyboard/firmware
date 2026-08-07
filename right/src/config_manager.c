@@ -278,8 +278,8 @@ const config_t DefaultCfg = (config_t){
         .I2cBaudRate = I2C_MAIN_BUS_NORMAL_BAUD_RATE,
 #endif
         .Bt_Enabled = true,
-        .Bt_AlwaysAdvertise = false,
-        .Bt_KeepConnectionsAlive = false,
+        .Bt_AlwaysAdvertise = true, // Agent sets false by default. Keep this 'true' for backward compatibility when used with older agent.
+        .Bt_KeepConnectionsAlive = true,
         .Bt_MaxPeripheralConnections = 3,
         .Bt_MinAdvertisingDelay = 250,
         .Bt_DirectedAdvertisingAllowed = false,
