@@ -1,0 +1,64 @@
+From 75d69f9c0e8451bb8d8dbc145205b24b9613fef0 Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Mon, 10 Aug 2026 12:55:40 +0200
+Subject: [PATCH] Ignore cancelled transfer notifications on the control
+ endpoint.
+
+The KHCI driver delivers cancellations synchronously from inside its own
+bus reset handling: USB_DeviceKhciInterruptReset sets isResetting, notifies
+us, we answer with device_control(SetDefaultStatus), and its endpoint deinit
+loop re-enters USB_DeviceNotificationTrigger for the still-armed EP0-OUT.
+
+The control branch of process_ep_notification only tested message.length > 0,
+and USB_CANCELLED_TRANSFER_LENGTH is 0xFFFFFFFF, so the cancellation was read
+as a completed data stage: control_ep_data got a 4 GB transfer, and priming
+the next stage then failed because the driver refuses transfers while
+isResetting is set - tripping the assert and aborting the firmware.
+
+Handle the cancelled case for endpoint 0 the same way the other endpoints
+already did.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+---
+ c2usb/port/nxp/mcux_mac.cpp | 12 +++++++++++-
+ 1 file changed, 11 insertions(+), 1 deletion(-)
+
+diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
+index b4c435c..a5af08d 100644
+--- a/c2usb/port/nxp/mcux_mac.cpp
++++ b/c2usb/port/nxp/mcux_mac.cpp
+@@ -300,12 +300,22 @@ usb::result mcux_mac::ep_change_stall(ep_handle eph, bool stall)
+ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct& message)
+ {
+     endpoint::address addr{static_cast<uint8_t>(message.code)};
++    const bool cancelled = (message.length == USB_CANCELLED_TRANSFER_LENGTH);
+     if (not addr.valid())
+     {
+         // wrong mapping
+     }
+     else if (addr.number() == 0)
+     {
++        // A cancelled control transfer is teardown (bus reset, EP deinit, stall), not a completed
++        // stage: there is nothing to complete, and nothing to prime. Note that the driver delivers
++        // this notification synchronously from within its own reset handling, where it also refuses
++        // to start new transfers - so priming here would fail anyway.
++        if (cancelled)
++        {
++            return;
++        }
++
+         transfer t{};
+         direction dir{};
+         if (message.isSetup)
+@@ -363,7 +373,7 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+     {
+         busy_flags_.clear(addr);
+ 
+-        bool success = (message.length != USB_CANCELLED_TRANSFER_LENGTH);
++        const bool success = not cancelled;
+         if (success)
+         {
+             diag::success(addr);
+-- 
+2.51.0
+
