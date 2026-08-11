@@ -1,21 +1,21 @@
-From e7cf160c348be1acc663701205be97e4cd9bc090 Mon Sep 17 00:00:00 2001
+From 85e5b32a49ac2d2b897ee84a276b2faf6dba33eb Mon Sep 17 00:00:00 2001
 From: Karel Tucek <kareltucek@centrum.cz>
 Date: Sat, 11 Jul 2026 13:05:57 +0200
 Subject: [PATCH] Add diagnostics logs.
 
 ---
  c2usb/CMakeLists.txt          |   1 +
- c2usb/port/nxp/mcux_mac.cpp   |  43 +++++++-
+ c2usb/port/nxp/mcux_mac.cpp   |  44 +++++++-
  c2usb/port/zephyr/udc_mac.cpp |  62 +++++++++++
  c2usb/usb/df/device.cpp       |   3 +
  c2usb/usb/df/mac_diag.cpp     | 191 ++++++++++++++++++++++++++++++++++
  c2usb/usb/df/mac_diag.hpp     |  84 +++++++++++++++
- 6 files changed, 381 insertions(+), 3 deletions(-)
+ 6 files changed, 382 insertions(+), 3 deletions(-)
  create mode 100644 c2usb/usb/df/mac_diag.cpp
  create mode 100644 c2usb/usb/df/mac_diag.hpp
 
 diff --git a/c2usb/CMakeLists.txt b/c2usb/CMakeLists.txt
-index 4d79132..92b61f0 100644
+index 890d99d..382bbf8 100644
 --- a/c2usb/CMakeLists.txt
 +++ b/c2usb/CMakeLists.txt
 @@ -70,6 +70,7 @@ target_sources(c2usb
@@ -27,7 +27,7 @@ index 4d79132..92b61f0 100644
          usb/standard/descriptors.cpp
  )
 diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
-index 8331fa1..b4c435c 100644
+index ecaa265..8ff5bd5 100644
 --- a/c2usb/port/nxp/mcux_mac.cpp
 +++ b/c2usb/port/nxp/mcux_mac.cpp
 @@ -18,6 +18,9 @@
@@ -98,25 +98,33 @@ index 8331fa1..b4c435c 100644
  }
  
  usb::result mcux_mac::ep_cancel(ep_handle eph)
-@@ -345,6 +364,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+@@ -294,6 +313,7 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+         {
+             // control transfer is cancelled at bus reset
+             // react to the reset signal only, ignore this event
++            diag::record(diag::CTRL_ERROR, message.code, 0);
+             return;
+         }
+         if (message.isSetup)
+@@ -351,6 +371,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+     {
          busy_flags_.clear(addr);
  
-         bool success = (message.length != USB_CANCELLED_TRANSFER_LENGTH);
-+        if (success)
-+        {
-+            diag::success(addr);
-+        }
-+        else
++        if (cancelled)
 +        {
 +            // cancelled transfer: a report that was handed to the controller
 +            // never reached the host (dropped)
 +            diag::record(diag::EP_ERROR, message.code, 0);
 +            c2usb_log("HID report dropped: EP %02x transfer cancelled\n", message.code);
 +        }
-         ep_transfer_complete(addr, transfer(message.buffer, message.length * success, success,
-                                             ep_address_to_handle(addr)));
++        else
++        {
++            diag::success(addr);
++        }
+         ep_transfer_complete(addr, transfer(message.buffer, cancelled ? 0 : message.length,
+                                             not cancelled, ep_address_to_handle(addr)));
      }
-@@ -362,28 +392,35 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+@@ -368,28 +399,35 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
      switch (message.code)
      {
      case kUSB_DeviceNotifyBusReset:
