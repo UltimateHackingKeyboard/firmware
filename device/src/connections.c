@@ -549,14 +549,15 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
     BtConn_UpdateConnectionLatencies();
 }
 
+// Indicates whether uhk should act as sleeping. Do not use this to determine report routing.
 bool Connections_IsCurrentHostAwake(void) {
     switch (Connections_Type(CurrentHostConnectionId)) {
         case ConnectionType_NusDongle:
             return DongleHostAwake;
         case ConnectionType_UsbHidRight:
-            return DEVICE_IS_UHK80_RIGHT && UsbState_Awake && UsbState_TransportUp;
+            return DEVICE_IS_UHK80_RIGHT && !UsbState_HostIsSuspended && UsbState_TransportUp;
         case ConnectionType_UsbHidLeft:
-            return DEVICE_IS_UHK80_LEFT && UsbState_Awake && UsbState_TransportUp;
+            return DEVICE_IS_UHK80_LEFT && !UsbState_HostIsSuspended && UsbState_TransportUp;
         case ConnectionType_Unknown:
         case ConnectionType_Empty:
             return false;

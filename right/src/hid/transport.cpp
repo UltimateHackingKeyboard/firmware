@@ -73,8 +73,8 @@ extern "C" void Hid_DumpTransportState(void)
         (int)(mouse_app::usb_handle().session() != nullptr),
         (int)(controls_app::usb_handle().session() != nullptr),
         (int)(command_app::usb_handle().session() != nullptr));
-    c2usb_log("  powerMode=%d usbUp=%d usbAwake=%d\n",
-        (int)CurrentPowerMode, (int)UsbState_TransportUp, (int)UsbState_Awake);
+    c2usb_log("  powerMode=%d usbUp=%d usbSuspended=%d\n",
+        (int)CurrentPowerMode, (int)UsbState_TransportUp, (int)UsbState_HostIsSuspended);
     uint32_t now = Timer_GetCurrentTime();
     c2usb_log("  key life (ms ago): scan(%d)=%u queued=%u/forceQueued=%u/applied=%u action=%u delivered=%u\n",
         (int)KeyLifeTimes.scanActive, now - KeyLifeTimes.scan, now - KeyLifeTimes.queued,
@@ -154,7 +154,7 @@ static report_sink_t determineSink()
 
 static void wakeUsbHostIfNeeded()
 {
-    if (!UsbState_Awake) {
+    if (UsbState_HostIsSuspended) {
         Trace_Printf("y1.%d", CurrentPowerMode);
         USB_RemoteWakeup();
         Trace_Printc("y4");

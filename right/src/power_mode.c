@@ -69,7 +69,7 @@ static bool isSomeoneAwake() {
         someoneAwake = Connections_IsCurrentHostAwake();
     }
 #else
-    bool someoneAwake = UsbState_Awake && UsbState_TransportUp;
+    bool someoneAwake = !UsbState_HostIsSuspended && UsbState_TransportUp;
 #endif
     return someoneAwake;
 }
