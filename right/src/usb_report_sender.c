@@ -32,8 +32,8 @@ LOG_MODULE_REGISTER(UsbReportSender, LOG_LEVEL_INF);
 #endif
 
 // Backoff sizing. MAX_RETRIES is sized so that the cumulative wait from
-// GetResendThrottleDelay() is ~1024 ms (1+2+4+8+16+32 + 30*32 = 1023).
-#define THROTTLE_MAX_RETRIES 36
+// GetResendThrottleDelay() is ~255 ms (1+2+4+8+16+32 + 6*32 = 1023).
+#define THROTTLE_MAX_RETRIES 12
 #define THROTTLE_MAX_SHIFT 5 // 1 << 5 == 32 ms
 #define THROTTLE_MAX_DELAY_MS 32
 
