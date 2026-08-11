@@ -97,7 +97,7 @@ static void handleUltimateFail(errno_t errorCode) {
         LOG_ERR("Send failed (gave up resending): %d (%s)\n", errorCode, ErrToStr(errorCode));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
             // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
-            if (!WormCfg->devMode) {
+            if (!WormCfg->devMode && Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
                 LOG_ERR("Send failed. Trying to reconnect.\n");
                 HostConnections_Reconnect();
             }
