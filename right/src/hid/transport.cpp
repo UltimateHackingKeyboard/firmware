@@ -124,7 +124,6 @@ static report_sink_t determineSink()
     connection_type_t connectionType = Connections_Type(CurrentHostConnectionId);
 
     if (!Connections_IsReady(CurrentHostConnectionId)) {
-        LOG_WRN("Can't send report - selected connection is not ready!\n");
         Connections_HandleSwitchover(ConnectionId_Invalid, false);
         if (!Connections_IsReady(CurrentHostConnectionId)) {
             if (connectionType == ConnectionType_UsbHidRight) {

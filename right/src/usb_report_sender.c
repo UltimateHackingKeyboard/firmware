@@ -88,7 +88,9 @@ uint16_t UsbReportSender_ComputeResendDelay(uint8_t counter) {
 static void handleUltimateFail(errno_t errorCode) {
     // In any case, make the keyboard wake up, compare the usb reports, and possibly send them (those that are up-to-date at that time)
     // This way, we loose some reports along the way, but at least don't produce stuck keys
-    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
+    //
+    // TODO: do this from device_state? (send all reports after any switch.
+    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
 
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
@@ -217,14 +219,18 @@ static void sendActiveReports(bool resending) {
         usbReportsChangedByAnything = true;
     }
 
-    // If anything changed, trigger one more update to send zero reports
-    // TODO: consider doing this depending on change of ReportsUsed mask(s) and actual module scans
-    if (usbReportsChangedByAnything) {
-        EventVector_Set(EventVector_SendUsbReports);
-    }
-
     if (UsbSemaphore_AnyInFlight()) {
-        EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
+        // Schedule semaphore timeout. Don't spam if we given up though - consider report as delivered.
+        if (UsbReportSender_GivenUp) {
+            UsbSemaphore_Clear();
+        } else {
+            EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
+        }
+
+        // If anything changed, trigger one more update to send zero reports
+        if (usbReportsChangedByAnything) {
+            EventVector_Set(EventVector_SendUsbReports);
+        }
     }
 }
 
