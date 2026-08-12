@@ -21,31 +21,41 @@ void set_dongle_led(const struct pwm_dt_spec *device, uint8_t percentage) {
 }
 
 
+static bool authorizationFailed = false;
+
 void DongleLeds_Set(uint8_t r, uint8_t g, uint8_t b) {
     set_dongle_led(&red_pwm_led, r);
     set_dongle_led(&green_pwm_led, g);
     set_dongle_led(&blue_pwm_led, b);
 }
 
-void DongleLeds_Update(void) {
-    if (Connections_IsReady(ConnectionId_NusServerRight)) {
-        if (!DongleStandby) {
-            // connected and receiving: green
-            DongleLeds_Set(0, 100, 0);
-            return;
-        } else {
-            // connected in standby: blue
-            DongleLeds_Set(0, 100, 100);
-            return;
-        }
+void DongleLeds_SetAuthorizationFailed(bool failed) {
+    if (authorizationFailed != failed) {
+        authorizationFailed = failed;
+        DongleLeds_Update();
     }
-    if (RightAddressIsSet) {
+}
+
+void DongleLeds_Update(void) {
+    bool isConnected = Connections_IsReady(ConnectionId_NusServerRight);
+    bool isPaired = RightAddressIsSet;
+
+    if (isConnected && !DongleStandby) {
+        // connected and receiving: green
+        DongleLeds_Set(0, 100, 0);
+    } else if (isConnected) {
+        // connected in standby: blue
+        DongleLeds_Set(0, 100, 100);
+    } else if (authorizationFailed) {
+        // connected, but not authorized: red
+        DongleLeds_Set(100, 0, 0);
+    } else if (isPaired) {
         // trying to connect: violet
         DongleLeds_Set(100, 0, 70);
-        return;
+    } else {
+        // disconnected: red
+        DongleLeds_Set(100, 0, 0);
     }
-    // disconnected: red
-    DongleLeds_Set(100, 0, 0);
 }
 
 #endif // DEVICE_IS_UHK_DONGLE

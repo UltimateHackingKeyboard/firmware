@@ -44,6 +44,7 @@
     extern void BtPair_EndPairing(bool success, const char* msg);
     extern void BtManager_RestartBt();
     extern void DongleLeds_Update(void);
+    extern void DongleLeds_SetAuthorizationFailed(bool failed);
     extern void BtPair_ClearUnknownBonds();
     extern void BtManager_StartScanningAndAdvertising();
     extern void BtConn_UpdateHostConnectionPeerAllocations();
