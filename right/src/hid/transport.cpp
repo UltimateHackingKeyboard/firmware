@@ -144,7 +144,7 @@ static report_sink_t determineSink()
             return ReportSink_Dongle;
         }
     default:
-        LOG_WRN("Unhandled sink type %d. Is this connection really meant to be a report target?\n",
+        LOG_WRN("Unhandled sink type %d. Is this connection really meant to be a report target?",
             connectionType);
         return ReportSink_Usb;
     }
@@ -232,7 +232,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         err = session->send_report(payload).to_int();
         if (err == -ENOMEM) {
             // this only happens on Android with NKRO mode when the transport MTU is too small
-            LOG_WRN("keyboard NKRO mode fails, falling back to 6KRO\n");
+            LOG_WRN("keyboard NKRO mode fails, falling back to 6KRO");
 
             keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_6_KEY);
             payload = keyboard_buffer.insert(*report);
@@ -244,7 +244,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
-            LOG_WRN("Failed to send keyboard report to dongle: %d\n", err);
+            LOG_WRN("Failed to send keyboard report to dongle: %d", err);
         } else {
             UsbSemaphore_Release(&UsbSemaphore.keyboard);
         }
@@ -259,7 +259,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         err = -EHOSTUNREACH;
         break;
     default:
-        LOG_WRN("Unhandled and unexpected switch state!\n");
+        LOG_WRN("Unhandled and unexpected switch state!");
         err = -EHOSTUNREACH;
         break;
     }
@@ -324,7 +324,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
-            LOG_WRN("Failed to send mouse report to dongle: %d\n", err);
+            LOG_WRN("Failed to send mouse report to dongle: %d", err);
         } else {
             UsbSemaphore_Release(&UsbSemaphore.mouse);
         }
@@ -334,7 +334,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
         err = -EHOSTUNREACH;
         break;
     default:
-        LOG_WRN("Unhandled and unexpected switch state!\n");
+        LOG_WRN("Unhandled and unexpected switch state!");
         err = -EHOSTUNREACH;
         break;
     }
@@ -393,7 +393,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
             SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
         if (err != 0) {
-            LOG_WRN("Failed to send controls report to dongle: %d\n", err);
+            LOG_WRN("Failed to send controls report to dongle: %d", err);
         } else {
             UsbSemaphore_Release(&UsbSemaphore.controls);
         }
@@ -403,7 +403,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
         err = -EHOSTUNREACH;
         break;
     default:
-        LOG_WRN("Unhandled and unexpected switch state!\n");
+        LOG_WRN("Unhandled and unexpected switch state!");
         err = -EHOSTUNREACH;
         break;
     }
@@ -482,7 +482,7 @@ extern "C" void Hid_UpdateKeyboardLedsState()
         StateSync_UpdateProperty(StateSyncPropertyId_KeyboardLedsState, NULL);
         break;
     default:
-        LOG_WRN("Unhandled connection type %d\n", Connections_Type(CurrentHostConnectionId));
+        LOG_WRN("Unhandled connection type %d", Connections_Type(CurrentHostConnectionId));
         break;
     }
 #else

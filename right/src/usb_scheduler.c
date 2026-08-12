@@ -70,7 +70,7 @@ void UsbScheduler_ReportDelivered(report_sink_t sink)
     if (sink == ReportSink_Usb) {
         uint32_t delta = Timer_GetCurrentTime() - lastUsbAccept;
         if (delta > 50) {
-            LOG_WRN("Report delivered in %d ms\n", delta);
+            LOG_WRN("Report delivered in %d ms.", delta);
         }
     }
 
