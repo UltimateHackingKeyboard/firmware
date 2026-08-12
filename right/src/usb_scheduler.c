@@ -7,9 +7,12 @@
 #include "host_connection.h"
 #include "utils.h"
 #include "debug.h"
+#include "logger.h"
 
 #ifdef __ZEPHYR__
 #include "bt_conn.h"
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(UsbSchedule, LOG_LEVEL_INF);
 #else
 #include "stubs.h"
 #endif
@@ -39,6 +42,8 @@ static uint32_t reportIntervalForSink(report_sink_t sink)
     }
 }
 
+uint32_t lastUsbAccept = 0;
+
 void UsbScheduler_ReportAcceptedByTransport(report_sink_t sink)
 {
     if (DEBUG_BLE_LATENCY_STATS) {
@@ -46,6 +51,10 @@ void UsbScheduler_ReportAcceptedByTransport(report_sink_t sink)
             dispatchTimeMs = Timer_GetCurrentTime();
         }
     }
+    if (sink == ReportSink_Usb) {
+        lastUsbAccept = Timer_GetCurrentTime();
+    }
+    lastUsbAccept = Timer_GetCurrentTime();
     UsbReportWindowEstimate = UsbReportWindowEstimateLast + 2 * reportIntervalForSink(sink);
 }
 
@@ -58,6 +67,13 @@ void UsbScheduler_ReportDelivered(report_sink_t sink)
             dispatchTimeMs = 0;
         }
     }
+    if (sink == ReportSink_Usb) {
+        uint32_t delta = Timer_GetCurrentTime() - lastUsbAccept;
+        if (delta > 50) {
+            LOG_WRN("Report delivered in %d ms\n", delta);
+        }
+    }
+
     uint32_t reportInterval = reportIntervalForSink(sink);
     uint32_t currentTime = Timer_GetCurrentTime();
     int16_t jitterGuess = (currentTime - UsbReportWindowEstimateLast - reportInterval + 1) / 2;
