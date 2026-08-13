@@ -37,6 +37,10 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
     if (Macros_IsNUM(ctx)) {
 #ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
+        if (value.type == MacroVariableType_None) {
+            Macros_ReportErrorTok(ctx, "Could not resolve:");
+            return 0;
+        }
         SegmentDisplay_SerializeVar(str, value);
         textLen = 3;
 #else
@@ -44,9 +48,12 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
 #endif
         return textLen;
     } else if (ctx->at != ctx->end) {
-        uint16_t stringOffset = 0, textIndex = 0, textSubIndex = 0;
+        string_reader_context_t stringCtx;
+
+        StrRead_InitContext(ctx, &stringCtx, StrReadMode_Literal);
+
         for (uint8_t i = 0; true; i++) {
-            char c = Macros_ConsumeCharOfString(ctx, &stringOffset, &textIndex, &textSubIndex);
+            char c = StrRead_ConsumeCharOfString(ctx, &stringCtx);
             if (c == '\0') {
                 break;
             }
@@ -211,6 +218,7 @@ void processList(parser_context_t* ctx, bool show, uint16_t time) {
 
 macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
 {
+    // TODO: I guess ATTR_UNUSED is not correct here?
     ATTR_UNUSED int16_t time = Macros_ConsumeInt(ctx);
 
     macro_result_t res = MacroResult_Finished;

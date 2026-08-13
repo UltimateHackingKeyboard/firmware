@@ -50,12 +50,19 @@ typedef enum {
 macro_variable_t macroVariables[MACRO_VARIABLE_COUNT_MAX];
 uint8_t macroVariableCount = 0;
 
+macro_argument_t macroArguments[MACRO_ARGUMENT_POOL_SIZE];
+// uint8_t macroArgumentCount = 0;
+
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx);
 static macro_variable_t consumeParenthessExpression(parser_context_t* ctx);
 static macro_variable_t consumeValue(parser_context_t* ctx);
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res);
 static macro_variable_t consumeMinMaxOperation(parser_context_t* ctx, operator_t op);
 static macro_variable_t negateBool(parser_context_t *ctx, macro_variable_t res);
+static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t value, macro_variable_type_t dstType);
+
+static string_ref_t createStringRef(const char *start, const char *end);
+static string_segment_t stringRefToSegment(string_ref_t ref);
 
 macro_result_t Macros_ProcessStatsVariablesCommand(void) {
     if (Macros_DryRun) {
@@ -77,6 +84,11 @@ static macro_variable_t intVar(int32_t value)
     return (macro_variable_t) { .asInt = value, .type = MacroVariableType_Int };
 }
 
+//static macro_variable_t floatVar(float value)
+//{
+//    return (macro_variable_t) { .asFloat = value, .type = MacroVariableType_Float };
+//}
+
 static macro_variable_t boolVar(bool value)
 {
     return (macro_variable_t) { .asBool = value, .type = MacroVariableType_Bool };
@@ -92,36 +104,101 @@ static macro_variable_t noneVar()
     return (macro_variable_t) { .asInt = 1, .type = MacroVariableType_None };
 }
 
-static macro_variable_t consumeNumericValue(parser_context_t* ctx)
+static macro_variable_t consumeNumericValueOfType(parser_context_t* ctx, macro_numericalvalue_type_t expectedType)
 {
     macro_variable_t res = { .type = MacroVariableType_Int, .asInt = 0 };
 
     bool numFound = false;
-    while(*ctx->at > 47 && *ctx->at < 58 && ctx->at < ctx->end) {
-        res.asInt = res.asInt*10 + ((uint8_t)(*ctx->at))-48;
+    while(*ctx->at >= '0' && *ctx->at <= '9' && ctx->at < ctx->end) {
+        res.asInt = res.asInt*10 + ((uint8_t)(*ctx->at))-'0';
         ctx->at++;
         numFound = true;
     }
     if (*ctx->at == '.') {
+        if (expectedType == MacroNumericalValueType_Int) {
+            Macros_ReportErrorTok(ctx, "Integer value expected but found:");
+            return noneVar();
+        }
         res.type = MacroVariableType_Float;
         res.asFloat = (float) res.asInt;
         ctx->at++;
 
         float b = 0.1;
-        while(*ctx->at > 47 && *ctx->at < 58 && ctx->at < ctx->end) {
-            res.asFloat += (((uint8_t)(*ctx->at))-48)*b;
+        while(*ctx->at >= '0' && *ctx->at <= '9' && ctx->at < ctx->end) {
+            res.asFloat += (((uint8_t)(*ctx->at))-'0')*b;
             b = b*0.1f;
             ctx->at++;
             numFound = true;
         }
     }
     if (!numFound) {
-        Macros_ReportErrorTok(ctx, "Numeric value expected");
+        Macros_ReportErrorTok(ctx, "Numeric value expected but found:");
         return noneVar();
+    }
+
+    if (expectedType == MacroNumericalValueType_Float && res.type == MacroVariableType_Int) {
+        res.asFloat = (float) res.asInt;
+        res.type = MacroVariableType_Float;
     }
 
     ConsumeWhite(ctx);
     return res;
+}
+
+static macro_variable_t consumeIntValue(parser_context_t* ctx)
+{
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Int);
+}
+
+static macro_variable_t consumeFloatValue(parser_context_t* ctx)
+{
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Float);
+}
+
+static macro_variable_t consumeNumericValue(parser_context_t* ctx)
+{
+    return consumeNumericValueOfType(ctx, MacroNumericalValueType_Any);
+}
+
+static macro_variable_t consumeBool(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "false")) {
+        return boolVar(false);
+    } 
+    else if (ConsumeToken(ctx, "true")) {
+        return boolVar(true);
+    }
+
+    Macros_ReportErrorTok(ctx, "Boolean value (true/false) expected but found:");
+    return noneVar();
+}
+
+static macro_variable_t consumeKeyIdValue(parser_context_t* ctx)
+{
+    uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
+    if (keyId == 255) {
+        return consumeIntValue(ctx);
+    }
+    return intVar(keyId);
+}
+
+static macro_variable_t consumeScancodeValue(parser_context_t* ctx)
+// consume "scancode" = modded scancode = "shortcut", return as string variable.
+{
+    // this function could preparse the Mods+Scancode for validity, e.g.
+    //   macro_action_t action = decodeKeyAndConsume(ctx, MacroSubAction_None);
+    // but for now we return the raw string.
+    const char* atStart = ctx->at;
+    const char* atEnd = TokEnd(ctx->at, ctx->end);
+    ConsumeWhiteAt(ctx, atEnd);
+
+    return stringVar(createStringRef(atStart, atEnd));
+}
+
+static macro_variable_t consumeStringVerbatim(parser_context_t* ctx)
+{
+    // the remaining context is the string. No expansions.
+    return stringVar(createStringRef(ctx->at, ctx->end));
 }
 
 static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
@@ -136,12 +213,8 @@ static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
         return noneVar();
     }
 
-    uint16_t offset = stringStart - (const char*)ValidatedUserConfigBuffer.buffer;
-    uint8_t len = ctx->at - stringStart;
-
-    return stringVar((string_ref_t){ .offset = offset, .len = len });
+    return stringVar(createStringRef(stringStart, ctx->at));
 }
-
 
 macro_variable_t* Macros_ConsumeExistingWritableVariable(parser_context_t* ctx)
 {
@@ -185,7 +258,7 @@ static macro_variable_t consumeVariable(parser_context_t* ctx)
     }
 
     ConsumeAnyIdentifier(ctx);
-    return (macro_variable_t){};
+    return (macro_variable_t){};    // TODO: shouldn't this be noneVar()?
 }
 
 // Expects <variable name>
@@ -198,7 +271,8 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
         }
     }
 
-    CTX_COPY(bakCtx, *ctx);
+    // TODO: Is this needed at all? Looks like something left over
+    // CTX_COPY(bakCtx, *ctx);
     macro_variable_t configVal = Macro_TryReadConfigVal(ctx);
 
     if (configVal.type != MacroVariableType_None) {
@@ -236,6 +310,14 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
     return res;
 }
 
+static macro_variable_t reportUnexpectedVariableType(parser_context_t* ctx, macro_variable_type_t type)
+{
+    // TODO: would there be any way to trace the current position down the 
+    //       context stack and report it here?
+    Macros_ReportErrorNum("Unexpected variable type:", type, NULL);
+    return noneVar();
+}
+
 static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t value, macro_variable_type_t dstType)
 {
     if (value.type == dstType) {
@@ -260,8 +342,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_Float:
@@ -281,8 +362,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_Bool:
@@ -302,8 +382,7 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_String:
@@ -319,15 +398,13 @@ static macro_variable_t coalesceType(parser_context_t* ctx, macro_variable_t val
                 case MacroVariableType_None:
                     break;
                 default:
-                    Macros_ReportErrorNum("Unexpected variable type:", value.type, NULL);
-                    break;
+                    return reportUnexpectedVariableType(ctx, value.type);
             }
             break;
         case MacroVariableType_None:
             break;
         default:
-            Macros_ReportErrorNum("Unexpected variable type:", dstType, NULL);
-            break;
+            return reportUnexpectedVariableType(ctx, value.type);;
     }
     value.type = dstType;
     return value;
@@ -349,7 +426,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(Timer_GetCurrentTime() & 0x7FFFFFFF);
     }
     else if (ConsumeToken(ctx, "queuedKeyId")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         int8_t queueIdx = Macros_ConsumeInt(ctx);
         if (queueIdx >= PostponerQuery_PendingKeypressCount()) {
             if (!Macros_DryRun) {
@@ -361,16 +438,16 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
         return intVar(PostponerExtended_PendingId(queueIdx));
     }
     else if (ConsumeToken(ctx, "keyId")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
         if (keyId == 255) {
-            Macros_ReportErrorTok(ctx, "KeyId abbreviation expected");
+            Macros_ReportErrorTok(ctx, "KeyId abbreviation expected:");
             return noneVar();
         }
         return intVar(keyId);
     }
     else if (ConsumeToken(ctx, "uhk")) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         if (ConsumeToken(ctx, "name")) {
             return stringVar(Cfg.DeviceName);
         } else {
@@ -390,6 +467,7 @@ static macro_variable_t consumeDollarExpression(parser_context_t* ctx)
 
 static macro_variable_t consumeValue(parser_context_t* ctx)
 {
+    // TODO: this shouldn't be here, when properly handled by $macroArg :any type.
     if (*ctx->at == '&') {
         TryExpandMacroTemplateOnce(ctx);
         if (Macros_ParserError) {
@@ -430,7 +508,6 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
             else {
                 goto failed;
             }
-
         case 't':
             if (ConsumeToken(ctx, "true")) {
                 return (macro_variable_t){ .type = MacroVariableType_Bool, .asBool = true };
@@ -438,7 +515,6 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
             else {
                 goto failed;
             }
-
         case '$':
             ctx->at++;
             return consumeDollarExpression(ctx);
@@ -458,12 +534,16 @@ static macro_variable_t consumeValue(parser_context_t* ctx)
     }
 
 failed:
+    return consumeStringLiteral(ctx);  // try reading as a raw string literal
+
+#if 0
     if (IsIdentifierChar(*ctx->at)) {
-        Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '$%s'?", OneWord(ctx));
+        Macros_ReportErrorPrintf(ctx->at, "Parsing failed, did you mean '\"%s\"'?", OneWord(ctx));
     } else {
         Macros_ReportErrorTok(ctx, "Could not parse");
     }
     return noneVar();
+#endif
 }
 
 static macro_variable_t negate(parser_context_t *ctx, macro_variable_t res)
@@ -912,6 +992,17 @@ bool Macros_ConsumeBool(parser_context_t* ctx)
     return coalesceType(ctx, res, MacroVariableType_Bool).asBool;
 }
 
+string_segment_t Macros_ConsumeString(parser_context_t* ctx)
+{
+    macro_variable_t res = consumeValue(ctx);
+    if (res.type != MacroVariableType_String) {
+        // Do not report error directly here, just return a "null" string.
+        // Macros_ReportError("String value expected but found:", NULL, NULL);
+        return (string_segment_t){ .start = NULL, .end = NULL };
+    }
+    return stringRefToSegment(res.asStringRef);
+}
+
 macro_variable_t Macros_ConsumeAnyValue(parser_context_t *ctx)
 {
     return consumeValue(ctx);
@@ -928,7 +1019,23 @@ macro_result_t Macros_ProcessSetVarCommand(parser_context_t* ctx)
 
     if (dst != NULL) {
         dst->type = src.type;
-        dst->asInt = src.asInt;
+        switch (src.type) {
+            case MacroVariableType_Int:
+                dst->asInt = src.asInt;
+                break;
+            case MacroVariableType_Float:
+                dst->asFloat = src.asFloat;
+                break;
+            case MacroVariableType_Bool:
+                dst->asBool = src.asBool;
+                break;
+            case MacroVariableType_String:
+                dst->asStringRef = src.asStringRef;
+                break;
+            default:
+                Macros_ReportErrorNum("Unexpected variable type:", src.type, NULL);
+                break;
+        }
     }
 
     return MacroResult_Finished;
@@ -1022,32 +1129,117 @@ void MacroVariables_RunTests(void) {
 }
 
 static macro_variable_t consumeArgumentAsValue(parser_context_t* ctx) {
-    ConsumeUntilDot(ctx);
-    uint8_t argId = Macros_ConsumeInt(ctx);
+    uint8_t argIdx;
+    macro_argument_type_t argType;
 
-    if (S->ms.currentMacroArgumentOffset == 0) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argId);
+    if (!ConsumeOneDot(ctx)) {
+        Macros_ReportErrorPos(ctx, "Expected '.' after '$macroArg'");
+        return noneVar();
+    };
+
+    if (!IsDigit(ctx)) {
+        // argument accessed by name, e.g., $macroArg.my_param
+
+        const char *idStart = ctx->at;
+        const char *idEnd = IdentifierEnd(ctx);
+        if (idStart == idEnd) {
+            Macros_ReportErrorPos(ctx, "Expected identifier after '$macroArg.'");
+            return noneVar();
+        }
+
+        // parse macro argument name and convert to number; error if not found.
+        // if found, consume the name and retrieve argument number and argument type.
+        macro_argument_t *arg = Macros_FindMacroArgumentByName(MACRO_STATE_SLOT(S), idStart, idEnd);
+        if (arg == NULL) {
+            Macros_ReportErrorPrintf(ctx->at, "Argument with name '$macroArg.%s' not found!", OneWord(ctx));
+            return noneVar();
+        }
+        argIdx = arg->idx;
+        argType = arg->type;
+        ConsumeWhiteAt(ctx, idEnd);
+    } else {
+        // argument accessed by number, e.g., $macroArg.1
+
+        argIdx = Macros_ConsumeInt(ctx);
+        macro_argument_t *arg = Macros_FindMacroArgumentByIndex(MACRO_STATE_SLOT(S), argIdx);
+        if (arg == NULL) {
+            // if not found (= undeclared), assume type 'any' for this argument
+            // (backwards compatibility to macro arguments without macroArg declaration).
+            argType = MacroArgType_Any;
+        } else {
+            argType = arg->type;
+        }
     }
 
-    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argId);
+    // at this point, we have argument index and argument type.
 
-    if (str.start == NULL) {
-        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argId);
+    if (S->ms.currentMacroArgumentOffset == 0) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d, because this macro doesn't seem to have arguments assigned!", argIdx);
         return noneVar();
     }
 
-    parser_context_t varCtx = (parser_context_t) {
-        .at = str.start,
-        .begin = str.start,
-        .end = str.end,
-        .macroState = ctx->macroState,
-        .nestingLevel = ctx->nestingLevel,
-        .nestingBound = ctx->nestingBound,
-    };
+    string_segment_t str = ParseMacroArgument(S->ms.currentMacroArgumentOffset, argIdx);
 
-    macro_variable_t res = consumeValue(&varCtx);
+    if (str.start == NULL) {
+        Macros_ReportErrorPrintf(ctx->at, "Failed to retrieve argument %d. Argument not found!", argIdx);
+        return noneVar();
+    }
 
-    return res;
+    if (argType == MacroArgType_Any) {
+        // for type 'any', consume the value as a template expansion (i.e. like &macroArg)
+        // for compatibility with existing macros that don't declare their argument types.
+
+#if 0
+        // TODO: This doesn't work; it will cause firmware crashes.
+        // I don't understand why.
+        PushParserContext(ctx, str.start, str.start, str.end);
+        return consumeValue(ctx);
+#else
+        parser_context_t varCtx = (parser_context_t) {
+            .at = str.start,
+            .begin = str.start,
+            .end = str.end,
+            .macroState = ctx->macroState,
+            .nestingLevel = ctx->nestingLevel,
+            .nestingBound = ctx->nestingBound,
+        };
+
+        return consumeValue(&varCtx);
+#endif
+    } else {
+        // for declared types, consume the value according to type.
+        parser_context_t varCtx = (parser_context_t) {
+            .at = str.start,
+            .begin = str.start,
+            .end = str.end,
+            .macroState = ctx->macroState,
+            .nestingLevel = ctx->nestingLevel,
+            .nestingBound = ctx->nestingBound,
+        };
+    
+        switch (argType) {
+        case MacroArgType_Int:
+            return consumeIntValue(&varCtx);
+        case MacroArgType_Float:
+            return consumeFloatValue(&varCtx);
+        case MacroArgType_Bool:
+            return consumeBool(&varCtx);
+        case MacroArgType_String:
+            // this used to be consumeStringLiteral, but that leads to $-expansions
+            // within the string, even if not enclosed in double-quotes. 
+            // Values configured for arguments of type string should be interpreted 
+            // as verbatim strings without expansions.
+            // Use type 'any' if you want $-expansions in your arguments.
+            return consumeStringVerbatim(&varCtx);
+        case MacroArgType_KeyId:
+            return consumeKeyIdValue(&varCtx);
+        case MacroArgType_ScanCode:
+            return consumeScancodeValue(&varCtx);
+        default:
+            Macros_ReportErrorNum("Unexpected argument type:", argType, NULL);
+            return noneVar();
+        }
+    }
 }
 
 static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
@@ -1069,17 +1261,160 @@ static bool expandArgumentInplace(parser_context_t* ctx, uint8_t argNumber) {
 bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
     ASSERT(*ctx->at == '&');
 
+    // save context position to restore if the "try" fails
+    const char *savedAt = ctx->at;
+
     ctx->at++;
 
     Trace_Printc("e1");
 
     if (ConsumeToken(ctx, "macroArg")) {
-        ConsumeUntilDot(ctx);
-        uint8_t argId = Macros_ConsumeInt(ctx);
-        expandArgumentInplace(ctx, argId);
-        return true;
+        if(ConsumeOneDot(ctx)) {
+            uint8_t argId = Macros_ConsumeInt(ctx);
+            expandArgumentInplace(ctx, argId);
+            return true;
+        }
     }
 
-    ctx->at--;
+    // restore parser context if no expansion was performed
+    ctx->at = savedAt;
+
     return false;
+}
+
+// ----------------------------------------
+// macroArguments allocation and processing
+// ----------------------------------------
+
+// helper functions to convert to and from StringRefs and StringSegments
+
+static string_ref_t createStringRef(const char *start, const char *end) {
+    return (string_ref_t) {
+        .offset = start - (const char*)ValidatedUserConfigBuffer.buffer,
+        .len = (uint8_t)(end - start),
+    };
+}
+
+static string_segment_t stringRefToSegment(string_ref_t ref) {
+    return (string_segment_t) {
+        .start = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset),
+        .end = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len),
+    };
+}
+
+string_segment_t StringRefToSegment(string_ref_t ref) {
+    return stringRefToSegment(ref);
+}
+
+// currently unused:
+//static const char *stringRefStart(string_ref_t ref) {
+//    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
+//}
+
+// currently unused:
+//static const char *stringRefEnd(string_ref_t ref) {
+//    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
+//}
+
+// Allocates a macro argument in the pool and returns a reference to it. 
+// Fails if an argument with the same name already exists for this owner, 
+// or if the pool limit is exceeded.
+//
+// Returns:
+//    MacroArgAllocResult_Success and sets *outArgRef to new allocated argument on success.
+//    MacroArgAllocResult_DuplicateArgumentName if an argument with the same name already exists for this owner.
+//    MacroArgAllocResult_PoolLimitExceeded if there are no free slots in the pool.
+
+macro_argument_alloc_result_t Macros_AllocateMacroArgument(
+    uint8_t owner,
+    const char *idStart, 
+    const char *idEnd, 
+    macro_argument_type_t type,
+    uint8_t argNumber
+) {
+    // search for existing argument of same owner with the same identifier, error if found
+    if (Macros_FindMacroArgumentByName(owner, idStart, idEnd)) {
+        return MacroArgAllocResult_DuplicateArgumentName;
+    }
+
+    // search for an unused slot in the pool
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type == MacroArgType_Unused) {
+            macroArguments[i].owner = owner;
+            macroArguments[i].type = type;
+            macroArguments[i].idx = argNumber;
+            macroArguments[i].name = createStringRef(idStart, idEnd);
+            return MacroArgAllocResult_Success;
+        }
+    }
+
+    return MacroArgAllocResult_PoolLimitExceeded;
+}
+
+// Deallocates all macro arguments for the given owner. Used when a macro ends.
+
+void Macros_DeallocateMacroArgumentsByOwner(uint8_t owner) {
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner) {
+            macroArguments[i].type = MacroArgType_Unused;
+        }
+    }
+}
+
+// Retrieve the number of arguments allocated for the given owner.
+
+uint8_t Macros_CountMacroArgumentsByOwner(uint8_t owner) {
+    uint8_t count = 0;
+
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner) {
+            count++;
+        }
+    }
+    return count;
+}
+
+// Finds a macro argument by name for the given owner. Returns NULL if not found.
+
+macro_argument_t *Macros_FindMacroArgumentByName(uint8_t owner, const char *nameStart, const char *nameEnd) {
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
+            SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = nameStart, .end = nameEnd })) {
+            return &macroArguments[i];
+        }
+    }
+    return NULL;
+}
+
+// Finds a macro argument index by name for the given owner. Returns 0 if not found.
+// Returns the argument index (1-based) if found, or 0 if not found. 
+// The index is determined by the order of arguments for the same owner in the pool.
+
+uint8_t Macros_FindMacroArgumentIndexByName(uint8_t owner, const char *nameStart, const char *nameEnd) {
+    uint8_t idx = 0; // argument index for this owner
+
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner) {
+            idx++;
+            if (SegmentEqual(stringRefToSegment(macroArguments[i].name), (string_segment_t){ .start = nameStart, .end = nameEnd })) {
+                return idx;
+            }
+        }
+    }
+    return 0; // return 0 if not found; argument indices are 1-based
+}
+
+// Finds a macro argument by index for the given owner.
+
+macro_argument_t *Macros_FindMacroArgumentByIndex(uint8_t owner, uint8_t argIndex) {
+    uint8_t idx = 0; // argument index for this owner
+
+    for (uint8_t i = 0; i < MACRO_ARGUMENT_POOL_SIZE; i++) {
+        idx++;
+        if (macroArguments[i].type != MacroArgType_Unused && macroArguments[i].owner == owner &&
+            idx == argIndex) {
+            return &macroArguments[i];
+        }
+    }
+    return NULL;
 }

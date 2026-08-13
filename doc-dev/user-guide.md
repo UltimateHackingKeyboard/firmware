@@ -55,9 +55,9 @@ ifDoubletap tapKey capsLock
         - Provided value bounds are informational only - they denote values that seem to make sense. Sometimes default values are marked.
     - If you are still not sure about some feature or syntax, do not hesitate to ask.
 
-3) If `ERR` appears on the display, you can retrieve the description by using `printStatus` over a focused text editor. Or, using the above point, just search the [reference manual](reference-manual.md) for `ERR`.
+3) If `ERR` appears on the display (UHK60), or a triangle warning icon `⚠️` is shown on the display (UHK80), you can retrieve the error description by using `printStatus` over a focused text editor. In addition, a yellow error pane will automatically appear in Agent, showing the error description. You can also search the [reference manual](reference-manual.md) for `ERR`.
 
-4) If you encounter a bug, let me know. There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
+4) If you encounter a bug, let us know (ideally, by reporting a GitHub issue). There are lots of features and quite few users around this codebase - if you do not report problems you find, chances are that no one else will (since most likely no one else has noticed).
 
 ## Known software limitations and oddities
 
@@ -113,6 +113,15 @@ replaceLayer fn QTY fn
 replaceLayer mod QTY mod
 replaceLayer mouse QTY mouse
 ```
+
+Alternatively, you can also replace all of the keymap first, and the just load the base layer of your keymap again. For this approach, your macro would be:
+
+```
+replaceKeymap QTY
+overlayKeymap current
+```
+
+This second method also allows you to only define some keys on the COL base layer that need to change from QTY. Any key mapped to "None" inherits its action from QTY, as `overlayKeymap` will not overload it.
 
 ## Examples
 
