@@ -19,7 +19,6 @@
 #include "messenger_queue.h"
 #include "debug.h"
 #include <zephyr/settings/settings.h>
-#include "resend.h"
 #include "trace.h"
 #include <zephyr/logging/log.h>
 #include "config_manager.h"
@@ -196,7 +195,7 @@ int NusClient_SendMessage(message_t* msg) {
     // gives it back on error, and the `sent` callback gives it back on success.
 
     // Call this only after we have taken the semaphore.
-    Resend_RegisterMessageAndUpdateWatermarks(msg);
+    Messenger_UpdateWatermarks(msg);
 
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;

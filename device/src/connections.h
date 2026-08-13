@@ -31,6 +31,7 @@
     typedef enum {
         ConnectionId_Invalid,
         ConnectionId_HostConnectionFirst,
+        ConnectionId_HostConnectionLastRegular = ConnectionId_HostConnectionFirst + HOST_CONNECTION_COUNT_MAX - 1 - 2,
         ConnectionId_HostConnectionLast = ConnectionId_HostConnectionFirst + HOST_CONNECTION_COUNT_MAX - 1,
         ConnectionId_UsbHidLeft,
         ConnectionId_UsbHidRight, //alias to some host connection
@@ -68,11 +69,6 @@
     typedef struct {
         uint8_t rxIdx;
         uint8_t txIdx;
-        uint16_t missedCount;
-        bool needsResend;
-        uint8_t lastSentResendableWm;
-        uint8_t lastSentId1;
-        uint8_t lastSentId2;
     } ATTR_PACKED connection_watermarks_t;
 
     typedef struct {
@@ -85,9 +81,8 @@
 
 // Variables:
 
-    extern connection_id_t ActiveHostConnectionId;
-    extern connection_id_t LastActiveHostConnectionId;
-    extern connection_id_t SelectedHostConnectionId;
+    extern connection_id_t CurrentHostConnectionId;
+    extern connection_id_t LastHostConnectionId;
     extern connection_id_t LastSelectedHostConnectionId;
     extern connection_t Connections[ConnectionId_Count];
 
@@ -111,7 +106,9 @@
 
     bool Connections_IsHostConnection(connection_id_t connectionId);
     bool Connections_IsReady(connection_id_t connectionId);
-    bool Connections_IsActiveHostConnection(connection_id_t connectionId);
+    bool Connections_IsCurrentHost(connection_id_t connectionId);
+    bool Connections_IsSelectedConnecting(void);
+    bool Connections_IsCurrentHostAwake(void);
 
     void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch);
 

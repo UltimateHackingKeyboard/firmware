@@ -60,6 +60,9 @@ if (gitInfo.tag !== `v${version}`) {
     releaseFile = `${__dirname}/${releaseName}-${gitInfo.tag}.tar.gz`;
 }
 
+// fail fast on node/npm version mismatch before spending 15 minutes on firmware builds;
+shell.exec(`npm ci && npm run prebuild`, {cwd: agentDir});
+
 shell.rm('-rf', releaseDir, releaseFile);
 
 const buildTargets = [...packageJson.devices, ...packageJson.modules];
@@ -78,7 +81,7 @@ for (const buildTarget of buildTargets) {
     build(buildTarget, 2);
 }
 
-shell.exec(`npm ci; npm run build`, {cwd: agentDir});
+shell.exec(`npm run build`, {cwd: agentDir});
 
 for (const device of packageJson.devices) {
     const deviceDir = `${releaseDir}/devices/${device.name}`;

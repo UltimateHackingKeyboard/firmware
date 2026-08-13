@@ -15,7 +15,9 @@
 
 // Macros:
 
-    #define KEY_COUNT_PER_UPDATE ((MAX_KEY_COUNT_PER_MODULE+MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE)/2+1)
+    // Max key actions per layer-sync packet; sized so sync_command_layer_t fits a
+    // link packet (see static assert in state_sync.c). Split into 3 packets.
+    #define KEY_COUNT_PER_UPDATE 23
 
 // Typedefs:
 
@@ -32,12 +34,12 @@
     } ATTR_PACKED sync_command_action_t;
 
     typedef struct {
-        layer_id_t layerId;
+        uint8_t layerId;
         uint8_t startOffset;
         uint8_t actionCount;
         uint8_t moduleActionCount;
         sync_command_action_t actions[KEY_COUNT_PER_UPDATE];
-    } sync_command_layer_t;
+    } ATTR_PACKED sync_command_layer_t;
 
     typedef struct {
         uint16_t vertical;
@@ -59,10 +61,19 @@
         version_t firmwareVersion;
         uint8_t keyCount;
         uint8_t pointerCount;
-        char gitRepo[MAX_STRING_PROPERTY_LENGTH];
-        char gitTag[MAX_STRING_PROPERTY_LENGTH];
         char firmwareChecksum[MD5_CHECKSUM_LENGTH];
     } ATTR_PACKED sync_command_module_state_t;
+
+    // gitRepo/gitTag are synced separately: together they exceed one link packet.
+    typedef struct {
+        uint8_t slotId;
+        char gitRepo[MAX_STRING_PROPERTY_LENGTH];
+    } ATTR_PACKED sync_command_module_git_repo_t;
+
+    typedef struct {
+        uint8_t slotId;
+        char gitTag[MAX_STRING_PROPERTY_LENGTH];
+    } ATTR_PACKED sync_command_module_git_tag_t;
 
     typedef struct {
         version_t dataModelVersion;
@@ -106,6 +117,9 @@
         StateSyncPropertyId_KeyStatesDummy = 31,
         StateSyncPropertyId_DongleProtocolVersion = 32,
         StateSyncPropertyId_BatteryStationaryMode = 33,
+        StateSyncPropertyId_DongleHostAwake = 34,
+        StateSyncPropertyId_ModuleGitRepo = 35,
+        StateSyncPropertyId_ModuleGitTag = 36,
         StateSyncPropertyId_Count,
     } state_sync_prop_id_t;
 
@@ -142,6 +156,11 @@
     extern sync_generic_half_state_t SyncLeftHalfState;
     extern sync_generic_half_state_t SyncRightHalfState;
     extern scroll_multipliers_t DongleScrollMultipliers;
+    // Transport variable for StateSyncPropertyId_DongleHostAwake: on the dongle
+    // it holds our own USB host's awake state (source); on the right it holds the
+    // last received value, which is then fanned into the current dongle
+    // connection's per-connection awake bit.
+    extern bool DongleHostAwake;
 
     extern bool StateSync_BatteryBacklightPowersavingMode;
     extern bool StateSync_BlinkBatteryIcon;

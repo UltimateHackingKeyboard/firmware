@@ -9,7 +9,6 @@
 #include "messenger_queue.h"
 #include "debug.h"
 #include "zephyr/bluetooth/addr.h"
-#include "resend.h"
 #include <zephyr/logging/log.h>
 #include "bt_manager.h"
 #include "hid/transport.h"
@@ -115,7 +114,7 @@ int NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
     // gives it back on error, and the `sent` callback gives it back on success.
 
     // Call this only after we have taken the semaphore.
-    Resend_RegisterMessageAndUpdateWatermarks(msg);
+    Messenger_UpdateWatermarks(msg);
 
     uint8_t buffer[MAX_LINK_PACKET_LENGTH];
     uint8_t bufferIdx = 0;

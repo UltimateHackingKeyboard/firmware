@@ -52,7 +52,7 @@ uint16_t BatteryCalculator_CalculateWindowAverageVoltage(uint16_t voltage) {
             res =  (sum + voltage) / (count + 1);
         }
         if ((voltage > res && voltage - res > 200) || (res < voltage && voltage - res > 200)) {
-            LOG_WRN("Battery average flew away, resetting window to %d\n", voltage);
+            LOG_WRN("Battery average flew away, resetting window to %d", voltage);
             addNewRecord(voltage);
             count = 1;
             sum = voltage;

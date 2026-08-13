@@ -1,4 +1,5 @@
 #include "event_scheduler.h"
+#include "atomicity.h"
 #include "timer.h"
 #include "macros/core.h"
 #include "macro_recorder.h"
@@ -10,6 +11,7 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
+#include "usb_report_updater.h"
 #include "oneshot.h"
 #include "trace.h"
 
@@ -126,8 +128,16 @@ static inline heap_entry_t* heapPeek(void) {
     return heapSize > 0 ? &heap[0] : NULL;
 }
 
+// Must run inside the enclosing heap critical section: the heapSize read and
+// the vector update have to be atomic, and the nested guard of
+// EventVector_Set/Unset would re-enable irqs mid-section on MCUX.
 static void updateEventVector(void) {
-    EventVector_SetValue(EventVector_EventScheduler, heapSize > 0);
+    ASSERT_IRQS_DISABLED();
+    if (heapSize > 0) {
+        EventScheduler_Vector |= EventVector_EventScheduler;
+    } else {
+        EventScheduler_Vector &= ~EventVector_EventScheduler;
+    }
 }
 
 #define RETURN_IF_SPAM(EVT) if (isSpam(EVT)) { return; }
@@ -196,8 +206,10 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_PowerModeUpdate:
             PowerMode_Update();
             break;
-        case EventSchedulerEvent_PowerModeRestart:
-            PowerMode_Restart();
+        case EventSchedulerEvent_EnterDeepSleep:
+#ifdef __ZEPHYR__
+            PowerMode_EnterDeepSleep();
+#endif
             break;
         case EventSchedulerEvent_EndBtPairing:
             BtPair_EndPairing(false, "Pairing timeout");
@@ -222,9 +234,6 @@ static void processEvt(event_scheduler_event_t evt)
             RoundTripTest_Run();
             EventScheduler_Schedule(Timer_GetCurrentTime()+10000, EventSchedulerEvent_RoundTripTest, "Event scheduler loop");
             break;
-        case EventSchedulerEvent_ResendMessage:
-            Resend_RequestResendSync();
-            break;
         case EventSchedulerEvent_CheckFwChecksums:
             StateSync_CheckFirmwareVersions();
             break;
@@ -237,8 +246,8 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_BlinkStatusIcons:
             WIDGET_REFRESH(&StatusWidget);
             break;
-        case EventSchedulerEvent_UnselectHostConnection:
-            HostConnection_Unselect(true);
+        case EventSchedulerEvent_RollTargetEllipsis:
+            WIDGET_REFRESH(&TargetWidget);
             break;
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
@@ -251,14 +260,19 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_SendUsbReports:
             EventVector_Set(EventVector_SendUsbReports);
             break;
-        case EventSchedulerEvent_CheckLeftBleVsUart:
-#if DEVICE_IS_UHK80_LEFT
-            BtManager_CheckLeftBleVsUart();
+        case EventSchedulerEvent_CheckBleVsUart:
+#if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
+            BtManager_CheckBleVsUart();
 #endif
             break;
         case EventSchedulerEvent_ConnectionsUpdateState:
 #ifdef __ZEPHYR__
             Connections_UpdateStates();
+#endif
+            break;
+        case EventSchedulerEvent_CheckConnectionSecurity:
+#ifdef __ZEPHYR__
+            BtConn_CheckConnectionSecurity();
 #endif
             break;
         default:
@@ -285,8 +299,8 @@ void EventScheduler_Reschedule(uint32_t at, event_scheduler_event_t evt, const c
     } else {
         heapInsert(evt, at, label);
     }
-    ENABLE_IRQ();
     updateEventVector();
+    ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
     Main_Wake();
@@ -311,8 +325,8 @@ void EventScheduler_Schedule(uint32_t at, event_scheduler_event_t evt, const cha
     } else {
         heapInsert(evt, at, label);
     }
-    ENABLE_IRQ();
     updateEventVector();
+    ENABLE_IRQ();
 
 #ifdef __ZEPHYR__
     Main_Wake();
@@ -328,8 +342,8 @@ void EventScheduler_Unschedule(event_scheduler_event_t evt)
     if (idx != HEAP_INDEX_NONE) {
         heapRemove(idx);
     }
-    ENABLE_IRQ();
     updateEventVector();
+    ENABLE_IRQ();
 }
 
 uint32_t EventScheduler_Process()
@@ -345,9 +359,9 @@ uint32_t EventScheduler_Process()
         }
         heap_entry_t entry = heap[0];
         heapRemove(0);
+        updateEventVector();
         ENABLE_IRQ();
 
-        updateEventVector();
 
         LOG_SCHEDULE(
             if (entry.label != NULL) {

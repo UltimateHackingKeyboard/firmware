@@ -1,0 +1,7 @@
+speed 4000
+device MK22FN512xxx12
+connect
+loadfile right/build/v2-debug/uhk-60-right.hex
+RSetType 2
+r
+qc

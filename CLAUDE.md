@@ -94,3 +94,23 @@ In `key_action.h`:
 ## Code Review Philosophy
 
 Focus on functional aspects, not nitpicks. Only flag magic constants if they're used in multiple places and may need future changes. Don't require comments unless truly necessary.
+
+## UHK80 / Zephyr Dev Environment — Findings
+
+Key gotchas discovered while setting up:
+
+- **Re-run `./build.sh update` after any branch/manifest switch.** The west modules (zephyr, nrf, …)
+  are pinned per `west_nrfsdk.yml`; if they don't match the current checkout, CMake configure fails
+  with `Error finding board: uhk-80-right ... Malformed "build" section ... SchemaError`. This is a
+  Zephyr version mismatch, not a `board.yml` bug — `./build.sh update` (west update + patch) fixes it.
+- **Single-device builds run in the foreground** (`./build.sh right build`), which is easiest for
+  testing; multi-device (`left right dongle`) fans out into tmux `buildsession` panes.
+- **Dongle link depends on `keyboard/` sources.** `right/src/slave_drivers/kboot_driver.c` is compiled
+  for all UHK80 targets, but `device/src/CMakeLists.txt` only compiles `keyboard/*.c` (which includes
+  `uart_modules.c`) for left/right, **not** the dongle. So any symbol `kboot_driver.c` pulls from
+  `uart_modules.c` (e.g. the `KbootUart_*` UART-transport functions) must be stubbed/guarded for the
+  dongle or the dongle link fails with `undefined reference`.
+- **Agent npm shadow.** `lib/agent` is nested inside this repo; the firmware root's `node_modules/npm`
+  (11.8.0, pinned by the root lockfile) shadows nvm's npm during the Agent build and trips its
+  `check-node-version` (>=11.13.0). Fix: `npm install npm@11.13.0 --no-save --no-package-lock` in the
+  firmware root. Details in the reference doc above.

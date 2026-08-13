@@ -131,8 +131,7 @@ COMMAND = {pressKey|holdKey|tapKey|releaseKey|toggleKey} [persistent] SHORTCUT
 COMMAND = tapKeySeq [persistent] [ SHORTCUT | KEY_SEQUENCE ]+
 COMMAND = powerMode [toggle] { wake | lock | sleep }
 COMMAND = reboot
-COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
-COMMAND = switchHost { last | lastSelected | next | previous | <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
+COMMAND = switchHost { last | lastSelected | next | previous | nextActive | previousActive | <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }
 COMMAND = unpairHost { <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> }
 COMMAND = set module.MODULEID.navigationMode.LAYERID_BASIC NAVIGATION_MODE
 COMMAND = set module.MODULEID.baseSpeed <non-xcelerated speed, 0-10.0 (FLOAT)>
@@ -193,7 +192,8 @@ COMMAND = set leds.fadeTimeout <seconds to fade after (INT)>
 COMMAND = set leds.{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout} <seconds to fade after (INT)>
 COMMAND = set battery.chargeLimit { full | optimizeHealth }
 COMMAND = set bluetooth.enabled BOOL
-COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
+COMMAND = set bluetooth.alwaysAdvertise BOOL
+COMMAND = set bluetooth.keepConnectionsAlive BOOL
 COMMAND = set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}
 COMMAND = &macroArg.<macro argument index (INT)>
 COMMAND = macroArg <argument name (IDENTIFIER)> [: MACROARG_TYPE] <argument description (STRING)>
@@ -309,17 +309,17 @@ COMMAND = statsActiveMacros
 COMMAND = statsRecordKeyTiming
 COMMAND = statsVariables
 COMMAND = statsBattery
-COMMAND = diagnose
+COMMAND = diagnose { usb | logic }
 COMMAND = panic
 COMMAND = freeze
 COMMAND = trace
 COMMAND = setStatus STRING
 COMMAND = clearStatus
 COMMAND = set emergencyKey KEYID
+COMMAND = set recoveryKey KEYID
 COMMAND = validateMacros
 COMMAND = resetConfiguration
 COMMAND = set leds.alwaysOn BOOL
-COMMAND = set bluetooth.allowUnsecuredConnections BOOL
 COMMAND = set bluetooth.peripheralConnectionCount INT
 COMMAND = set bluetooth.minAdvertisingDelay INT
 COMMAND = set bluetooth.directedAdvertisingAllowed BOOL
@@ -327,7 +327,6 @@ COMMAND = set devMode BOOL
 COMMAND = set log.sink.usb BOOL
 COMMAND = set log.sink.oled BOOL
 COMMAND = set maxVoltage INT
-COMMAND = powerMode autoShutdown
 COMMAND = testLeakage
 COMMAND = zephyr ZEPHYR_COMMAND
 COMMAND = testSuite [ <moduleName (STRING)> | all ] [ <testName (STRING)> ]
@@ -347,6 +346,8 @@ LAYERID = control
 ###########
 # REMOVED #
 ###########
+COMMAND = bluetooth [toggle] { pair | advertise | noAdvertise }
+COMMAND = set bluetooth.alwaysAdvertiseHid BOOL
 INT = #<register idx (INT)> | #key | @<relative macro action index(INT)> | %<key idx in postponer queue (INT)>
 CONDITION = {ifRegEq | ifNotRegEq | ifRegGt | ifRegLt} <register index (INT)> <value (INT)>
 COMMAND = resolveNextKeyEq <queue position (INT)> KEYID {<time in ms>|untilRelease} <action adr (ADDRESS)> <action adr (ADDRESS)>
@@ -367,6 +368,8 @@ COMMAND = setCompensateDiagonalSpeed {0|1}
 COMMAND = setDebounceDelay <time in ms, at most 250 (INT)>
 COMMAND = setKeystrokeDelay <time in ms, at most 65535 (INT)>
 COMMAND = setEmergencyKey KEYID
+COMMAND = set bluetooth.allowUnsecuredConnections BOOL
+COMMAND = powerMode [toggle] { shutdown | shutDown | autoShutdown }
 ```
 
 ### Uncategorized commands
@@ -382,10 +385,9 @@ COMMAND = setEmergencyKey KEYID
 - `resetTrackpoint` resets the internal trackpoint board. Can be used to recover the trackpoint from drift conditions. Drifts usually happen if you keep the cursor moving at slow constant speeds, because of the boards's internal adaptive calibration. Since the board's parameters cannot be altered, the only way around is or you to learn not to do the type of movement which triggers them.
 - `i2cBaudRate <baud rate, default 100000(INT)>` sets i2c baud rate. Lowering this value may improve module reliability, while increasing latency.
 - `{|}` Braces allow grouping multiple commands as if they were a single command. Please note that from the point of view of the engine, braces are (almost) regular commands, and have to be followed by newlines like any other command. Therefore idioms like `} else {` are not possible at the moment.
-- `powerMode [toggle] { wake | lock | sleep | shutdown }`
+- `powerMode [toggle] { wake | lock | sleep }`
   - `lock` disables all leds, disables USB output. Connections remain active. Device can be woken up by either pressing s+f and j+l keys, or by another macro call. This mode is experimental.
-  - `sleep` reboots the keyboard into a low power mode, that still scans keys and can be woken up by s+f or j+l keys.
-  - `shutdown` is used by uhk when its battery runs out. You can wake up by plugging in the USB cable. It is not designed to be used directly.
+  - `sleep` is the deepest sleep mode. Bluetooth and the left-right link are shut down, and the key matrix is scanned at a low rate. Each half is woken separately, by pressing s+f or j+l keys on it.
   - `wake` wakes up the device from "any" sleep mode that doesn't disable macro engine and the half link.
   - Further rules:
     - If a sleep mode is activated while another sleep mode is active, the deeper of them will be activated.
@@ -394,20 +396,17 @@ COMMAND = setEmergencyKey KEYID
 
 ### Bluetooth
 
-- `bluetooth [toggle] { pair | advertise | noAdvertise }` controls advertising for hid devices - this doesn't affect dongle and left half advertising.
-  - `pair` will start pairing mode. The device will be discoverable for 2 minutes, and will refuse connections from all known devices so that it is possible to pair a new device.
-  - `advertise` will make the device discoverable for 2 minutes. This allows ble hid devices to either connect or pair.
-  - `noAdvertise` will disable alwaysAdvertiseHid and stop advertising.
-  - `toggle` will make keyboard enter the default mode if the supplied mode is active.
-- `switchHost { last | next | previous | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
-  - `previous | next` switch to the next currently connected host in the list of hosts. E.g., this iterates over blue dongles, as well as some other connections.
+Advertising is not controlled explicitly. UHK advertises for the current host connection whenever that connection is not established - i.e., it advertises HID when the current slot is a ble hid or an empty one, and advertises for the specific dongle when the current slot is a dongle. Pairing a new ble hid host is therefore a matter of switching to an empty slot via `switchHost`.
+
+- `switchHost { last | next | previous | nextActive | previousActive | <host connection name (IDENTIFIER)> | <host connection name (STRING)> }` switches the host connection. 
+  - `previous | next` iterate over all nonempty (configured) host connection slots, regardless of whether they are currently connected. Selecting a slot that is not currently connected will reserve a connection slot and attempt to connect to it.
+  - `previousActive | nextActive` iterate over the currently connected hosts only. E.g., this iterates over blue dongles, as well as some other currently connected connections.
   - `last` switches to the previously active host connection. For instance the last in `switchHost "pc"; switchHost "laptop"; switchHost last` switches to "pc".
   - `lastSelected` switches to the last manually selected connection. This is useful to undo an automatic switchover.
   - `<host connection identifier>` switches to the host connection with the given name. If the connection is not available, UHK will reserve a connection slot for this host. Therefore it is possible to connect to violet dongles too. 
   - See the bluetooth section for more information.
 - `unpairHost { <host connection slot (NUMBER)> | <host connection name (IDENTIFIER)> }` unpairs the given host connection. If the slot is in User Configuration, it only unpairs the host, but keeps the connection information. If the slot is not in User Configuration, it removes the entire connection information and makes the slot available to pairing another device.
 - `reconnect` disconnects current active host, waits 100ms and then attempts to connect to it again (i.e., similar to calling switchHost).
-- `set bluetooth.alwaysAdvertiseHid BOOL` - if set to true (default), the device always advertises. If set to false, the device only advertises when a macro calls `bluetooth advertise` or `bluetooth pair` and will stop after 2 minutes.
 
 
 ### Triggering keyboard actions (pressing keys, clicking, etc.)
@@ -470,6 +469,7 @@ COMMAND = setEmergencyKey KEYID
 - `statsRecordKeyTiming` will write timing information of pressed and released keys into status buffer until invoked again.
 - `diagnose` will deactivate all keys and macros and print diagnostic information into the status buffer.
 - `set emergencyKey KEYID` will make the one key be ignored by postponing mechanisms. `diagnose` command on such key can be used to recover keyboard from conditions like infinite postponing loop...
+- `set recoveryKey KEYID` designates a key that is handled directly in the right half's key scanner. When pressed, it dumps USB diagnostics and reboots the keyboard, so it works even when the main event loop is stuck. The key has to be bound in the right half; 255 (default) disables it.
 
 ### Delays
 
@@ -774,6 +774,10 @@ Such named arguments can also be accessed using `$macroArg.<name>`, and the valu
   - `leds.brightness <0-1 multiple of default (FLOAT)>` allows scaling default brightness. E.g., `0.5` will dim the entire keyboard to half of the default values that are configured in Agent
   - `leds.fadeTimeout <seconds to fade after (INT)>` will make uhk turn off all leds after the configured interval. (This is an alias that sets all of `{keyBacklightFadeTimeout|keyBacklightFadeBatteryTimeout|displayFadeTimeout|displayFadeBatteryTimeout}`)
 
+- bluetooth:
+  - `set bluetooth.alwaysAdvertise BOOL` makes uhk keep advertising even when the current host is already connected, as long as there is a free peripheral connection slot. This lets other configured hosts (dongles, ble hids) connect in the background, so that switching to them later is instantaneous. Default is off. Implies `bluetooth.keepConnectionsAlive`.
+  - `set bluetooth.keepConnectionsAlive BOOL` keeps the old host connected when you switch away from it. By default, switching hosts disconnects the previous ble host or dongle in order to free its peripheral connection slot for the new host. Default is off.
+
 - modifier layer triggers:
   - `set modifierLayerTriggers.{shift|alt|super|ctrl} {left|right|both}` controls whether modifier layers are triggered by left or right or either of the modifiers.
 
@@ -846,8 +850,10 @@ Connection counts:
 
 Rules:
 
-- Uhk will iterate over connected devices (blue dongles, usb, ble hid) by `switchHost {previous | next | last}`. This switchover is almost instantaneous, but can reach only currently connected devices.
-- Uhk can connect to violet dongles or additional ble hids by calling `switchHost <host connection name(STRING)>`. In that case, it reserves one connection slot for the selected device. This may mean disconnecting some of the currently connected devices. This kind of switchover usually takes a second or so, but can reach all devices.
+- Host switching is up to the user. The current host stays current even when it gets disconnected, and Uhk keeps advertising for it (and shows it on the oled) until the user switches elsewhere.
+- Uhk will iterate over currently connected devices (blue dongles, usb, ble hid) by `switchHost {previousActive | nextActive}`. This switchover is almost instantaneous, but can reach only currently connected devices.
+- Uhk can connect to any configured host - e.g., violet dongles or additional ble hids - by calling `switchHost <host connection name(STRING)>` or by iterating over all configured slots via `switchHost {previous | next}`. If the selected host is not connected, Uhk reserves a connection slot for it, which may mean disconnecting some of the currently connected devices. This kind of switchover usually takes a second or so, but can reach all devices.
+- Uhk falls back to another host only if the current host is truly disconnected and the other host has the `switchover` flag set. A host whose computer merely went to sleep is not disconnected - it is woken up by usb remote wakeup instead. Once a fallback happens, the fallback host becomes the current one and stays current.
 
 ### Modifier layers
 

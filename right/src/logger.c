@@ -7,6 +7,8 @@
 #include "macro_events.h"
 #include "debug.h"
 #include "usb_log_buffer.h"
+#include "timer.h"
+#include "utils.h"
 
 
 #ifdef __ZEPHYR__
@@ -34,15 +36,15 @@
 #define RED "\033[1m\033[31m"
 #define UNCOLOR "\033[0m"
 
-#define MAX_LOG_LENGTH 256
+#define MAX_LOG_LENGTH 128
 
 #define EXPAND_STRING(BUFFER)  \
 char BUFFER[MAX_LOG_LENGTH]; \
 { \
     va_list myargs; \
     va_start(myargs, fmt); \
+    vsnprintf(BUFFER, MAX_LOG_LENGTH, fmt, myargs); \
     BUFFER[MAX_LOG_LENGTH-1] = '\0'; \
-    vsnprintf(BUFFER, MAX_LOG_LENGTH-1, fmt, myargs); \
 }
 
 void Uart_LogConstant(const char* buffer) {
@@ -63,6 +65,30 @@ void Log(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
     LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+}
+
+// Hooks injected into the patched c2usb (usb/df/mac_diag.hpp). The log targets
+// the error buffer too, so USB anomalies survive reboot in noinit memory.
+void c2usb_log(const char *fmt, ...) {
+    REENTRANCY_GUARD_BEGIN;
+    EXPAND_STRING(buffer);
+
+    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+    REENTRANCY_GUARD_END;
+}
+
+#ifndef __ZEPHYR__
+// on Zephyr the c2usb port provides its own k_uptime-based time source
+uint32_t c2usb_diag_time_ms(void) {
+    return Timer_GetCurrentTime();
+}
+#endif
+
+// Weak fallback so the firmware also links against a plain upstream c2usb
+// checkout (without the diagnostics patch); the patched c2usb's strong
+// definition overrides this.
+__attribute__((weak)) void c2usb_diag_dump(void) {
+    c2usb_log("c2usb diag not available (unpatched c2usb build)\n");
 }
 
 void LogErr(const char *fmt, ...) {
@@ -139,6 +165,7 @@ void LogUSDO(const char *fmt, ...) {
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
+    REENTRANCY_GUARD_BEGIN;
     if (DEVICE_IS_UHK60 || DEVICE_ID == deviceId) {
 #if DEVICE_HAS_OLED
         if (logMask & LogTarget_Oled) {
@@ -155,7 +182,7 @@ void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffe
         }
 #endif
         if (logMask & LogTarget_ErrorBuffer) {
-            Macros_PrintfWithPos(NULL, "%s", buffer);
+            Macros_PrintConstant(buffer);
         }
     } else {
 #ifdef __ZEPHYR__
@@ -166,6 +193,7 @@ void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffe
         }
 #endif
     }
+    REENTRANCY_GUARD_END;
 }
 
 void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...) {
@@ -190,6 +218,7 @@ void InitLogLevels() {
     setLevel("udc", LOG_LEVEL_WRN);
     setLevel("udc_nrf", LOG_LEVEL_WRN);
     setLevel("c2usb", LOG_LEVEL_WRN);
+    setLevel("Battery", LOG_LEVEL_WRN);
 }
 
 #endif

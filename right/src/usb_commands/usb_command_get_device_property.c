@@ -135,7 +135,7 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
     } break;
     case DevicePropertyId_PairingStatus: {
 #ifdef __ZEPHYR__
-        if (BtPair_PairingMode == PairingMode_Oob) {
+        if (BtPair_OobPairingInProgress) {
             SetUsbTxBufferUint8(1, PairingStatus_InProgress);
         } else {
             SetUsbTxBufferUint8(1, BtPair_LastOobPairingSucceeded ? PairingStatus_Success : PairingStatus_Failed);
@@ -144,7 +144,12 @@ void UsbCommand_GetDeviceProperty(const uint8_t *GenericHidOutBuffer, uint8_t *G
     } break;
     case DevicePropertyId_NewPairings:
 #ifdef __ZEPHYR__
-        UsbCommand_GetNewPairings(GetUsbRxBufferUint8(2), GenericHidOutBuffer, GenericHidInBuffer);
+        UsbCommand_GetNewPairings(GetUsbRxBufferUint8(2), false, GenericHidOutBuffer, GenericHidInBuffer);
+#endif
+        break;
+    case DevicePropertyId_NewPairingsWithSlots:
+#ifdef __ZEPHYR__
+        UsbCommand_GetNewPairings(GetUsbRxBufferUint8(2), true, GenericHidOutBuffer, GenericHidInBuffer);
 #endif
         break;
     default:

@@ -23,7 +23,7 @@
 
 // Variables:
 
-    extern pairing_mode_t AdvertisingHid;
+    extern bool BtAdvertise_IsAdvertising;
 
 // Functions:
 

@@ -19,7 +19,7 @@
 uint16_t changeInterval = 1500;
 uint32_t lastChange = 0;
 segment_display_slot_record_t slots[SegmentDisplaySlot_Count] = {
-    [SegmentDisplaySlot_Keymap] = { .text = "   ", .active = true, .len = 3 }
+    [SegmentDisplaySlot_Keymap] = { .text = { ' ', ' ', ' ' }, .active = true, .len = 3 }
 };
 uint8_t activeSlotCount = 1;
 segment_display_slot_t currentSlot = SegmentDisplaySlot_Keymap;

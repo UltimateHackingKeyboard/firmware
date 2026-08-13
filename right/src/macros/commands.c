@@ -35,7 +35,6 @@
 #include "debug.h"
 #include "config_manager.h"
 #include "usb_commands/usb_command_reenumerate.h"
-#include "bt_defs.h"
 #include "trace.h"
 #include "peripherals/leakage_test.h"
 #include "oneshot.h"
@@ -43,7 +42,6 @@
 
 #ifdef __ZEPHYR__
 #include "connections.h"
-#include "bt_pair.h"
 #include "shell/shell_uhk.h"
 #include "host_connection.h"
 #else
@@ -151,10 +149,10 @@ bool Macros_CurrentMacroKeyIsActive()
 
 static macro_result_t writeNum(uint32_t a)
 {
-    char num[11];
-    num[10] = '\0';
+    char num[12];
+    num[11] = '\0';
     int at = 10;
-    while ((a > 0 || at == 10) && at > 0) {
+    while ((a > 0 || at == 10) && at > 1) {
         at--;
         num[at] = a % 10 + 48;
         a = a/10;
@@ -760,39 +758,6 @@ static macro_result_t processBreakCommand(parser_context_t *ctx)
 
     // Takes care of break in root scope
     S->ms.macroBroken = true;
-    return MacroResult_Finished;
-}
-
-static macro_result_t processBluetoothCommand(parser_context_t *ctx)
-{
-    ATTR_UNUSED bool toggle = false;
-    ATTR_UNUSED pairing_mode_t mode = PairingMode_Off;
-    if (ConsumeToken(ctx, "toggle")) {
-        toggle = true;
-    }
-
-    if (ConsumeToken(ctx, "pair")) {
-        mode = PairingMode_PairHid;
-    } else if (ConsumeToken(ctx, "advertise")) {
-        mode = PairingMode_Advertise;
-    } else if (ConsumeToken(ctx, "noadvertise") || ConsumeToken(ctx, "noAdvertise")) {
-        mode = PairingMode_Off;
-    } else {
-        Macros_ReportErrorTok(ctx, "Unrecognized argument:");
-        return MacroResult_Finished;
-    }
-
-    if (Macros_ParserError || Macros_DryRun) {
-        return MacroResult_Finished;
-    }
-
-    if (mode == PairingMode_Off) {
-        Cfg.Bt_AlwaysAdvertiseHid = false;
-    }
-#ifdef __ZEPHYR__
-    BtManager_EnterMode(mode, toggle);
-#endif
-
     return MacroResult_Finished;
 }
 
@@ -1661,10 +1626,7 @@ static macro_result_t processPowerModeCommand(parser_context_t* ctx) {
     if (false) { }
     else if (ConsumeToken(ctx, "wake")) { mode = PowerMode_Awake; }
     else if (ConsumeToken(ctx, "lock")) { mode = PowerMode_Lock; }
-    else if (ConsumeToken(ctx, "sleep")) { mode = PowerMode_SfjlSleep; }
-    else if (ConsumeToken(ctx, "shutdown")) { mode = PowerMode_ManualShutDown; }
-    else if (ConsumeToken(ctx, "shutDown")) { mode = PowerMode_ManualShutDown; }
-    else if (ConsumeToken(ctx, "autoShutdown")) { mode = PowerMode_AutoShutDown; }
+    else if (ConsumeToken(ctx, "sleep")) { mode = PowerMode_DeepSleep; }
     else {
         Macros_ReportErrorTok(ctx, "This mode is not available in this release:");
     }
@@ -2122,6 +2084,14 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
         DRY_RUN_FINISH();
         HostConnections_SelectPreviousConnection();
     }
+    else if (ConsumeToken(ctx, "nextActive")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectNextActiveConnection();
+    }
+    else if (ConsumeToken(ctx, "prevActive") || ConsumeToken(ctx, "previousActive")) {
+        DRY_RUN_FINISH();
+        HostConnections_SelectPreviousActiveConnection();
+    }
     else if (ConsumeToken(ctx, "last")) {
         DRY_RUN_FINISH();
         HostConnections_SelectLastConnection();
@@ -2193,11 +2163,12 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
         Macros_ReportErrorPos(ctx, "Command was removed, please use command similar to `setVar varName ($varName+1)`.");
         return MacroResult_Finished;
 
-    // 'b' commands
-    case CommandId_break:
-        return processBreakCommand(ctx);
-    case CommandId_bluetooth:
-        return processBluetoothCommand(ctx);
+        // 'b' commands
+        case CommandId_break:
+            return processBreakCommand(ctx);
+        case CommandId_bluetooth:
+            Macros_ReportErrorPos(ctx, "Command was removed. Advertising is now driven by the current host connection - use `switchHost` to advertise for (and pair with) a specific host slot.");
+            return MacroResult_Finished;
 
     // 'c' commands
     case CommandId_consumePending:
@@ -2207,15 +2178,15 @@ static macro_result_t dispatchCommand(parser_context_t* ctx, command_id_t comman
     case CommandId_call:
         return processCallCommand(ctx);
 
-    // 'd' commands
-    case CommandId_delayUntilRelease:
-        return processDelayUntilReleaseCommand();
-    case CommandId_delayUntilReleaseMax:
-        return processDelayUntilReleaseMaxCommand(ctx);
-    case CommandId_delayUntil:
-        return processDelayUntilCommand(ctx);
-    case CommandId_diagnose:
-        return Macros_ProcessDiagnoseCommand();
+        // 'd' commands
+        case CommandId_delayUntilRelease:
+            return processDelayUntilReleaseCommand();
+        case CommandId_delayUntilReleaseMax:
+            return processDelayUntilReleaseMaxCommand(ctx);
+        case CommandId_delayUntil:
+            return processDelayUntilCommand(ctx);
+        case CommandId_diagnose:
+            return Macros_ProcessDiagnoseCommand(ctx);
 
     // 'e' commands
     case CommandId_exec:

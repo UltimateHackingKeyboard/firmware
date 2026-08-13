@@ -3,6 +3,7 @@
 #include "key_matrix.h"
 #include "test_switches.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "macros/core.h"
 #include "config_manager.h"
 
@@ -29,7 +30,7 @@ void UsbCommand_GetVariable(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
             SetUsbTxBufferUint8(1, Cfg.DebounceTimeRelease);
             break;
         case UsbVariable_UsbReportSemaphore:
-            SetUsbTxBufferUint8(1, UsbReportUpdateSemaphore);
+            SetUsbTxBufferUint8(1, UsbSemaphore_Get());
             break;
         case UsbVariable_StatusBuffer:
             for (uint8_t i = 1; i < USB_COMMAND_BUFFER_LENGTH; i++) {

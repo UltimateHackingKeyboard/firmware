@@ -44,19 +44,18 @@
     extern void BtPair_EndPairing(bool success, const char* msg);
     extern void BtManager_RestartBt();
     extern void DongleLeds_Update(void);
+    extern void DongleLeds_SetAuthorizationFailed(bool failed);
     extern void BtPair_ClearUnknownBonds();
     extern void BtManager_StartScanningAndAdvertising();
     extern void BtConn_UpdateHostConnectionPeerAllocations();
     extern void Oled_RequestRedraw();
     extern void RoundTripTest_Run();
-    extern void Resend_RequestResendSync();
     extern void PairingScreen_Feedback(const char* message);
     extern void StateSync_CheckFirmwareVersions();
     extern void StateSync_CheckDongleProtocolVersion();
     extern void PowerMode_PutBackToSleepMaybe(void);
     extern void BtAdvertise_DisableAdvertisingIcon(void);
     extern void NotificationScreen_NotifyFor(const char* message, uint16_t duration);
-    extern void HostConnection_Unselect(bool becauseTimeout);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

@@ -6,6 +6,51 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [18.0.1] - 2026-08-12
+
+Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
+
+- Use the old bluetooth behavior until a new Config is flashed.
+- Adjust usb send failure logic.
+- Also turn the dongle red on an authentication fail.
+- Fix: make uhk60 not freeze on reboot.
+- Fix: fix some issues with usb suspend tracking.
+
+## [18.0.0] - 2026-08-06
+
+Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
+
+Major changes:
+- Optimized power consumption for Uhk80. Modules are now the main power hogs.
+  - Sleep commands now work without reboot. As a consequence, state (selected keymap, selected connection, charging mode, etc) is not lost.
+  - `powerMode shutdown` target removed `SMARTMACROS:MAJOR`
+- Multiple bluetooth devices at the same time are now supported.
+- Host switching reworked based on user feedback. Single-point operation is now the default mode:
+  - Never switch connections unless the user explicitly requests it.
+  - Implement `switchHost nextActive` and `switchHost prevActive` macro commands (targets). `SMARTMACROS:MINOR`
+  - Change semantics of `switchHost next` and `switchHost prev` to iterate over offline hosts. `SMARTMACROS:MINOR`
+  - Add `set bluetooth.alwaysAdvertise BOOL` and `set bluetooth.keepConnectionsAlive BOOL` to switch between singlepoint and multipoint operation. `SMARTMACROS:MINOR`, `USERCONFIG:MAJOR`
+  - Remove `bluetooth [toggle] { pair | advertise | noAdvertise }` commands. `SMARTMACROS:MAJOR`
+- Remote wakeup revised. Uhk now should better manage sleeping hosts via USB and via Dongle. `DONGLEPROTOCOL:MINOR`
+
+Macros:
+- Implement `ifMouseActive | ifNotMouseActive` macro commands, and related `set mouseActiveTimeout <time in ms (INT)>` settings. `SMARTMACROS:MINOR`
+- Fix: adjust macro validation to print less duplicit errors. `SMARTMACROS:PATCH`
+- Fix: don't discard tokens after a template expansion. E.g. `tapKeySeq hexCodeOf(a) x y` may have dropped x. `SMARTMACROS:PATCH`
+
+Reliability fixes:
+- Fix: don't crash when receiving an invalid message from a peer device.
+- Fix: don't miss input due to report throttling.
+- Fix: don't allow keys get stuck due to module reconnects.
+
+Other:
+- Remove unsecured bluetooth mode completely.
+- Zephyr's native seurity retry mechanism is now allowed to run uninterrupted.
+- Implement new diagnostics tools. (`diagnose usb`, `recoveryKey`)
+- Freed some memory, adjusted logging, buffer sizes.
+- Decreased state sync message length. Affects dongle protocol and bridge protocol. `DONGLEPROTOCOL:MAJOR`
+- Add a command to read unregistered bluetooth devices, including their slots. `DEVICEPROTOCOL:MINOR`
+
 ## [17.2.0] - 2026-06-23
 
 Device Protocol: 4.18.1 | Module Protocol: 4.3.0 | Dongle Protocol: 1.0.2 | User Config: 14.0.0 | Hardware Config: 1.0.0 | Smart Macros: 3.15.0

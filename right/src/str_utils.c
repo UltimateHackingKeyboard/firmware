@@ -1,5 +1,6 @@
 #include <string.h>
 #include "str_utils.h"
+#include "attributes.h"
 #include "debug.h"
 #include "config_parser/config_globals.h"
 #include "macros/status_buffer.h"
@@ -162,6 +163,10 @@ bool IsWhite(parser_context_t* ctx) {
 static void consumeWhite(parser_context_t* ctx)
 {
     while (!isEnd(ctx)) {
+        // isEnd() may pop an exhausted parser context (e.g. an expandCodes/
+        // template expansion), moving ctx->at to the parent's next token. It
+        // must be checked *before* dereferencing ctx->at, otherwise a ctx->at++
+        // here would step over that token's first character and drop it.
         while (!isEnd(ctx) && *ctx->at <= 32) {
             ctx->at++;
         }
@@ -757,3 +762,4 @@ const char* DeviceModelName(device_id_t device) {
             return "Unknown device";
     }
 }
+

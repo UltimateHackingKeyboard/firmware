@@ -139,6 +139,25 @@ static void process(const struct log_backend *const backend, union log_msg_gener
     }
 }
 
+// Called by the logging thread when the deferred log buffer (CONFIG_LOG_BUFFER_SIZE)
+// overflowed and the oldest messages were overwritten. Without this, bursty output
+// (e.g. `uhk connections`) is silently truncated at the beginning.
+static void dropped(const struct log_backend *const backend, uint32_t cnt)
+{
+    if (uartDev != NULL && !shellOutputInProgress) {
+        shellOutputInProgress = true;
+        log_output_dropped_process(&shellLogOutput, cnt);
+        shellOutputInProgress = false;
+    }
+
+    shell_sinks_t sinks = ShellConfig_GetLogSinks();
+
+    if (sinks.toStatusBuffer || sinks.toUsbBuffer || sinks.toOled) {
+        log_output_ctx_set(&sinkLogOutput, &sinks);
+        log_output_dropped_process(&sinkLogOutput, cnt);
+    }
+}
+
 static void panic(const struct log_backend *const backend)
 {
     ShellConfig_ActivatePanicMode();
@@ -169,7 +188,7 @@ static void notify(const struct log_backend *const backend, enum log_backend_evt
 
 static const struct log_backend_api shellLogBackendApi = {
     .process = process,
-    .dropped = NULL,
+    .dropped = dropped,
     .panic = panic,
     .init = init,
     .is_ready = isReady,

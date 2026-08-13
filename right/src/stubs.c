@@ -24,12 +24,12 @@
     ATTRS void BtPair_EndPairing(bool success, const char* msg) {};
     ATTRS void BtManager_RestartBt() {};
     ATTRS void DongleLeds_Update(void) {};
+    ATTRS void DongleLeds_SetAuthorizationFailed(bool failed) {};
     ATTRS void BtPair_ClearUnknownBonds() {};
     ATTRS void BtManager_StartScanningAndAdvertising() {};
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};
     ATTRS void Oled_RequestRedraw() {};
     ATTRS void RoundTripTest_Run() {};
-    ATTRS void Resend_RequestResendSync() {};
     ATTRS void PairingScreen_Feedback(const char* message) {};
     ATTRS void StateSync_CheckFirmwareVersions() {};
     ATTRS void StateSync_CheckDongleProtocolVersion() {};
@@ -39,4 +39,3 @@
     ATTRS void PowerMode_PutBackToSleepMaybe(void) {};
     ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
     ATTRS void NotificationScreen_NotifyFor(const char* message, uint16_t duration) {};
-    ATTRS void HostConnection_Unselect(bool becauseTimeout) {};

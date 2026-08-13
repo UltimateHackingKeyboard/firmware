@@ -22,7 +22,7 @@
 #include "battery_unloaded_calculator.h"
 #include <zephyr/logging/log_ctrl.h>
 
-LOG_MODULE_REGISTER(Battery, LOG_LEVEL_WRN);
+LOG_MODULE_REGISTER(Battery, LOG_LEVEL_INF);
 
 /**
  * chargerStatDt == 1 => (actually) not charging (e.g., fully charged, or no power provided)
@@ -104,10 +104,12 @@ static void updateMaxCharge() {
 static bool updateBatteryPresent() {
     uint32_t statPeriod = MIN((uint32_t)(lastStatZeroTime - lastStatOneTime), (uint32_t)(lastStatOneTime-lastStatZeroTime));
     uint32_t lastStat = MAX(lastStatZeroTime, lastStatOneTime);
+    bool lastStatValue = lastStatOneTime > lastStatZeroTime;
     bool batteryOscilates = statPeriod < CHARGER_STAT_PERIOD;
     bool changedRecently = (Timer_GetCurrentTime() - lastStat) < CHARGER_STAT_PERIOD;
     bool batteryMissing = (changedRecently && batteryOscilates);
     bool batteryPresent = !batteryMissing;
+    LOG_INF("Stat: %d, Battery present: %d, batteryOscilates: %d, changedRecently: %d, lastStatZeroTime: %d, lastStatOneTime: %d", lastStatValue, batteryPresent, batteryOscilates, changedRecently, lastStatZeroTime, lastStatOneTime);
     return setBatteryPresent(batteryPresent);
 }
 
@@ -133,11 +135,13 @@ static uint16_t getVoltage() {
     adc_read(adc_channel.dev, &sequence);
     int32_t val_mv = (int32_t)buf;
     adc_raw_to_millivolts_dt(&adc_channel, &val_mv);
-    return (uint16_t)(VOLTAGE_DIVIDER_MULTIPLIER*val_mv);
+    uint16_t result = (uint16_t)(VOLTAGE_DIVIDER_MULTIPLIER*val_mv);
+    LOG_INF("Raw voltage: %d mV", result);
+    return result;
 }
 
 static void printState(battery_state_t* state) {
-    LOG_INF("Battery is present: %i, charging: %i, charger enabled: %i, powered: %d, at %imV (%i%%); automaton state %d\n", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->powered, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
+    LOG_INF("Battery is present: %i, charging: %i, charger enabled: %i, powered: %d, at %imV (%i%%); automaton state %d", state->batteryPresent, state->batteryCharging, Charger_ChargingEnabled, state->powered, state->batteryVoltage, state->batteryPercentage, currentChargingAutomatonState);
 }
 
 void Charger_PrintState() {
@@ -161,9 +165,6 @@ static bool handleStateTransition(battery_manager_automaton_state_t newState) {
         currentChargingAutomatonState = newState;
         switch (newState) {
             case BatteryManagerAutomatonState_TurnOff:
-                // LOG_INF("Going to shut down. Measured voltage %d, computed voltage %d, powered %d\n", rawVoltage, batteryState->batteryVoltage, batteryState->powered);
-                // PowerMode_ActivateMode(PowerMode_AutoShutDown, false, false);
-                // break;
             case BatteryManagerAutomatonState_Powersaving:
                 stateChanged |= setPowersaving(true);
                 break;
@@ -194,12 +195,12 @@ static bool updateChargerEnabled(battery_state_t *batteryState, battery_manager_
         if (voltage > minThreshold) {
             BatteryManager_SetMaxCharge(newMaxVoltage);
             oldState = BatteryManagerAutomatonState_Charged;
-            LOG_INF("Charger stopped at %dmV. Setting as new 100%%.\n", voltage);
+            LOG_INF("Charger stopped at %dmV. Setting as new 100%%.", voltage);
             Charger_PrintState();
         } else {
             BatteryManager_SetMaxCharge(BatteryManager_StandardUse.maxVoltage - 10);
             oldState = BatteryManagerAutomatonState_Charged;
-            LOG_INF("Charger stopped bellow %dmV. This is suspicious!\n", minThreshold);
+            LOG_INF("Charger stopped bellow %dmV. This is suspicious!", minThreshold);
             Charger_PrintState();
         }
     } else if (newMaxVoltage > config->maxVoltage) {
@@ -298,7 +299,7 @@ void Charger_UpdateBatteryState() {
             perc = BatteryCalculator_Step(batteryState.batteryPercentage, perc);
 
             stateChanged |= setPercentage(voltage, perc);
-            LOG_INF("corrected voltage is %d %d\n", voltage, perc);
+            LOG_INF("corrected voltage is %d %d", voltage, perc);
 
             if (voltage == 0) {
                 // the value is not valid, try again
@@ -328,7 +329,7 @@ void Charger_UpdateBatteryState() {
             bool actuallyCharging = !gpio_pin_get_dt(&chargerStatDt);
             stateChanged |= setActuallyCharging(actuallyCharging && Charger_ChargingEnabled);
 
-            // LOG_INF("Going to measure voltage; charger formallyEnabled = %d, actuallyEnabled = %d, actuallyCharging = %d\n", Charger_ChargingEnabled, actuallyEnabled, actuallyCharging);
+            // LOG_INF("Going to measure voltage; charger formallyEnabled = %d, actuallyEnabled = %d, actuallyCharging = %d", Charger_ChargingEnabled, actuallyEnabled, actuallyCharging);
 
             setChargerEnPin(false);
 
@@ -403,7 +404,7 @@ void chargerStatCallback(const struct device *port, struct gpio_callback *cb, gp
         StateSync_UpdateProperty(StateSyncPropertyId_Battery, &batteryState);
     }
     if (Shell.statLog) {
-        LOG_INF("STAT changed to %i\n", stat ? 1 : 0);
+        LOG_INF("STAT changed to %i", stat ? 1 : 0);
     }
     EventScheduler_Reschedule(Timer_GetCurrentTime() + CHARGER_STAT_PERIOD, EventSchedulerEvent_UpdateBattery, "charger - stat callback");
 }
@@ -412,10 +413,10 @@ bool Charger_ShouldRemainInDepletedMode(bool checkVoltage) {
     updatePowered();
     if (checkVoltage) {
         uint16_t voltage = getVoltage();
-        LOG_INF("Charger_ShouldRemainInDepletedMode called; powered = %d && raw voltage = %d\n", batteryState.powered, voltage);
+        LOG_INF("Charger_ShouldRemainInDepletedMode called; powered = %d && raw voltage = %d", batteryState.powered, voltage);
         return !batteryState.powered && voltage > 1000 && voltage < BatteryManager_GetCurrentBatteryConfig()->minWakeupVoltage;
     } else {
-        LOG_INF("Charger_ShouldRemainInDepletedMode called; powered = %d\n", batteryState.powered);
+        LOG_INF("Charger_ShouldRemainInDepletedMode called; powered = %d", batteryState.powered);
         return !batteryState.powered;
     }
 }
@@ -424,7 +425,7 @@ bool Charger_ShouldEnterDepletedMode() {
     updatePowered();
     uint16_t voltage = getVoltage();
 
-    LOG_INF("Charger_ShouldEnterDepletedMode called; powered = %d && raw voltage = %d\n", batteryState.powered, voltage);
+    LOG_INF("Charger_ShouldEnterDepletedMode called; powered = %d && raw voltage = %d", batteryState.powered, voltage);
     return !batteryState.powered && voltage < BatteryManager_GetCurrentBatteryConfig()->minVoltage;
 }
 
@@ -434,9 +435,6 @@ void InitCharger_Min(void) {
 }
 
 void InitCharger(void) {
-    log_filter_set(NULL, 0, log_source_id_get("Battery"), LOG_LEVEL_WRN);
-
-
     InitCharger_Min();
 
     gpio_pin_configure_dt(&chargerEnDt, GPIO_OUTPUT);

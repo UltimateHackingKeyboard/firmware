@@ -102,7 +102,7 @@ static connection_id_t findPreferredConnection(connection_target_t target) {
             RETURN_IF_CONNECTED(ConnectionId_NusClientRight);
             return ConnectionId_Invalid;
         case ConnectionTarget_Host:
-            return ActiveHostConnectionId;
+            return CurrentHostConnectionId;
         default:
             return ConnectionId_Invalid;
     }

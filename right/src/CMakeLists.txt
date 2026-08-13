@@ -68,6 +68,9 @@ target_sources(${PROJECT_NAME} PRIVATE
     $<$<BOOL:${IS_MCUX_SDK}>:${CMAKE_CURRENT_SOURCE_DIR}/trace_reasons.c>
     usb_log_buffer.c
     usb_protocol_handler.c
+    usb_report_sender.c
+    usb_scheduler.c
+    usb_semaphore.c
     usb_report_updater.c
     usb_state.c
     user_logic.c

@@ -93,12 +93,13 @@
         uint16_t AutoShiftDelay;
         uint8_t ChordingDelay;
         key_state_t* EmergencyKey;
+        uint8_t RecoveryKey;
 
         // bluetooth
-        bool Bt_AllowUnsecuredConnections;
+        bool Bt_AlwaysAdvertise;
+        bool Bt_KeepConnectionsAlive;
         bool Bt_DirectedAdvertisingAllowed;
         bool Bt_Enabled;
-        bool Bt_AlwaysAdvertiseHid;
 
         // others
         bool DevMode;

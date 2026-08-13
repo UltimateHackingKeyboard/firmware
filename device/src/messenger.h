@@ -55,7 +55,7 @@
 
 // Functions:
 
-    uint16_t Messenger_GetMissedMessages(device_id_t dst);
+    void Messenger_UpdateWatermarks(message_t* msg);
 
     int Messenger_SendMessage(message_t* message);
     int Messenger_Send(device_id_t dst, uint8_t messageId, const uint8_t* data, uint16_t len);

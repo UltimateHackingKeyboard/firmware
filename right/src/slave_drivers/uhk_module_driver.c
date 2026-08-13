@@ -32,7 +32,12 @@
 #include "layouts/key_layout_60_to_universal.h"
 #include "test_switches.h"
 #include "mouse_controller.h"
-#include "logger.h"
+
+
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(UhkModuleDriver, LOG_LEVEL_INF);
+#endif
 
 uhk_module_state_t UhkModuleStates[UHK_MODULE_MAX_SLOT_COUNT];
 module_connection_state_t ModuleConnectionStates[UHK_MODULE_MAX_SLOT_COUNT];
@@ -168,6 +173,7 @@ void UhkModuleSlaveDriver_ProcessKeystates(uint8_t uhkModuleDriverId, uhk_module
         }
 
         if (KeyStates[slotId][targetKeyId].hardwareSwitchState != keyStatesBuffer[keyId]) {
+            DEBUG_KEY_LIFE_SCAN(keyStatesBuffer[keyId]);
             KeyStates[slotId][targetKeyId].hardwareSwitchState = keyStatesBuffer[keyId];
             stateChanged = true;
         }
@@ -458,15 +464,16 @@ slave_result_t UhkModuleSlaveDriver_Update(uint8_t uhkModuleDriverId)
 #ifdef __ZEPHYR__
             if (DEVICE_ID == DeviceId_Uhk80_Left && uhkModuleDriverId == UhkModuleDriverId_LeftModule) {
                 StateSync_UpdateProperty(StateSyncPropertyId_ModuleStateLeftModule, NULL);
+                StateSync_UpdateProperty(StateSyncPropertyId_ModuleGitRepo, NULL);
+                StateSync_UpdateProperty(StateSyncPropertyId_ModuleGitTag, NULL);
             }
 #endif
-            LogU("Module %d initialized: protocol version %d.%d.%d, firmware version %d.%d.%d, git tag %s, git repo %s, firmware checksum %s\n",
+            LOG_INF("Module %d init: protocol %d.%d.%d, fw %d.%d.%d, git %s/%s",
                  uhkModuleDriverId,
                  uhkModuleState->moduleProtocolVersion.major, uhkModuleState->moduleProtocolVersion.minor, uhkModuleState->moduleProtocolVersion.patch,
                  uhkModuleState->firmwareVersion.major, uhkModuleState->firmwareVersion.minor, uhkModuleState->firmwareVersion.patch,
-                 uhkModuleState->gitTag,
                  uhkModuleState->gitRepo,
-                 uhkModuleState->firmwareChecksum
+                 uhkModuleState->gitTag
             );
             break;
         }
@@ -590,7 +597,18 @@ void UhkModuleSlaveDriver_Disconnect(uint8_t uhkModuleDriverId)
     uint8_t slotId = UhkModuleSlaveDriver_DriverIdToSlotId(uhkModuleDriverId);
 
     if (IS_VALID_MODULE_SLOT(slotId)) {
-        memset(KeyStates[slotId], 0, MAX_KEY_COUNT_PER_MODULE * sizeof(key_state_t));
+        bool stateChanged = false;
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            if (KeyStates[slotId][keyId].hardwareSwitchState) {
+                DEBUG_KEY_LIFE_SCAN(0);
+                KeyStates[slotId][keyId].hardwareSwitchState = false;
+                stateChanged = true;
+            }
+        }
+        if (stateChanged) {
+            EventVector_Set(EventVector_StateMatrix);
+            EventVector_WakeMain();
+        }
     }
 
     EventScheduler_Schedule(Timer_GetCurrentTime() + MODULE_CONNECTION_TIMEOUT, EventSchedulerEvent_ModuleConnectionStatusUpdate, "ModuleConnectionStatusUpdate");

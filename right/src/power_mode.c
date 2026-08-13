@@ -1,14 +1,20 @@
 #include "power_mode.h"
+#include "attributes.h"
 #include "timer.h"
 #include "event_scheduler.h"
 #include "led_manager.h"
 #include "wormhole.h"
 #include "stubs.h"
 #include "hid/transport.h"
+#include "usb_state.h"
+#include "usb_report_updater.h"
 
 #ifdef __ZEPHYR__
     #include "device_state.h"
     #include "connections.h"
+    #include "bt_conn.h"
+    #include "bt_manager.h"
+    #include "keyboard/uart_bridge.h"
     #include "keyboard/key_scanner.h"
     #include "keyboard/charger.h"
     #include "keyboard/leds.h"
@@ -38,20 +44,10 @@ power_mode_config_t PowerModeConfig[PowerMode_Count] = {
         .i2cInterval = 50,
         .keyScanInterval = 50,
     },
-    [PowerMode_SfjlSleep] = {
-        .name = "SfjlSleep",
+    [PowerMode_DeepSleep] = {
+        .name = "DeepSleep",
         .i2cInterval = 100,
         .keyScanInterval = 100,
-    },
-    [PowerMode_AutoShutDown] = {
-        .name = "AutoShutDown",
-        .i2cInterval = 500,
-        .keyScanInterval = 500,
-    },
-    [PowerMode_ManualShutDown] = {
-        .name = "ManualShutDown",
-        .i2cInterval = 500,
-        .keyScanInterval = 500,
     },
 };
 
@@ -59,15 +55,21 @@ static uint32_t lastWakeEvent = 0;
 
 volatile power_mode_t CurrentPowerMode = PowerMode_Awake;
 
-#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 10*1000
+#define LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH 5*1000
 
 
 static bool isSomeoneAwake() {
 #ifdef __ZEPHYR__
-    connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
-    bool someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    bool someoneAwake = false;
+    if (DEVICE_IS_UHK80_LEFT) {
+        connection_target_t ourMaster = DEVICE_IS_UHK80_LEFT ? ConnectionTarget_Right : ConnectionTarget_Host;
+        someoneAwake = DeviceState_IsTargetConnected(ourMaster);
+    }
+    if (DEVICE_IS_UHK80_RIGHT) {
+        someoneAwake = Connections_IsCurrentHostAwake();
+    }
 #else
-    bool someoneAwake = CurrentPowerMode == PowerMode_Awake;
+    bool someoneAwake = !UsbState_HostIsSuspended && UsbState_TransportUp;
 #endif
     return someoneAwake;
 }
@@ -84,10 +86,11 @@ void PowerMode_Update() {
         }
 
         if (newPowerMode == PowerMode_LightSleep && CurrentPowerMode < PowerMode_LightSleep) {
-            if (Timer_GetCurrentTime() - lastWakeEvent >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
+            uint32_t baseTime = MAX(lastWakeEvent, UsbReportUpdater_LastActivityTime);
+            if (Timer_GetCurrentTime() - baseTime >= LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH) {
                 PowerMode_ActivateMode(newPowerMode, false, false, "power mode update");
             } else {
-                EventScheduler_Schedule(lastWakeEvent + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
+                EventScheduler_Schedule(baseTime + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
             }
         }
     }
@@ -113,13 +116,8 @@ static void lock() {
     notifyEveryone();
 }
 
-static void sfjlSleep() {
-    CurrentPowerMode = PowerMode_SfjlSleep;
-    notifyEveryone();
-}
-
-static void shutDown(power_mode_t mode) {
-    CurrentPowerMode = mode;
+static void deepSleep() {
+    CurrentPowerMode = PowerMode_DeepSleep;
     notifyEveryone();
 }
 
@@ -147,6 +145,9 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
         return;
     }
 
+    ATTR_UNUSED bool wasAwake = CurrentPowerMode <= PowerMode_LastAwake;
+    ATTR_UNUSED bool wasDeepSleep = CurrentPowerMode == PowerMode_DeepSleep;
+
     switch (mode) {
         case PowerMode_Awake:
             wake();
@@ -157,12 +158,8 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
         case PowerMode_Lock:
             lock();
             break;
-        case PowerMode_SfjlSleep:
-            sfjlSleep();
-            break;
-        case PowerMode_ManualShutDown:
-        case PowerMode_AutoShutDown:
-            shutDown(mode);
+        case PowerMode_DeepSleep:
+            deepSleep();
             break;
         default:
             break;
@@ -176,98 +173,70 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
     }
 #endif
 
-    if (CurrentPowerMode > PowerMode_Lock) {
-        EventScheduler_Schedule(Timer_GetCurrentTime() + POWER_MODE_RESTART_DELAY, EventSchedulerEvent_PowerModeRestart, "restart power mode");
+#ifdef __ZEPHYR__
+    // On an awake<->sleep transition, recompute BLE intervals (everything relaxes while asleep).
+    if ((CurrentPowerMode <= PowerMode_LastAwake) != wasAwake) {
+        BtConn_UpdateConnectionLatencies();
     }
-}
+#endif
 
-void PowerMode_WakeHost() {
-    LogUS("Usb_RemoteWakeup\n");
-    USB_RemoteWakeup();
-}
+#ifdef __ZEPHYR__
+    // Leaving deep sleep has to bring the links back before anything wants to talk over
+    // them. Entering it is deferred, so that the mode change itself still gets synced to
+    // the other half over the link we are about to cut.
+    if (CurrentPowerMode == PowerMode_DeepSleep) {
+        EventScheduler_Schedule(Timer_GetCurrentTime() + POWER_MODE_DEEP_SLEEP_DELAY, EventSchedulerEvent_EnterDeepSleep, "cut links for deep sleep");
+    } else {
+        EventScheduler_Unschedule(EventSchedulerEvent_EnterDeepSleep);
+        PowerMode_SetLinksEnabled(true);
 
-void PowerMode_Restart() {
-#if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
-    StateWormhole_Open();
-    StateWormhole.wasReboot = true;
-    StateWormhole.rebootToPowerMode = true;
-    StateWormhole.restartPowerMode = CurrentPowerMode;
-    NVIC_SystemReset();
+        if (wasDeepSleep && DEVICE_IS_UHK80_LEFT) {
+            // Each half wakes on its own sfjl combo. If the right one didn't, go back down
+            // rather than idling awake on battery.
+            EventScheduler_Schedule(Timer_GetCurrentTime() + 60*1000, EventSchedulerEvent_PutBackToShutDown, "we woke, but the right half may not have");
+        }
+    }
 #endif
 }
 
+#ifdef __ZEPHYR__
+// Deep sleep runs with the radio and the inter-half link down - together they are the bulk
+// of what is still drawing power once the display and the backlight are off. Both halves
+// reach this independently, and each wakes on its own sfjl combo.
+void PowerMode_SetLinksEnabled(bool enabled) {
+    static bool linksEnabled = true;
+
+    if (linksEnabled == enabled) {
+        return;
+    }
+    linksEnabled = enabled;
+
+    if (enabled) {
+#if DEVICE_IS_KEYBOARD
+        UartBridge_Resume();
+#endif
+        BtManager_StartBt();
+    } else {
+        BtManager_StopBt();
+#if DEVICE_IS_KEYBOARD
+        UartBridge_Suspend();
+#endif
+    }
+}
+
+void PowerMode_EnterDeepSleep(void) {
+    if (CurrentPowerMode == PowerMode_DeepSleep) {
+        PowerMode_SetLinksEnabled(false);
+    }
+}
+#endif
+
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
-
-power_mode_t lastDeepPowerMode = PowerMode_Awake;
-
-static void runDepletedSleep(bool allowWake) {
-    // if the keyboard is powered, give the user a chance to disconnect it for 30 seconds.
-    while (!allowWake && !Charger_ShouldRemainInDepletedMode(false) && k_uptime_get() < 30*1000) {
-        k_sleep(K_MSEC(PowerModeConfig[CurrentPowerMode].keyScanInterval));
-        printk("In order to shut down the keyboard, please disconnect UHK from power.\n");
-    }
-
-    LogU("Entering low power mode. Allow wake by voltage raise %d\n", allowWake);
-
-    while (Charger_ShouldRemainInDepletedMode(allowWake)) {
-        k_sleep(K_MSEC(1000));
-    }
-    LogU("Waking from low power mode.");
-}
-
-static void runSfjlSleep() {
-    while (true) {
-        if (KeyScanner_ScanAndWakeOnSfjl(true, false)) {
-            return;
-        }
-
-        if (Charger_ShouldEnterDepletedMode()) {
-            runDepletedSleep(true);
-        }
-
-        k_sleep(K_MSEC(PowerModeConfig[CurrentPowerMode].keyScanInterval));
-    }
-}
 
 void PowerMode_PutBackToSleepMaybe(void) {
     if (DEVICE_IS_UHK80_LEFT && CurrentPowerMode >= PowerMode_LightSleep && !DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right)) {
-        power_mode_t newMode = lastDeepPowerMode == PowerMode_ManualShutDown ? PowerMode_ManualShutDown : PowerMode_SfjlSleep;
-        PowerMode_ActivateMode(newMode, false, false, "put back to sleep because right side is not available");
+        PowerMode_ActivateMode(PowerMode_DeepSleep, false, false, "put back to sleep because right side is not available");
     }
 }
-
-void PowerMode_RestartedTo(power_mode_t mode) {
-    CurrentPowerMode = mode;
-    KeyBacklightBrightness = 0;
-    lastDeepPowerMode = mode;
-
-    InitLeds_Min();
-    InitKeyScanner_Min();
-    InitCharger_Min();
-
-    switch (mode) {
-        case PowerMode_SfjlSleep:
-            runSfjlSleep();
-            break;
-        case PowerMode_AutoShutDown:
-        case PowerMode_ManualShutDown:
-            printk("A mode %d\n", mode);
-            runDepletedSleep(mode == PowerMode_AutoShutDown);
-            break;
-        default:
-            break;
-    }
-
-    if (DEVICE_IS_UHK80_LEFT) {
-        PowerMode_ActivateMode(PowerMode_LightSleep, false, true, "woken up from sfjl sleep, waiting for right");
-        EventScheduler_Schedule(Timer_GetCurrentTime() + 60*1000, EventSchedulerEvent_PutBackToShutDown, "We were woken up, but right may not.");
-    } else {
-        PowerMode_ActivateMode(PowerMode_Awake, false, true, "woken up from sfjl sleep");
-    }
-}
-
-#else
-
-void PowerMode_RestartedTo(power_mode_t mode) {};
 
 #endif

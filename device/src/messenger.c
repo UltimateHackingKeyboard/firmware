@@ -12,6 +12,7 @@
 #include "state_sync.h"
 #include "thread_stats.h"
 #include "hid/transport.h"
+#include "usb_state.h"
 #include "nus_server.h"
 #include "nus_client.h"
 #include "module.h"
@@ -22,7 +23,6 @@
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/status_buffer.h"
 #include "connections.h"
-#include "resend.h"
 #include "debug.h"
 #include "trace.h"
 #include "usb_commands/usb_command_reenumerate.h"
@@ -35,6 +35,7 @@
 #if DEVICE_IS_UHK_DONGLE
 #include <zephyr/kernel.h>
 #include "usb_report_updater.h"
+#include "usb_report_sender.h"
 
 static K_SEM_DEFINE(dongleUsbSem, 0, 1);
 
@@ -87,8 +88,8 @@ static connection_id_t determineChannel(device_id_t dst) {
     if (DEVICE_IS_UHK80_RIGHT) {
         switch (dst) {
             case DeviceId_Uhk_Dongle:
-                if (Connections_IsReady(ActiveHostConnectionId) && Connections_Type(ActiveHostConnectionId) == ConnectionType_NusDongle) {
-                    return ActiveHostConnectionId;
+                if (Connections_IsReady(CurrentHostConnectionId) && Connections_Type(CurrentHostConnectionId) == ConnectionType_NusDongle) {
+                    return CurrentHostConnectionId;
                 }
                 break;
             case DeviceId_Uhk80_Left:
@@ -115,11 +116,6 @@ static connection_id_t determineChannel(device_id_t dst) {
     }
 
     return ConnectionId_Invalid;
-}
-
-uint16_t Messenger_GetMissedMessages(device_id_t dst) {
-    connection_id_t connId = determineChannel(dst);
-    return Connections[connId].watermarks.missedCount;
 }
 
 static char getDeviceAbbrev(device_id_t src) {
@@ -152,9 +148,6 @@ static void receiveLeft(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
-            break;
-        case MessageId_ResendRequest:
-            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
             break;
         default:
             printk("Didn't expect to receive message %i %i\n", data[0], data[1]);
@@ -200,9 +193,6 @@ static void receiveRight(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
             break;
-        case MessageId_ResendRequest:
-            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
-            break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
             break;
@@ -241,8 +231,8 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
 
 #if DEVICE_IS_UHK_DONGLE
     uint8_t retryCounter = 0;
-    while (ShouldResendReport(ret == 0, &retryCounter)) {
-        uint16_t delay = GetResendThrottleDelay(retryCounter);
+    while (!UsbReportSender_ShouldGiveUp(ret, &retryCounter)) {
+        uint16_t delay = UsbReportSender_ComputeResendDelay(retryCounter);
         k_sleep(K_MSEC(delay));
         k_sem_take(&dongleUsbSem, K_MSEC(128));
         ret = sendDongleReport(propertyId, message);
@@ -263,9 +253,6 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
         case MessageId_RoundTripTest:
             RoundTripTest_Receive(data, len);
-            break;
-        case MessageId_ResendRequest:
-            Resend_ResendRequestReceived(src, determineChannel(src), data, len);
             break;
         default:
             printk("Unrecognized or unexpected message [%i, %i, ...]\n", data[0], data[1]);
@@ -313,7 +300,7 @@ static bool isSpam(const uint8_t* data, connection_id_t connectionId) {
     if (data[MessageOffset_MsgId1] == MessageId_StateSync && data[MessageOffset_MsgId1+1] == StateSyncPropertyId_Battery) {
         return DEBUG_EVENTLOOP_SCHEDULE;
     }
-    if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != ActiveHostConnectionId) {
+    if (DEVICE_IS_UHK80_RIGHT && Connections_Type(connectionId) == ConnectionType_NusDongle && connectionId != CurrentHostConnectionId) {
         StateSync_UpdateProperty(StateSyncPropertyId_DongleStandby, NULL);
         return true;
     }
@@ -386,34 +373,11 @@ void logAllMessages(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, u
 
 
 bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
-    if (data[offset+MessageOffset_MsgId1] == MessageId_ResendRequest) {
-        return true;
-    }
-
-    uint8_t wm = data[offset+MessageOffset_Wm];
-    uint8_t lastWm = Connections[srcConnectionId].watermarks.rxIdx;
-    uint8_t expectedWm = lastWm + 1;
-
-    if (wm == lastWm) {
-        // we have already received this message, so don't push it into the queue again.
-        return false;
-    }
-
     if (data == MessengerQueue_BlackholeBuffer) {
         return false;
     }
 
-    if (false && wm != expectedWm && DEBUG_MODE) {
-        if (wm != 0) {
-            int8_t difference = wm - expectedWm;
-            LogUSDO("Message index doesn't match by %i message(s) from connection %d (%s), wm %d / %d\n", difference, srcConnectionId, Connections_GetStaticName(srcConnectionId), wm, expectedWm);
-        } else {
-            // they have resetted their connection; that is fine, just update our watermarks
-        }
-        Connections[srcConnectionId].watermarks.missedCount++;
-    }
-
-    Connections[srcConnectionId].watermarks.rxIdx = wm;
+    Connections[srcConnectionId].watermarks.rxIdx = data[offset+MessageOffset_Wm];
 
     return true;
 }
@@ -472,9 +436,23 @@ void Messenger_ProcessQueue() {
     }
 }
 
+void Messenger_UpdateWatermarks(message_t* msg) {
+    msg->wm = Connections[msg->connectionId].watermarks.txIdx++;
+}
+
 int Messenger_SendMessage(message_t* message) {
     connection_id_t connectionId = message->connectionId;
     device_id_t dst = message->dst;
+
+    uint16_t totalLen = 3 + message->idsUsed + message->len;
+    if (totalLen > MAX_LINK_PACKET_LENGTH) {
+        const char *desc1, *desc2;
+        getMessageDescription(message->messageId[0], message->messageId[1], &desc1, &desc2);
+        LogU("Refusing to send over-long message (%d > %d bytes) to %s: %s %s\n",
+            totalLen, MAX_LINK_PACKET_LENGTH, Utils_DeviceIdToString(dst),
+            desc1 == NULL ? "" : desc1, desc2 == NULL ? "" : desc2);
+        return -1;
+    }
 
     int err = 0;
 

@@ -22,6 +22,7 @@
 #include "peripherals/reset_button.h"
 #include "config_parser/config_globals.h"
 #include "usb_report_updater.h"
+#include "usb_semaphore.h"
 #include "macro_events.h"
 #include "macros/shortcut_parser.h"
 #include "macros/keyid_parser.h"
@@ -35,6 +36,7 @@
 #include "power_mode.h"
 #include "usb_protocol_handler.h"
 #include "event_scheduler.h"
+#include "utils.h"
 #include "wormhole.h"
 #include "trace.h"
 #include "trace_reasons.h"
@@ -86,14 +88,14 @@ static void sendFirstReport()
     errno_t ret = -1;
     // Wait until sending a report is successful, but don't block longer than 5 seconds.
     while (ret && Timer_GetCurrentTime() < 5000) {
-        UsbReportUpdateSemaphore |= UsbReportUpdate_Keyboard;
+        UsbSemaphore_Set(UsbReportUpdate_Keyboard);
         ret = Hid_SendKeyboardReport(&emptyReport);
         if (ret) {
-            UsbReportUpdateSemaphore &= ~UsbReportUpdate_Keyboard;
+            UsbSemaphore_Clear();
             __WFI();
         }
     }
-    while (UsbReportUpdateSemaphore) {
+    while (UsbSemaphore_Get()) {
         __WFI();
     }
 }
@@ -114,6 +116,7 @@ void CopyRightKeystateMatrix(void)
         }
 
         if (KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState != RightKeyMatrix.keyStates[keyId]) {
+            DEBUG_KEY_LIFE_SCAN(RightKeyMatrix.keyStates[keyId]);
             KeyStates[SlotId_RightKeyboardHalf][targetKeyId].hardwareSwitchState = RightKeyMatrix.keyStates[keyId];
             stateChanged = true;
         }
@@ -121,17 +124,6 @@ void CopyRightKeystateMatrix(void)
     if (stateChanged) {
         EventVector_Set(EventVector_StateMatrix);
     }
-}
-
-bool UsbReadyForTransfers(void) {
-    if (UsbReportUpdateSemaphore && CurrentPowerMode > PowerMode_LastAwake) {
-        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
-            return false;
-        } else {
-            UsbReportUpdateSemaphore = 0;
-        }
-    }
-    return true;
 }
 
 static void initUsb() {
@@ -204,9 +196,13 @@ static void checkSleepMode() {
 
 int main(void)
 {
+    Debug_InitStackCanary();
     Trace_Init();
     if (StateWormhole_IsOpen()) {
-        if (StateWormhole.wasReboot || Trace_ResetShouldBeIgnored()) {
+        if (StateWormhole.persistStatusBuffer) {
+            MacroStatusBuffer_InitFromWormhole();
+        }
+        else if (StateWormhole.wasReboot || Trace_ResetShouldBeIgnored()) {
             // Looks like a normal reboot or power on startup
             MacroStatusBuffer_InitNormal();
         }
@@ -245,9 +241,9 @@ int main(void)
         sendFirstReport();
 
         Trace_Printc("initialized");
+        LOG_INF("Booted up.");
 
         while (1) {
-            Trace_Printc("{");
             if (TestHooks_Active) {
                 TestHooks_Tick();
             } else {
@@ -258,7 +254,7 @@ int main(void)
                 checkSleepMode();
             }
 
-            if (UsbReadyForTransfers() && EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
+            if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
                 Trace('(');
                 RunUserLogic();
                 Trace(')');
@@ -269,7 +265,6 @@ int main(void)
 
             UserLogic_LastEventloopTime = Timer_GetCurrentTime();
 
-            Trace_Printc("}");
             __WFI();
         }
     }

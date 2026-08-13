@@ -18,4 +18,6 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_parser_benevolence.c
     tests/test_sticky.c
     tests/test_playtime.c
+    tests/test_transport.c
+    tests/test_tapkeyseq.c
 )

@@ -8,12 +8,16 @@
 
 // Macros:
 
-// 251 = maximum BLE packet length with data length extension
+// Maximum deserialized message length (header + payload) that fits in a single
+// BLE notification / UART bridge frame. We deliberately keep this well below the
+// DLE maximum (244 with a 251-byte ACL buffer) to save RAM (messenger-queue
+// regions, nus/uart buffers) and to shorten BLE packets for lower latency.
 // 4 bytes reserved for L2CAP header
 // 3 bytes reserved for ATT header
 // https://devzone.nordicsemi.com/f/nordic-q-a/111900/maximum-nus-packet-payload-with-ble-data-length-extensio
-// Should equal `CONFIG_BT_BUF_ACL_RX_SIZE - L2CAP_HEADER_SIZE - ATT_HEADER_SIZE`, otherwise something is wrong
-#define MAX_LINK_PACKET_LENGTH 244
+// Should equal `CONFIG_BT_BUF_ACL_RX_SIZE - L2CAP_HEADER_SIZE - ATT_HEADER_SIZE`
+// (i.e. 135 - 4 - 3), otherwise something is wrong.
+#define MAX_LINK_PACKET_LENGTH 128
 
 // Typedefs:
 

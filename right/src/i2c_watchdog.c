@@ -6,9 +6,16 @@
 #include "i2c.h"
 #include "i2c_watchdog.h"
 #include "init_peripherals.h"
+#include "debug.h"
 #include "peripherals/test_led.h"
 #include "trace.h"
 #include "slave_protocol.h"
+
+
+#ifdef __ZEPHYR__
+#include <zephyr/logging/log.h>
+LOG_MODULE_REGISTER(I2cWatchdog, LOG_LEVEL_INF);
+#endif
 
 uint32_t I2cWatchdog_WatchCounter;
 uint32_t I2cWatchdog_RecoveryCounter;
@@ -24,7 +31,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
         return;
     }
 
-    Trace_Printc("<i5");
+    ISR_LIFE_START(i2cWatchdog);
     I2cWatchdog_WatchCounter++;
 
     if (I2C_Watchdog == prevWatchdogCounter) { // Restart I2C if there haven't been any interrupts recently
@@ -35,7 +42,7 @@ void PIT_I2C_WATCHDOG_HANDLER(void)
     prevWatchdogCounter = I2C_Watchdog;
     PIT_ClearStatusFlags(PIT, PIT_I2C_WATCHDOG_CHANNEL, PIT_TFLG_TIF_MASK);
 	TestLed_Toggle();
-    Trace_Printc(">");
+    ISR_LIFE_END(i2cWatchdog);
     SDK_ISR_EXIT_BARRIER;
 }
 

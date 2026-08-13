@@ -172,3 +172,31 @@ ATTR_UNUSED uint32_t Utils_Random(void)
     return s;
 }
 
+ATTR_UNUSED void Utils_PrintData(const uint8_t* data, uint16_t len) {
+    static const char hex[] = "0123456789abcdef";
+    // Room for 64 output chars; a single byte can add up to 4 (\xHH), so leave headroom.
+    char line[72];
+    uint16_t pos = 0;
+
+    for (uint16_t i = 0; i < len; i++) {
+        uint8_t b = data[i];
+        if (b >= 32 && b < 127) {
+            line[pos++] = (char)b;
+        } else {
+            line[pos++] = '\\';
+            line[pos++] = 'x';
+            line[pos++] = hex[b >> 4];
+            line[pos++] = hex[b & 0x0f];
+        }
+        if (pos >= 64) {
+            line[pos] = '\0';
+            LogU("%s\n", line);
+            pos = 0;
+        }
+    }
+    if (pos > 0) {
+        line[pos] = '\0';
+        LogU("%s\n", line);
+    }
+}
+

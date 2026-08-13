@@ -19,6 +19,7 @@
 #include "keyboard/oled/widgets/widget.h"
 #include "event_scheduler.h"
 #include "host_connection.h"
+#include "power_mode.h"
 #include "nus_client.h"
 #include "nus_server.h"
 #include "device.h"
@@ -90,6 +91,8 @@ uint32_t Bt_LastConnectedTime = 0;
 
 static void disconnectAllHids();
 static void auth_cancel(struct bt_conn *conn);
+static void watchSecurity(struct bt_conn* conn);
+static void securityEstablished(struct bt_conn* conn);
 
 // BLE APIs that allocate HCI/ATT buffers (data length update, MTU exchange,
 // GATT discovery, security elevation) must not run directly in connection
@@ -291,10 +294,13 @@ static void enableDataLengthExtension(struct bt_conn *conn) {
     data_len = BT_LE_DATA_LEN_PARAM_MAX;
 
     /**
-     * This configures actual transmission length.
+     * Configures actual transmission length. Cap the payload to our reduced ACL
+     * buffer (CONFIG_BT_BUF_ACL_TX_SIZE) rather than the DLE max of 251: we never
+     * send larger packets and shorter PDUs mean lower latency.
      *
-     * We don't want it too high in order to prevent scheduling conflicts between multiple links.
+     * tx_max_time kept low to avoid scheduling conflicts between multiple links.
      * */
+    data_len->tx_max_len = CONFIG_BT_BUF_ACL_TX_SIZE;
     data_len->tx_max_time = 2500;
 
     int err = bt_conn_le_data_len_update(conn, data_len);
@@ -361,6 +367,51 @@ static void configureLatency(struct bt_conn *conn, latency_mode_t latencyMode) {
                 setLatency(conn, &conn_params);
              }
             break;
+        case LatencyMode_Idle: {
+                // i.e., at most 240ms windows
+                const struct bt_le_conn_param conn_params = BT_LE_CONN_PARAM_INIT(
+                    6, 12,
+                    16,
+                    100
+                );
+                setLatency(conn, &conn_params);
+             }
+            break;
+    }
+}
+
+static latency_mode_t desiredLatencyMode(connection_id_t connectionId) {
+    connection_type_t connectionType = Connections_Type(connectionId);
+    if (connectionType != ConnectionType_BtHid && connectionType != ConnectionType_NusDongle) {
+        // don't sleep right-left link
+        return LatencyMode_NUS;
+    }
+    bool awake = CurrentPowerMode <= PowerMode_LastAwake;
+    if (awake && connectionId == CurrentHostConnectionId) {
+        return LatencyMode_BleHid;
+    }
+    return LatencyMode_Idle;
+}
+
+// Last mode actually applied per peer, so that the recompute is idempotent - every
+// configureLatency triggers an on-air renegotiation. -1 = none yet.
+static int8_t appliedLatencyMode[PeerCount];
+
+void BtConn_UpdateConnectionLatencies(void) {
+    // Host switchover and power modes are a right-half concept.
+    if (!DEVICE_IS_UHK80_RIGHT) {
+        return;
+    }
+    for (uint8_t i = PeerIdFirst; i < PeerCount; i++) {
+        if (Peers[i].conn == NULL) {
+            appliedLatencyMode[i] = -1;
+            continue;
+        }
+        latency_mode_t mode = desiredLatencyMode(Peers[i].connectionId);
+        if ((int8_t)mode != appliedLatencyMode[i]) {
+            appliedLatencyMode[i] = (int8_t)mode;
+            configureLatency(Peers[i].conn, mode);
+        }
     }
 }
 
@@ -373,13 +424,13 @@ static void youAreNotWanted(struct bt_conn *conn) {
         LOG_WRN("Refusing connenction %s (this is not a selected connection)(this is repeated attempt!)", GetPeerStringByConn(conn));
         safeDisconnect(conn, BT_REASON_HID_GIVE_US_BREAK);
     } else {
-        LOG_WRN("Refusing connenction %s (this is not a selected connection (%d))", GetPeerStringByConn(conn), SelectedHostConnectionId);
+        LOG_WRN("Refusing connenction %s (slots reserved for current connection (%d))", GetPeerStringByConn(conn), CurrentHostConnectionId);
         safeDisconnect(conn, BT_REASON_TEMPORARY);
     }
-    LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, bt pari mode: %d",
+    LOG_INF("    Free peripheral slots: %d, Peripheral conn count: %d, oob pairing: %d",
         BtConn_UnusedPeripheralConnectionCount(),
         ACTUAL_PERIPHERAL_CONNECTION_COUNT,
-        BtPair_PairingMode
+        BtPair_OobPairingInProgress
    );
 
     lastAttemptTime = currentTime;
@@ -481,82 +532,34 @@ void BtConn_ListAllBonds() {
     bt_foreach_bond(BT_ID_DEFAULT, bt_foreach_print_bond, NULL);
 }
 
-// If last available slot is reserved for a selected connection, refuse other connections
-static bool isWantedInHidPairingMode(struct bt_conn *conn, bool alreadyAuthenticated, connection_id_t connectionId, connection_type_t connectionType) {
-    bool isLeftConnection = connectionType == ConnectionType_NusLeft;
-    bool isBonded = BtPair_IsDeviceBonded(bt_conn_get_dst(conn));
+static bool shouldReserveForCurrentConnection() {
+    connection_type_t connType = Connections_Type(CurrentHostConnectionId);
+    bool isBluetoothConnection = connType == ConnectionType_BtHid || connType == ConnectionType_NusDongle;
 
-    bool result = isLeftConnection || !isBonded || !alreadyAuthenticated;
-
-    if (!result) {
-        LOG_INF("    Not wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
-    } else {
-        LOG_INF("    Is wanted in HID pairing mode: isLeft: %d, isBonded: %d, alreadyAuth: %d", isLeftConnection, isBonded, alreadyAuthenticated);
-    }
-
-    return result;
+    return DEVICE_IS_UHK80_RIGHT && Connections_GetState(CurrentHostConnectionId) == ConnectionState_Disconnected && isBluetoothConnection;
 }
 
-static bool isWantedInNormalMode(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
+// If last available slot is reserved for the current connection, refuse other connections
+static bool isWanted(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
 
-    bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
+    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(CurrentHostConnectionId)->bleAddress);
+    bool isSelectedSlotEmpty = Connections_Type(CurrentHostConnectionId) == ConnectionType_Empty;
+    bool isPeerConnection = connectionType == ConnectionType_NusLeft || connectionType == ConnectionType_NusRight;
+    bool isOobPairingPeer = BtPair_OobPairingInProgress && BtAddrEq(addr, &BtPair_GetRemoteOob()->addr);
+    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || !shouldReserveForCurrentConnection();
 
-    bool isHidCollision = connectionType == ConnectionType_BtHid && BtConn_ConnectedHidCount(addr) > 0;
-    bool isSelectedConnection = BtAddrEq(addr, &HostConnection(SelectedHostConnectionId)->bleAddress);
-    bool weHaveSlotToSpare = BtConn_UnusedPeripheralConnectionCount() > 1 || SelectedHostConnectionId == ConnectionId_Invalid;
-    bool isLeftConnection = connectionType == ConnectionType_NusLeft;
-
-
-    if (isHidCollision) {
-    /**
-     * TODO: uncomment and test this code if we want to allow inplace hid switchover initiated by the remote.
-     *       I predict this is not workable due to aggressive connection policies of third parties.
-        if (SelectedHostConnectionId == ConnectionId_Invalid) {
-            host_connection_t *hostConnection = HostConnection(connectionId);
-            bool wantSwitch = hostConnection != NULL && hostConnection->switchover;
-            if (wantSwitch) {
-                disconnectAllHids();
-                return true;
-            } else {
-                return false;
-            }
-        } else {
-            if (isSelectedConnection) {
-                disconnectAllHids();
-                return true;
-            } else {
-                return false;
-            }
-        }
-    */
-
-        // We can get here during pairing where the connection collides with itself.
-        LOG_INF("    Not wanted: this is HID collision");
-        return false;
-    } else if (selectedConnectionIsBleHid) {
-        if (!isSelectedConnection) {
-            LOG_INF("    Not wanted: selected connection is BLE HID, this is not it: %d != %d (%d)", SelectedHostConnectionId, connectionId, connectionType);
-        }
-        return isSelectedConnection;
-    }
-    else {
-        bool result = weHaveSlotToSpare || isSelectedConnection || isLeftConnection;
-        if (!result) {
-            LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (%d != %d (%d)), isLeft: %d", weHaveSlotToSpare, isSelectedConnection,
-                SelectedHostConnectionId, connectionId, connectionType, isLeftConnection);
-        }
-        return result;
-    }
-}
-
-// If last available slot is reserved for a selected connection, refuse other connections
-static bool isWanted(struct bt_conn *conn, bool alreadyAuthenticated, connection_id_t connectionId, connection_type_t connectionType) {
-    if (BtPair_PairingMode == PairingMode_PairHid) {
-        return isWantedInHidPairingMode(conn, alreadyAuthenticated, connectionId, connectionType);
+    bool result = false;
+    if (Cfg.Bt_AlwaysAdvertise) {
+        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty || isOobPairingPeer || weHaveSlotToSpare;
     } else {
-        return isWantedInNormalMode(conn, connectionId, connectionType);
+        result = isPeerConnection || isSelectedConnection || isSelectedSlotEmpty || isOobPairingPeer;
     }
+
+    if (!result) {
+        LOG_INF("    Not wanted: haveSlot: %d, isSelected: %d (selected %d, this %d (%d)), isPeer: %d, isEmptySlot: %d, isOobPeer: %d", weHaveSlotToSpare, isSelectedConnection, CurrentHostConnectionId, connectionId, connectionType, isPeerConnection, isSelectedSlotEmpty, isOobPairingPeer);
+    }
+    return result;
 }
 
 static void connectNus(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
@@ -578,7 +581,7 @@ static void connectNus(struct bt_conn *conn, connection_id_t connectionId, conne
 static void connectHid(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
     assignPeer(conn, connectionId, connectionType);
 
-    configureLatency(conn, LatencyMode_NUS);
+    configureLatency(conn, LatencyMode_BleHid);
 
     // Assume that HOGP is ready
     LOG_INF("Established HID connection with %s", GetPeerStringByConn(conn));
@@ -606,7 +609,7 @@ ATTR_UNUSED static uint8_t discover_func(struct bt_conn *conn, const struct bt_g
         if (service_val && service_val->uuid) {
             if (service_val->uuid->type == BT_UUID_TYPE_128 && !bt_uuid_cmp(service_val->uuid, BT_UUID_NUS)) {
                 bool isPairedConnection = false;
-                if (BtPair_PairingMode == PairingMode_Oob) {
+                if (BtPair_OobPairingInProgress) {
                     const bt_addr_le_t* addr = bt_conn_get_dst(conn);
                     struct bt_le_oob* oob = BtPair_GetRemoteOob();
                     isPairedConnection = BtAddrEq(addr, &oob->addr);
@@ -676,6 +679,15 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     LOG_INF("Disconnected from %s, reason %u", GetPeerStringByConn(conn), reason);
 
+    bool rejectedForSecurityReasons = reason == BT_HCI_ERR_AUTH_FAIL
+        || reason == BT_HCI_ERR_PIN_OR_KEY_MISSING
+        || reason == BT_HCI_ERR_INSUFFICIENT_SECURITY;
+    if (rejectedForSecurityReasons) {
+        DongleLeds_SetAuthorizationFailed(true);
+    }
+
+    securityEstablished(conn);
+
     if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
         NusServer_Disconnected();
     }
@@ -731,9 +743,9 @@ static bool isUhkDeviceConnection(connection_type_t connectionType) {
 }
 
 static void authenticatedConnectionFlow(struct bt_conn *conn, connection_id_t connectionId, connection_type_t connectionType) {
-    // in case we don't have free connection slots and this is not the selected connection, then refuse
-    if (!isWanted(conn, true, connectionId, connectionType)) {
-        LOG_WRN("Refusing authenticated connenction %d (this is not a selected connection(%d))", connectionId, SelectedHostConnectionId);
+    // in case we don't have free connection slots and this is not the current connection, then refuse
+    if (!isWanted(conn, connectionId, connectionType)) {
+        LOG_WRN("Refusing authenticated connenction %d (slots reserved for connection (%d))", connectionId, CurrentHostConnectionId);
         youAreNotWanted(conn);
         return;
     }
@@ -776,8 +788,9 @@ static void connectedFlow(struct bt_conn *conn) {
         connectUnknown(conn);
         BtManager_StartScanningAndAdvertisingAsync(true, "connected - invalid connection");
     } else {
-        if (isWanted(conn, false, connectionId, connectionType)) {
+        if (isWanted(conn, connectionId, connectionType)) {
             bt_conn_set_security(conn, BT_SECURITY_L4);
+            watchSecurity(conn);
             // advertising/scanning needs to be started only after peers are assigned :-/
         } else {
             youAreNotWanted(conn);
@@ -832,23 +845,110 @@ static void scheduleBtFlow(struct bt_conn *conn, bt_flow_t action, connection_id
     k_work_submit(&btDeferredWork);
 }
 
-static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
-    BT_TRACE_AND_ASSERT("bc3");
-    // In case of failure, disconnect
-    if (err || (level < BT_SECURITY_L4 && !Cfg.Bt_AllowUnsecuredConnections)) {
-        LOG_WRN("Bt security failed: %s, level %u, err %d, disconnecting", GetPeerStringByConn(conn), level, err);
+// A peer can connect, ignore our security request and simply sit there. It can read
+// nothing (every characteristic requires authentication) but it holds a peripheral slot
+// and keeps the radio busy, and no callback ever tells us: no pairing starts, so
+// pairing_failed does not fire, and no security change happens, so security_changed does
+// not either. The stack will not time it out for us - bt_conn_set_security only emits an
+// SMP Security Request, and smp_send_security_req deliberately does not arm the SMP timer
+// ("SMP timer is not restarted for SecRequest"). So we have to watch it ourselves.
+#define SECURITY_ESTABLISHMENT_TIMEOUT 30000
+
+static struct bt_conn* pendingSecurityConns[PeerCount];
+static uint32_t pendingSecurityDeadlines[PeerCount];
+
+static void watchSecurity(struct bt_conn* conn) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        if (pendingSecurityConns[i] == NULL || pendingSecurityConns[i] == conn) {
+            pendingSecurityConns[i] = conn;
+            pendingSecurityDeadlines[i] = Timer_GetCurrentTime() + SECURITY_ESTABLISHMENT_TIMEOUT;
+            EventScheduler_Reschedule(pendingSecurityDeadlines[i], EventSchedulerEvent_CheckConnectionSecurity, "security establishment timeout");
+            return;
+        }
+    }
+}
+
+static void securityEstablished(struct bt_conn* conn) {
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        if (pendingSecurityConns[i] == conn) {
+            pendingSecurityConns[i] = NULL;
+        }
+    }
+}
+
+void BtConn_CheckConnectionSecurity(void) {
+    uint32_t now = Timer_GetCurrentTime();
+
+    for (uint8_t i = 0; i < PeerCount; i++) {
+        struct bt_conn* conn = pendingSecurityConns[i];
+        if (conn == NULL) {
+            continue;
+        }
 
         struct bt_conn_info info;
-        int err = bt_conn_get_info(conn, &info);
-        if (err == 0 && info.state == BT_CONN_STATE_CONNECTED) {
-            bt_conn_auth_cancel(conn);
-            // bt_conn_disconnect(conn, BT_REASON_PERMANENT);
+        if (bt_conn_get_info(conn, &info) != 0 || info.state != BT_CONN_STATE_CONNECTED) {
+            pendingSecurityConns[i] = NULL;
+            continue;
+        }
+
+        if (info.security.level >= BT_SECURITY_L4) {
+            pendingSecurityConns[i] = NULL;
+            continue;
+        }
+
+        if (now >= pendingSecurityDeadlines[i]) {
+            LOG_WRN("No security established within timeout - disconnecting %s", GetPeerStringByConn(conn));
+            pendingSecurityConns[i] = NULL;
+            DongleLeds_SetAuthorizationFailed(true);
+            bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
         } else {
-            // Sometimes securityChanged gets called twice, resulting in a race and a crash, so check for it \efp.
-            LOG_WRN("The connection (%s) isn't even connected! Ignoring.", GetPeerStringByConn(conn));
+            EventScheduler_Reschedule(pendingSecurityDeadlines[i], EventSchedulerEvent_CheckConnectionSecurity, "security establishment timeout");
+        }
+    }
+}
+
+// Distinguishes "our bond is no good, re-pair me" from a security procedure that merely did
+// not get to finish. The latter is normal: the right half advertises while filtering for a
+// specific host, accepts our link, then drops it (BT_REASON_NOT_SELECTED) - the aborted SMP
+// exchange surfaces as UNSPECIFIED, which says nothing about our bond. Only errors that are
+// an actual verdict on our keys turn the dongle red.
+static bool isAuthorizationFailure(enum bt_security_err err) {
+    switch (err) {
+        case BT_SECURITY_ERR_AUTH_FAIL:
+        case BT_SECURITY_ERR_PIN_OR_KEY_MISSING:
+        case BT_SECURITY_ERR_OOB_NOT_AVAILABLE:
+        case BT_SECURITY_ERR_AUTH_REQUIREMENT:
+        case BT_SECURITY_ERR_PAIR_NOT_SUPPORTED:
+        case BT_SECURITY_ERR_PAIR_NOT_ALLOWED:
+        case BT_SECURITY_ERR_KEY_REJECTED:
+            return true;
+        case BT_SECURITY_ERR_SUCCESS:
+        case BT_SECURITY_ERR_INVALID_PARAM:
+        case BT_SECURITY_ERR_UNSPECIFIED:
+        default:
+            return false;
+    }
+}
+
+static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_security_err err) {
+    BT_TRACE_AND_ASSERT("bc3");
+
+    // Report only - do NOT disconnect here. This fires on every security failure, including
+    // bonded reconnects where no pairing was attempted (smp.c:3112), and it runs just before
+    // smp_pairing_complete's automatic bt_smp_start_security retry. Disconnecting here
+    // suppresses that retry, so transient failures that used to self-heal become full
+    // reconnect cycles. Enforcement belongs to CONFIG_BT_SMP_SC_ONLY plus the attribute
+    // permissions; a genuinely failed pairing is dropped in pairing_failed instead.
+    if (err || level < BT_SECURITY_L4) {
+        LOG_WRN("Bt security not established: %s, level %u, err %d", GetPeerStringByConn(conn), level, err);
+        if (isAuthorizationFailure(err)) {
+            DongleLeds_SetAuthorizationFailed(true);
         }
         return;
     }
+
+    securityEstablished(conn);
+    DongleLeds_SetAuthorizationFailed(false);
 
 
     // Ignore connection that is being paired. At this point, the central is
@@ -869,8 +969,8 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
     LOG_DBG("%s conn params: interval=%u ms, latency=%u, timeout=%u ms", GetPeerStringByConn(conn), interval * 5 / 4, latency, timeout * 10);
 
     int8_t peerId = GetPeerIdByConn(conn);
-    connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
-    bool isUhkPeer = isUhkDeviceConnection(connectionType);
+    connection_id_t connectionId = Peers[peerId].connectionId;
+    connection_type_t connectionType = Connections_Type(connectionId);
 
     if (connectionType == ConnectionType_BtHid || connectionType == ConnectionType_NusDongle) {
         uint32_t intervalMs = (interval * 5 + 3) / 4;
@@ -880,8 +980,12 @@ __attribute__((unused)) static void infoLatencyParamsUpdated(struct bt_conn* con
         Peers[peerId].bleReportIntervalMs = intervalMs;
     }
 
-    if (interval > 10) {
-        configureLatency(conn, isUhkPeer ? LatencyMode_NUS : LatencyMode_BleHid);
+    // Re-force our interval if the peer negotiated a long one - unless a long one is what
+    // we asked for, in which case accept whatever was granted rather than fight over it.
+    latency_mode_t mode = desiredLatencyMode(connectionId);
+    if (mode != LatencyMode_Idle && interval > 10) {
+        appliedLatencyMode[peerId] = (int8_t)mode;
+        configureLatency(conn, mode);
     }
 }
 
@@ -923,7 +1027,7 @@ static void auth_passkey_entry(struct bt_conn *conn) {
     int8_t peerId = GetPeerIdByConn(conn);
     connection_type_t connectionType = Connections_Type(Peers[peerId].connectionId);
     bool isUhkPeer = isUhkDeviceConnection(connectionType);
-    if (isUhkPeer || isUhkPeerByAddr || BtPair_PairingMode == PairingMode_Oob) {
+    if (isUhkPeer || isUhkPeerByAddr || BtPair_OobPairingInProgress) {
         LOG_INF("refusing passkey authentification for %s", GetPeerStringByConn(conn));
         bt_conn_auth_cancel(conn);
         return;
@@ -985,7 +1089,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
     bt_addr_le_t addr = *bt_conn_get_dst(conn);
     Bt_LastConnectedTime = Timer_GetCurrentTime();
 
-    if (BtPair_PairingMode == PairingMode_Oob) {
+    if (BtPair_OobPairingInProgress) {
         BtPair_EndPairing(true, "Successfuly bonded!");
 
         // Disconnect it so that the connection is established only after it is identified as a host connection
@@ -1011,7 +1115,7 @@ static void pairing_complete(struct bt_conn *conn, bool bonded) {
 
         HostConnection_SetSelectedConnection(connectionId);
 
-        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Selected conn is %d", connectionId, SelectedHostConnectionId);
+        LOG_INF("Pairing complete, passing connection %d to authenticatedConnection handler. Current conn is %d", connectionId, CurrentHostConnectionId);
 
         // we have to connect from here, because central changes its address *after* setting security
         scheduleBtFlow(conn, BtFlow_AuthenticatedConnection, connectionId, connectionType);
@@ -1075,6 +1179,10 @@ void BtConn_DisconnectAllUnidentified() {
 
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
+    if (isAuthorizationFailure(reason)) {
+        DongleLeds_SetAuthorizationFailed(true);
+    }
+
     if (!auth_conn) {
         return;
     }
@@ -1086,10 +1194,18 @@ static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
         PairingScreen_Feedback("Pairing failed!");
     }
 
-    // TODO: should we here?
-    //safeDisconnect(conn, BT_REASON_PERMANENT);
+    LOG_WRN("Pairing failed: %s, reason %d - disconnecting", GetPeerStringByConn(conn), reason);
 
-    LOG_WRN("Pairing failed: %s, reason %d", GetPeerStringByConn(conn), reason);
+    // Unlike security_changed, this only fires when a pairing procedure was actually
+    // underway (guarded by SMP_FLAG_PAIRING), so it cannot catch a bonded reconnect that
+    // merely failed to encrypt. A pairing that failed will not succeed by itself - with
+    // SC_ONLY the peer has been told why - so drop the link rather than leave it parked
+    // at the aggressive interval. PIN_OR_KEY_MISSING means our bond is stale and every
+    // retry fails identically, so report that as permanent.
+    uint8_t disconnectReason = reason == BT_SECURITY_ERR_PIN_OR_KEY_MISSING
+        ? BT_REASON_PERMANENT
+        : BT_REASON_TEMPORARY;
+    bt_conn_disconnect(conn, disconnectReason);
 }
 
 
@@ -1188,24 +1304,20 @@ ATTR_UNUSED static void disconnectAllHids() {
 
 void BtConn_ReserveConnections() {
 #if DEVICE_IS_UHK80_RIGHT
-    bool hostSelected = SelectedHostConnectionId != ConnectionId_Invalid;
-    uint8_t hostState = hostSelected ? Connections_GetState(SelectedHostConnectionId) : ConnectionState_Disconnected;
-    bool hostActive = hostSelected && hostState >= ConnectionState_Connected;
-    bool selectionIsSatisfied = !hostSelected || hostActive;
+    // We reserve a slot for the selected host while it is a BLE target we have
+    // not reached yet.
+    bool needToReach = Connections_IsSelectedConnecting();
+    connection_state_t hostState = Connections_GetState(CurrentHostConnectionId);
 
-    if (!selectionIsSatisfied) {
+    if (needToReach) {
         // clear filters and restart advertising
         BtAdvertise_Stop();
 
         BtConn_DisconnectAllUnidentified();
 
         uint8_t unusedConnectionCount = BtConn_UnusedPeripheralConnectionCount();
-        bool selectedConnectionIsBleHid = Connections_Type(SelectedHostConnectionId) == ConnectionType_BtHid;
 
-        if (selectedConnectionIsBleHid && BtConn_ConnectedHidCount(NULL) > 0) {
-            disconnectAllHids();
-            // Advertising will get started when the host actually gets disconnected
-        } else if (unusedConnectionCount == 0) {
+        if (unusedConnectionCount == 0) {
             disconnectOldestHost();
             // Advertising will get started when the host actually gets disconnected
         } else {
@@ -1221,13 +1333,6 @@ void BtConn_ReserveConnections() {
         }
     }
 #endif
-}
-
-void BtConn_MakeSpaceForHid() {
-    disconnectAllHids();
-    if (BtConn_UnusedPeripheralConnectionCount() == 0) {
-        disconnectOldestHost();
-    }
 }
 
 void Bt_SetEnabled(bool enabled) {

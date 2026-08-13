@@ -67,6 +67,7 @@
 // Functions:
 
     host_known_t HostConnections_IsKnownBleAddress(const bt_addr_le_t *address);
+    host_known_t HostConnections_LookupBleAddress(const bt_addr_le_t *address, uint8_t *outConnectionId);
     host_connection_t* HostConnection(uint8_t connectionId);
 
     void HostConnections_ListKnownBleConnections();
@@ -76,10 +77,10 @@
     void HostConnections_SelectLastSelectedConnection(void);
     void HostConnections_SelectNextConnection(void);
     void HostConnections_SelectPreviousConnection(void);
+    void HostConnections_SelectNextActiveConnection(void);
+    void HostConnections_SelectPreviousActiveConnection(void);
     void HostConnections_SelectByName(parser_context_t* ctx);
     void HostConnection_SetSelectedConnection(uint8_t connectionId);
-
-    void HostConnection_Unselect(bool unselectedDueToTimeout);
 
     uint8_t HostConnections_NameToConnId(parser_context_t* ctx);
 

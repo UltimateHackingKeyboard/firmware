@@ -27,6 +27,9 @@ typedef enum {
     void InitLogLevels();
 #endif
 
+    // logging hook injected into the patched c2usb
+    void c2usb_log(const char *fmt, ...);
+
     void Log(const char *fmt, ...);
     void LogTo(device_id_t deviceId, log_target_t logMask, const char *fmt, ...);
     void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer);
@@ -47,9 +50,9 @@ typedef enum {
     void LogDbg(const char *fmt, ...);
 
 #ifndef __ZEPHYR__
-#define LOG_WRN(fmt, ...) LogWrn(fmt, ##__VA_ARGS__)
-#define LOG_ERR(fmt, ...) LogErr(fmt, ##__VA_ARGS__)
-#define LOG_INF(fmt, ...) LogInf(fmt, ##__VA_ARGS__)
+#define LOG_WRN(fmt, ...) LogWrn(fmt"\n", ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...) LogErr(fmt"\n", ##__VA_ARGS__)
+#define LOG_INF(fmt, ...) LogInf(fmt"\n", ##__VA_ARGS__)
 #endif
 
 #endif // __LOGGER_H__

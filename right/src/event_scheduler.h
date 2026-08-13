@@ -34,7 +34,7 @@
         EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_PowerModeUpdate,
-        EventSchedulerEvent_PowerModeRestart,
+        EventSchedulerEvent_EnterDeepSleep,
         EventSchedulerEvent_EndBtPairing,
         EventSchedulerEvent_RestartBt,
         EventSchedulerEvent_BtStartScanningAndAdvertising,
@@ -46,12 +46,13 @@
         EventSchedulerEvent_CheckDongleProtocolVersion,
         EventSchedulerEvent_PutBackToShutDown,
         EventSchedulerEvent_BlinkStatusIcons,
-        EventSchedulerEvent_UnselectHostConnection,
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
-        EventSchedulerEvent_CheckLeftBleVsUart,
+        EventSchedulerEvent_CheckBleVsUart,
         EventSchedulerEvent_ConnectionsUpdateState,
+        EventSchedulerEvent_RollTargetEllipsis,
+        EventSchedulerEvent_CheckConnectionSecurity,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

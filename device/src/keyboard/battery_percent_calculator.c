@@ -190,7 +190,7 @@ uint16_t BatteryCalculator_Step(uint8_t oldPercentage, uint8_t newPercentage) {
     } else if (absoluteDiff) {
         res = oldPercentage;
     }
-    LOG_INF("Step called with %d %d -> %d\n", oldPercentage, newPercentage, res);
+    LOG_INF("Step called with %d %d -> %d", oldPercentage, newPercentage, res);
     return res;
 }
 

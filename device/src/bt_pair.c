@@ -15,30 +15,21 @@
 #include "host_connection.h"
 #include "settings.h"
 #include "usb_commands/usb_command_get_new_pairings.h"
-#include "config_manager.h"
 #include "right/src/bt_defs.h"
 #include "bt_health.h"
 
 bool BtPair_LastOobPairingSucceeded = true;
 
-pairing_mode_t BtPair_PairingMode = PairingMode_Advertise;
+bool BtPair_OobPairingInProgress = false;
 
 bool BtPair_PairingAsCentral = false;
 static bool initialized = false;
 static struct bt_le_oob oobRemote;
 static struct bt_le_oob oobLocal;
 
-static pairing_mode_t defaultPairingMode() {
-    if (Cfg.Bt_AlwaysAdvertiseHid) {
-        return PairingMode_Advertise;
-    } else {
-        return PairingMode_Off;
-    }
-}
-
-static void enterOobPairingMode() {
+void BtPair_EnterOobPairingMode(void) {
     printk("------ Entering oob pairing mode. Going to stop BT and disconnect all connections. ------\n");
-    BtPair_PairingMode = PairingMode_Oob;
+    BtPair_OobPairingInProgress = true;
     BtManager_StopBt();
 }
 
@@ -54,48 +45,6 @@ struct bt_le_oob* BtPair_GetLocalOob() {
         initialized = true;
     }
     return &oobLocal;
-}
-
-void BtManager_EnterMode(pairing_mode_t mode, bool toggle) {
-    pairing_mode_t defaultMode = defaultPairingMode();
-
-    if (toggle && BtPair_PairingMode == mode) {
-        mode = defaultMode;
-    }
-
-    if (mode == PairingMode_Off) {
-        mode = defaultMode;
-    }
-
-    if (mode == defaultMode) {
-        EventScheduler_Unschedule(EventSchedulerEvent_EndBtPairing);
-    }
-
-    switch (mode) {
-        case PairingMode_Oob:
-            enterOobPairingMode();
-            break;
-        case PairingMode_PairHid:
-        case PairingMode_Advertise:
-            if (BtPair_PairingMode == PairingMode_Oob) {
-                BtPair_EndPairing(BtPair_LastOobPairingSucceeded, "Exiting OOB pairing mode because of switch to another mode.");
-            }
-            BtPair_PairingMode = mode;
-#ifdef CONFIG_BT_PERIPHERAL
-            BtAdvertise_Stop();
-#endif
-            if (mode == PairingMode_PairHid) {
-                BtConn_MakeSpaceForHid();
-            }
-            BtManager_StartScanningAndAdvertisingAsync(false, "BtManager_EnterMode - start advertising");
-            if (mode != defaultMode) {
-                EventScheduler_Reschedule(k_uptime_get_32() + USER_PAIRING_TIMEOUT, EventSchedulerEvent_EndBtPairing, "User pairing mode timeout.");
-            }
-            break;
-        case PairingMode_Off:
-            BtPair_EndPairing(false, "Pairing mode off.");
-            break;
-    }
 }
 
 struct bt_le_oob* BtPair_GetRemoteOob() {
@@ -133,10 +82,10 @@ void BtPair_PairPeripheral() {
 #endif
 
 void BtPair_EndPairing(bool success, const char* msg) {
-    bool wasOob = BtPair_PairingMode == PairingMode_Oob;
+    bool wasOob = BtPair_OobPairingInProgress;
     BT_TRACE_AND_ASSERT("bp4");
     printk("--- Pairing ended, success = %d: %s ---\n", success, msg);
-    if (BtPair_PairingMode == PairingMode_Oob) {
+    if (wasOob) {
 
         initialized = false;
 
@@ -148,7 +97,7 @@ void BtPair_EndPairing(bool success, const char* msg) {
 
     }
 
-    BtPair_PairingMode = defaultPairingMode();
+    BtPair_OobPairingInProgress = false;
 
     EventScheduler_Unschedule(EventSchedulerEvent_EndBtPairing);
 

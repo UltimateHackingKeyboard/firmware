@@ -10,13 +10,14 @@
 // Includes:
 
     #include <stdint.h>
+    #include <stdbool.h>
 
 // Typedefs:
 
 // Functions:
 
     void UsbCommand_UpdateNewPairingsFlag();
-    void UsbCommand_GetNewPairings(uint8_t page, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
+    void UsbCommand_GetNewPairings(uint8_t page, bool withSlots, const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer);
 
 #endif
 

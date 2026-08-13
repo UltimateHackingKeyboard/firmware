@@ -23,9 +23,10 @@ static void appendRxByte(uart_parser_t *uartState, uint8_t byte) {
         uartState->rxCrcBuffer[uartState->rxPosition++] = byte;
     } else if (uartState->rxPosition - CRC_LEN < uartState->rxLength) {
         uartState->rxBuffer[uartState->rxPosition++ - CRC_LEN] = byte;
-    } else {
-        LogU("Uart error: too long message [%i, %i, ... %i]\n", uartState->rxPosition, uartState->rxBuffer[0], uartState->rxBuffer[1], byte);
-        uartState->receiveMessage(uartState, UartControl_Unexpected, NULL, 0);
+    } else if (!uartState->rxTooLong) {
+        uartState->rxTooLong = true;
+        LogU("Uart error: too long message, discarding [len %i: src %i, dst %i, msgId %i, propId %i]\n",
+            uartState->rxLength, uartState->rxBuffer[0], uartState->rxBuffer[1], uartState->rxBuffer[3], uartState->rxBuffer[4]);
     }
 }
 
@@ -95,6 +96,11 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
 
                 uartState->receivingMessage = false;
 
+                if (uartState->rxTooLong) {
+                    uartState->rxTooLong = false;
+                    break;
+                }
+
                 uint16_t len = uartState->rxPosition;
                 uint8_t* data = uartState->rxBuffer;
 
@@ -117,6 +123,15 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
             }
             uartState->receivingMessage = true;
             uartState->rxPosition = 0;
+            uartState->rxTooLong = false;
+            break;
+        case UartControlByte_Wake:
+            // Carries no meaning and must be swallowed silently - reporting it as
+            // Unexpected would tear RX down exactly when the frame behind it is arriving.
+            // It is escaped on TX, so an unescaped one here is never payload.
+            if (uartState->escaping) {
+                goto msg_byte;
+            }
             break;
 msg_byte:
         default:
@@ -160,6 +175,7 @@ static void escapeAndAppend(uart_parser_t *uartState, uint8_t byte) {
         case UartControlByte_Ack:
         case UartControlByte_Nack:
         case UartControlByte_Ping:
+        case UartControlByte_Wake:
             appendByte(uartState, UartControlByte_Escape);
             appendByte(uartState, byte);
             break;
@@ -209,6 +225,7 @@ void UartParser_InitParser(
     uartState->txPosition = 0;
     uartState->receivingMessage = false;
     uartState->escaping = false;
+    uartState->rxTooLong = false;
     uartState->receiveMessage = receiveMessage;
     uartState->userArg = userArg;
 }
@@ -219,6 +236,7 @@ void UartParser_SetRxBuffer(uart_parser_t *uartState, uint8_t* buffer, uint16_t 
     uartState->rxLength = length;
     uartState->escaping = false;
     uartState->receivingMessage = false;
+    uartState->rxTooLong = false;
 }
 
 void UartParser_SetTxBuffer(uart_parser_t *uartState, uint8_t* buffer, uint16_t length) {
