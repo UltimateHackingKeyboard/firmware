@@ -3,7 +3,6 @@
 
 // Includes:
 
-    #include "chords.h"
     #include "key_action.h"
     #include "module.h"
     #include "secondary_role_driver.h"
