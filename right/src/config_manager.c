@@ -271,6 +271,9 @@ const config_t DefaultCfg = (config_t){
         .Macros_OneShotTimeout = 500,
         .AutoShiftDelay = 0,
         .ChordingDelay = 0,
+        .Chords_Timeout = 75,
+        .Chords_MinimumIdleTime = 70,
+        .Chords_ApplicationType = ChordApplicationType_LeadingKey,
         .BatteryStationaryMode = false,
 #ifdef __ZEPHYR__
         .I2cBaudRate = 0,

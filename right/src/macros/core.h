@@ -6,6 +6,7 @@
     #include <stdint.h>
     #include <stdbool.h>
     #include "attributes.h"
+    #include "chords.h"
     #include "key_action.h"
     #include "key_states.h"
     #include "str_utils.h"
@@ -17,7 +18,6 @@
 
     #define MAX_MACRO_NUM 255
     #define MACRO_STATE_POOL_SIZE 16
-    #define MACRO_HISTORY_POOL_SIZE 16
     #define MACRO_SCOPE_STATE_POOL_SIZE (MACRO_STATE_POOL_SIZE*2)
     #define MAX_REG_COUNT 32
 
@@ -129,11 +129,6 @@
 
     typedef struct macro_state_t macro_state_t;
 
-    typedef struct {
-        uint32_t macroStartTime;
-        uint8_t macroIndex;
-    } macro_history_t;
-
     struct macro_state_t {
         // local scope data
         macro_scope_state_t *ls;
@@ -155,6 +150,7 @@
             uint8_t oneShot : 2;
             bool macroInterrupted : 1;
             uint8_t keyActivationId: 4;
+            uint8_t chordActivationId: CHORDS_ACTIVATIONID_SIZE;
             // TODO: refactor macroSleeping, macroBroken and macroPlaying into a single state?
             bool macroSleeping : 1;
             bool macroBroken : 1;
@@ -237,7 +233,6 @@
     extern macro_reference_t AllMacros[MacroIndex_MaxCount];
     extern uint8_t AllMacrosCount;
     extern macro_state_t MacroState[MACRO_STATE_POOL_SIZE];
-    extern macro_history_t MacroHistory[MACRO_HISTORY_POOL_SIZE];
     extern macro_scope_state_t MacroScopeState[MACRO_SCOPE_STATE_POOL_SIZE];
     extern macro_state_t *S;
     extern bool MacroPlaying;
@@ -277,7 +272,7 @@
     macro_result_t Macros_SleepTillTime(uint32_t time, const char* reason);
     uint8_t Macros_ConsumeLayerId(parser_context_t* ctx);
     uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActivationId, uint8_t queueAfterSlot);
-    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationId, uint8_t parentMacroSlot, bool runFirstAction, const char *inlineText);
+    uint8_t Macros_StartMacro(uint8_t index, key_state_t *keyState, uint16_t argumentOffset, uint8_t keyActivationId, bool runFirstAction, const char *inlineText);
     uint8_t Macros_StartInlineMacro(const char *text, key_state_t *keyState, uint8_t keyActivationId);
     uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx);
     uint8_t Macros_ConsumeKeyId(parser_context_t* ctx);
