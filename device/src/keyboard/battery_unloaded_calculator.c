@@ -58,7 +58,7 @@ static uint16_t calculateUnloadedVoltage(const resistance_reference_t* ref, uint
         uint32_t iExtRes = (uint32_t)(externalResistance * 1000);
         uint32_t iUnloadedVoltage = (uint32_t)(unloadedVoltage);
 
-        LOG_INF("  - Resistances %d %d %d, brightness %d, correcting %d -> %d\n",
+        LOG_INF("  - Resistances %d %d %d, brightness %d, correcting %d -> %d",
             iIntRes,
             iLedRes,
             iExtRes,
@@ -82,13 +82,13 @@ void BatteryCalculator_RunTests(void) {
     const resistance_reference_t* ref;
     testing = true;
 
-    LOG_INF("Running battery tests for Right:\n");
+    LOG_INF("Running battery tests for Right:");
     ref = &ReferenceResistanceRight;
     calculateUnloadedVoltage(ref, 3500, ref->keyCount*3*255);
     calculateUnloadedVoltage(ref, 3500, ref->keyCount*3*128);
     calculateUnloadedVoltage(ref, 3500, ref->keyCount*3*64);
     calculateUnloadedVoltage(ref, 3500, ref->keyCount*3*8);
-    LOG_INF("Running battery tests for Left:\n");
+    LOG_INF("Running battery tests for Left:");
     ref = &ReferenceResistanceLeft;
     calculateUnloadedVoltage(ref, 3500, ref->keyCount*3*255);
     calculateUnloadedVoltage(ref, 3500, ref->keyCount*3*128);

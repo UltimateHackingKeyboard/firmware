@@ -99,14 +99,20 @@ struct usb_manager {
                 case usb::power::state::L2_SUSPEND:
 #if DEVICE_IS_UHK60
                     if (dev.configured()) {
-                        UsbState_SetUsbAwake(false);
+                        UsbState_SetHostSuspended(true);
                     }
 #else
-                    UsbState_SetUsbAwake(false);
+                    UsbState_SetHostSuspended(true);
 #endif
                     break;
                 case usb::power::state::L0_ON:
-                    UsbState_SetUsbAwake(true);
+                    UsbState_SetHostSuspended(false);
+                    break;
+                case usb::power::state::L3_OFF:
+                    // Detached - there is no host to be suspended. Leaving the flag set
+                    // would make it stale until the next enumeration, which only stays
+                    // harmless as long as every reader also checks UsbState_TransportUp.
+                    UsbState_SetHostSuspended(false);
                     break;
                 default:
                     break;
@@ -115,6 +121,14 @@ struct usb_manager {
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
                 // reset the semaphore on USB configuration or reset
                 UsbSemaphore_Clear();
+
+                if (dev.configured()) {
+                    // A host that just selected a configuration is awake and listening.
+                    // Reconfiguration also clears the host's remote wakeup arming, so a
+                    // stale suspended state here would make USB_RemoteWakeup() fail with
+                    // EPERM indefinitely.
+                    UsbState_SetHostSuspended(false);
+                }
             }
         });
     }
@@ -164,7 +178,10 @@ extern "C" void USB_Reconfigure()
 extern "C" bool USB_RemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
-    if (err != usb::result::ok) {
+    if (err.to_int() == -1 /* not permitted; treat it as awake */) {
+        UsbState_SetHostSuspended(false);
+        LogInf("USB: remote wakeup not permitted, usb suspended: %d\n", UsbState_HostIsSuspended);
+    } else if (err != usb::result::ok) {
         LogErr("USB: remote wakeup request failed: %d\n", err.to_int());
     } else {
         LogInf("USB: remote wakeup request succeeded\n");

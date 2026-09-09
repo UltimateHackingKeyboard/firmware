@@ -241,7 +241,7 @@ int main(void)
         sendFirstReport();
 
         Trace_Printc("initialized");
-        LOG_INF("Booted up.\n");
+        LOG_INF("Booted up.");
 
         while (1) {
             if (TestHooks_Active) {

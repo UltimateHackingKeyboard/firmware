@@ -50,9 +50,9 @@ typedef enum {
     void LogDbg(const char *fmt, ...);
 
 #ifndef __ZEPHYR__
-#define LOG_WRN(fmt, ...) LogWrn(fmt, ##__VA_ARGS__)
-#define LOG_ERR(fmt, ...) LogErr(fmt, ##__VA_ARGS__)
-#define LOG_INF(fmt, ...) LogInf(fmt, ##__VA_ARGS__)
+#define LOG_WRN(fmt, ...) LogWrn(fmt"\n", ##__VA_ARGS__)
+#define LOG_ERR(fmt, ...) LogErr(fmt"\n", ##__VA_ARGS__)
+#define LOG_INF(fmt, ...) LogInf(fmt"\n", ##__VA_ARGS__)
 #endif
 
 #endif // __LOGGER_H__

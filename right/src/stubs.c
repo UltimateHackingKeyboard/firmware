@@ -24,6 +24,7 @@
     ATTRS void BtPair_EndPairing(bool success, const char* msg) {};
     ATTRS void BtManager_RestartBt() {};
     ATTRS void DongleLeds_Update(void) {};
+    ATTRS void DongleLeds_SetAuthorizationFailed(bool failed) {};
     ATTRS void BtPair_ClearUnknownBonds() {};
     ATTRS void BtManager_StartScanningAndAdvertising() {};
     ATTRS void BtConn_UpdateHostConnectionPeerAllocations() {};

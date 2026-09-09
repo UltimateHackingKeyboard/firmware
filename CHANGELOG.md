@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [18.0.1] - 2026-08-12
+
+Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
+
+- Use the old bluetooth behavior until a new Config is flashed.
+- Adjust usb send failure logic.
+- Also turn the dongle red on an authentication fail.
+- Fix: make uhk60 not freeze on reboot.
+- Fix: fix some issues with usb suspend tracking.
+
 ## [18.0.0] - 2026-08-06
 
 Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0

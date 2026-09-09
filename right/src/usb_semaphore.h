@@ -10,7 +10,7 @@
 // Macros:
 
     #define USB_SEMAPHORE_TIMEOUT 32 // ms
-    #define USB_RESEND_DELAY_MS MAX(10, Cfg.KeystrokeDelay)
+    #define USB_GIVEUP_RESEND_DELAY_MS 1024 // ms; don't spam logs or host
 
 // Typedefs:
 

@@ -679,6 +679,13 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
 
     LOG_INF("Disconnected from %s, reason %u", GetPeerStringByConn(conn), reason);
 
+    bool rejectedForSecurityReasons = reason == BT_HCI_ERR_AUTH_FAIL
+        || reason == BT_HCI_ERR_PIN_OR_KEY_MISSING
+        || reason == BT_HCI_ERR_INSUFFICIENT_SECURITY;
+    if (rejectedForSecurityReasons) {
+        DongleLeds_SetAuthorizationFailed(true);
+    }
+
     securityEstablished(conn);
 
     if (DEVICE_IS_UHK80_LEFT && peerId == PeerIdRight) {
@@ -892,10 +899,34 @@ void BtConn_CheckConnectionSecurity(void) {
         if (now >= pendingSecurityDeadlines[i]) {
             LOG_WRN("No security established within timeout - disconnecting %s", GetPeerStringByConn(conn));
             pendingSecurityConns[i] = NULL;
+            DongleLeds_SetAuthorizationFailed(true);
             bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
         } else {
             EventScheduler_Reschedule(pendingSecurityDeadlines[i], EventSchedulerEvent_CheckConnectionSecurity, "security establishment timeout");
         }
+    }
+}
+
+// Distinguishes "our bond is no good, re-pair me" from a security procedure that merely did
+// not get to finish. The latter is normal: the right half advertises while filtering for a
+// specific host, accepts our link, then drops it (BT_REASON_NOT_SELECTED) - the aborted SMP
+// exchange surfaces as UNSPECIFIED, which says nothing about our bond. Only errors that are
+// an actual verdict on our keys turn the dongle red.
+static bool isAuthorizationFailure(enum bt_security_err err) {
+    switch (err) {
+        case BT_SECURITY_ERR_AUTH_FAIL:
+        case BT_SECURITY_ERR_PIN_OR_KEY_MISSING:
+        case BT_SECURITY_ERR_OOB_NOT_AVAILABLE:
+        case BT_SECURITY_ERR_AUTH_REQUIREMENT:
+        case BT_SECURITY_ERR_PAIR_NOT_SUPPORTED:
+        case BT_SECURITY_ERR_PAIR_NOT_ALLOWED:
+        case BT_SECURITY_ERR_KEY_REJECTED:
+            return true;
+        case BT_SECURITY_ERR_SUCCESS:
+        case BT_SECURITY_ERR_INVALID_PARAM:
+        case BT_SECURITY_ERR_UNSPECIFIED:
+        default:
+            return false;
     }
 }
 
@@ -910,10 +941,14 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     // permissions; a genuinely failed pairing is dropped in pairing_failed instead.
     if (err || level < BT_SECURITY_L4) {
         LOG_WRN("Bt security not established: %s, level %u, err %d", GetPeerStringByConn(conn), level, err);
+        if (isAuthorizationFailure(err)) {
+            DongleLeds_SetAuthorizationFailed(true);
+        }
         return;
     }
 
     securityEstablished(conn);
+    DongleLeds_SetAuthorizationFailed(false);
 
 
     // Ignore connection that is being paired. At this point, the central is
@@ -1144,6 +1179,10 @@ void BtConn_DisconnectAllUnidentified() {
 
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
+    if (isAuthorizationFailure(reason)) {
+        DongleLeds_SetAuthorizationFailed(true);
+    }
+
     if (!auth_conn) {
         return;
     }

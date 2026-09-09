@@ -460,6 +460,7 @@ macro_result_t Macros_ProcessPrintStatusCommand()
 macro_result_t Macros_ProcessSetStatusCommand(parser_context_t* ctx, bool addEndline)
 {
     if (Macros_DryRun) {
+        ctx->at = ctx->end;
         return MacroResult_Finished;
     }
     setStatusStringInterpolated(ctx);
