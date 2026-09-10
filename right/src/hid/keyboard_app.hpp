@@ -66,10 +66,10 @@ class keyboard_app : public hid::application {
             usage(generic_desktop::KEYBOARD),
             collection::application(
                 // 6KRO input keys report
-                keys_input_report_descriptor<KEYS_6KRO_REPORT_ID>(),
+                keys_input_report<KEYS_6KRO_REPORT_ID>::descriptor(),
 
                 // LED report
-                leds_output_report_descriptor<LEDS_REPORT_ID>(),
+                output_report<LEDS_REPORT_ID>::descriptor(),
 
                 // NKRO keys report with report ID
                 conditional_report_id<KEYS_NKRO_REPORT_ID>(),
@@ -104,7 +104,7 @@ class keyboard_app : public hid::application {
             usage(generic_desktop::KEYBOARD),
             collection::application(
                 // LED report
-                leds_output_report_descriptor<LEDS_REPORT_ID>(),
+                output_report<LEDS_REPORT_ID>::descriptor(),
 
                 // NKRO keys report with report ID
                 conditional_report_id<KEYS_NKRO_REPORT_ID>(),
@@ -139,11 +139,10 @@ class keyboard_app : public hid::application {
 
     template <uint8_t REPORT_ID = 0>
     struct keys_nkro_report_base : public hid::report::base<hid::report::type::INPUT, REPORT_ID> {
-        hid::report_bitset<hid::page::keyboard_keypad,
-            hid::page::keyboard_keypad::KEYBOARD_LEFT_CONTROL,
+        hid::report_bitset_range<hid::page::keyboard_keypad::KEYBOARD_LEFT_CONTROL,
             hid::page::keyboard_keypad::KEYBOARD_RIGHT_GUI>
             modifiers;
-        hid::report_bitset<hid::page::keyboard_keypad, NKRO_FIRST_USAGE, NKRO_LAST_USAGE> scancodes;
+        hid::report_bitset_range<NKRO_FIRST_USAGE, NKRO_LAST_USAGE> scancodes;
         void set_code(scancode code, bool value = true)
         {
             if (modifiers.set(code, value)) {

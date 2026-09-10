@@ -1,4 +1,4 @@
-From 85e5b32a49ac2d2b897ee84a276b2faf6dba33eb Mon Sep 17 00:00:00 2001
+From b4de2fb0e2aec895efa6656d37f3b1b89dd60d8b Mon Sep 17 00:00:00 2001
 From: Karel Tucek <kareltucek@centrum.cz>
 Date: Sat, 11 Jul 2026 13:05:57 +0200
 Subject: [PATCH] Add diagnostics logs.
@@ -15,19 +15,19 @@ Subject: [PATCH] Add diagnostics logs.
  create mode 100644 c2usb/usb/df/mac_diag.hpp
 
 diff --git a/c2usb/CMakeLists.txt b/c2usb/CMakeLists.txt
-index 890d99d..382bbf8 100644
+index 123ef42..320c189 100644
 --- a/c2usb/CMakeLists.txt
 +++ b/c2usb/CMakeLists.txt
-@@ -70,6 +70,7 @@ target_sources(c2usb
-         usb/df/device.cpp
-         usb/df/function.cpp
-         usb/df/mac.cpp
-+        usb/df/mac_diag.cpp
-         usb/df/message.cpp
-         usb/standard/descriptors.cpp
- )
+@@ -78,6 +78,7 @@ if(CONFIG_C2USB_DF)
+             usb/df/device.cpp
+             usb/df/function.cpp
+             usb/df/mac.cpp
++            usb/df/mac_diag.cpp
+             usb/df/message.cpp
+             usb/standard/descriptors.cpp
+     )
 diff --git a/c2usb/port/nxp/mcux_mac.cpp b/c2usb/port/nxp/mcux_mac.cpp
-index ecaa265..8ff5bd5 100644
+index 3d197e7..a806314 100644
 --- a/c2usb/port/nxp/mcux_mac.cpp
 +++ b/c2usb/port/nxp/mcux_mac.cpp
 @@ -18,6 +18,9 @@
@@ -98,7 +98,7 @@ index ecaa265..8ff5bd5 100644
  }
  
  usb::result mcux_mac::ep_cancel(ep_handle eph)
-@@ -294,6 +313,7 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+@@ -299,6 +318,7 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
          {
              // control transfer is cancelled at bus reset
              // react to the reset signal only, ignore this event
@@ -106,7 +106,7 @@ index ecaa265..8ff5bd5 100644
              return;
          }
          if (message.isSetup)
-@@ -351,6 +371,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+@@ -361,6 +381,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
      {
          busy_flags_.clear(addr);
  
@@ -124,7 +124,7 @@ index ecaa265..8ff5bd5 100644
          ep_transfer_complete(addr, transfer(message.buffer, cancelled ? 0 : message.length,
                                              not cancelled, ep_address_to_handle(addr)));
      }
-@@ -368,28 +399,35 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+@@ -378,28 +409,35 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
      switch (message.code)
      {
      case kUSB_DeviceNotifyBusReset:
@@ -161,10 +161,10 @@ index ecaa265..8ff5bd5 100644
      default:
          process_ep_notification(message);
 diff --git a/c2usb/port/zephyr/udc_mac.cpp b/c2usb/port/zephyr/udc_mac.cpp
-index 03fc6f3..a1f48c9 100644
+index 0dddfd1..79a9578 100644
 --- a/c2usb/port/zephyr/udc_mac.cpp
 +++ b/c2usb/port/zephyr/udc_mac.cpp
-@@ -11,6 +11,7 @@
+@@ -2,6 +2,7 @@
  #include "port/zephyr/udc_mac.hpp"
  #include <atomic>
  #include "compatibility_helper.hpp"
@@ -172,7 +172,7 @@ index 03fc6f3..a1f48c9 100644
  #include <zephyr/logging/log.h>
  #include <zephyr/message_queue.hpp>
  extern "C"
-@@ -18,6 +19,19 @@ extern "C"
+@@ -9,6 +10,19 @@ extern "C"
  #include <zephyr/drivers/usb/udc.h>
  }
  
@@ -192,7 +192,7 @@ index 03fc6f3..a1f48c9 100644
  #if defined(CONFIG_DEBUG) == defined(NDEBUG)
  // for assert() to be active in debug configuration only, this is necessary
  #error "Either CONFIG_DEBUG or NDEBUG must be defined"
-@@ -113,6 +127,7 @@ static int udc_buf_enqueue(const ::device* dev, ::net_buf* buf)
+@@ -104,6 +118,7 @@ static int udc_buf_enqueue(const ::device* dev, ::net_buf* buf)
      if (ret != 0)
      {
          LOG_ERR("Failed to enqueue ep 0x%02x: %d", udc_get_buf_info(buf)->ep, ret);
@@ -200,7 +200,7 @@ index 03fc6f3..a1f48c9 100644
      }
      return ret;
  }
-@@ -151,6 +166,7 @@ udc_mac::udc_mac(const ::device* dev, size_t ctrl_ep_buf_size, usb::power::state
+@@ -142,6 +157,7 @@ udc_mac::udc_mac(const ::device* dev, size_t ctrl_ep_buf_size, usb::power::state
      }
      set_control_buffer(std::span<uint8_t>(ctrl_buf_->data, ctrl_buf_->size));
  
@@ -208,7 +208,7 @@ index 03fc6f3..a1f48c9 100644
      set_driver_ctx();
  }
  
-@@ -230,9 +246,14 @@ static int udc_mac_event_dispatch(const ::device*, const udc_event* event)
+@@ -221,9 +237,14 @@ static int udc_mac_event_dispatch(const ::device*, const udc_event* event)
      last_full = !message_queue().try_post(*event);
      if (last_full)
      {
@@ -223,7 +223,7 @@ index 03fc6f3..a1f48c9 100644
  #if CONFIG_C2USB_UDC_MAC_LOG_LEVEL >= LOG_LEVEL_DBG
      static auto min_free_msgq_space = message_queue().free_space();
      if (auto free_space = message_queue().free_space(); free_space < min_free_msgq_space)
-@@ -351,6 +372,7 @@ uint16_t udc_mac::control_ep_max_packet_size(usb::speed speed) const
+@@ -342,6 +363,7 @@ uint16_t udc_mac::control_ep_max_packet_size(usb::speed speed) const
  
  void udc_mac::ctrl_stall(net_buf* buf, int err)
  {
@@ -231,7 +231,7 @@ index 03fc6f3..a1f48c9 100644
      auto addr = endpoint::address::control_in();
      if ((request().direction() == usb::direction::OUT) and request().wLength and (err == -ENOMEM))
      {
-@@ -514,6 +536,7 @@ void udc_mac::process_ctrl_ep_event(net_buf* buf, const udc_buf_info& info)
+@@ -512,6 +534,7 @@ void udc_mac::process_ctrl_ep_event(net_buf* buf, const udc_buf_info& info)
          net_buf_unref(buf);
          LOG_WRN("CTRL EP %x (stage %d) error: %d", info.ep,
                  info.setup * 0 + info.data * 1 + info.status * 2, info.err);
@@ -239,7 +239,7 @@ index 03fc6f3..a1f48c9 100644
      }
  }
  
-@@ -541,6 +564,29 @@ int udc_mac::event_callback(const udc_event& event)
+@@ -539,6 +562,29 @@ int udc_mac::event_callback(const udc_event& event)
  
  int udc_mac::process_event(const udc_event& event)
  {
@@ -269,7 +269,7 @@ index 03fc6f3..a1f48c9 100644
      if ((power_state() == power::state::L3_OFF) and (event.type != UDC_EVT_VBUS_READY)) [[unlikely]]
      {
          // flush late events after Vbus removal
-@@ -619,6 +665,7 @@ void udc_mac::process_ctrl_ep(net_buf* buf, const udc_buf_info& info)
+@@ -617,6 +663,7 @@ void udc_mac::process_ctrl_ep(net_buf* buf, const udc_buf_info& info)
      {
          LOG_WRN("CTRL EP %x (stage %d) error: %d", info.ep,
                  info.setup * 0 + info.data * 1 + info.status * 2, info.err);
@@ -277,7 +277,7 @@ index 03fc6f3..a1f48c9 100644
  
          if (info.setup or (info.data and (dir == direction::OUT)))
          {
-@@ -742,6 +789,12 @@ void udc_mac::process_ep_event(net_buf* buf)
+@@ -747,6 +794,12 @@ void udc_mac::process_ep_event(net_buf* buf)
          if (info.err != 0)
          {
              LOG_ERR("EP %x error:%d", info.ep, info.err);
@@ -290,7 +290,7 @@ index 03fc6f3..a1f48c9 100644
          }
          for (uint8_t i = 0; i < ep_bufs_.size(); ++i)
          {
-@@ -864,10 +917,12 @@ usb::result udc_mac::ep_transfer(usb::df::ep_handle eph, const transfer& t, usb:
+@@ -869,10 +922,12 @@ usb::result udc_mac::ep_transfer(usb::df::ep_handle eph, const transfer& t, usb:
  #endif
      if ((dir == direction::IN) and (power_state() != power::state::L0_ON))
      {
@@ -303,7 +303,7 @@ index 03fc6f3..a1f48c9 100644
          return result::device_or_resource_busy;
      }
  
-@@ -878,6 +933,7 @@ usb::result udc_mac::ep_transfer(usb::df::ep_handle eph, const transfer& t, usb:
+@@ -883,6 +938,7 @@ usb::result udc_mac::ep_transfer(usb::df::ep_handle eph, const transfer& t, usb:
      auto ret = udc_ep_enqueue(dev_, buf);
      if (ret != 0)
      {
@@ -311,8 +311,8 @@ index 03fc6f3..a1f48c9 100644
          busy_flags_.clear(addr);
      }
      return usb::result(ret);
-@@ -965,4 +1021,10 @@ usb::result udc_mac::ep_change_stall(usb::df::ep_handle eph, bool stall)
-     }
+@@ -976,4 +1032,10 @@ bool udc_mac::setup_test_mode(uint8_t mode_selector)
+     return ret == 0;
  }
  
 +extern "C" void c2usb_diag_dump_port(void)
@@ -323,10 +323,10 @@ index 03fc6f3..a1f48c9 100644
 +
  } // namespace usb::zephyr
 diff --git a/c2usb/usb/df/device.cpp b/c2usb/usb/df/device.cpp
-index 5e2a088..de24e11 100644
+index f7797c8..85c81dc 100644
 --- a/c2usb/usb/df/device.cpp
 +++ b/c2usb/usb/df/device.cpp
-@@ -11,6 +11,8 @@
+@@ -2,6 +2,8 @@
  #include "usb/df/device.hpp"
  #include "usb/df/function.hpp"
  #include "usb/standard/descriptors.hpp"
@@ -335,7 +335,7 @@ index 5e2a088..de24e11 100644
  
  using namespace magic_enum::bitwise_operators;
  
-@@ -174,6 +176,7 @@ void device::set_configuration(message& msg)
+@@ -163,6 +165,7 @@ void device::set_configuration(message& msg)
          }
      }
  
@@ -631,5 +631,5 @@ index 0000000..d240521
 +
 +#endif // __USB_DF_MAC_DIAG_HPP_
 -- 
-2.51.0
+2.43.0
 

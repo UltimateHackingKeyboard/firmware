@@ -68,6 +68,8 @@ struct usb_manager {
 #endif
         }
 
+        using namespace usb::df;
+
         static constexpr auto speed = usb::speed::FULL;
         static usb::df::hid::function usb_kb{
             keyboard_app::usb_handle(), usb::hid::boot_protocol_mode::KEYBOARD};
@@ -76,15 +78,13 @@ struct usb_manager {
         static usb::df::hid::function usb_controls{controls_app::usb_handle()};
 
         constexpr auto config_header =
-            usb::df::config::header(usb::df::config::power::bus(500, true));
-        const auto shared_config_elems = usb::df::config::join_elements(
-            usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
-            usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
-            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 8),
-            usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1));
+            config::header(config::power::bus(500, config::remote_wakeup));
 
-        static const auto base_config =
-            usb::df::config::make_config(config_header, shared_config_elems);
+        static const auto base_config = config::make_config(config_header,
+            usb_kb.config_entry(speed, usb::endpoint::address(0x81), 1),
+            usb_mouse.config_entry(speed, usb::endpoint::address(0x82), 1),
+            usb_command.config_entry(speed, usb::endpoint::address(0x83), 8),
+            usb_controls.config_entry(speed, usb::endpoint::address(0x84), 1));
 
         device_.set_config(base_config);
         device_.open();
