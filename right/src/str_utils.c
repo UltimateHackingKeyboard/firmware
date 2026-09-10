@@ -157,14 +157,6 @@ static void consumeWhite(parser_context_t* ctx)
     }
 }
 
-bool TryConsumeDot(parser_context_t* ctx)
-{
-    if (*ctx->at == '.') {
-        ++ctx->at;
-        return true;
-    }
-    return false;
-}
 
 void ConsumeCommentsAsWhite(bool consume)
 {

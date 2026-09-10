@@ -116,8 +116,7 @@
     typedef struct {
         key_action_t action;
         rgb_t color;
-        bool colorOverridden : 1;
-        bool isPartOfChord : 1;
+        bool colorOverridden;
     } ATTR_PACKED key_definition_t;
 
     typedef struct {

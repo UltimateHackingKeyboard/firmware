@@ -136,9 +136,6 @@ bool Macros_CurrentMacroKeyIsActive()
     if (S->ms.currentMacroKey == NULL) {
         return S->ms.oneShot == 1;
     }
-    if (S->ms.chordActivationId != CHORDS_INVALID_ACTIVATION_ID && Cfg.Chords_ApplicationType == ChordApplicationType_AllKeys) {
-        return (S->ms.oneShot == 1) || Chords_IsChordActivationActive(S->ms.chordActivationId, isCurrentMacroPostponing());
-    }
     if (isCurrentMacroPostponing()) {
         bool isSameActivation = (S->ms.currentMacroKey->activationId == S->ms.keyActivationId);
         bool keyIsActive = (KeyState_Active(S->ms.currentMacroKey) && !PostponerQuery_IsKeyReleased(S->ms.currentMacroKey));
@@ -166,7 +163,7 @@ static macro_result_t writeNum(uint32_t a)
 
     macro_result_t res = Macros_DispatchText(&num[10-len], len, NULL);
     if (res == MacroResult_Finished) {
-        PostponerExtended_ConsumePendingKeypresses(1);
+        PostponerExtended_ConsumePendingKeypresses(1, true);
         return MacroResult_Finished;
     }
     return res;
@@ -1067,7 +1064,7 @@ static macro_result_t processResolveNextKeyIdCommand()
     }
     macro_result_t res = writeNum(PostponerExtended_PendingId(0));
     if (res == MacroResult_Finished) {
-        PostponerExtended_ConsumePendingKeypresses(1);
+        PostponerExtended_ConsumePendingKeypresses(1, true);
         return MacroResult_Finished;
     }
     return res;
@@ -1206,7 +1203,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
                 return MacroResult_Sleeping;
             }
             else if (cancelInTimedOut) {
-                PostponerExtended_ConsumePendingKeypresses(numArgs);
+                PostponerExtended_ConsumePendingKeypresses(numArgs, true);
                 S->ms.macroBroken = true;
                 goto conditionFailed;
             }
@@ -1241,7 +1238,7 @@ static macro_result_t processIfShortcutCommand(parser_context_t* ctx, bool negat
 matched:
     //all keys match
     if (consume) {
-        PostponerExtended_ConsumePendingKeypresses(numArgs);
+        PostponerExtended_ConsumePendingKeypresses(numArgs, true);
     }
     if (negate) {
         goto conditionFailed;
@@ -1270,12 +1267,8 @@ uint8_t Macros_TryConsumeKeyId(parser_context_t* ctx)
     uint8_t keyId = MacroKeyIdParser_TryConsumeKeyId(ctx);
 
     if (keyId == 255 && isNUM(ctx)) {
-        bool ErrorBefore = Macros_ParserError;
-        Macros_ParserError = false;
         uint8_t num = Macros_ConsumeInt(ctx);
-        bool ErrorAfter = Macros_ParserError;
-        Macros_ParserError |= ErrorBefore;
-        if (ErrorAfter) {
+        if (Macros_ParserError) {
             return 255;
         } else {
             return num;
@@ -1624,7 +1617,7 @@ static macro_result_t processConsumePendingCommand(parser_context_t* ctx)
     if (Macros_DryRun) {
         return MacroResult_Finished;
     }
-    PostponerExtended_ConsumePendingKeypresses(cnt);
+    PostponerExtended_ConsumePendingKeypresses(cnt, true);
     return MacroResult_Finished;
 }
 
