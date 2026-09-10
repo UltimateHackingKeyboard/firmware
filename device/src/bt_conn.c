@@ -337,7 +337,6 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
         LOG_WRN("LE latencies update failed: %d", err);
-        Bt_HandleError("bt_conn_le_param_update", err);
     }
 }
 
