@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [18.0.2] - 2026-09-10
+
+Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
+
+- Decrease the bt_conn_le_param_update error severity - don't bother the user over it.
+- Merge c2usb upstream.
+
 ## [18.0.1] - 2026-08-12
 
 Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
