@@ -16,6 +16,7 @@
         BacklightingMode_LightAll,
         BacklightingMode_LightNone,
         BacklightingMode_Unspecified,
+        BacklightingMode_DynamicLighting, // https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/dynamic-lighting-devices
     } backlighting_mode_t;
 
     typedef enum {
@@ -59,5 +60,7 @@
     void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode);
     void Ledmap_ResetTemporaryLedBacklightingMode();
     backlighting_mode_t Ledmap_GetEffectiveBacklightMode();
+    void Ledmap_SetKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId);
+    void Ledmap_TriggerFullUpdate(void);
 
 #endif
