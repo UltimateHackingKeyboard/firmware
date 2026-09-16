@@ -35,13 +35,20 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_BUF_REQUEST:
     {
-        uartState->rxbuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
+        uint8_t *nextBuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
 
-        err = uart_rx_buf_rsp(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH);
-        if (err != 0) {
-            LogU("Could not provide new buffer because %i\n", err);
+        err = uart_rx_buf_rsp(uartState->device, nextBuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH);
+
+        if (err == 0) {
+            uartState->rxbuf = nextBuf;
+        } else if (err == -EACCES) {
+            // Not fatal. It went down in the meantime and so the buffer is no longer wanted.
+            BridgeDbg("BRIDGE buf_rsp declined, rx down\n");
+        } else {
+            LogU("Uart: buffer request rejected because %i\n", err);
+            __ASSERT(false, "Uart: buffer request rejected because %i\n", err);
         }
-        __ASSERT(err == 0, "Failed to provide new buffer");
+
         break;
     }
 
