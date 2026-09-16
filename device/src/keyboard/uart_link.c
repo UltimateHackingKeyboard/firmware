@@ -90,7 +90,7 @@ void UartLink_Enable(uart_link_t *uartState) {
         return;
     }
 #endif
-    int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_BRIDGE_TIMEOUT);
+    int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_TRANSPORT_TIMEOUT_US);
     if (err == 0) {
         uartState->enabled = true;
     } else if (err == -EBUSY) {
@@ -247,7 +247,7 @@ void UartLink_SendWakeByte(uart_link_t *uartState) {
 
     uint8_t wake = UartControlByte_Wake;
     UartLink_LockBusy(uartState);
-    int err = uart_tx(uartState->device, &wake, 1, UART_BRIDGE_TIMEOUT);
+    int err = uart_tx(uartState->device, &wake, 1, UART_TRANSPORT_TIMEOUT_US);
     if (err != 0) {
         k_sem_give(&uartState->txControlBusy);
     }
@@ -282,7 +282,7 @@ void UartLink_LockBusy(uart_link_t *uartState) {
 
 
 int UartLink_Send(uart_link_t *uartState, uint8_t* data, uint16_t len) {
-    return uart_tx(uartState->device, data, len, UART_BRIDGE_TIMEOUT);
+    return uart_tx(uartState->device, data, len, UART_TRANSPORT_TIMEOUT_US);
 }
 
 

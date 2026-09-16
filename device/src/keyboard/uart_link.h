@@ -36,6 +36,10 @@
     #define UART_LP_IDLE_HOLDOFF_MS 1000
     #define UART_LP_DISCONNECTED_HOLDOFF_MS 0
 
+    // RX idle timeout; the driver stops RX ~0.8x this after the last byte. Must stay well below
+    // UART_WAKE_DISPATCH_DELAY_US, or that stop lands on the frame following a wake byte.
+    #define UART_TRANSPORT_TIMEOUT_US 700
+
 // Typedefs:
 
     typedef enum {
