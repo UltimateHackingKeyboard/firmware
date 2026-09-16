@@ -12,7 +12,8 @@
     // Master switch for the low-power scheme: RX is disabled while the link is idle and
     // woken by a GPIO edge on RXD, senders prepend a sacrificial wake byte.
     #ifndef UART_LOWPOWER
-        #define UART_LOWPOWER 1
+        // The low-power still doesn't work reliably. Especially simultaneous startup (no battery, no probe, no uart shell adapter, just bridge cable connected; then connect usb. Uart can't recover from that.)
+        #define UART_LOWPOWER 0
     #endif
 
     #ifndef UART_BRIDGE_DEBUG
