@@ -1050,5 +1050,10 @@ void StateSync_ResetConfig() {
 }
 
 const char* StateSync_PropertyIdToString(state_sync_prop_id_t propId) {
-    return stateSyncProps[propId].name;
+    if (propId < StateSyncPropertyId_Count) {
+        return stateSyncProps[propId].name;
+    } else {
+        return "OutOfRangeStateSyncPropertyId";
+    }
+
 }
