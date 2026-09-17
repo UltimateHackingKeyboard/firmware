@@ -130,7 +130,7 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
 }
 
 
-static void receivePacket(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
+static void receiveMessage(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
     uartState->lastLinkActivity = k_uptime_get();
     switch (messageKind) {
@@ -153,7 +153,6 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
         case UartControl_ValidMessage:
             {
                 uartState->lastPingTime = k_uptime_get();
-                len -= UART_CRC_LEN;
                 setRxState(uartState, UartRxState_Ack);
 
                 // message
@@ -171,7 +170,7 @@ static void receivePacket(void *state, uart_control_t messageKind, const uint8_t
         case UartControl_InvalidMessage: {
                 uartState->invalidMessagesCounter++;
                 const char *out1, *out2;
-                Messenger_GetMessageDescription(uartState->rxBuffer, UART_CRC_LEN, &out1, &out2);
+                Messenger_GetMessageDescription(uartState->rxBuffer, 0, &out1, &out2);
                 LogUO("Crc-invalid UART message received! %s %s ", out1, out2 == NULL ? "" : out2);
 
                 for (uint16_t i = 0; i < uartState->parser.rxPosition; i++) {
@@ -425,7 +424,7 @@ static void initUart(
     uartState->remoteDeviceId = DEVICE_IS_UHK80_LEFT ? DeviceId_Uhk80_Right : DeviceId_Uhk80_Left;
 
     UartLink_Init(&uartState->core, device->device, bridgeReceiveBytes, (void*)uartState);
-    UartParser_InitParser(&uartState->parser, &receivePacket, (void*)uartState);
+    UartParser_InitParser(&uartState->parser, &receiveMessage, (void*)uartState);
 
     uartState->rxBuffer = MessengerQueue_AllocateMemory();
     UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer, UART_MAX_BRIDGE_PAYLOAD_LENGTH);

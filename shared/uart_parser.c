@@ -101,13 +101,14 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
                     break;
                 }
 
-                uint16_t len = uartState->rxPosition;
+                uint16_t frameLen = uartState->rxPosition;
+                uint16_t dataLen = frameLen - CRC_LEN; // crc and data are saved into different buffers
                 uint8_t* data = uartState->rxBuffer;
 
-                if (len >= CRC_LEN && isCrcValid(uartState, data, len - CRC_LEN)) {
-                    uartState->receiveMessage(uartState->userArg, UartControl_ValidMessage, data, len - CRC_LEN);
+                if (frameLen >= CRC_LEN && isCrcValid(uartState, data, dataLen)) {
+                    uartState->receiveMessage(uartState->userArg, UartControl_ValidMessage, data, dataLen);
                 } else {
-                    uartState->receiveMessage(uartState->userArg, UartControl_InvalidMessage, data, len - CRC_LEN);
+                    uartState->receiveMessage(uartState->userArg, UartControl_InvalidMessage, data, dataLen);
                 }
             }
             break;
