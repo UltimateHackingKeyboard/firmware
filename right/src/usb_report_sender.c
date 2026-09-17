@@ -138,7 +138,13 @@ static void clearMouseMovement(void) {
     }
 }
 
+static bool mouseButtonsChanged(void) {
+    return mouseReports[0].buttons != mouseReports[1].buttons;
+}
+
 static void sendActiveReports(bool resending) {
+    bool usbReportsChangedByAction = false;
+    bool usbReportsChangedByAnything = false;
     errno_t ret;
 
     // in case of usb error, this gets set back again
@@ -174,6 +180,8 @@ static void sendActiveReports(bool resending) {
                     UsbReportSender_ResendOrGiveUp(&UsbSemaphore.keyboard, ret, true);
                 }
             }
+            usbReportsChangedByAction = true;
+            usbReportsChangedByAnything = true;
             lastBasicReportTime = Timer_GetCurrentTime();
             UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         }
@@ -187,9 +195,13 @@ static void sendActiveReports(bool resending) {
             UsbReportSender_ResendOrGiveUp(&UsbSemaphore.controls, ret, true);
         }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+        usbReportsChangedByAction = true;
+        usbReportsChangedByAnything = true;
     }
 
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
+        bool usbMouseButtonsChanged = mouseButtonsChanged();
+
         UsbSemaphore.mouse.inFlight = true;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
@@ -203,6 +215,8 @@ static void sendActiveReports(bool resending) {
 
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         UsbReportUpdater_LastMouseActivityTime = resending ? UsbReportUpdater_LastMouseActivityTime : Timer_GetCurrentTime();
+        usbReportsChangedByAction |= usbMouseButtonsChanged;
+        usbReportsChangedByAnything = true;
     }
 
     if (UsbSemaphore_AnyInFlight()) {
@@ -214,7 +228,9 @@ static void sendActiveReports(bool resending) {
         }
 
         // If anything changed, trigger one more update to send zero reports
-        EventVector_Set(EventVector_SendUsbReports);
+        if (usbReportsChangedByAnything) {
+            EventVector_Set(EventVector_SendUsbReports);
+        }
     }
 }
 
