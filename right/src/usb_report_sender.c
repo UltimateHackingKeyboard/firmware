@@ -219,17 +219,17 @@ static void sendActiveReports(bool resending) {
         usbReportsChangedByAnything = true;
     }
 
+    // If anything changed, trigger one more update to send zero reports
+    if (usbReportsChangedByAnything && !UsbReportSender_GivenUp) {
+        EventVector_Set(EventVector_SendUsbReports);
+    }
+
     if (UsbSemaphore_AnyInFlight()) {
         // Schedule semaphore timeout. Don't spam if we given up though - consider report as delivered.
         if (UsbReportSender_GivenUp) {
             UsbSemaphore_Clear();
         } else {
             EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
-        }
-
-        // If anything changed, trigger one more update to send zero reports
-        if (usbReportsChangedByAnything) {
-            EventVector_Set(EventVector_SendUsbReports);
         }
     }
 }
