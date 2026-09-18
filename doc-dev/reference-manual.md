@@ -183,6 +183,10 @@ COMMAND = set oneShotTimeout <time in ms (INT)>
 COMMAND = set macroEngine.batchSize <number of commands to execute per one update cycle INT>
 COMMAND = set navigationModeAction.NAVIGATION_MODE_CUSTOM.DIRECTION ACTION
 COMMAND = set keymapAction.LAYERID.KEYID ACTION
+COMMAND = set chord[.LAYERID_BASIC] ACTION
+COMMAND = set chordTimeout <ms, 0-255 (INT)> sets the chord activation window size
+COMMAND = set chordPriorIdleTime <ms, 0-65535 (INT)> sets the minimum dead time before a chord can trigger
+COMMAND = set chordLifetime { leadingKey | allKeys } sets how long a chord activation lasts
 COMMAND = set backlight.strategy { functional | constantRgb | perKeyRgb | off }
 COMMAND = set backlight.constantRgb.rgb <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)><number 0-255 (INT)>
 COMMAND = set backlight.keyRgb.LAYERID.KEYID <number 0-255 (INT)> <number 0-255 (INT)> <number 0-255 (INT)>
@@ -721,6 +725,14 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize the caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.
   - `set keymapAction.LAYERID.KEYID ACTION` can be used to remap any action that lives in a keymap. Most remappable ids can be retrieved with `resolveNextKeyId`. Keyid can also be constructed manually - see `KEYID`. Binding applies only until the next keymap switch. E.g., `set keymapAction.base.64 keystroke escape` (maps `~` key to escape), or `set keymapAction.fn.193 macro TouchpadAction` (maps touchpad two-finger gesture to a macro named `TouchpadAction`).
+
+- Chords
+  Chords is a concept where a number of keys can be linked together such that if they are pressed together all at once, like a chord on a piano, a specific action is taken, different from what each of the keys do on their own.  Anywhere between 2 and 5 keys can be chorded together and associated with an `ACTION`
+
+  - `set chord[.LAYERID_BASIC] ACTION` Configures a chord with an action.  If a layer is specified, the chord will be available when that layer is active, if not, it will be available on any layer.  The same chord can be defined for different actions for different layers, including the `any` layer.  If action is `none`, the chord is removed and the keys will work as individual keys if the chord is pressed, not as an empty action.
+  - `set chordTimeout <ms, 0-255 (INT)>` sets the interval within which all keys of a chord must be pressed in order for the chord to be activated.
+  - `set chordPriorIdleTime <ms, 0-65535 (INT)>` sets a limit to how soon a chord can be activated after a key has been pressed.  This helps prevent accidental activations while typing rapidly.
+  - `set chordLifetime { leadingKey | allKeys }` sets how long a chord activation lasts.  With `leadingKey`, the chord is considered released when earliest key pressed in the activation is released, with `allKeys`, the chord is considered released when all keys in the chord is released.
 
 - Secondary roles section configures the resolution strategy used for controlling both the native (agent-mapped) secondary roles and the`ifPrimary` and `ifSecondary` conditions.
 

@@ -84,6 +84,7 @@
     const char* CmdEnd(const char* cmd, const char *cmdEnd);
     void ConsumeUntilDot(parser_context_t* ctx);
     void ConsumeWhiteAt(parser_context_t* ctx, const char* at);
+    bool TryConsumeDot(parser_context_t* ctx);
     const char* SkipWhite(const char* cmd, const char *cmdEnd);
     uint8_t CountCommands(const char* text, uint16_t textLen);
     const char* TokEnd(const char* cmd, const char *cmdEnd);

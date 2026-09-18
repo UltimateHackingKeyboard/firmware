@@ -21,6 +21,7 @@ endif()
 
 target_sources(${PROJECT_NAME} PRIVATE
     caret_config.c
+    chords.c
     config_manager.c
     debug.c
     eeprom.c
