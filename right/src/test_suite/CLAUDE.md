@@ -99,5 +99,5 @@ TEST_SET_MACRO("j", "ifShortcut k final tapKey n\n holdKey j")
 - `TestSuite_Verbose` controls logging.
 - `LOG_VERBOSE(fmt, ...)` is conditional.
 - `TEST_EXPECT___________MAYBE` only logs in verbose mode.
-- Failures are always logged immediately; failed tests are auto-rerun with verbose enabled.
+- Failures are always logged immediately via `LOG_FAILURE(fmt, ...)`, which prints a separator before the first failure of a test; failed tests are auto-rerun with verbose enabled.
 - Reset `TestSuite_Verbose = false` after a verbose rerun.

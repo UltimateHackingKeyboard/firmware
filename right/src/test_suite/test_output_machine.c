@@ -39,7 +39,7 @@ static bool validateReport(const usb_basic_keyboard_report_t *actual, const char
 
         key_action_t keyAction = { 0 };
         if (!MacroShortcutParser_Parse(at, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-            if (logFailure) LogU("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
+            if (logFailure) LOG_FAILURE("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
             return false;
         }
 
@@ -61,7 +61,7 @@ static bool validateReport(const usb_basic_keyboard_report_t *actual, const char
     if (UsbBasicKeyboard_ScancodeCount(actual) != scancodeCount) match = false;
 
     if (!match && logFailure) {
-        LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
+        LOG_FAILURE("[TEST] <   FAIL: Expect '%s', got '%s'\n",
             expectShortcuts, Utils_GetUsbReportString(actual));
     }
 

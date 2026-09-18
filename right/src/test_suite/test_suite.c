@@ -31,6 +31,7 @@ static uint16_t currentModuleIndex = 0;
 static uint16_t currentTestIndex = 0;
 static uint16_t totalTestCount = 0;
 static uint16_t passedCount = 0;
+static uint16_t partialCount = 0;
 static uint16_t failedCount = 0;
 
 // Module-scoped run limit
@@ -47,6 +48,22 @@ static uint16_t rerunTestIndex = 0;
 // Inter-test delay state
 static bool inInterTestDelay = false;
 static uint32_t interTestDelayStart = 0;
+
+// Whether the current test (including its rerun) has opened its log with a separator
+static bool separatorPrinted = false;
+
+void TestSuite_LogSeparatorOnce(void) {
+    if (!separatorPrinted) {
+        LogU("[TEST] ----------------------\n");
+        separatorPrinted = true;
+    }
+}
+
+static void closeTestLog(void) {
+    if (separatorPrinted) {
+        LogU("[TEST] ----------------------\n");
+    }
+}
 
 static const test_t* getCurrentTest(void) {
     return &AllTestModules[currentModuleIndex]->tests[currentTestIndex];
@@ -68,8 +85,11 @@ static void startTest(const test_t *test, const test_module_t *module) {
     ConfigManager_ResetConfiguration(false, false);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
+    if (!isRerunning) {
+        separatorPrinted = false;
+    }
     if (TestSuite_Verbose) {
-        LogU("[TEST] ----------------------\n");
+        TestSuite_LogSeparatorOnce();
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
     }
     InputMachine_Start(test);
@@ -127,11 +147,11 @@ void TestHooks_Tick(void) {
             if (isRerunning || singleTestMode) {
                 // Already rerunning with verbose (or single test mode), log final result
                 if (failed) {
-                    LogU("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
+                    LOG_FAILURE("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
                 } else {
-                    LogU("[TEST] Finished: %s/%s - TIMEOUT\n", module->name, test->name);
+                    LOG_FAILURE("[TEST] Finished: %s/%s - TIMEOUT\n", module->name, test->name);
                 }
-                LogU("[TEST] ----------------------\n");
+                closeTestLog();
                 failedCount++;
                 isRerunning = false;
                 TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
@@ -152,9 +172,9 @@ void TestHooks_Tick(void) {
             } else {
                 // First failure - log and save position for rerun with verbose
                 if (failed) {
-                    LogU("[TEST] Finished: %s/%s - FAIL (rerunning verbose)\n", module->name, test->name);
+                    LOG_FAILURE("[TEST] Finished: %s/%s - FAIL (rerunning verbose)\n", module->name, test->name);
                 } else {
-                    LogU("[TEST] Finished: %s/%s - TIMEOUT (rerunning verbose)\n", module->name, test->name);
+                    LOG_FAILURE("[TEST] Finished: %s/%s - TIMEOUT (rerunning verbose)\n", module->name, test->name);
                 }
                 rerunModuleIndex = currentModuleIndex;
                 rerunTestIndex = currentTestIndex;
@@ -165,12 +185,17 @@ void TestHooks_Tick(void) {
                 interTestDelayStart = Timer_GetCurrentTime();
             }
         } else {
-            LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
-            passedCount++;
             if (isRerunning) {
+                // Failed in the first run, passed in the rerun
+                LogU("[TEST] Finished: %s/%s - PARTIAL (passed on rerun)\n", module->name, test->name);
+                partialCount++;
                 isRerunning = false;
                 TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
+            } else {
+                LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
+                passedCount++;
             }
+            closeTestLog();
 
             if (singleTestMode) {
                 goto finish;
@@ -189,8 +214,11 @@ void TestHooks_Tick(void) {
 
 finish:
     Macros_StopAllMacros();
-    LogU("[TEST] ----------------------\n");
-    LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
+    if (!separatorPrinted) {
+        // Otherwise the last test has already closed its log with a separator
+        LogU("[TEST] ----------------------\n");
+    }
+    LogU("[TEST] Complete: %d passed, %d partial, %d failed\n", passedCount, partialCount, failedCount);
     TestHooks_Active = false;
     ConfigManager_ResetConfiguration(false, false);
     LayerStack_Reset();
@@ -205,6 +233,7 @@ uint8_t TestSuite_RunAll(void) {
     currentModuleIndex = 0;
     currentTestIndex = 0;
     passedCount = 0;
+    partialCount = 0;
     failedCount = 0;
     inInterTestDelay = false;
     isRerunning = false;
@@ -262,6 +291,7 @@ uint8_t TestSuite_RunSingle(const char *moduleStart, const char *moduleEnd, cons
             currentModuleIndex = mi;
             currentTestIndex = ti;
             passedCount = 0;
+            partialCount = 0;
             failedCount = 0;
             inInterTestDelay = false;
             isRerunning = false;
@@ -292,6 +322,7 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
         currentModuleIndex = mi;
         currentTestIndex = 0;
         passedCount = 0;
+        partialCount = 0;
         failedCount = 0;
         inInterTestDelay = false;
         isRerunning = false;
