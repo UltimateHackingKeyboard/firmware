@@ -31,6 +31,7 @@ static uint16_t currentModuleIndex = 0;
 static uint16_t currentTestIndex = 0;
 static uint16_t totalTestCount = 0;
 static uint16_t passedCount = 0;
+static uint16_t partialCount = 0;
 static uint16_t failedCount = 0;
 
 // Module-scoped run limit
@@ -184,13 +185,17 @@ void TestHooks_Tick(void) {
                 interTestDelayStart = Timer_GetCurrentTime();
             }
         } else {
-            LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
-            closeTestLog();
-            passedCount++;
             if (isRerunning) {
+                // Failed in the first run, passed in the rerun
+                LogU("[TEST] Finished: %s/%s - PARTIAL (passed on rerun)\n", module->name, test->name);
+                partialCount++;
                 isRerunning = false;
                 TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
+            } else {
+                LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
+                passedCount++;
             }
+            closeTestLog();
 
             if (singleTestMode) {
                 goto finish;
@@ -213,7 +218,7 @@ finish:
         // Otherwise the last test has already closed its log with a separator
         LogU("[TEST] ----------------------\n");
     }
-    LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
+    LogU("[TEST] Complete: %d passed, %d partial, %d failed\n", passedCount, partialCount, failedCount);
     TestHooks_Active = false;
     ConfigManager_ResetConfiguration(false, false);
     LayerStack_Reset();
@@ -228,6 +233,7 @@ uint8_t TestSuite_RunAll(void) {
     currentModuleIndex = 0;
     currentTestIndex = 0;
     passedCount = 0;
+    partialCount = 0;
     failedCount = 0;
     inInterTestDelay = false;
     isRerunning = false;
@@ -285,6 +291,7 @@ uint8_t TestSuite_RunSingle(const char *moduleStart, const char *moduleEnd, cons
             currentModuleIndex = mi;
             currentTestIndex = ti;
             passedCount = 0;
+            partialCount = 0;
             failedCount = 0;
             inInterTestDelay = false;
             isRerunning = false;
@@ -315,6 +322,7 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
         currentModuleIndex = mi;
         currentTestIndex = 0;
         passedCount = 0;
+        partialCount = 0;
         failedCount = 0;
         inInterTestDelay = false;
         isRerunning = false;
