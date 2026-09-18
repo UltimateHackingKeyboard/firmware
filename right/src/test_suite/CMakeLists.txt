@@ -20,4 +20,5 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_playtime.c
     tests/test_transport.c
     tests/test_tapkeyseq.c
+    tests/test_fail.c
 )
