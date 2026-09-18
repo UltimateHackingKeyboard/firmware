@@ -85,7 +85,7 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
 
         key_action_t keyAction = { 0 };
         if (!MacroShortcutParser_Parse(at, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-            if (logFailure) LogU("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
+            if (logFailure) LOG_FAILURE("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
             return false;
         }
 
@@ -107,7 +107,7 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
     if (KeyboardReport_ScancodeCount(actual) != scancodeCount) match = false;
 
     if (!match && logFailure) {
-        LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
+        LOG_FAILURE("[TEST] <   FAIL: Expect '%s', got '%s'\n",
             expectShortcuts, Utils_GetUsbReportString(actual));
     }
 
@@ -150,7 +150,7 @@ void InputMachine_Tick(void) {
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
                 } else {
-                    LogU("[TEST] FAIL: Press [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: Press [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -166,7 +166,7 @@ void InputMachine_Tick(void) {
                     EventVector_Set(EventVector_StateMatrix);
                     EventVector_WakeMain();
                 } else {
-                    LogU("[TEST] FAIL: Release [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: Release [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -192,7 +192,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetAction: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetAction [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: SetAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -203,7 +203,7 @@ void InputMachine_Tick(void) {
 
                 key_action_t keyAction = { 0 };
                 if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-                    LogU("[TEST] FAIL: SetAction [%s] = '%s' - invalid shortcut\n", action->keyId, action->shortcutStr);
+                    LOG_FAILURE("[TEST] FAIL: SetAction [%s] = '%s' - invalid shortcut\n", action->keyId, action->shortcutStr);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -217,7 +217,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetMacro: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetMacro [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: SetMacro [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -238,7 +238,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetLayerHold: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetLayerHold [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: SetLayerHold [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -261,7 +261,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetLayerAction: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetLayerAction [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: SetLayerAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -272,7 +272,7 @@ void InputMachine_Tick(void) {
 
                 key_action_t keyAction = { 0 };
                 if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-                    LogU("[TEST] FAIL: SetLayerAction layer %d [%s] = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
+                    LOG_FAILURE("[TEST] FAIL: SetLayerAction layer %d [%s] = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -286,7 +286,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetSecondaryRole: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetSecondaryRole [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: SetSecondaryRole [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -311,7 +311,7 @@ void InputMachine_Tick(void) {
             case TestAction_SetGenericAction: {
                 uint8_t slotId, keyId;
                 if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetGenericAction [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: SetGenericAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
