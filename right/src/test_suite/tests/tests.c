@@ -19,7 +19,8 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_Playtime,
     &TestModule_Transport,
     &TestModule_TapKeySeq,
-    &TestModule_Fail,
+    // Always fails; uncomment to check that the framework reports failures.
+    // &TestModule_Fail,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);

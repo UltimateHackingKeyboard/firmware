@@ -1,6 +1,7 @@
 #include "tests.h"
 
 // Always fails - used to verify that the test framework reports failures.
+// Not part of the normal suite; uncomment it in AllTestModules[] to run it.
 static const test_action_t test_fail[] = {
     TEST_SET_ACTION("u", "u"),
     TEST_PRESS______("u"),
