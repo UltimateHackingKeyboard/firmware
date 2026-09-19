@@ -1,15 +1,72 @@
 #include "keyboard_app.hpp"
 extern "C" {
 #include "hid/transport.h"
+#include "ledmap.h"
 #include "usb_state.h"
 #include "utils.h"
 #if __has_include(<zephyr/sys/printk.h>)
     #include <zephyr/sys/printk.h>
 #endif
 #ifdef __ZEPHYR__
-#include "connections.h"
+    #include "connections.h"
 #endif
 }
+
+#if DEVICE_IS_UHK60
+// TODO: tune this value to match reality
+static constexpr uint8_t LED_UPDATE_DELAY_MS = 20;
+
+struct position_mm {
+    uint16_t x;
+    uint16_t y;
+};
+
+static constexpr uint16_t lamp_position_z = 15;
+
+static constexpr auto left_lamp_positions = std::to_array<position_mm>({// first row
+    {16, 33}, {35, 33}, {54, 33}, {73, 33}, {92, 33}, {112, 33}, {131, 33},
+    // second row
+    {20, 52}, {43, 52}, {63, 52}, {82, 52}, {101, 52}, {120, 52},
+    // third row
+    {23, 71}, {48, 71}, {67, 71}, {86, 71}, {105, 71}, {124, 71},
+    // fourth row
+    {18, 91}, {40, 91}, {59, 91}, {78, 91}, {97, 91}, {116, 91}, {135, 91},
+    // fifth row
+    {18, 110}, {42, 110}, {66, 110}, {89, 110}, {117, 110},
+    // key cluster
+    {154, 91}, {144, 110}, {168, 117}});
+static_assert(left_lamp_positions.size() == keyboard_session::LEFT_LAMP_COUNT);
+
+static constexpr auto right_lamp_positions = std::to_array<position_mm>({// first row
+    {21, 33}, {40, 33}, {59, 33}, {78, 33}, {97, 33}, {116, 33}, {140, 33},
+    // second row
+    {10, 52}, {29, 52}, {48, 52}, {77, 52}, {86, 52}, {105, 52}, {124, 52}, {143, 52},
+    // third row
+    {14, 71}, {33, 71}, {52, 71}, {71, 71}, {90, 71}, {110, 71}, {137, 71},
+    // fourth row
+    {24, 91}, {43, 91}, {63, 91}, {82, 91}, {101, 91}, {132, 91},
+    // fifth row
+    {22, 110}, {51, 110}, {75, 110}, {98, 110}, {132, 110}});
+static_assert(right_lamp_positions.size() == keyboard_session::RIGHT_LAMP_COUNT);
+
+// intensity_level_count is 1, so hosts only distinguish "off" (0) from "on" (non-zero)
+static rgb_t lamp_rgbi_to_rgb(const hid::app::lamparray::rgbi_tuple &rgbi)
+{
+    if (rgbi.intensity == 0) {
+        return rgb_t{};
+    }
+    return rgb_t{
+        .red = static_cast<uint8_t>(rgbi.red),
+        .green = static_cast<uint8_t>(rgbi.green),
+        .blue = static_cast<uint8_t>(rgbi.blue),
+    };
+}
+#endif
+
+keyboard_app::keyboard_app(const hid::report_protocol &rp)
+    : hid::application(rp),
+      usb_function_{*this, nullptr, {}, usb::hid::boot_protocol_mode::KEYBOARD}
+{}
 
 void keyboard_app::set_rollover(rollover_t mode)
 {
@@ -115,16 +172,144 @@ keyboard_session::leds_boot_report keyboard_session::get_leds_report() const
 
 void keyboard_session::set_report(hid::report::type type, const std::span<const uint8_t> &data)
 {
-    // only one report is receivable, the LEDs
-    if (type != hid::report::type::OUTPUT) {
-        return;
+    if (type == hid::report::type::OUTPUT) {
+        keyboard_leds_changed_callback(*this);
+
+        // always keep receiving new reports
+        // if the report data is processed immediately, the same buffer can be used
+        receive_report(&leds_buffer_);
+    } else {
+#if DEVICE_IS_UHK60
+        if (data.empty()) {
+            return;
+        }
+        switch (hid::report::selector(type, data.front())) {
+        case left_lamp_attrs_req_report::selector():
+            if (data.size() >= sizeof(left_lamp_attrs_req_report)) {
+                auto *req = reinterpret_cast<const left_lamp_attrs_req_report *>(data.data());
+                if (req->lamp_id < keyboard_session::LEFT_LAMP_COUNT) {
+                    req_led_left_ = req->lamp_id;
+                }
+            }
+            break;
+        case right_lamp_attrs_req_report::selector():
+            if (data.size() >= sizeof(right_lamp_attrs_req_report)) {
+                auto *req = reinterpret_cast<const right_lamp_attrs_req_report *>(data.data());
+                if (req->lamp_id < keyboard_session::RIGHT_LAMP_COUNT) {
+                    req_led_right_ = req->lamp_id;
+                }
+            }
+            break;
+        case left_lamp_control_report::selector():
+            if (data.size() >= sizeof(left_lamp_control_report)) {
+                auto *report = reinterpret_cast<const left_lamp_control_report *>(data.data());
+                if (report->autonomous_mode) {
+                    Ledmap_ResetTemporaryLedBacklightingMode();
+                    Ledmap_TriggerFullUpdate();
+                } else {
+                    Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_DynamicLighting);
+                }
+            }
+            break;
+        case right_lamp_control_report::selector():
+            if (data.size() >= sizeof(right_lamp_control_report)) {
+                auto *report = reinterpret_cast<const right_lamp_control_report *>(data.data());
+                if (report->autonomous_mode) {
+                    Ledmap_ResetTemporaryLedBacklightingMode();
+                    Ledmap_TriggerFullUpdate();
+                } else {
+                    Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_DynamicLighting);
+                }
+            }
+            break;
+        case left_lamp_multi_update_report::selector():
+            if (data.size() >= sizeof(left_lamp_multi_update_report)) {
+                auto *report = reinterpret_cast<const left_lamp_multi_update_report *>(data.data());
+                if (report->lamp_count > keyboard_session::LEFT_LAMP_COUNT) {
+                    break;
+                }
+                for (size_t i = 0; i < report->lamp_count; ++i) {
+                    uint16_t lamp_id = report->lamp_ids[i];
+                    if (lamp_id >= keyboard_session::LEFT_LAMP_COUNT) {
+                        continue;
+                    }
+                    rgb_t color = lamp_rgbi_to_rgb(report->values[i]);
+
+                    if (lamp_id < LEFT_HALF_LAMP_COUNT) {
+                        Ledmap_SetKeyColor(&color, SlotId_LeftKeyboardHalf, lamp_id);
+                    } else if (lamp_id < LEFT_LAMP_COUNT) {
+                        Ledmap_SetKeyColor(
+                            &color, SlotId_LeftModule, lamp_id - LEFT_HALF_LAMP_COUNT);
+                    }
+                }
+                if (report->update_flags == hid::app::lamparray::update_flags::COMPLETE) {
+                    Ledmap_TriggerFullUpdate();
+                }
+            }
+            break;
+        case right_lamp_multi_update_report::selector():
+            if (data.size() >= sizeof(right_lamp_multi_update_report)) {
+                auto *report =
+                    reinterpret_cast<const right_lamp_multi_update_report *>(data.data());
+                if (report->lamp_count > keyboard_session::RIGHT_LAMP_COUNT) {
+                    break;
+                }
+                for (size_t i = 0; i < report->lamp_count; ++i) {
+                    uint16_t lamp_id = report->lamp_ids[i];
+                    if (lamp_id >= keyboard_session::RIGHT_LAMP_COUNT) {
+                        continue;
+                    }
+                    rgb_t color = lamp_rgbi_to_rgb(report->values[i]);
+
+                    Ledmap_SetKeyColor(&color, SlotId_RightKeyboardHalf, lamp_id);
+                }
+                if (report->update_flags == hid::app::lamparray::update_flags::COMPLETE) {
+                    Ledmap_TriggerFullUpdate();
+                }
+            }
+            break;
+        case left_lamp_range_update_report::selector():
+            if (data.size() >= sizeof(left_lamp_range_update_report)) {
+                auto *report = reinterpret_cast<const left_lamp_range_update_report *>(data.data());
+                if ((report->lamp_id_start > report->lamp_id_end) or
+                    (report->lamp_id_end >= keyboard_session::LEFT_LAMP_COUNT)) {
+                    break;
+                }
+                rgb_t color = lamp_rgbi_to_rgb(report->value);
+                for (size_t i = report->lamp_id_start; i <= report->lamp_id_end; ++i) {
+                    if (i < LEFT_HALF_LAMP_COUNT) {
+                        Ledmap_SetKeyColor(&color, SlotId_LeftKeyboardHalf, i);
+                    } else if (i < LEFT_LAMP_COUNT) {
+                        Ledmap_SetKeyColor(&color, SlotId_LeftModule, i - LEFT_HALF_LAMP_COUNT);
+                    }
+                }
+                if (report->update_flags == hid::app::lamparray::update_flags::COMPLETE) {
+                    Ledmap_TriggerFullUpdate();
+                }
+            }
+            break;
+        case right_lamp_range_update_report::selector():
+            if (data.size() >= sizeof(right_lamp_range_update_report)) {
+                auto *report =
+                    reinterpret_cast<const right_lamp_range_update_report *>(data.data());
+                if ((report->lamp_id_start > report->lamp_id_end) or
+                    (report->lamp_id_end >= keyboard_session::RIGHT_LAMP_COUNT)) {
+                    break;
+                }
+                rgb_t color = lamp_rgbi_to_rgb(report->value);
+                for (size_t i = report->lamp_id_start; i <= report->lamp_id_end; ++i) {
+                    Ledmap_SetKeyColor(&color, SlotId_RightKeyboardHalf, i);
+                }
+                if (report->update_flags == hid::app::lamparray::update_flags::COMPLETE) {
+                    Ledmap_TriggerFullUpdate();
+                }
+            }
+            break;
+        default:
+            break;
+        }
+#endif
     }
-
-    keyboard_leds_changed_callback(*this);
-
-    // always keep receiving new reports
-    // if the report data is processed immediately, the same buffer can be used
-    receive_report(&leds_buffer_);
 }
 
 void keyboard_session::report_sent(const std::span<const uint8_t> &data)
@@ -150,36 +335,133 @@ std::span<const uint8_t> keyboard_session::get_report(
         return {};
     }
 
-    if (select == leds_report::selector()) {
+    switch (select) {
+    case keyboard_app::keys_6kro_report::selector():
+        assert(buffer.size() >= sizeof(keyboard_app::keys_6kro_report));
+        std::ignore = new (buffer.data()) keyboard_app::keys_6kro_report{};
+        return buffer.subspan(0, sizeof(keyboard_app::keys_6kro_report));
+
+    case keyboard_app::keys_nkro_report::selector():
+        assert(buffer.size() >= sizeof(keyboard_app::keys_nkro_report));
+        std::ignore = new (buffer.data()) keyboard_app::keys_nkro_report{};
+        return buffer.subspan(0, sizeof(keyboard_app::keys_nkro_report));
+
+    case leds_report::selector(): {
         assert(buffer.size() >= sizeof(leds_report));
         auto *ptr = new (buffer.data()) leds_report{};
         ptr->leds = leds_buffer_.leds;
         return buffer.subspan(0, sizeof(leds_report));
     }
-    if constexpr (report_ids::IN_KEYBOARD_NKRO == 0) {
-        // no report ID, use the rollover mode to determine which report to send
-        if (select.type() == hid::report::type::INPUT) {
-            if (HID_GetKeyboardRollover() == rollover_t::ROLLOVER_N_KEY) {
-                assert(buffer.size() >= sizeof(keyboard_app::keys_nkro_report));
-                std::ignore = new (buffer.data()) keyboard_app::keys_nkro_report{};
-                return buffer.subspan(0, sizeof(keyboard_app::keys_nkro_report));
-            } else {
-                assert(buffer.size() >= sizeof(keyboard_app::keys_6kro_report));
-                std::ignore = new (buffer.data()) keyboard_app::keys_6kro_report{};
-                return buffer.subspan(0, sizeof(keyboard_app::keys_6kro_report));
-            }
-        }
-    } else {
-        if (select == keyboard_app::keys_6kro_report::selector()) {
-            assert(buffer.size() >= sizeof(keyboard_app::keys_6kro_report));
-            std::ignore = new (buffer.data()) keyboard_app::keys_6kro_report{};
-            return buffer.subspan(0, sizeof(keyboard_app::keys_6kro_report));
-        }
-        if (select == keyboard_app::keys_nkro_report::selector()) {
-            assert(buffer.size() >= sizeof(keyboard_app::keys_nkro_report));
-            std::ignore = new (buffer.data()) keyboard_app::keys_nkro_report{};
-            return buffer.subspan(0, sizeof(keyboard_app::keys_nkro_report));
-        }
+
+#if DEVICE_IS_UHK60
+    case left_lamp_attrs_report::selector(): {
+        assert(buffer.size() >= sizeof(left_lamp_attrs_report));
+        auto *ptr = new (buffer.data()) left_lamp_attrs_report{};
+        // UHK60 left + module
+        ptr->lamp_count = LEFT_LAMP_COUNT;
+        ptr->bounding_box.width = 185 * 1000;  // um
+        ptr->bounding_box.height = 136 * 1000; // um
+        ptr->bounding_box.depth = 30 * 1000;   // um
+        ptr->min_update_interval = LED_UPDATE_DELAY_MS * 1000;
+        ptr->kind = hid::app::lamparray::kind::KEYBOARD;
+        return buffer.subspan(0, sizeof(left_lamp_attrs_report));
     }
-    return {};
+
+    case right_lamp_attrs_report::selector(): {
+        assert(buffer.size() >= sizeof(right_lamp_attrs_report));
+        auto *ptr = new (buffer.data()) right_lamp_attrs_report{};
+        // UHK60 right
+        ptr->lamp_count = RIGHT_LAMP_COUNT;
+        ptr->bounding_box.width = 159 * 1000;  // um
+        ptr->bounding_box.height = 130 * 1000; // um
+        ptr->bounding_box.depth = 30 * 1000;   // um
+        ptr->min_update_interval = LED_UPDATE_DELAY_MS * 1000;
+        ptr->kind = hid::app::lamparray::kind::KEYBOARD;
+        return buffer.subspan(0, sizeof(right_lamp_attrs_report));
+    }
+
+    case left_lamp_attrs_req_report::selector(): {
+        assert(buffer.size() >= sizeof(left_lamp_attrs_req_report));
+        auto *ptr = new (buffer.data()) left_lamp_attrs_req_report{};
+        ptr->lamp_id = req_led_left_;
+        return buffer.subspan(0, sizeof(left_lamp_attrs_req_report));
+    }
+
+    case right_lamp_attrs_req_report::selector(): {
+        assert(buffer.size() >= sizeof(right_lamp_attrs_req_report));
+        auto *ptr = new (buffer.data()) right_lamp_attrs_req_report{};
+        ptr->lamp_id = req_led_right_;
+        return buffer.subspan(0, sizeof(right_lamp_attrs_req_report));
+    }
+
+    case left_lamp_attrs_rsp_report::selector(): {
+        assert(buffer.size() >= sizeof(left_lamp_attrs_rsp_report));
+        auto *ptr = new (buffer.data()) left_lamp_attrs_rsp_report{};
+        ptr->position.x = left_lamp_positions[req_led_left_].x * 1000;
+        ptr->position.y = left_lamp_positions[req_led_left_].y * 1000;
+        ptr->position.z = lamp_position_z * 1000;
+        ptr->update_latency = LED_UPDATE_DELAY_MS / 2 * 1000;
+        ptr->red_level_count = std::numeric_limits<uint8_t>::max();
+        ptr->green_level_count = std::numeric_limits<uint8_t>::max();
+        ptr->blue_level_count = std::numeric_limits<uint8_t>::max();
+        ptr->intensity_level_count = 1;
+        ptr->is_programmable = true;
+        ptr->purposes = hid::app::lamparray::purposes::CONTROL |
+                        hid::app::lamparray::purposes::ACCENT |
+                        hid::app::lamparray::purposes::STATUS;
+        // TODO set according to mapped key
+        ptr->input_binding = 0;
+
+        ptr->lamp_id = req_led_left_;
+        req_led_left_ = (req_led_left_ + 1) % LEFT_LAMP_COUNT;
+        return buffer.subspan(0, sizeof(left_lamp_attrs_rsp_report));
+    }
+
+    case right_lamp_attrs_rsp_report::selector(): {
+        assert(buffer.size() >= sizeof(right_lamp_attrs_rsp_report));
+        auto *ptr = new (buffer.data()) right_lamp_attrs_rsp_report{};
+        ptr->position.x = right_lamp_positions[req_led_right_].x * 1000;
+        ptr->position.y = right_lamp_positions[req_led_right_].y * 1000;
+        ptr->position.z = lamp_position_z * 1000;
+        ptr->update_latency = LED_UPDATE_DELAY_MS / 2 * 1000;
+        ptr->red_level_count = std::numeric_limits<uint8_t>::max();
+        ptr->green_level_count = std::numeric_limits<uint8_t>::max();
+        ptr->blue_level_count = std::numeric_limits<uint8_t>::max();
+        ptr->intensity_level_count = 1;
+        ptr->is_programmable = true;
+        ptr->purposes = hid::app::lamparray::purposes::CONTROL |
+                        hid::app::lamparray::purposes::ACCENT |
+                        hid::app::lamparray::purposes::STATUS;
+        // TODO set according to mapped key
+        ptr->input_binding = 0;
+
+        ptr->lamp_id = req_led_right_;
+        req_led_right_ = (req_led_right_ + 1) % RIGHT_LAMP_COUNT;
+        return buffer.subspan(0, sizeof(right_lamp_attrs_rsp_report));
+    }
+
+    case left_lamp_control_report::selector(): {
+        assert(buffer.size() >= sizeof(left_lamp_control_report));
+        auto *ptr = new (buffer.data()) left_lamp_control_report{};
+        ptr->autonomous_mode =
+            Ledmap_GetEffectiveBacklightMode() != BacklightingMode_DynamicLighting;
+        return buffer.subspan(0, sizeof(left_lamp_control_report));
+    }
+
+    case attributes_report::selector(): {
+        assert(buffer.size() >= sizeof(attributes_report));
+        auto *ptr = new (buffer.data()) attributes_report{};
+        // TODO: either we set the values realistically,
+        // or we set them to common values that conform to the expected OS layout
+        ptr->form_factor = hid::app::keyboard::form_factor::FULL_SIZE;
+        ptr->key_type = hid::app::keyboard::key_type::FULL_TRAVEL;
+        ptr->layout = hid::app::keyboard::layout::_102;
+        ptr->ietf_lang_tag_index = keyboard_app::usb_function().string_index(0);
+        return buffer.subspan(0, sizeof(attributes_report));
+    }
+#endif
+
+    default:
+        return {};
+    }
 }

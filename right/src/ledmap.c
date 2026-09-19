@@ -630,6 +630,9 @@ static void setKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId) {
     setPerKeyColor(color, determineMode(slotId), slotId, keyId);
 }
 
+void Ledmap_SetKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId) {
+    setKeyColor(color, slotId, keyId);
+}
 
 void Ledmap_SetBlackValues(void) {
     setEntireMatrix(0);
@@ -651,6 +654,11 @@ void handleModeChange(backlighting_mode_t from, backlighting_mode_t to) {
     if (from == BacklightingMode_LightAll && to != BacklightingMode_LedTest) {
         setEntireMatrix(0);
     }
+}
+
+void Ledmap_TriggerFullUpdate(void) {
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    EventVector_WakeMain();
 }
 
 void Ledmap_ActivateTestLedMode(bool active) {
@@ -700,6 +708,7 @@ void Ledmap_UpdateBacklightLeds(void) {
             updateLedsByLightNoneStrategy();
             break;
         case BacklightingMode_Unspecified:
+        case BacklightingMode_DynamicLighting:
             break;
     }
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
@@ -756,7 +765,7 @@ void Ledmap_InitLedLayout(void) {
 
 static void updateAlwaysOn() {
     backlighting_mode_t mode = Ledmap_GetEffectiveBacklightMode();
-    Ledmap_AlwaysOn = mode == BacklightingMode_LightAll || mode == BacklightingMode_LedTest;
+    Ledmap_AlwaysOn = (mode == BacklightingMode_LightAll) || (mode == BacklightingMode_LedTest) || (mode == BacklightingMode_DynamicLighting);
 }
 
 void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode) {
