@@ -10,16 +10,21 @@
     #include "key_states.h"
     #include "str_utils.h"
     #include "macros/typedefs.h"
+    #include "macros/vars.h"
     #include "event_scheduler.h"
 
 // Macros:
     #define MACRO_CYCLES_TO_POSTPONE 4
+
+    #define MACRO_STATE_SLOT(S) ((S) - MacroState)
 
     #define MAX_MACRO_NUM 255
     #define MACRO_STATE_POOL_SIZE 16
     #define MACRO_HISTORY_POOL_SIZE 16
     #define MACRO_SCOPE_STATE_POOL_SIZE (MACRO_STATE_POOL_SIZE*2)
     #define MAX_REG_COUNT 32
+
+    #define MAX_MACRO_ARGUMENT_COUNT 8
 
     #define ALTMASK (HID_KEYBOARD_MODIFIER_LEFTALT | HID_KEYBOARD_MODIFIER_RIGHTALT)
     #define CTRLMASK (HID_KEYBOARD_MODIFIER_LEFTCTRL | HID_KEYBOARD_MODIFIER_RIGHTCTRL)
@@ -168,8 +173,8 @@
             bool isDoubletap: 1;
             bool isFirstCommand : 1;
             secondary_role_state_t secondaryRoleState: 2;
+            bool macroHeadersProcessed : 1;
             // ---- 4-aligned ----
-
             macro_usb_keyboard_reports_t reports;
         } ms;
 

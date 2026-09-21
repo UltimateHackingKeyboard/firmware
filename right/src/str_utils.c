@@ -14,7 +14,7 @@
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
-ATTR_UNUSED static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
+static parser_context_t parserContextStack[PARSER_CONTEXT_STACK_SIZE];
 
 static bool consumeCommentsAsWhite = true;
 
@@ -125,13 +125,39 @@ static bool isEnd(parser_context_t* ctx) {
         return false;
     }
     while (ctx->nestingLevel > 0 && ctx->at >= ctx->end && PopParserContext(ctx)) {
-        /* everything was don in PopParserContext */
+        /* everything was done in PopParserContext */
     };
     return ctx->at >= ctx->end;
 }
 
 bool IsEnd(parser_context_t* ctx) {
     return isEnd(ctx);
+}
+
+static bool isDigit(parser_context_t* ctx) {
+    return *ctx->at >= '0' && *ctx->at <= '9';
+}
+
+bool IsDigit(parser_context_t* ctx) {
+    return isDigit(ctx);
+}
+
+static bool isCommentLeader(parser_context_t* ctx) {
+    return ctx->at + 1 < ctx->end && ctx->at[0] == '/' && ctx->at[1] == '/';
+}
+
+static bool isWhite(parser_context_t* ctx) {
+    if (*ctx->at <= 32) {
+        return true;
+    }
+    if (isCommentLeader(ctx)) {
+         return true;
+    }
+    return false;
+}
+
+bool IsWhite(parser_context_t* ctx) {
+    return isWhite(ctx);
 }
 
 static void consumeWhite(parser_context_t* ctx)
@@ -144,11 +170,14 @@ static void consumeWhite(parser_context_t* ctx)
         while (!isEnd(ctx) && *ctx->at <= 32) {
             ctx->at++;
         }
-        if (ctx->at[0] == '/' && ctx->at[1] == '/' && consumeCommentsAsWhite) {
+        if (consumeCommentsAsWhite && isCommentLeader(ctx)) {
             while (!isEnd(ctx) && *ctx->at != '\n') {
                 ctx->at++;
             }
         }
+        // TODO: this TRY_EXPAND_TEMPLATE needs to be replaced with expansion of $macroArg:any here.
+        //       Note: possible command injection vulnerability if we allow template expansion in white space.
+        //       Do we want to allow this at all?
         if (TRY_EXPAND_TEMPLATE(ctx)) {
             continue;
         } else {
@@ -156,7 +185,6 @@ static void consumeWhite(parser_context_t* ctx)
         }
     }
 }
-
 
 void ConsumeCommentsAsWhite(bool consume)
 {
@@ -181,6 +209,7 @@ void UnconsumeWhite(parser_context_t* ctx)
     }
 }
 
+// dangerous due to static return buffer; only use for error messages!
 const char* OneWord(parser_context_t* ctx)
 {
     static char buffer[20];
@@ -194,12 +223,14 @@ const char* ConsumedToken(parser_context_t* ctx)
 {
     const char* at = ctx->at;
 
-    at--;
-
-    while (*at <= 32) {
+    if(at > ctx->begin) {
         at--;
     }
-    while (*at > 32 && *at != '.') {
+
+    while (at > ctx->begin && *at <= 32) {
+        at--;
+    }
+    while (at > ctx->begin && *at > 32 && *at != '.') {
         at--;
     }
 
@@ -210,8 +241,8 @@ bool ConsumeToken(parser_context_t* ctx, const char *b)
 {
     const char* at = ctx->at;
     while(at < ctx->end && *b) {
-        if (*at <= 32 || at == ctx->end || *b <= 32) {
-            bool res = (*at <= 32 || at == ctx->end) && *b <= 32;
+        if (at >= ctx->end || *at <= 32 || *b <= 32) {
+            bool res = (at >= ctx->end || *at <= 32) && *b <= 32;
             if (res) {
                 ctx->at = at;
                 consumeWhite(ctx);
@@ -222,7 +253,7 @@ bool ConsumeToken(parser_context_t* ctx, const char *b)
             return false;
         }
     }
-    bool res = (*at <= 32 || at == ctx->end || !isIdentifierChar(*at) || !isIdentifierChar(*(at-1))) && *b <= 32;
+    bool res = (at >= ctx->end || *at <= 32 || !isIdentifierChar(*at) || !isIdentifierChar(*(at-1))) && *b <= 32;
     if (res) {
         ctx->at = at;
         consumeWhite(ctx);
@@ -243,8 +274,8 @@ bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)
     const char* b = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset);
     const char* bEnd = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
     while(at < ctx->end && b < bEnd) {
-        if (*at <= 32 || at == ctx->end || *b <= 32 || b == bEnd) {
-            bool res = (*at <= 32 || at == ctx->end) && *b <= 32;
+        if (at >= ctx->end || *at <= 32 || b >= bEnd || *b <= 32) {
+            bool res = (at >= ctx->end || *at <= 32) && *b <= 32;
             if (res) {
                 ctx->at = at;
                 consumeWhite(ctx);
@@ -255,7 +286,7 @@ bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)
             return false;
         }
     }
-    bool res = (*at <= 32 || at == ctx->end || *at == '.') && (*b <= 32 || b == bEnd);
+    bool res = (at >= ctx->end || *at <= 32 || *at == '.') && (b >= bEnd || *b <= 32);
     if (res) {
         ctx->at = at;
         consumeWhite(ctx);
@@ -276,12 +307,10 @@ static bool isIdentifierChar(char c)
     }
 }
 
-
 bool IsIdentifierChar(char c)
 {
     return isIdentifierChar(c);
 }
-
 
 bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
 {
@@ -289,8 +318,8 @@ bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
     const char* b = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset);
     const char* bEnd = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
     while(at < ctx->end && b < bEnd) {
-        if (!isIdentifierChar(*at) || at == ctx->end || !isIdentifierChar(*b) || b == bEnd) {
-            bool res = (!isIdentifierChar(*at) || at == ctx->end) && (!isIdentifierChar(*b) || b == bEnd);
+        if (at >= ctx->end || !isIdentifierChar(*at) || b >= bEnd || !isIdentifierChar(*b)) {
+            bool res = (at >= ctx->end || !isIdentifierChar(*at)) && (b >= bEnd || !isIdentifierChar(*b));
             if (res) {
                 ctx->at = at;
                 consumeWhite(ctx);
@@ -302,7 +331,7 @@ bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
         }
     }
 
-    bool res = (!isIdentifierChar(*at) || at == ctx->end) && (!isIdentifierChar(*b) || b == bEnd);
+    bool res = (at >= ctx->end || !isIdentifierChar(*at)) && (b >= bEnd || !isIdentifierChar(*b));
     if (res) {
         ctx->at = at;
         consumeWhite(ctx);
@@ -313,7 +342,7 @@ bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
 const char* IdentifierEnd(parser_context_t* ctx)
 {
     const char* at = ctx->at;
-    while (isIdentifierChar(*at) && at < ctx->end) {
+    while (at < ctx->end && isIdentifierChar(*at)) {
         at++;
     }
     return at;
@@ -325,22 +354,60 @@ void ConsumeAnyIdentifier(parser_context_t* ctx)
     consumeWhite(ctx);
 }
 
-void ConsumeUntilDot(parser_context_t* ctx)
+#if 0
+// Consume characters until a specific character is found or whitespace is hit.
+// If end of context is reached, report an error.
+// If the character is found, consume it.
+// If whitespace is found, and failOnWhite is true, report an error.
+void consumeUntilCharOrWhite(parser_context_t* ctx, char c, bool failOnWhite)
 {
-    while(!isEnd(ctx) && *ctx->at > 32 && *ctx->at != '.') {
+    while(!isEnd(ctx) && *ctx->at > 32 && *ctx->at != c) {
         ctx->at++;
     }
-    if (*ctx->at != '.') {
-        Macros_ReportError("'.' expected", ctx->at, ctx->at);
+    if (IsEnd(ctx)) {
+        Macros_ReportError("unexpected end of statement", ctx->at, ctx->at);
+        return;
     }
-    ctx->at++;
+    if (*ctx->at == c) {
+        ctx->at++;
+        return;
+    }
+    if (failOnWhite) {
+        Macros_ReportErrorPrintf(ctx->at, "'%c' expected", c);
+        return;
+    }
+}
+
+void ConsumeUntilDot(parser_context_t* ctx)
+{
+    consumeUntilCharOrWhite(ctx, '.', true);
+}
+#endif
+
+// will consume exactly one character.
+// will not consume whitespace after the character.
+// returns true if the character was found, false otherwise.
+bool ConsumeOneChar(parser_context_t* ctx, char c)
+{
+    if (!isEnd(ctx) && *ctx->at == c) {
+        ctx->at++;
+        return true;
+    }
+    return false;
+}
+
+// will not consume whitespace after the dot.
+// returns true if the dot was found, false otherwise.
+bool ConsumeOneDot(parser_context_t* ctx)
+{
+    return ConsumeOneChar(ctx, '.');
 }
 
 bool TokenMatches(const char *a, const char *aEnd, const char *b)
 {
     while(a < aEnd && *b) {
-        if (*a <= 32 || a == aEnd || *b <= 32) {
-            return (*a <= 32 || a == aEnd) && *b <= 32;
+        if (a >= aEnd || *a <= 32 || *b <= 32) {
+            return (a >= aEnd || *a <= 32) && *b <= 32;
         }
         if (*a++ != *b++) {
             return false;
@@ -352,20 +419,20 @@ bool TokenMatches(const char *a, const char *aEnd, const char *b)
 bool TokenMatches2(const char *a, const char *aEnd, const char *b, const char *bEnd)
 {
     while(a < aEnd && b < bEnd) {
-        if (*a <= 32 || a == aEnd || *b <= 32 || b == bEnd) {
-            return (*a <= 32 || a == aEnd) && *b <= 32;
+        if (a >= aEnd || *a <= 32 || b >= bEnd || *b <= 32) {
+            return (a >= aEnd || *a <= 32) && *b <= 32;
         }
         if (*a++ != *b++) {
             return false;
         }
     }
-    return (*a <= 32 || a == aEnd || *a == '.') && (*b <= 32 || b == bEnd);
+    return (a >= aEnd || *a <= 32 || *a == '.') && (b >= bEnd || *b <= 32);
 }
 
 uint8_t TokLen(const char *a, const char *aEnd)
 {
     uint8_t l = 0;
-    while(*a > 32 && a < aEnd) {
+    while(a < aEnd && *a > 32) {
         l++;
         a++;
     }
@@ -374,7 +441,7 @@ uint8_t TokLen(const char *a, const char *aEnd)
 
 const char* TokEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd > 32 && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd > 32)    {
         cmd++;
     }
     return cmd;
@@ -383,10 +450,10 @@ const char* TokEnd(const char* cmd, const char *cmdEnd)
 // This doesn't handle expansions. Don't use it in actual macro context.
 const char* NextTok(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd > 32 && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd > 32)    {
         cmd++;
     }
-    while(*cmd <= 32 && cmd < cmdEnd) {
+    while(cmd < cmdEnd && *cmd <= 32) {
         cmd++;
     }
     if (cmd < cmdEnd - 1 && cmd[0] == '/' && cmd[1] == '/') {
@@ -397,7 +464,7 @@ const char* NextTok(const char* cmd, const char *cmdEnd)
 
 void ConsumeAnyToken(parser_context_t* ctx)
 {
-    while (*ctx->at > 32 && ctx->at < ctx->end) {
+    while (ctx->at < ctx->end && *ctx->at > 32) {
         ctx->at++;
     }
     consumeWhite(ctx);
@@ -408,12 +475,12 @@ struct command_entry* ConsumeGperfToken(parser_context_t* ctx)
     const char* start = ctx->at;
 
     // parse an identifier token
-    while (isIdentifierChar(*ctx->at) && ctx->at < ctx->end) {
+    while (ctx->at < ctx->end && isIdentifierChar(*ctx->at)) {
         ctx->at++;
     }
 
     // parse a single char operator if token wasn't matched.
-    if (ctx->at == start && !isIdentifierChar(*ctx->at) && *ctx->at > 32 && ctx->at < ctx->end) {
+    if (ctx->at < ctx->end && ctx->at == start && !isIdentifierChar(*ctx->at) && *ctx->at > 32) {
         ctx->at++;
     }
 
@@ -424,11 +491,11 @@ struct command_entry* ConsumeGperfToken(parser_context_t* ctx)
 
 const char* NextCmd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd != '\n')    {
         cmd++;
     }
     const char* lastNewline = cmd;
-    while(*cmd <= 32 && cmd < cmdEnd) {
+    while(cmd < cmdEnd && *cmd <= 32) {
         if (*cmd == '\n') {
             lastNewline = cmd;
         }
@@ -444,7 +511,7 @@ const char* NextCmd(const char* cmd, const char *cmdEnd)
 
 const char* CmdEnd(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd != '\n' && cmd < cmdEnd)    {
+    while(cmd < cmdEnd && *cmd != '\n')    {
         cmd++;
     }
     return cmd;
@@ -452,7 +519,7 @@ const char* CmdEnd(const char* cmd, const char *cmdEnd)
 
 const char* SkipWhite(const char* cmd, const char *cmdEnd)
 {
-    while(*cmd <= 32 && cmd < cmdEnd) {
+    while(cmd < cmdEnd && *cmd <= 32) {
         cmd++;
     }
     return cmd;
@@ -607,7 +674,7 @@ uint8_t CountCommands(const char* text, uint16_t textLen)
     uint8_t count = 1;
     const char* textEnd = text + textLen;
 
-    while ( *text <= 32 && text < textEnd) {
+    while (text < textEnd && *text <= 32) {
         text++;
     }
 
@@ -695,5 +762,4 @@ const char* DeviceModelName(device_id_t device) {
             return "Unknown device";
     }
 }
-
 
