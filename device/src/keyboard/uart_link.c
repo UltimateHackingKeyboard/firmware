@@ -266,7 +266,8 @@ void UartLink_SendWakeByte(uart_link_t *uartState) {
         return;
     }
 
-    uint8_t wake = UartControlByte_Wake;
+    // uart_tx reads its buffer by DMA after returning; a stack byte doesn't outlive the call.
+    static uint8_t wake = UartControlByte_Wake;
     UartLink_LockBusy(uartState);
     int err = uart_tx(uartState->device, &wake, 1, UART_TRANSPORT_TIMEOUT_US);
     if (err != 0) {
