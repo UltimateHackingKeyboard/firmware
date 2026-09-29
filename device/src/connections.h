@@ -69,6 +69,7 @@
     typedef struct {
         uint8_t rxIdx;
         uint8_t txIdx;
+        bool rxIdxValid; // rxIdx holds the watermark of a frame accepted since the last reset
     } ATTR_PACKED connection_watermarks_t;
 
     typedef struct {
