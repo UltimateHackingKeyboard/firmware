@@ -11,8 +11,10 @@
 
 #ifdef DEVICE_ID
 #include "logger.h"
+#include "debug.h" // DEBUG_STRESS_UART
 #else
 #define LogU(...)
+#define DEBUG_STRESS_UART false
 #endif
 
 #define CRC_SALT 0x1234
