@@ -243,16 +243,14 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
             }
             break;
         case UartControl_Unexpected:
+            // Out-of-frame garbage: a byte received while the parser is between frames. It is
+            // routine after any RX teardown - bridgeOnRxDisabled resyncs the parser while the
+            // peer's frame may still be streaming in, so its remaining bytes land here. The
+            // parser resyncs itself on the next Start byte. Tearing RX down here instead
+            // (the old UartLink_Reset) made every such byte another teardown, another mid-frame
+            // re-enable, and so on until the frame ended - one lost frame per hiccup.
             stats.unexpectedBytes++;
-#if UART_LOWPOWER
-            // Out-of-frame garbage is expected here: enabling RX mid-byte after a GPIO wake
-            // yields a partial byte or the tail of the wake byte. The parser resyncs on the
-            // next Start byte, whereas resetting RX (10ms of deafness, wake sense unarmed)
-            // exactly when the real frame is inbound turns one garbled byte into a resend storm.
             BridgeDbg("BRIDGE RX unexpected byte\n");
-#else
-            UartLink_Reset(&uartState->core);
-#endif
             break;
     }
 }
