@@ -28,4 +28,7 @@
     void UartBridge_Suspend(void);
     void UartBridge_Resume(void);
 
+    // Print bridge link diagnostics (frame/ack/resend counters, ack latencies) to the uart log.
+    void UartBridge_DumpStats(void);
+
 #endif // __UART_H__
