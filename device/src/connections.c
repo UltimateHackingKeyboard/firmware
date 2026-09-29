@@ -143,6 +143,7 @@ void Connections_ResetWatermarks(connection_id_t connectionId) {
 
     Connections[connectionId].watermarks.txIdx = 0;
     Connections[connectionId].watermarks.rxIdx = 255;
+    Connections[connectionId].watermarks.rxIdxValid = false;
 }
 
 void Connections_ReportState(connection_id_t connectionId) {
