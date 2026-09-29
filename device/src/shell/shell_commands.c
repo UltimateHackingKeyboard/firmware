@@ -24,6 +24,9 @@
 #include "stubs.h"
 #include "slave_drivers/kboot_driver.h"
 #include "pin_wiring.h"
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+#include "keyboard/uart_bridge.h"
+#endif
 #include "slot.h"
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
@@ -518,6 +521,14 @@ static int cmd_uhk_usbDiag(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+static int cmd_uhk_uartStats(const struct shell *shell, size_t argc, char *argv[])
+{
+    UartBridge_DumpStats();
+    return 0;
+}
+#endif
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -593,6 +604,9 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
         SHELL_CMD_ARG(usbDiag, NULL, "dump c2usb state and anomaly log", cmd_uhk_usbDiag, 1, 0),
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+        SHELL_CMD_ARG(uartStats, NULL, "print bridge uart link statistics", cmd_uhk_uartStats, 1, 0),
+#endif
         SHELL_CMD_ARG(reportEventVector, NULL, "decode an EventVector mask value", cmd_uhk_reportEventVector, 2, 0),
         SHELL_SUBCMD_SET_END);
 

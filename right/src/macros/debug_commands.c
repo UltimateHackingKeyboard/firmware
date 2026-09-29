@@ -23,6 +23,7 @@
 #include "keyboard/battery_manager.h"
 #include "keyboard/battery_percent_calculator.h"
 #include "state_sync.h"
+#include "keyboard/uart_bridge.h"
 #endif
 
 macro_result_t Macros_ProcessStatsLayerStackCommand()
@@ -153,6 +154,9 @@ void Macros_RecoverDiagnostics(void)
     Macros_ProcessClearStatusCommand(true);
     c2usb_diag_dump();
     Hid_DumpTransportState();
+#if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
+    UartBridge_DumpStats();
+#endif
     Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
     StateWormhole.persistStatusBuffer = true;
     Reboot(false);
