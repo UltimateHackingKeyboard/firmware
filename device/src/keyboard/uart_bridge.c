@@ -20,7 +20,10 @@
 #define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
-#define UART_RESEND_DELAY 64
+// First resend after this many ms, doubling on every retry. The ack loop takes ~3ms for a
+// key-state frame and ~13ms for a maximum-length one (115200 baud), so 15ms is late enough
+// not to duplicate a frame that's merely still in flight, and the backoff handles a bad link.
+#define UART_RESEND_DELAY 15
 #define UART_RESEND_COUNT 5
 
 typedef enum {
@@ -318,7 +321,7 @@ static void sendControl(uart_state_t *uartState, uint8_t byte, bool isAck) {
 
 // wakePeer: a nack-triggered resend skips the wake handshake, since the peer just parsed
 // our garbled frame and is provably awake; a timeout-triggered one redoes it, because
-// after 64ms+ of silence the peer has almost certainly slept again. This must not
+// after the resend delay of silence the peer may have slept again. This must not
 // k_sleep - it runs on the control thread, where blocking makes us blind to wake edges,
 // acks and pings, which used to cascade into a disconnect + BLE-fallback feedback loop.
 static void resend(uart_state_t *uartState, bool wakePeer) {
