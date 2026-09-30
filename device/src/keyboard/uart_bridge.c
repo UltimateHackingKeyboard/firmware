@@ -21,11 +21,18 @@
 #define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
-// First resend after this many ms, doubling on every retry. The ack loop takes ~3ms for a
-// key-state frame and ~13ms for a maximum-length one (115200 baud), so 15ms is late enough
-// not to duplicate a frame that's merely still in flight, and the backoff handles a bad link.
+// Resend an unacked frame every UART_RESEND_DELAY ms, up to UART_RESEND_COUNT times, then
+// give up. The ack loop takes ~3ms for a key-state frame and ~13ms for a maximum-length one
+// (115200 baud), so 15ms is late enough not to duplicate a frame that's merely in flight.
+//
+// The delay is constant, not exponential, on purpose. Senders block on txBufferBusy (one
+// slot) until the outstanding frame is acked; on the left half that sender is the key
+// scanner thread, which then stops scanning - key changes made during the stall are
+// coalesced into the next snapshot or, if pressed and released inside it, never seen. The
+// worst-case stall is therefore UART_RESEND_COUNT * UART_RESEND_DELAY (was ~8s with the old
+// 64ms<<tries backoff), and every retry also shortens the blind window it causes.
 #define UART_RESEND_DELAY 15
-#define UART_RESEND_COUNT 5
+#define UART_RESEND_COUNT 3
 
 typedef enum {
     UartTxState_Idle,
@@ -469,7 +476,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
 
             currentTime = k_uptime_get();
             if (uartState->txState == UartTxState_WaitingForAck) {
-                uint32_t resendDelay = (UART_RESEND_DELAY << uartState->resendTries);
+                uint32_t resendDelay = UART_RESEND_DELAY;
                 uint32_t resendTime = uartState->lastMessageSentTime + resendDelay;
                 if (currentTime >= resendTime) {
                     LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
