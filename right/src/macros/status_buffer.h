@@ -58,6 +58,7 @@
     void MacroStatusBuffer_InitFromWormhole();
     void MacroStatusBuffer_InitNormal();
     void MacroStatusBuffer_SafePrint();
+    void MacroStatusBuffer_LogToUart(void);
 
     void NotifyPrintf(const char *fmt, ...);
     void UnNotify();
