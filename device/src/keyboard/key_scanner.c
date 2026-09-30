@@ -297,6 +297,8 @@ static void scanAllKeys() {
     }
 
     if (DEVICE_IS_UHK80_LEFT) {
+        // If ack gets lost, second key state change will block (because uart is busy with control of the first one). That blocks us. Third keystate change may be lost.
+        // TODO: consider passing this via postponer queue.
         Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
     }
 }
