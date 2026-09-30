@@ -11,8 +11,10 @@
 
 #ifdef DEVICE_ID
 #include "logger.h"
+#include "debug.h" // DEBUG_STRESS_UART
 #else
 #define LogU(...)
+#define DEBUG_STRESS_UART false
 #endif
 
 #define CRC_SALT 0x1234
@@ -54,10 +56,23 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
 #if DEBUG_STRESS_UART
     uint16_t r1 = get_random();
     uint8_t r2 = get_random();
+    uint16_t r3 = get_random();
 
+    // Mutate byte
     if (r1 < 128) {
-        LogU("Oops!\n");
+        LogU("UartStress: Oops!\n");
         byte = byte ^ r2;
+    }
+
+    // Or drop the byte
+    if (r3 < 128) {
+        return;
+    }
+
+    // More dropped acks, more fun
+    bool isAckLike = byte == UartControlByte_Ack  || byte == UartControlByte_Nack;
+    if (r3 < 2048 && isAckLike && !uartState->receivingMessage) {
+
     }
 #endif
 
