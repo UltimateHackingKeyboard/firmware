@@ -490,6 +490,8 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
         } else {
             uartState->txState = UartTxState_Idle;
             uartState->rxState = UartRxState_Idle;
+            // The retry budget belongs to the frame, not to the link.
+            uartState->resendTries = 0;
         }
 
         currentTime = k_uptime_get();
