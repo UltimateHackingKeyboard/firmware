@@ -475,15 +475,17 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             }
 
             currentTime = k_uptime_get();
+            bool ackOverdue = uartState->txState == UartTxState_WaitingForAck
+                && currentTime >= uartState->lastMessageSentTime + UART_RESEND_DELAY;
+            if (ackOverdue) {
+                LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, UART_RESEND_DELAY);
+                resend(uartState, true);
+            }
+
+            // Must be taken after the resend, which restamps lastMessageSentTime - read
+            // earlier, the deadline lands on the next ping tick instead of the next retry.
             if (uartState->txState == UartTxState_WaitingForAck) {
-                uint32_t resendDelay = UART_RESEND_DELAY;
-                uint32_t resendTime = uartState->lastMessageSentTime + resendDelay;
-                if (currentTime >= resendTime) {
-                    LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
-                    resend(uartState, true);
-                } else {
-                    wakeTime = MIN(wakeTime, resendTime);
-                }
+                wakeTime = MIN(wakeTime, uartState->lastMessageSentTime + UART_RESEND_DELAY);
             }
         } else {
             uartState->txState = UartTxState_Idle;
