@@ -84,18 +84,19 @@
 // Functions (Basic Query APIs):
 
     uint8_t PostponerQuery_PendingKeypressCount();
-    bool PostponerQuery_IsKeyReleased(key_state_t* key);
+    bool PostponerQuery_IsKeyReleased(const key_state_t* key);
     bool PostponerQuery_IsActiveEventually(key_state_t* key);
     void PostponerQuery_InfoByKeystate(key_state_t* key, postponer_buffer_record_type_t** press, postponer_buffer_record_type_t** release);
     bool PostponerQuery_ContainsKeyId(uint8_t keyid);
     void PostponerQuery_FindFirstPressed(const postponer_buffer_record_type_t** press, const key_state_t* opposingKey);
     void PostponerQuery_FindFirstReleased(const postponer_buffer_record_type_t** release, const key_state_t* opposingKey);
+    uint8_t PostponerQuery_GetPendingKeypresses(uint8_t pendingKeyIds[], uint8_t maxCount, uint32_t cutoffTime);   
 
 // Functions (Query APIs extended):
     uint16_t PostponerExtended_PendingId(uint16_t idx);
     uint32_t PostponerExtended_LastPressTime(void);
     bool PostponerExtended_IsPendingKeyReleased(uint8_t idx);
-    void PostponerExtended_ConsumePendingKeypresses(int count, bool suppress);
+    void PostponerExtended_ConsumePendingKeypresses(int count);
     void PostponerExtended_ResetPostponer(void);
 
     void PostponerExtended_PrintContent();
