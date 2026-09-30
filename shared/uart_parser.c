@@ -58,7 +58,7 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
     uint8_t r2 = get_random();
 
     if (r1 < 128) {
-        LogU("Oops!\n");
+        LogU("UartStress: Oops!\n");
         byte = byte ^ r2;
     }
 #endif
