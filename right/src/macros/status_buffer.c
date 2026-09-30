@@ -499,6 +499,22 @@ void MacroStatusBuffer_InitNormal() {
     Macros_ProcessClearStatusCommand(true);
 }
 
+void MacroStatusBuffer_LogToUart(void) {
+    uint16_t pos = 0;
+    while (pos < Buf.len) {
+        uint16_t lineLen = 0;
+        while (pos + lineLen < Buf.len && Buf.data[pos + lineLen] != '\n') {
+            lineLen++;
+        }
+        bool endsWithNewline = pos + lineLen < Buf.len;
+        LogWrn("%.*s\n", lineLen, &Buf.data[pos]);
+        pos += lineLen + (endsWithNewline ? 1 : 0);
+#ifdef __ZEPHYR__
+        k_sleep(K_MSEC(10));
+#endif
+    }
+}
+
 void MacroStatusBuffer_Validate(void) {
     REENTRANCY_GUARD_BEGIN;
     for (uint16_t i = 0; i < Buf.len; i++) {

@@ -2,6 +2,8 @@ When Uhk or its usb stack completely stops working, please follow this procedure
 
 # Uhk80
 
+## Method 1 - for right half and stuck usb stack
+
 Create a macro named `$onInit`, with following content:
 
 ```
@@ -13,6 +15,16 @@ Feel free to change the binding to any right half key. You can find the list of 
 Once the keyboard becomes unresponsive, press the configured key. This reboots the keyboard while logging the state dump into the error buffer. 
 
 Continue by opening the Agent. A yellow pane with diagnostics should pop up. Copy & paste & send it to us.
+
+## Method 2 - either half, requires working usb stack
+
+Access UHK's logs via Agent's [advanced settings](logs.md).
+
+Enter `uhk recover` in the command line. 
+
+Then enter `uhk printStatus`. 
+
+Send us the log.
 
 # Uhk60
 

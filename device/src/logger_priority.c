@@ -62,7 +62,10 @@ int set_thread_priority_by_name(const char *thread_name, int new_priority) {
 #define LOG_THREAD_PRIORITY_HIGH K_PRIO_COOP(CONFIG_NUM_COOP_PRIORITIES - 1)
 #define LOG_THREAD_PRIORITY_LOW K_PRIO_PREEMPT(K_LOWEST_APPLICATION_THREAD_PRIO - 1)
 
+bool Logger_PriorityHigh = false;
+
 void Logger_SetPriority(bool high) {
+    Logger_PriorityHigh = high;
     set_thread_priority_by_name("logging", high ? LOG_THREAD_PRIORITY_HIGH : LOG_THREAD_PRIORITY_LOW);
     set_thread_priority_by_name("UhkShell", SHELL_THREAD_PRIORITY);
     set_thread_priority_by_name("shell_rtt", SHELL_THREAD_PRIORITY);
