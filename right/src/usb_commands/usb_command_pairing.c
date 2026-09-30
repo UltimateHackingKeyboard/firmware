@@ -70,7 +70,9 @@ void UsbCommand_Unpair(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidIn
 void UsbCommand_IsPaired(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
     bt_addr_le_t addr = GetUsbRxBufferBleAddress(1);
     bool isPaired = BtPair_IsDeviceBonded(&addr);
+    bool isBondBroken = BtConn_IsBondBroken(&addr);
     SetUsbTxBufferUint8(1, isPaired);
+    SetUsbTxBufferUint8(2, isBondBroken);
 }
 
 void UsbCommand_EnterPairingMode(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer) {
