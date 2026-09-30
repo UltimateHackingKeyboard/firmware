@@ -190,22 +190,26 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
 // Dumps a frame as a few log lines rather than one log message per byte: this runs in the
 // UART ISR, and a per-byte dump floods the deferred log buffer faster than any log thread
 // priority can drain it. Only the head of the frame is shown.
-#define FRAME_DUMP_MAX_BYTES 16
 #define FRAME_DUMP_LINE_LEN 80
+#define FRAME_DUMP_MAX_LINES 2
 
 static void logFrameBytes(const uint8_t* data, uint16_t len) {
     char line[FRAME_DUMP_LINE_LEN];
     uint16_t pos = 0;
-    uint16_t shown = MIN(len, FRAME_DUMP_MAX_BYTES);
+    uint16_t shown = len;
+    uint16_t lines = 0;
 
     for (uint16_t i = 0; i < shown; i++) {
-        int n = snprintf(line + pos, sizeof(line) - pos, "%u ", data[i]);
+        int n = snprintf(line + pos, FRAME_DUMP_LINE_LEN - pos, "%02x ", data[i]);
         bool lineFull = n < 0 || pos + n >= sizeof(line) - 1;
         if (lineFull) {
             line[pos] = '\0';
             LogU("  %s\n", line);
             pos = 0;
-            n = snprintf(line, sizeof(line), "%u ", data[i]);
+            if (++lines >= FRAME_DUMP_MAX_LINES) {
+                break;
+            }
+            n = snprintf(line, sizeof(line), "%02x ", data[i]);
         }
         pos += n;
     }
