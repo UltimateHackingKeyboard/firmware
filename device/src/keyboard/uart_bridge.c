@@ -59,6 +59,9 @@ typedef struct {
 
     uint8_t* rxBuffer;
     uint8_t txBuffer[UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH];
+    // uart_tx reads its buffer by DMA after returning; it has to outlive the call. Control
+    // bytes are serialized by txControlBusy, so one slot is enough.
+    uint8_t controlByte;
 
     struct k_sem txBufferBusy;
     struct k_sem controlThreadSleeper;
@@ -311,7 +314,8 @@ static void sendControl(uart_state_t *uartState, uint8_t byte, bool isAck) {
         // Measured once we hold the TX slot: includes waiting out our own in-flight frame.
         recordLatency(&stats.ackTurn, uartState->ackReqCyc);
     }
-    int err = UartLink_Send(&uartState->core, &byte, 1);
+    uartState->controlByte = byte;
+    int err = UartLink_Send(&uartState->core, &uartState->controlByte, 1);
     if (err != 0) {
         // No transfer started -> no TX_DONE -> return the slot ourselves.
         stats.txSendFail++;
