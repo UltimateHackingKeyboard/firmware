@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/pm/device.h>
@@ -186,6 +187,33 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
     wakeControlThread(uartState);
 }
 
+// Dumps a frame as a few log lines rather than one log message per byte: this runs in the
+// UART ISR, and a per-byte dump floods the deferred log buffer faster than any log thread
+// priority can drain it. Only the head of the frame is shown.
+#define FRAME_DUMP_MAX_BYTES 48
+#define FRAME_DUMP_LINE_LEN 96
+
+static void logFrameBytes(const uint8_t* data, uint16_t len) {
+    char line[FRAME_DUMP_LINE_LEN];
+    uint16_t pos = 0;
+    uint16_t shown = MIN(len, FRAME_DUMP_MAX_BYTES);
+
+    for (uint16_t i = 0; i < shown; i++) {
+        int n = snprintf(line + pos, sizeof(line) - pos, "%u ", data[i]);
+        bool lineFull = n < 0 || pos + n >= sizeof(line) - 1;
+        if (lineFull) {
+            line[pos] = '\0';
+            LogU("  %s\n", line);
+            pos = 0;
+            n = snprintf(line, sizeof(line), "%u ", data[i]);
+        }
+        pos += n;
+    }
+    if (pos > 0) {
+        LogU("  %s%s\n", line, shown < len ? "..." : "");
+    }
+}
+
 
 static void receiveMessage(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
@@ -236,12 +264,8 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
                 uartState->invalidMessagesCounter++;
                 const char *out1, *out2;
                 Messenger_GetMessageDescription(uartState->rxBuffer, 0, &out1, &out2);
-                LogUO("Crc-invalid UART message received! %s %s ", out1, out2 == NULL ? "" : out2);
-
-                for (uint16_t i = 0; i < uartState->parser.rxPosition; i++) {
-                    LogU("%i ", uartState->rxBuffer[i]);
-                }
-                LogU("\n");
+                LogUO("Crc-invalid UART message received! %s %s\n", out1, out2 == NULL ? "" : out2);
+                logFrameBytes(uartState->rxBuffer, uartState->parser.rxPosition);
 
                 setRxState(uartState, UartRxState_Nack);
 
