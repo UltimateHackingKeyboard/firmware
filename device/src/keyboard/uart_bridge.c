@@ -34,6 +34,12 @@
 #define UART_RESEND_DELAY 15
 #define UART_RESEND_COUNT 3
 
+// A frame gets UART_RESEND_COUNT+2 transmissions, so the budget spans that many delays. It
+// must fit inside UART_BRIDGE_TIMEOUT, or the link dies before the retries are exhausted.
+#define UART_RESEND_BUDGET_MS ((UART_RESEND_COUNT + 2) * UART_RESEND_DELAY)
+_Static_assert(UART_RESEND_BUDGET_MS < UART_BRIDGE_TIMEOUT,
+    "UART resend budget outlives UART_BRIDGE_TIMEOUT");
+
 typedef enum {
     UartTxState_Idle,
     UartTxState_WaitingForAck,
