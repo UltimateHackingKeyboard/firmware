@@ -26,6 +26,7 @@
 #include "pin_wiring.h"
 #if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
 #include "keyboard/uart_bridge.h"
+#include "messenger.h"
 #endif
 #include "slot.h"
 #include "i2c_addresses.h"
@@ -534,6 +535,17 @@ static int cmd_uhk_uartStats(const struct shell *shell, size_t argc, char *argv[
 }
 #endif
 
+#if DEVICE_IS_UHK80_RIGHT
+static int cmd_uhk_leftTest(const struct shell *shell, size_t argc, char *argv[])
+{
+    uint8_t testId = argc > 1 ? (uint8_t)atoi(argv[1]) : 0;
+    Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_StartTest,
+            &testId, sizeof(testId));
+    shell_fprintf(shell, SHELL_NORMAL, "Requested left test %d (0 stops).\n", testId);
+    return 0;
+}
+#endif
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -610,6 +622,9 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
 #if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
         SHELL_CMD_ARG(uartStats, NULL, "print bridge uart link statistics", cmd_uhk_uartStats, 1, 0),
+#endif
+#if DEVICE_IS_UHK80_RIGHT
+        SHELL_CMD_ARG(leftTest, NULL, "start a left-half key producing test (0 stops)", cmd_uhk_leftTest, 1, 1),
 #endif
         SHELL_CMD_ARG(printStatus, NULL, "print the macro status buffer", cmd_uhk_printStatus, 1, 0),
         SHELL_CMD_ARG(recover, NULL, "dump diagnostics into the status buffer and reboot", cmd_uhk_recover, 1, 0),
