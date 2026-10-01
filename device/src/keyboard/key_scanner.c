@@ -5,6 +5,9 @@
 #include "keyboard/key_scanner.h"
 #include "shell.h"
 #include "keyboard/uart_bridge.h"
+#if DEVICE_IS_UHK80_LEFT
+#include "keyboard/left_test.h"
+#endif
 #include "nus_client.h"
 #include "nus_server.h"
 #include "oled/oled_buffer.h"
@@ -317,6 +320,12 @@ bool KeyScanner_ScanAndWakeOnSfjl(bool fullScan, bool wake) {
 static void scanKeys() {
     if (CurrentPowerMode > PowerMode_LightSleep) {
         KeyScanner_ScanAndWakeOnSfjl(true, true);
+#if DEVICE_IS_UHK80_LEFT
+    } else if (LeftTest_Active) {
+        // Produces keys instead of reading the matrix, so a test can drive the left half
+        // without anyone touching it.
+        LeftTest_Tick();
+#endif
     } else if (!USE_QUICK_SCAN || KeyPressed || quickScan() || TestHooks_Active) {
         if (TestHooks_Active) {
             TestHooks_Tick();

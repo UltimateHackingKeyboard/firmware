@@ -27,6 +27,7 @@
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
 #include "jitter_test.h"
+#include "messenger.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
 #include <string.h>
@@ -438,6 +439,17 @@ static int cmd_uhk_testSuite(const struct shell *shell, size_t argc, char *argv[
     return 0;
 }
 
+#if DEVICE_IS_UHK80_RIGHT
+static int cmd_uhk_leftTest(const struct shell *shell, size_t argc, char *argv[])
+{
+    uint8_t testId = argc > 1 ? (uint8_t)atoi(argv[1]) : 0;
+    Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_StartTest,
+            &testId, sizeof(testId));
+    shell_fprintf(shell, SHELL_NORMAL, "Requested left test %d (0 stops).\n", testId);
+    return 0;
+}
+#endif
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -504,6 +516,9 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(irqs, NULL, "list enabled IRQs and their priorities", cmd_uhk_irqs, 1, 0),
         SHELL_CMD_ARG(testSuite, NULL, "run test suite [module] [test]", cmd_uhk_testSuite, 1, 2),
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
+#if DEVICE_IS_UHK80_RIGHT
+        SHELL_CMD_ARG(leftTest, NULL, "start a left-half key producing test (0 stops)", cmd_uhk_leftTest, 1, 1),
+#endif
         SHELL_SUBCMD_SET_END);
 
     SHELL_CMD_REGISTER(uhk, &uhk_cmds, "UHK commands", NULL);

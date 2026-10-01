@@ -29,6 +29,9 @@
 
     typedef enum {
         MessengerCommand_Reboot = 0,
+        // Payload: one byte, a left_test_id_t. Handled inline on arrival, so it takes effect
+        // without waiting for the messenger queue and the main loop.
+        MessengerCommand_StartTest = 1,
         MessengerCommand_Count,
     } messenger_command_t;
 

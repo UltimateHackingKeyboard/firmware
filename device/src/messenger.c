@@ -1,4 +1,7 @@
 #include "messenger.h"
+#if DEVICE_IS_UHK80_LEFT
+#include "keyboard/left_test.h"
+#endif
 #include "bt_conn.h"
 #include "connections.h"
 #include "device.h"
@@ -424,6 +427,15 @@ static void handleCommand(device_id_t src, const uint8_t* data, uint16_t len) {
         case MessengerCommand_Reboot:
             Reboot(false);
             break;
+#if DEVICE_IS_UHK80_LEFT
+        case MessengerCommand_StartTest:
+            if (len > MessageOffset_MsgId1+2) {
+                LeftTest_Start(data[MessageOffset_MsgId1+2]);
+            } else {
+                printk("StartTest without a test id\n");
+            }
+            break;
+#endif
         default:
             printk("Unknown command: %d\n", command);
             break;
