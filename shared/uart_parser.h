@@ -15,6 +15,8 @@
 
     typedef enum {
     UartControl_Ack = 1,
+        UartControl_Ack0,
+        UartControl_Ack1,
         UartControl_Nack,
         UartControl_Ping,
         UartControl_ValidMessage,
@@ -26,11 +28,16 @@
         UartControlByte_Start = 0b01010100,
         UartControlByte_End = 0b01010101,
         UartControlByte_Escape = 0b01010110,
+        // Unsequenced ack. Kept for peers that predate Ack0/Ack1; we still accept it, but
+        // no longer send it.
         UartControlByte_Ack = 0b01010111,
         UartControlByte_Nack = 0b01011000,
         UartControlByte_Ping = 0b01011001,
         // Sacrificial byte sent to wake a sleeping (RX-disabled) peer.
         UartControlByte_Wake = 0b01011010,
+        // Ack carrying the low bit of the acked frame's watermark.
+        UartControlByte_Ack0 = 0b01011011,
+        UartControlByte_Ack1 = 0b01011100,
     } uart_control_byte_t;
 
     typedef struct {

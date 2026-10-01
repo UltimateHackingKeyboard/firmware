@@ -70,7 +70,8 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
     }
 
     // More dropped acks, more fun: CRC mutation alone never reaches the resend path.
-    bool isAckLike = byte == UartControlByte_Ack || byte == UartControlByte_Nack;
+    bool isAckLike = byte == UartControlByte_Ack || byte == UartControlByte_Ack0
+        || byte == UartControlByte_Ack1 || byte == UartControlByte_Nack;
     if (r3 < 2048 && isAckLike && !uartState->receivingMessage) {
         return;
     }
@@ -84,6 +85,20 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
             }
 
             uartState->receiveMessage(uartState->userArg, UartControl_Ack, NULL, 0);
+            break;
+        case UartControlByte_Ack0:
+            if (uartState->receivingMessage) {
+                goto msg_byte;
+            }
+
+            uartState->receiveMessage(uartState->userArg, UartControl_Ack0, NULL, 0);
+            break;
+        case UartControlByte_Ack1:
+            if (uartState->receivingMessage) {
+                goto msg_byte;
+            }
+
+            uartState->receiveMessage(uartState->userArg, UartControl_Ack1, NULL, 0);
             break;
         case UartControlByte_Nack:
             if (uartState->receivingMessage) {
@@ -189,6 +204,8 @@ static void escapeAndAppend(uart_parser_t *uartState, uint8_t byte) {
         case UartControlByte_End:
         case UartControlByte_Escape:
         case UartControlByte_Ack:
+        case UartControlByte_Ack0:
+        case UartControlByte_Ack1:
         case UartControlByte_Nack:
         case UartControlByte_Ping:
         case UartControlByte_Wake:

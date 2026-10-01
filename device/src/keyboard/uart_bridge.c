@@ -66,6 +66,8 @@ typedef struct {
     uint32_t lastPingTime;
     uint16_t invalidMessagesCounter;
     uint8_t resendTries;
+    uint8_t txWm; // watermark of the frame we await an ack for
+    uint8_t rxWm; // watermark of the frame we owe an ack for
 
     // Cycle stamps for the latency stats below.
     uint32_t sentCyc;   // last uart_tx of a data frame
@@ -109,6 +111,7 @@ typedef struct {
     uint32_t framesSent;
     uint32_t framesReceived;
     uint16_t ackWhileIdle;   // ack arrived while we weren't waiting for one
+    uint16_t ackStale;       // ack for a frame other than the outstanding one
     uint16_t nackWhileIdle;
     uint16_t nackReceived;
     uint16_t resendTimeout;
@@ -237,13 +240,30 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
     uartState->lastLinkActivity = k_uptime_get();
     switch (messageKind) {
         case UartControl_Ack:
-            if (uartState->txState == UartTxState_WaitingForAck) {
-                recordLatency(&stats.ackLoop, uartState->sentCyc);
-                uartState->resendTries = 0;
-                uartState->txState = UartTxState_Idle;
-                k_sem_give(&uartState->txBufferBusy);
-            } else {
-                stats.ackWhileIdle++;
+        case UartControl_Ack0:
+        case UartControl_Ack1: {
+                // Ack0/Ack1 are matched by watermark parity: a resend is acked twice, and the
+                // second ack must not close the next frame. A bare Ack carries no parity and
+                // is accepted unconditionally, as it was before Ack0/Ack1 existed.
+                bool carriesParity = messageKind != UartControl_Ack;
+                bool ackIsOdd = messageKind == UartControl_Ack1;
+                bool acksOutstandingFrame =
+                    !carriesParity || ackIsOdd == ((uartState->txWm & 1) != 0);
+                bool waiting = uartState->txState == UartTxState_WaitingForAck;
+
+                if (waiting && acksOutstandingFrame) {
+                    recordLatency(&stats.ackLoop, uartState->sentCyc);
+                    uartState->resendTries = 0;
+                    uartState->txState = UartTxState_Idle;
+                    k_sem_give(&uartState->txBufferBusy);
+                } else if (waiting) {
+                    stats.ackStale++;
+                    if (stats.ackStale == 1) {
+                        LogU("Uart: ack watermark mismatch\n");
+                    }
+                } else {
+                    stats.ackWhileIdle++;
+                }
             }
             break;
         case UartControl_Nack:
@@ -263,6 +283,7 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
                 uartState->lastPingTime = k_uptime_get();
                 stats.framesReceived++;
                 uartState->ackReqCyc = k_cycle_get_32();
+                uartState->rxWm = len > MessageOffset_Wm ? data[MessageOffset_Wm] : 0;
                 setRxState(uartState, UartRxState_Ack);
 
                 // message
@@ -328,6 +349,7 @@ int UartBridge_SendMessage(message_t* msg) {
     UartLink_LockBusy(&uartState->core);
 
     Messenger_UpdateWatermarks(msg);
+    uartState->txWm = msg->wm;
     UartParser_StartMessage(&uartState->parser);
     UartParser_AppendEscapedTxBytes(&uartState->parser, (uint8_t[]){msg->src, msg->dst, msg->wm}, 3);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->messageId, msg->idsUsed);
@@ -464,7 +486,8 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
         if (Connections_IsReady(uartState->connectionId)) {
             switch (uartState->rxState) {
                 case UartRxState_Ack:
-                    sendControl(uartState, UartControlByte_Ack, true);
+                    sendControl(uartState,
+                        (uartState->rxWm & 1) ? UartControlByte_Ack1 : UartControlByte_Ack0, true);
                     uartState->rxState = UartRxState_Idle;
                     break;
                 case UartRxState_Nack:
@@ -662,8 +685,9 @@ void UartBridge_DumpStats(void) {
     LogU("  frames: sent=%u received=%u crcInvalid=%u unexpectedBytes=%u\n",
         (unsigned)stats.framesSent, (unsigned)stats.framesReceived, (unsigned)uartState->invalidMessagesCounter,
         (unsigned)stats.unexpectedBytes);
-    LogU("  acks: whileIdle=%u nack=%u nackWhileIdle=%u\n",
-        (unsigned)stats.ackWhileIdle, (unsigned)stats.nackReceived, (unsigned)stats.nackWhileIdle);
+    LogU("  acks: whileIdle=%u stale=%u nack=%u nackWhileIdle=%u\n",
+        (unsigned)stats.ackWhileIdle, (unsigned)stats.ackStale, (unsigned)stats.nackReceived,
+        (unsigned)stats.nackWhileIdle);
     LogU("  resends: timeout=%u nack=%u giveUps=%u txSendFail=%u txAborted=%u\n",
         (unsigned)stats.resendTimeout, (unsigned)stats.resendNack, (unsigned)stats.giveUps,
         (unsigned)stats.txSendFail, (unsigned)core->txAbortedCount);
