@@ -404,11 +404,10 @@ static void handleCommand(device_id_t src, const uint8_t* data, uint16_t len) {
             break;
 #if DEVICE_IS_UHK80_LEFT
         case MessengerCommand_StartTest:
-            if (len > MessageOffset_MsgId1+2) {
-                LeftTest_Start(data[MessageOffset_MsgId1+2]);
-            } else {
-                printk("StartTest without a test id\n");
-            }
+            // Read the argument the same way the command byte above is read. `len` is not
+            // usable for validation here: it counts differently per transport on this tree
+            // (observed 4 for a 6-byte BLE-delivered frame).
+            LeftTest_Start(data[MessageOffset_MsgId1+2]);
             break;
 #endif
         default:

@@ -8,6 +8,7 @@
 #include "device.h"
 #include "messenger.h"
 #include "link_protocol.h"
+#include "connections.h"
 #include "module.h"
 #include "timer.h"
 #include "logger.h"
@@ -27,6 +28,7 @@ volatile bool LeftTest_Active = false;
 static volatile uint8_t requestedTest = LeftTestId_None;
 static uint8_t activeTest = LeftTestId_None;
 
+static uint32_t sendErrors;
 static uint8_t keyIndex;
 static bool holding;
 static uint32_t phaseStartedAt;
@@ -90,8 +92,17 @@ void LeftTest_Tick(void) {
     // Sent every tick rather than on change only: the point of the harness is to keep the
     // bridge busy, and a resend of an unchanged state is exactly what the right half has to
     // tolerate anyway.
-    Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty,
-            SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+    //
+    // Pinned to the UART connection rather than left to determineChannel: with BLE to the
+    // right also up, the default route can carry this over NUS instead, and then the harness
+    // silently stresses the wrong link.
+    int err = Messenger_Send2Via(DeviceId_Uhk80_Right, ConnectionId_UartRight,
+            MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates,
+            compressedBuffer, compressedLength);
+
+    if (err != 0 && sendErrors++ % 32 == 0) {
+        LogU("LeftTest: uart send failed (%d), %d so far\n", err, sendErrors);
+    }
 }
 
 #endif // DEVICE_IS_UHK80_LEFT
