@@ -21,6 +21,7 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_TapKeySeq,
     // Always fails; uncomment to check that the framework reports failures.
     // &TestModule_Fail,
+    &TestModule_Link,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);

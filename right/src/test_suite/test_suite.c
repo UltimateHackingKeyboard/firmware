@@ -1,4 +1,6 @@
 #include "test_suite.h"
+#include "messenger.h"
+#include "device.h"
 #include "test_hooks.h"
 #include "test_actions.h"
 #include "test_input_machine.h"
@@ -92,6 +94,19 @@ static void startTest(const test_t *test, const test_module_t *module) {
         TestSuite_LogSeparatorOnce();
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
     }
+    // A link test needs the left half running the same script. Sent before the machines start
+    // so the left is already producing by the time the first expectation is due.
+    //
+    // Only for link tests: Messenger_Send2 blocks on txBufferBusy until the frame is acked,
+    // and doing that on every test start stalls the thread that ticks the suite, which left
+    // even purely local tests never reaching their completion check.
+#if DEVICE_IS_UHK80_RIGHT
+    if (test->linkTestId != 0) {
+        Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_StartTest,
+                &test->linkTestId, sizeof(test->linkTestId));
+    }
+#endif
+
     InputMachine_Start(test);
     OutputMachine_Start(test);
     OutputMachine_OnReportChange(ActiveKeyboardReport);
