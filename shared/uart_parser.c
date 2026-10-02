@@ -9,6 +9,11 @@
     #include "shared/module/uart_link.h"
 #endif
 
+// DEVICE_ID comes from CONFIG_DEVICE_ID via device.h. Without this include the guard below
+// is always false, which silently compiles out DEBUG_STRESS_UART - the actual reason the
+// stress harness had no effect, and what 9265da9aa missed by adding debug.h *inside* it.
+#include "device.h"
+
 #ifdef DEVICE_ID
 #include "logger.h"
 #include "debug.h" // DEBUG_STRESS_UART
