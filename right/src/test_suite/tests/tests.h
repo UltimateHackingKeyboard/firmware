@@ -31,5 +31,10 @@ extern const test_module_t TestModule_CurrentMacroKeyIsActive;
 extern const test_module_t TestModule_ParserBenevolence;
 extern const test_module_t TestModule_Sticky;
 extern const test_module_t TestModule_Playtime;
+extern const test_module_t TestModule_Link;
+
+// Script for a link test, looked up by the id carried in MessengerCommand_StartTest. Both
+// halves resolve the same id to the same script. NULL for an unknown id.
+const test_action_t* LinkTest_GetActions(uint8_t linkTestId);
 
 #endif

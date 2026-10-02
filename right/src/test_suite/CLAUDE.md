@@ -56,6 +56,14 @@ This matters when you want a base-layer macro to run while a layer is held (e.g.
 - **Always use right-half keys**: j, k, l, ;, p, o, i, u, m, n, h, y, 7, 8, 9, 0, etc.
 - Never use left-half keys (a, s, d, f, q, w, e, r, etc.) — the test rig only drives the right half.
 
+### Exception: link tests
+
+A test with a nonzero `linkTestId` is a *link test* and may use left-half keys. The left half
+runs the same script and presses those keys itself, so they genuinely traverse the bridge;
+the right half skips them locally (`skipLocally` in `test_input_machine.c`). See
+`tests/test_link.c`. Such tests must space input actions by debounce + margin, not the usual
+50ms, because both halves run independent timelines.
+
 ## Macro Formatting
 
 For `TEST_SET_MACRO` / `TEST_SET_LAYER_MACRO`, use multiline format with `\n`:

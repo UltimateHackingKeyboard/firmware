@@ -5,88 +5,124 @@
 
 #include <string.h>
 #include "left_test.h"
-#include "device.h"
 #include "messenger.h"
 #include "link_protocol.h"
 #include "connections.h"
 #include "module.h"
+#include "slot.h"
 #include "timer.h"
 #include "logger.h"
 #include "bool_array_converter.h"
-
-// Key positions pressed by LeftTestId_TypePhrase, in order. Universal key ids, the same
-// numbering scanAllKeys feeds to BoolBitToBytes.
-static const uint8_t phraseKeys[] = { 0, 1, 2, 3, 4, 5, 6, 7 };
-
-// Long enough to clear debouncing on the right half (Cfg.DebounceTimePress defaults well
-// below this) while still being brisk enough to keep the link busy.
-#define HOLD_MS 30
-#define GAP_MS 30
+#include "test_suite/tests/tests.h"
+#include "test_suite/test_input_machine.h"
 
 volatile bool LeftTest_Active = false;
 
-static volatile uint8_t requestedTest = LeftTestId_None;
-static uint8_t activeTest = LeftTestId_None;
+static volatile uint8_t requestedTest = 0;
+static uint8_t activeTest = 0;
+
+static const test_action_t *script;
+static uint16_t actionIndex;
+static uint32_t delayStartedAt;
+static bool inDelay;
+
+// Which left-half key positions are currently held, indexed by universal key id - the same
+// numbering scanAllKeys feeds to BoolBitToBytes.
+static bool held[MAX_KEY_COUNT_PER_MODULE];
 
 static uint32_t sendErrors;
-static uint8_t keyIndex;
-static bool holding;
-static uint32_t phaseStartedAt;
 
 void LeftTest_Start(uint8_t testId) {
     requestedTest = testId;
-    LeftTest_Active = testId != LeftTestId_None;
+    LeftTest_Active = testId != 0;
 }
 
-static void beginPhase(bool hold) {
-    holding = hold;
-    phaseStartedAt = Timer_GetCurrentTime();
-}
+static void restart(uint8_t testId) {
+    activeTest = testId;
+    script = LinkTest_GetActions(testId);
+    actionIndex = 0;
+    inDelay = false;
+    memset(held, 0, sizeof(held));
 
-// Advances the press/release machine. Returns the key position to report as held, or
-// MAX_KEY_COUNT_PER_MODULE for none.
-static uint8_t advance(void) {
-    bool exhausted = keyIndex >= sizeof(phraseKeys);
-
-    if (exhausted) {
-        LogU("LeftTest: finished test %d\n", activeTest);
-        activeTest = LeftTestId_None;
-        requestedTest = LeftTestId_None;
+    if (script == NULL) {
+        LogU("LeftTest: no script for test %d\n", testId);
+        activeTest = 0;
+        requestedTest = 0;
         LeftTest_Active = false;
-        return MAX_KEY_COUNT_PER_MODULE;
+    } else {
+        LogU("LeftTest: running test %d\n", testId);
     }
+}
 
-    uint32_t elapsed = Timer_GetElapsedTime(&phaseStartedAt);
-    bool phaseOver = elapsed >= (holding ? HOLD_MS : GAP_MS);
+static void finish(void) {
+    LogU("LeftTest: finished test %d\n", activeTest);
+    memset(held, 0, sizeof(held));
+    script = NULL;
+    activeTest = 0;
+    requestedTest = 0;
+    LeftTest_Active = false;
+}
 
-    if (phaseOver) {
-        if (holding) {
-            keyIndex++;
-            beginPhase(false);
-        } else {
-            beginPhase(true);
+// Runs the same script the right half runs, but honours only what this half is responsible
+// for: its own key positions, and the delays that space them. Everything else - the right
+// half's keys, the config actions, the expectations - is stepped over without consuming a
+// tick, so both halves stay on the same timeline.
+static void advance(void) {
+    while (script != NULL) {
+        const test_action_t *action = &script[actionIndex];
+
+        if (action->type == TestAction_End) {
+            finish();
+            return;
         }
-    }
 
-    return holding ? phraseKeys[keyIndex] : MAX_KEY_COUNT_PER_MODULE;
+        if (action->type == TestAction_Delay) {
+            if (!inDelay) {
+                inDelay = true;
+                delayStartedAt = Timer_GetCurrentTime();
+                return;
+            }
+            if (Timer_GetElapsedTime(&delayStartedAt) < action->delayMs) {
+                return;
+            }
+            inDelay = false;
+            actionIndex++;
+            continue;
+        }
+
+        bool isPress = action->type == TestAction_Press;
+        bool isRelease = action->type == TestAction_Release;
+
+        if (isPress || isRelease) {
+            uint8_t slotId, keyId;
+            bool resolved = TestInput_ParseKeyId(action->keyId, &slotId, &keyId);
+            bool ours = resolved && slotId == SlotId_LeftKeyboardHalf
+                && keyId < MAX_KEY_COUNT_PER_MODULE;
+
+            if (ours) {
+                held[keyId] = isPress;
+            }
+        }
+
+        actionIndex++;
+    }
 }
 
 void LeftTest_Tick(void) {
     if (requestedTest != activeTest) {
-        activeTest = requestedTest;
-        keyIndex = 0;
-        beginPhase(false);
-        LogU("LeftTest: starting test %d\n", activeTest);
+        restart(requestedTest);
     }
 
-    uint8_t heldKey = advance();
+    advance();
 
     uint8_t compressedLength = MAX_KEY_COUNT_PER_MODULE/8+1;
     uint8_t compressedBuffer[compressedLength];
     memset(compressedBuffer, 0, compressedLength);
 
-    if (heldKey < MAX_KEY_COUNT_PER_MODULE) {
-        BoolBitToBytes(true, heldKey, compressedBuffer);
+    for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+        if (held[keyId]) {
+            BoolBitToBytes(true, keyId, compressedBuffer);
+        }
     }
 
     // Sent every tick rather than on change only: the point of the harness is to keep the

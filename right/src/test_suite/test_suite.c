@@ -1,4 +1,6 @@
 #include "test_suite.h"
+#include "messenger.h"
+#include "device.h"
 #include "test_hooks.h"
 #include "test_actions.h"
 #include "test_input_machine.h"
@@ -72,6 +74,14 @@ static void startTest(const test_t *test, const test_module_t *module) {
         LogU("[TEST] ----------------------\n");
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
     }
+    // A link test needs the left half running the same script. Sent before the machines
+    // start so the left is already producing by the time the first expectation is due; 0
+    // stops whatever the previous test left running.
+#if DEVICE_IS_UHK80_RIGHT
+    Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_StartTest,
+            &test->linkTestId, sizeof(test->linkTestId));
+#endif
+
     InputMachine_Start(test);
     OutputMachine_Start(test);
     OutputMachine_OnReportChange(ActiveKeyboardReport);

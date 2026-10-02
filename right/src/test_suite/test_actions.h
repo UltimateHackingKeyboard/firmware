@@ -116,6 +116,10 @@ typedef struct {
 typedef struct {
     const char *name;
     const test_action_t *actions;
+    // Nonzero marks a link test: the left half runs the same script and produces its own
+    // key presses physically, so the right half must not apply left-slot presses locally.
+    // Left unset (0) by every ordinary test, which stays entirely local.
+    uint8_t linkTestId;
 } test_t;
 
 #endif

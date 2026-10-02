@@ -7,6 +7,7 @@
 #include "str_utils.h"
 #include "key_action.h"
 #include "key_states.h"
+#include "slot.h"
 #include "keymap.h"
 #include "layer.h"
 #include "timer.h"
@@ -33,7 +34,7 @@ static bool inDelay = false;
 static uint32_t delayStartTime = 0;
 
 // Key ID parsing: convert string like "u" or "leftShift" to slot + keyId
-static bool parseKeyId(const char *keyIdStr, uint8_t *slotId, uint8_t *keyId) {
+bool TestInput_ParseKeyId(const char *keyIdStr, uint8_t *slotId, uint8_t *keyId) {
     if (keyIdStr == NULL) {
         return false;
     }
@@ -125,6 +126,14 @@ void InputMachine_Start(const test_t *test) {
     delayStartTime = 0;
 }
 
+// During a link test the left half presses its own keys for real, so applying them here too
+// would defeat the point - the report would be right even with a dead link.
+static bool skipLocally(uint8_t slotId) {
+    return InputMachine_CurrentTest != NULL
+        && InputMachine_CurrentTest->linkTestId != 0
+        && slotId == SlotId_LeftKeyboardHalf;
+}
+
 void InputMachine_Tick(void) {
     if (InputMachine_CurrentTest == NULL || InputMachine_Failed || InputMachine_TimedOut) {
         return;
@@ -144,7 +153,12 @@ void InputMachine_Tick(void) {
         switch (action->type) {
             case TestAction_Press: {
                 uint8_t slotId, keyId;
-                if (parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    if (skipLocally(slotId)) {
+                        LOG_VERBOSE("[TEST] > Press [%s] - left half's job\n", action->keyId);
+                        InputMachine_ActionIndex++;
+                        return;
+                    }
                     KeyStates[slotId][keyId].hardwareSwitchState = true;
                     LOG_VERBOSE("[TEST] > Press [%s]\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
@@ -160,7 +174,12 @@ void InputMachine_Tick(void) {
 
             case TestAction_Release: {
                 uint8_t slotId, keyId;
-                if (parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    if (skipLocally(slotId)) {
+                        LOG_VERBOSE("[TEST] > Release [%s] - left half's job\n", action->keyId);
+                        InputMachine_ActionIndex++;
+                        return;
+                    }
                     KeyStates[slotId][keyId].hardwareSwitchState = false;
                     LOG_VERBOSE("[TEST] > Release [%s]\n", action->keyId);
                     EventVector_Set(EventVector_StateMatrix);
@@ -191,7 +210,7 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetAction: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
                     LogU("[TEST] FAIL: SetAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
@@ -216,7 +235,7 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetMacro: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
                     LogU("[TEST] FAIL: SetMacro [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
@@ -237,7 +256,7 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetLayerHold: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
                     LogU("[TEST] FAIL: SetLayerHold [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
@@ -260,7 +279,7 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetLayerAction: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
                     LogU("[TEST] FAIL: SetLayerAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
@@ -285,7 +304,7 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetSecondaryRole: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
                     LogU("[TEST] FAIL: SetSecondaryRole [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
@@ -310,7 +329,7 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetGenericAction: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
                     LogU("[TEST] FAIL: SetGenericAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
