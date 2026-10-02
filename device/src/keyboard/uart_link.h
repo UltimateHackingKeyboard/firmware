@@ -41,6 +41,10 @@
     // UART_WAKE_DISPATCH_DELAY_US, or that stop lands on the frame following a wake byte.
     #define UART_TRANSPORT_TIMEOUT_US 700
 
+    // One byte-time on the wire at 115200-8N1 (~87us), rounded up. A physical property of the
+    // link, so it outlives the low-power scheme above it.
+    #define UART_BYTE_TIME_US 90
+
 // Typedefs:
 
     typedef enum {

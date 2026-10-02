@@ -125,9 +125,6 @@ void UartLink_Enable(uart_link_t *uartState) {
 
 #if UART_LOWPOWER
 
-// One byte-time on the wire at 115200-8N1 (~87us), rounded up.
-#define UART_BYTE_TIME_US 90
-
 // Edge-sense ISR: an incoming start bit on the slept RXD pin. Deliberately minimal - it
 // only kicks the owning thread and touches no lpState/gpio, so it cannot race
 // SleepRx/WakeRx. It re-fires on each edge of the wake byte until WakeRx disarms it;

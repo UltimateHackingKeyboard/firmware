@@ -34,9 +34,18 @@
 #define UART_RESEND_DELAY 15
 #define UART_RESEND_COUNT 3
 
+// UART_RESEND_DELAY budgets the ack turnaround only. The frame's own time on the wire has to
+// be added on top, because the deadline is anchored where uart_tx starts the DMA, not where
+// the transfer completes - measured ack turnaround is ~0.2-10ms, while a maximum-length frame
+// alone occupies the wire for ~23ms.
+#define UART_FRAME_WIRE_TIME_MS(BYTES) (((BYTES) * UART_BYTE_TIME_US + 999) / 1000)
+#define UART_MAX_FRAME_WIRE_TIME_MS \
+    UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
+
 // A frame gets UART_RESEND_COUNT+2 transmissions, so the budget spans that many delays. It
 // must fit inside UART_BRIDGE_TIMEOUT, or the link dies before the retries are exhausted.
-#define UART_RESEND_BUDGET_MS ((UART_RESEND_COUNT + 2) * UART_RESEND_DELAY)
+#define UART_RESEND_BUDGET_MS \
+    ((UART_RESEND_COUNT + 2) * (UART_RESEND_DELAY + UART_MAX_FRAME_WIRE_TIME_MS))
 _Static_assert(UART_RESEND_BUDGET_MS < UART_BRIDGE_TIMEOUT,
     "UART resend budget outlives UART_BRIDGE_TIMEOUT");
 
@@ -504,17 +513,19 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             }
 
             currentTime = k_uptime_get();
+            uint32_t resendDelay =
+                UART_RESEND_DELAY + UART_FRAME_WIRE_TIME_MS(uartState->parser.txPosition);
             bool ackOverdue = uartState->txState == UartTxState_WaitingForAck
-                && currentTime >= uartState->lastMessageSentTime + UART_RESEND_DELAY;
+                && currentTime >= uartState->lastMessageSentTime + resendDelay;
             if (ackOverdue) {
-                LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, UART_RESEND_DELAY);
+                LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
                 resend(uartState, true);
             }
 
             // Must be taken after the resend, which restamps lastMessageSentTime - read
             // earlier, the deadline lands on the next ping tick instead of the next retry.
             if (uartState->txState == UartTxState_WaitingForAck) {
-                wakeTime = MIN(wakeTime, uartState->lastMessageSentTime + UART_RESEND_DELAY);
+                wakeTime = MIN(wakeTime, uartState->lastMessageSentTime + resendDelay);
             }
         } else {
             uartState->txState = UartTxState_Idle;
