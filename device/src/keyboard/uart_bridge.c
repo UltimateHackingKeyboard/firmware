@@ -21,24 +21,9 @@
 #define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
-// Resend an unacked frame every UART_RESEND_DELAY ms, up to UART_RESEND_COUNT times, then
-// give up. The ack loop takes ~3ms for a key-state frame and ~13ms for a maximum-length one
-// (115200 baud), so 15ms is late enough not to duplicate a frame that's merely in flight.
-//
-// The delay is constant, not exponential, on purpose. Senders block on txBufferBusy (one
-// slot) until the outstanding frame is acked; on the left half that sender is the key
-// scanner thread, which then stops scanning - key changes made during the stall are
-// coalesced into the next snapshot or, if pressed and released inside it, never seen. The
-// worst-case stall is therefore UART_RESEND_COUNT * UART_RESEND_DELAY (was ~8s with the old
-// 64ms<<tries backoff), and every retry also shortens the blind window it causes.
-#define UART_RESEND_DELAY 15
-#define UART_RESEND_COUNT 3
 
-// UART_RESEND_DELAY budgets the ack turnaround only. The frame's own time on the wire has to
-// be added on top, because the deadline is anchored where uart_tx starts the DMA, not where
-// the transfer completes - measured ack turnaround is ~0.2-10ms, while a maximum-length frame
-// alone occupies the wire for ~23ms.
-#define UART_FRAME_WIRE_TIME_MS(BYTES) (((BYTES) * UART_BYTE_TIME_US + 999) / 1000)
+// UART_RESEND_DELAY / UART_RESEND_COUNT and the wire-time helper live in uart_defs.h, so
+// that the link tests can derive their own timings from them rather than restating them.
 #define UART_MAX_FRAME_WIRE_TIME_MS \
     UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
 

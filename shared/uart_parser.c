@@ -22,6 +22,21 @@
 #define DEBUG_STRESS_UART false
 #endif
 
+// Fault-injection rates under DEBUG_STRESS_UART, as reciprocals of get_random()'s 16-bit
+// range. Expressed as macros so the link tests can reason about them rather than guess.
+//
+// The ack-drop rate is the one that matters: a dropped ack is what forces a resend. The
+// probability of k consecutive drops on one frame is STRESS_ACK_DROP^-k, so the separation
+// between "k happens often" and "k+1 is rare" is only a factor of that probability - they
+// cannot both be made comfortable. 1/16 over a link test's ~420 frames puts two consecutive
+// drops at ~80% per run (exercising the absorb path) and three at ~10% (a false failure).
+#define STRESS_RANDOM_RANGE 65536
+#define STRESS_BYTE_FAULT_RECIPROCAL 512
+#define STRESS_ACK_DROP_RECIPROCAL 16
+
+#define STRESS_BYTE_FAULT_THRESHOLD (STRESS_RANDOM_RANGE / STRESS_BYTE_FAULT_RECIPROCAL)
+#define STRESS_ACK_DROP_THRESHOLD (STRESS_RANDOM_RANGE / STRESS_ACK_DROP_RECIPROCAL)
+
 #define CRC_SALT 0x1234
 #define CRC_LEN UART_CRC_LEN
 
@@ -64,20 +79,20 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
     uint16_t r3 = get_random();
 
     // Mutate byte
-    if (r1 < 128) {
+    if (r1 < STRESS_BYTE_FAULT_THRESHOLD) {
         LogU("UartStress: Oops!\n");
         byte = byte ^ r2;
     }
 
     // Or drop the byte
-    if (r3 < 128) {
+    if (r3 < STRESS_BYTE_FAULT_THRESHOLD) {
         return;
     }
 
     // More dropped acks, more fun: CRC mutation alone never reaches the resend path.
     bool isAckLike = byte == UartControlByte_Ack || byte == UartControlByte_Ack0
         || byte == UartControlByte_Ack1 || byte == UartControlByte_Nack;
-    if (r3 < 2048 && isAckLike && !uartState->receivingMessage) {
+    if (r3 < STRESS_ACK_DROP_THRESHOLD && isAckLike && !uartState->receivingMessage) {
         return;
     }
 #endif

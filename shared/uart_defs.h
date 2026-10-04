@@ -34,6 +34,27 @@
     #define UART_BRIDGE_PING_INTERVAL 200
     #define UART_BRIDGE_TIMEOUT 700
 
+    // One byte-time on the wire at 115200-8N1 (~87us), rounded up. A physical property of the
+    // link, so it outlives any particular power scheme.
+    #define UART_BYTE_TIME_US 90
+    #define UART_FRAME_WIRE_TIME_MS(BYTES) (((BYTES) * UART_BYTE_TIME_US + 999) / 1000)
+
+    // Resend an unacked frame every UART_RESEND_DELAY ms (plus the frame's own time on the
+    // wire, which the sender adds), up to UART_RESEND_COUNT times, then give up.
+    //
+    // The delay budgets the ack turnaround alone. Measured on hardware, that is 133-346us
+    // mean with a sub-millisecond p90 on the left half and 1.8ms mean on the right, so 7ms is
+    // roughly 20x the mean. It is deliberately not sized to the observed maximum (~10ms,
+    // which was slot contention during a StateSync burst): an occasional duplicate frame is
+    // cheap now that acks carry a watermark parity, whereas the delay is also how long the
+    // sender stalls on a genuine loss, and that blocks the key scanner.
+    //
+    // Constant rather than exponential on purpose: the worst-case stall is
+    // UART_RESEND_COUNT * UART_RESEND_DELAY, and every retry shortens the blind window it
+    // causes rather than lengthening it.
+    #define UART_RESEND_DELAY 7
+    #define UART_RESEND_COUNT 3
+
     #define UART_MODULE_PING_INTERVAL_MS 500
     #define UART_MODULE_TIMEOUT_MS (UART_MODULE_PING_INTERVAL_MS*4)
 
