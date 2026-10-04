@@ -40,7 +40,9 @@
     #define UART_FRAME_WIRE_TIME_MS(BYTES) (((BYTES) * UART_BYTE_TIME_US + 999) / 1000)
 
     // Resend an unacked frame every UART_RESEND_DELAY ms (plus the frame's own time on the
-    // wire, which the sender adds), up to UART_RESEND_COUNT times, then give up.
+    // wire, which the sender adds), up to UART_RESEND_COUNT times, then give up. So a frame
+    // gets UART_RESEND_COUNT+1 transmissions in all, and the give-up lands on the
+    // (UART_RESEND_COUNT+1)th timeout.
     //
     // The delay budgets the ack turnaround alone. Measured on hardware, that is 133-346us
     // mean with a sub-millisecond p90 on the left half and 1.8ms mean on the right, so 7ms is
@@ -49,11 +51,15 @@
     // cheap now that acks carry a watermark parity, whereas the delay is also how long the
     // sender stalls on a genuine loss, and that blocks the key scanner.
     //
-    // Constant rather than exponential on purpose: the worst-case stall is
-    // UART_RESEND_COUNT * UART_RESEND_DELAY, and every retry shortens the blind window it
-    // causes rather than lengthening it.
+    // Constant rather than exponential on purpose: senders block on txBufferBusy until the
+    // frame is acked, and on the left half that sender is the key scanner, so the whole
+    // budget is a window in which key changes are coalesced or missed entirely.
+    //
+    // The shorter delay paid for the deeper retry count: 5 retries at 7ms+wire is a ~54ms
+    // worst case, against ~85ms for the previous 4 retries at 15ms+wire. More chances to
+    // recover a lost frame, in less time than before.
     #define UART_RESEND_DELAY 7
-    #define UART_RESEND_COUNT 3
+    #define UART_RESEND_COUNT 5
 
     #define UART_MODULE_PING_INTERVAL_MS 500
     #define UART_MODULE_TIMEOUT_MS (UART_MODULE_PING_INTERVAL_MS*4)

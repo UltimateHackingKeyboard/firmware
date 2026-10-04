@@ -27,10 +27,11 @@
 #define UART_MAX_FRAME_WIRE_TIME_MS \
     UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
 
-// A frame gets UART_RESEND_COUNT+2 transmissions, so the budget spans that many delays. It
-// must fit inside UART_BRIDGE_TIMEOUT, or the link dies before the retries are exhausted.
+// A frame gets UART_RESEND_COUNT+1 transmissions and the give-up lands one delay after the
+// last, so the budget spans that many delays. It must fit inside UART_BRIDGE_TIMEOUT, or the
+// link is declared dead before the retries are exhausted and no retry can ever recover it.
 #define UART_RESEND_BUDGET_MS \
-    ((UART_RESEND_COUNT + 2) * (UART_RESEND_DELAY + UART_MAX_FRAME_WIRE_TIME_MS))
+    ((UART_RESEND_COUNT + 1) * (UART_RESEND_DELAY + UART_MAX_FRAME_WIRE_TIME_MS))
 _Static_assert(UART_RESEND_BUDGET_MS < UART_BRIDGE_TIMEOUT,
     "UART resend budget outlives UART_BRIDGE_TIMEOUT");
 
@@ -391,7 +392,7 @@ static void resend(uart_state_t *uartState, bool wakePeer) {
     } else {
         stats.resendNack++;
     }
-    if (uartState->resendTries++ > UART_RESEND_COUNT) {
+    if (uartState->resendTries++ >= UART_RESEND_COUNT) {
         stats.giveUps++;
         LogU("Repeatedly failed to send a message! ");
         for (uint16_t i = 0; i < uartState->parser.txPosition; i++) {
