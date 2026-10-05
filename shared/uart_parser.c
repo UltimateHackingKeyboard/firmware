@@ -75,6 +75,7 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
 
     // Or drop the byte
     if (r3 < STRESS_BYTE_FAULT_THRESHOLD) {
+        LogU("UartStress: Oops lost!\n");
         return;
     }
 
@@ -82,6 +83,7 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
     bool isAckLike = byte == UartControlByte_Ack || byte == UartControlByte_Ack0
         || byte == UartControlByte_Ack1 || byte == UartControlByte_Nack;
     if (r3 < STRESS_ACK_DROP_THRESHOLD && isAckLike && !uartState->receivingMessage) {
+        LogU("UartStress: Oops lost ack!\n");
         return;
     }
 #endif
