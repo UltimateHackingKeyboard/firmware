@@ -9,9 +9,6 @@
     #include "shared/module/uart_link.h"
 #endif
 
-// DEVICE_ID comes from CONFIG_DEVICE_ID via device.h. Without this include the guard below
-// is always false, which silently compiles out DEBUG_STRESS_UART - the actual reason the
-// stress harness had no effect, and what 9265da9aa missed by adding debug.h *inside* it.
 #include "device.h"
 
 #ifdef DEVICE_ID
@@ -22,14 +19,6 @@
 #define DEBUG_STRESS_UART false
 #endif
 
-// Fault-injection rates under DEBUG_STRESS_UART, as reciprocals of get_random()'s 16-bit
-// range. Expressed as macros so the link tests can reason about them rather than guess.
-//
-// The ack-drop rate is the one that matters: a dropped ack is what forces a resend. The
-// probability of k consecutive drops on one frame is STRESS_ACK_DROP^-k, so the separation
-// between "k happens often" and "k+1 is rare" is only a factor of that probability - they
-// cannot both be made comfortable. 1/16 over a link test's ~420 frames puts two consecutive
-// drops at ~80% per run (exercising the absorb path) and three at ~10% (a false failure).
 #define STRESS_RANDOM_RANGE 65536
 #define STRESS_BYTE_FAULT_RECIPROCAL 512
 #define STRESS_ACK_DROP_RECIPROCAL 16

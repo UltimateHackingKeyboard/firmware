@@ -24,9 +24,6 @@
 #include "stubs.h"
 #include "slave_drivers/kboot_driver.h"
 #include "pin_wiring.h"
-#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
-#include "keyboard/uart_bridge.h"
-#endif
 #include "slot.h"
 #include "i2c_addresses.h"
 #include "test_suite/test_suite.h"
@@ -41,6 +38,10 @@
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
 #include <string.h>
+
+#if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
+#include "keyboard/uart_bridge.h"
+#endif
 
 shell_t Shell = {
     .keyLog = 0,

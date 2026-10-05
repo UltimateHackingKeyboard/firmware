@@ -22,18 +22,12 @@
 
 #define UART_FOREVER_TIMEOUT 10000
 
-// UART_RESEND_DELAY / UART_RESEND_COUNT and the wire-time helper live in uart_defs.h, so
-// that the link tests can derive their own timings from them rather than restating them.
 #define UART_MAX_FRAME_WIRE_TIME_MS \
     UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
 
-// A frame gets UART_RESEND_COUNT+1 transmissions and the give-up lands one delay after the
-// last, so the budget spans that many delays. It must fit inside UART_BRIDGE_TIMEOUT, or the
-// link is declared dead before the retries are exhausted and no retry can ever recover it.
-#define UART_RESEND_BUDGET_MS \
-    ((UART_RESEND_COUNT + 1) * (UART_RESEND_DELAY + UART_MAX_FRAME_WIRE_TIME_MS))
-_Static_assert(UART_RESEND_BUDGET_MS < UART_BRIDGE_TIMEOUT,
-    "UART resend budget outlives UART_BRIDGE_TIMEOUT");
+// Assert that the resend budet fits inside uart timeout
+#define UART_RESEND_BUDGET_MS ((UART_RESEND_COUNT + 1) * (UART_RESEND_DELAY + UART_MAX_FRAME_WIRE_TIME_MS))
+_Static_assert(UART_RESEND_BUDGET_MS < UART_BRIDGE_TIMEOUT, "UART resend budget outlives UART_BRIDGE_TIMEOUT");
 
 typedef enum {
     UartTxState_Idle,
@@ -198,9 +192,6 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
     wakeControlThread(uartState);
 }
 
-// Dumps a frame as a few log lines rather than one log message per byte: this runs in the
-// UART ISR, and a per-byte dump floods the deferred log buffer faster than any log thread
-// priority can drain it. Only the head of the frame is shown.
 #define FRAME_DUMP_LINE_LEN 80
 #define FRAME_DUMP_MAX_LINES 2
 
@@ -481,8 +472,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
         if (Connections_IsReady(uartState->connectionId)) {
             switch (uartState->rxState) {
                 case UartRxState_Ack:
-                    sendControl(uartState,
-                        (uartState->rxWm & 1) ? UartControlByte_Ack1 : UartControlByte_Ack0, true);
+                    sendControl(uartState, (uartState->rxWm & 1) ? UartControlByte_Ack1 : UartControlByte_Ack0, true);
                     uartState->rxState = UartRxState_Idle;
                     break;
                 case UartRxState_Nack:
@@ -499,17 +489,14 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             }
 
             currentTime = k_uptime_get();
-            uint32_t resendDelay =
-                UART_RESEND_DELAY + UART_FRAME_WIRE_TIME_MS(uartState->parser.txPosition);
-            bool ackOverdue = uartState->txState == UartTxState_WaitingForAck
-                && currentTime >= uartState->lastMessageSentTime + resendDelay;
+            uint32_t resendDelay = UART_RESEND_DELAY + UART_FRAME_WIRE_TIME_MS(uartState->parser.txPosition);
+            bool ackOverdue = uartState->txState == UartTxState_WaitingForAck && currentTime >= uartState->lastMessageSentTime + resendDelay;
             if (ackOverdue) {
                 LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
                 resend(uartState, true);
             }
 
-            // Must be taken after the resend, which restamps lastMessageSentTime - read
-            // earlier, the deadline lands on the next ping tick instead of the next retry.
+            // Must be taken after the resend, which restamps lastMessageSentTime
             if (uartState->txState == UartTxState_WaitingForAck) {
                 wakeTime = MIN(wakeTime, uartState->lastMessageSentTime + resendDelay);
             }

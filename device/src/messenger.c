@@ -381,8 +381,6 @@ bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     uint8_t rxIdx = data[offset+MessageOffset_Wm];
 
     // A frame whose ack got lost is resent with the same watermark; don't apply it twice
-    // (key states carry cursor deltas). rxIdxValid guards the first frame after a local
-    // watermark reset, whose rxIdx is unrelated to what the peer is sending.
     if (wm->rxIdxValid && rxIdx == wm->rxIdx) {
         return false;
     }
