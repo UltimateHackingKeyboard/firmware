@@ -16,6 +16,7 @@
 #include "debug.h" // DEBUG_STRESS_UART
 #else
 #define LogU(...)
+#define LogWrn(...)
 #define DEBUG_STRESS_UART false
 #endif
 

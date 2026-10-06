@@ -1,5 +1,4 @@
 #include "test_suite.h"
-#include "messenger.h"
 #include "device.h"
 #include "test_hooks.h"
 #include "test_actions.h"
@@ -20,6 +19,10 @@
 #include "key_states.h"
 #include "module.h"
 #include <string.h>
+
+#ifdef __ZEPHYR__
+#include "messenger.h"
+#endif
 
 #if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
 #include "link_protocol.h"
@@ -81,13 +84,41 @@ static const test_t* getCurrentTest(void) {
     return &AllTestModules[currentModuleIndex]->tests[currentTestIndex];
 }
 
-static bool advanceToNextTest(void) {
+// Link tests need the left-right bridge, which only the UHK80 has.
+static bool isSkipped(const test_t *test) {
+    return !DEVICE_IS_UHK80 && test->linkTestId != 0;
+}
+
+static uint16_t runnableTestCount(const test_module_t *module) {
+    uint16_t count = 0;
+    for (uint16_t i = 0; i < module->testCount; i++) {
+        if (!isSkipped(&module->tests[i])) {
+            count++;
+        }
+    }
+    return count;
+}
+
+static bool stepToNextTest(void) {
     currentTestIndex++;
     if (currentTestIndex >= AllTestModules[currentModuleIndex]->testCount) {
         currentModuleIndex++;
         currentTestIndex = 0;
     }
     return currentModuleIndex < lastModuleIndexExclusive;
+}
+
+// Stays on the current test if this device can run it, otherwise moves on to the first one it can.
+static bool seekRunnableTest(void) {
+    bool inRange = currentModuleIndex < lastModuleIndexExclusive;
+    while (inRange && isSkipped(getCurrentTest())) {
+        inRange = stepToNextTest();
+    }
+    return inRange;
+}
+
+static bool advanceToNextTest(void) {
+    return stepToNextTest() && seekRunnableTest();
 }
 
 extern hid_keyboard_report_t *ActiveKeyboardReport;
@@ -120,9 +151,11 @@ static void startTest(const test_t *test, const test_module_t *module) {
         TestSuite_LogSeparatorOnce();
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
     }
+#ifdef __ZEPHYR__
     if (DEVICE_IS_UHK80_RIGHT && test->linkTestId != 0) {
         Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_StartTest, &test->linkTestId, sizeof(test->linkTestId));
     }
+#endif
 
     InputMachine_Start(test);
     OutputMachine_Start(test);
@@ -446,7 +479,7 @@ uint8_t TestSuite_RunAll(void) {
     // Count total tests
     totalTestCount = 0;
     for (uint16_t i = 0; i < AllTestModulesCount; i++) {
-        totalTestCount += AllTestModules[i]->testCount;
+        totalTestCount += runnableTestCount(AllTestModules[i]);
     }
 
     LogU("[TEST] Running custom unit tests...\n");
@@ -464,6 +497,7 @@ uint8_t TestSuite_RunAll(void) {
     }
 
     // Start first test
+    seekRunnableTest();
     const test_t *firstTest = getCurrentTest();
     const test_module_t *module = AllTestModules[currentModuleIndex];
     startTest(firstTest, module);
@@ -488,6 +522,11 @@ uint8_t TestSuite_RunSingle(const char *moduleStart, const char *moduleEnd, cons
         for (uint16_t ti = 0; ti < module->testCount; ti++) {
             const test_t *test = &module->tests[ti];
             if (!streq(testStart, testEnd, test->name)) continue;
+
+            if (isSkipped(test)) {
+                LogU("[TEST] Test not supported on this device: %s/%s\n", module->name, test->name);
+                return 255;
+            }
 
             // Found it - run with verbose logging, unless it is a repeated test: those run
             // hundreds of repetitions, so they log as in the full suite whichever way they are
@@ -536,7 +575,7 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
         lastModuleIndexExclusive = mi + 1;
         TestSuite_Verbose = false;
 
-        totalTestCount = module->testCount;
+        totalTestCount = runnableTestCount(module);
 
         LogU("[TEST] Running module: %s (%d tests)\n", module->name, totalTestCount);
 
@@ -544,6 +583,7 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
             return 0;
         }
 
+        seekRunnableTest();
         const test_t *firstTest = getCurrentTest();
         startTest(firstTest, module);
         TestHooks_Active = true;
