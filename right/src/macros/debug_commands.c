@@ -149,9 +149,53 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
 // provided by the patched c2usb (usb/df/mac_diag.hpp)
 extern void c2usb_diag_dump(void);
 
+#ifdef __ZEPHYR__
+#include <zephyr/kernel.h>
+#include <stdio.h>
+
+extern k_tid_t Main_ThreadId;
+
+#define MAIN_DUMP_SCAN_WORDS 160
+#define MAIN_DUMP_MAX_ADDRS 10
+
+// Where the main thread sits: its state, the pc/lr of its saved frame, and the thumb return
+// addresses found on its stack - resolve them with addr2line against zephyr.elf. A blocked
+// main shows up as a wait inside some caller; an idle one as the wait in scheduleNextRun.
+static void dumpMainThread(void) {
+    const struct k_thread *thread = Main_ThreadId;
+    char state[24];
+    const uint32_t *sp = (const uint32_t *)thread->callee_saved.psp;
+    uint32_t stackStart = thread->stack_info.start;
+    uint32_t stackEnd = stackStart + thread->stack_info.size;
+    bool spValid = (uint32_t)sp >= stackStart && (uint32_t)sp + 32 <= stackEnd;
+
+    k_thread_state_str(Main_ThreadId, state, sizeof(state));
+    LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "Main thread [%s] pc=%x lr=%x\n",
+            state, spValid ? sp[6] : 0, spValid ? sp[5] : 0);
+
+    if (spValid) {
+        char line[128];
+        int at = snprintf(line, sizeof(line), "  stack:");
+        uint8_t found = 0;
+        for (uint16_t i = 8; i < MAIN_DUMP_SCAN_WORDS && (uint32_t)&sp[i] < stackEnd && found < MAIN_DUMP_MAX_ADDRS; i++) {
+            uint32_t word = sp[i];
+            bool looksLikeReturn = (word & 1) && word > 0x1000 && word < 0x100000;
+            if (looksLikeReturn) {
+                at += snprintf(line + at, sizeof(line) - at, " %x", word);
+                found++;
+            }
+        }
+        LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "%s\n", line);
+    }
+}
+#endif
+
 void Macros_RecoverDiagnostics(void)
 {
     Macros_ProcessClearStatusCommand(true);
+#ifdef __ZEPHYR__
+    dumpMainThread();
+#endif
     c2usb_diag_dump();
     Hid_DumpTransportState();
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)

@@ -20,6 +20,7 @@
 #endif
 
 #define STRESS_RANDOM_RANGE 65536
+// Do NOT change these - test_link.c statistics are calibrated against them.
 #define STRESS_BYTE_FAULT_RECIPROCAL 512
 #define STRESS_ACK_DROP_RECIPROCAL 16
 
@@ -41,12 +42,17 @@ static void appendRxByte(uart_parser_t *uartState, uint8_t byte) {
     }
 }
 
+// xorshift32, top half of each draw. Not the one-bit-per-call LFSR this used to be: its
+// consecutive draws shared all but one bit, so the drop rolls of acks arriving back to back -
+// exactly what a retry loop produces - were correlated, making two and three dropped acks in
+// a row about 2x and 4x likelier than their nominal rate.
 ATTR_UNUSED static uint16_t get_random(void)
 {
-    static uint16_t lfsr = 0xACE1;  // Non-zero seed
-    uint16_t bit = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)) & 1;
-    lfsr = (lfsr >> 1) | (bit << 15);
-    return lfsr;
+    static uint32_t state = 0x2545F491;  // Non-zero seed
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    return (uint16_t)(state >> 16);
 }
 
 static bool isCrcValid(uart_parser_t *uartState, const uint8_t* buf, uint16_t len) {
@@ -61,30 +67,36 @@ static bool isCrcValid(uart_parser_t *uartState, const uint8_t* buf, uint16_t le
     return CRC16_IsMessageValidExt(&msg);
 }
 
-static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
-#if DEBUG_STRESS_UART
-    uint16_t r1 = get_random();
-    uint8_t r2 = get_random();
-    uint16_t r3 = get_random();
+// Default comes from the build flag, so a stress build still corrupts from boot, but tests
+// can switch it on for their duration and off again afterwards.
+bool UartStress_Active = DEBUG_STRESS_UART;
 
-    // Mutate byte
-    if (r1 < STRESS_BYTE_FAULT_THRESHOLD) {
+// Returns true when the byte should be swallowed. Mutates `byte` in place otherwise.
+static bool stressByte(uart_parser_t *uartState, uint8_t *byte) {
+    uint16_t corruptRoll = get_random();
+    uint8_t corruptMask = get_random();
+    uint16_t dropRoll = get_random();
+
+    if (corruptRoll < STRESS_BYTE_FAULT_THRESHOLD) {
         LogU("UartStress: Oops!\n");
-        byte = byte ^ r2;
+        *byte = *byte ^ corruptMask;
     }
 
-    // Or drop the byte
-    if (r3 < STRESS_BYTE_FAULT_THRESHOLD) {
-        return;
+    if (dropRoll < STRESS_BYTE_FAULT_THRESHOLD) {
+        return true;
     }
 
     // More dropped acks, more fun: CRC mutation alone never reaches the resend path.
-    bool isAckLike = byte == UartControlByte_Ack || byte == UartControlByte_Ack0
-        || byte == UartControlByte_Ack1 || byte == UartControlByte_Nack;
-    if (r3 < STRESS_ACK_DROP_THRESHOLD && isAckLike && !uartState->receivingMessage) {
+    bool isAckLike = *byte == UartControlByte_Ack || *byte == UartControlByte_Ack0
+        || *byte == UartControlByte_Ack1 || *byte == UartControlByte_Nack;
+
+    return dropRoll < STRESS_ACK_DROP_THRESHOLD && isAckLike && !uartState->receivingMessage;
+}
+
+static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
+    if (UartStress_Active && stressByte(uartState, &byte)) {
         return;
     }
-#endif
 
 
     switch (byte) {
