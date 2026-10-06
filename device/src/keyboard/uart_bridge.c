@@ -206,7 +206,7 @@ static void logFrameBytes(const uint8_t* data, uint16_t len) {
         bool lineFull = n < 0 || pos + n >= sizeof(line) - 1;
         if (lineFull) {
             line[pos] = '\0';
-            LogU("  %s\n", line);
+            LogWrn("  %s\n", line);
             pos = 0;
             if (++lines >= FRAME_DUMP_MAX_LINES) {
                 break;
@@ -216,7 +216,7 @@ static void logFrameBytes(const uint8_t* data, uint16_t len) {
         pos += n;
     }
     if (pos > 0) {
-        LogU("  %s%s\n", line, shown < len ? "..." : "");
+        LogWrn("  %s%s\n", line, shown < len ? "..." : "");
     }
 }
 
@@ -245,7 +245,7 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
                 } else if (waiting) {
                     stats.ackStale++;
                     if (stats.ackStale == 1) {
-                        LogU("Uart: ack watermark mismatch\n");
+                        LogWrn("Uart: ack watermark mismatch\n");
                     }
                 } else {
                     stats.ackWhileIdle++;
@@ -288,7 +288,7 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
                 uartState->invalidMessagesCounter++;
                 const char *out1, *out2;
                 Messenger_GetMessageDescription(uartState->rxBuffer, 0, &out1, &out2);
-                LogUO("Crc-invalid UART message received! %s %s\n", out1, out2 == NULL ? "" : out2);
+                LogWrn("Crc-invalid UART message received! %s %s\n", out1, out2 == NULL ? "" : out2);
                 logFrameBytes(uartState->rxBuffer, uartState->parser.rxPosition);
 
                 setRxState(uartState, UartRxState_Nack);
@@ -319,7 +319,7 @@ int UartBridge_SendMessage(message_t* msg) {
     int err;
     err = k_sem_take(&uartState->txBufferBusy, K_MSEC(UART_FOREVER_TIMEOUT));
     if (err != 0) {
-        LogUOS("Uart: failed to take txBufferBusy semaphore.\n");
+        LogWrn("Uart: failed to take txBufferBusy semaphore.\n");
     }
 
     // Mark the exchange outstanding before waking, so the control thread's sleep gate
@@ -385,11 +385,11 @@ static void resend(uart_state_t *uartState, bool wakePeer) {
     }
     if (uartState->resendTries++ >= UART_RESEND_COUNT) {
         stats.giveUps++;
-        LogU("Repeatedly failed to send a message! ");
+        LogErr("Repeatedly failed to send a message! ");
         for (uint16_t i = 0; i < uartState->parser.txPosition; i++) {
-            LogU("%i ", uartState->parser.txBuffer[i]);
+            LogErr("%i ", uartState->parser.txBuffer[i]);
         }
-        LogU("\n");
+        LogErr("\n");
 
         uartState->resendTries = 0;
         uartState->txState = UartTxState_Idle;
@@ -484,7 +484,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             }
 
             if (uartState->txState == UartTxState_Resend) {
-                LogU("Uart: received Nack, resending\n");
+                LogWrn("Uart: received Nack, resending\n");
                 resend(uartState, false);
             }
 
@@ -492,7 +492,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             uint32_t resendDelay = UART_RESEND_DELAY + UART_FRAME_WIRE_TIME_MS(uartState->parser.txPosition);
             bool ackOverdue = uartState->txState == UartTxState_WaitingForAck && currentTime >= uartState->lastMessageSentTime + resendDelay;
             if (ackOverdue) {
-                LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
+                LogWrn("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
                 resend(uartState, true);
             }
 

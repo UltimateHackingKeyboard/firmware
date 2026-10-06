@@ -62,6 +62,8 @@
 
 // Variables:
 
+    extern bool UartStress_Active;
+
 // Functions:
 
     void UartParser_InitParser( uart_parser_t* uartState, void (*receiveMessage)(void* state, uart_control_t messageKind, const uint8_t* rxBuffer, uint16_t len), void* userArg);
