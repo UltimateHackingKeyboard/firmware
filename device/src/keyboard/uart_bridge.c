@@ -385,11 +385,8 @@ static void resend(uart_state_t *uartState, bool wakePeer) {
     }
     if (uartState->resendTries++ >= UART_RESEND_COUNT) {
         stats.giveUps++;
-        LogErr("Repeatedly failed to send a message! ");
-        for (uint16_t i = 0; i < uartState->parser.txPosition; i++) {
-            LogErr("%i ", uartState->parser.txBuffer[i]);
-        }
-        LogErr("\n");
+        LogErr("Repeatedly failed to send a message!\n");
+        logFrameBytes(uartState->parser.txBuffer, uartState->parser.txPosition);
 
         uartState->resendTries = 0;
         uartState->txState = UartTxState_Idle;

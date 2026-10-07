@@ -114,7 +114,7 @@ __attribute__((weak)) void c2usb_diag_dump(void) {
 void LogErr(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
-    LogConstantTo(DEVICE_ID, LogTarget_Uart, RED "WRN: " UNCOLOR);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, RED "ERR: " UNCOLOR);
     LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
 }
 
