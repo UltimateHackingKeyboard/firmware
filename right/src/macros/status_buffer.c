@@ -224,7 +224,7 @@ static uint16_t findPosition(const char* arg)
     const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
     const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
 
-    if (arg < startOfLine || endOfLine < arg) {
+    if (arg < startOfLine || arg > endOfLine) {
         return 1;
     }
     return arg - startOfLine + 1;
@@ -240,7 +240,7 @@ static uint16_t findPositionCtx(const parser_context_t* ctx)
         ctx = ViewContext(0);
     }
 
-    if (ctx->at < ctx->begin || ctx->end < ctx->at) {
+    if (ctx->at < ctx->begin || ctx->at > ctx->end) {
         return 1;
     }
 
@@ -293,9 +293,9 @@ static void reportCommandLocation(uint16_t line, uint16_t pos, const char* begin
 }
 
 static void reportLocationStackLevel(const parser_context_t* ctx, uint16_t line, uint8_t indent) {
-    uint16_t pos = ctx->at - ctx->begin;
-    bool positionIsValid = ctx->begin <= ctx->at && ctx->at <= ctx->end;
+    bool positionIsValid = ctx->at >= ctx->begin && ctx->at <= ctx->end;
     if (positionIsValid) {
+        uint16_t pos = ctx->at - ctx->begin;
         reportCommandLocation(line, pos, ctx->begin, ctx->end, positionIsValid, indent);
     } else {
         Macros_SetStatusString("> Position not available here.\n", NULL);
@@ -320,7 +320,6 @@ static void reportError(
     Macros_SetStatusString(err, NULL);
 
     if (S != NULL) {
-        bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
         if (arg != NULL && arg != argEnd) {
             Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(arg, TokEnd(arg, argEnd));
@@ -329,7 +328,8 @@ static void reportError(
         const char* startOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandBegin;
         const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
-        if (startOfLine <= arg && arg <= endOfLine) {
+        if (arg != NULL && argEnd != NULL && argEnd >= startOfLine && arg <= endOfLine) {
+            bool argIsCommand = (uint8_t*)arg >= ValidatedUserConfigBuffer.buffer && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
             reportCommandLocation(line, arg - startOfLine, startOfLine, endOfLine, argIsCommand, 0);
         } else if (ctx != NULL) {
             reportLocationStack(ctx, line);
