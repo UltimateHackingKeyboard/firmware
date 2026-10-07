@@ -22,6 +22,9 @@
 
 #define UART_FOREVER_TIMEOUT 10000
 
+#define UART_GARBAGE_CHUNKS_TO_RESTART 3
+#define UART_GARBAGE_RESTART_INTERVAL_MS 100
+
 #define UART_MAX_FRAME_WIRE_TIME_MS \
     UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
 
@@ -57,6 +60,12 @@ typedef struct {
     uint8_t resendTries;
     uint8_t txWm; // watermark of the frame we await an ack for
     uint8_t rxWm; // watermark of the frame we owe an ack for
+
+    // Garbage watch, isr context only. See watchForGarbage.
+    bool chunkHadValid;
+    bool chunkHadGarbage;
+    uint8_t garbageChunks;
+    uint32_t lastRxRestartTime;
 
     // Cycle stamps for the latency stats below.
     uint32_t sentCyc;   // last uart_tx of a data frame
@@ -108,6 +117,7 @@ typedef struct {
     uint16_t giveUps;
     uint16_t txSendFail;     // uart_tx returned an error
     uint16_t unexpectedBytes;
+    uint16_t rxRestarts;     // rx restarted because of a run of garbage
     latency_stats_t ackLoop; // sender: uart_tx of a frame -> its ack parsed
     latency_stats_t ackTurn; // receiver: frame parsed -> ack handed to uart_tx
 } uart_bridge_stats_t;
@@ -165,10 +175,35 @@ static bool bridgeCanSleep(void *arg) {
         && (k_uptime_get() - uartState->lastLinkActivity) >= bridgeHoldoffMs(uartState);
 }
 
+// The UARTE receiver can come out of a simultaneous cold start of both halves in a state
+// where it corrupts the first byte after every idle gap: frames lose their Start byte, lone
+// pings and acks are lost, and no rx error is ever raised. One rx restart cures it for good.
+// A single frame tail after an ordinary rx teardown also arrives as garbage, so only a run
+// of garbage chunks with nothing valid in between counts.
+static void watchForGarbage(uart_state_t *uartState) {
+    if (uartState->chunkHadValid) {
+        uartState->garbageChunks = 0;
+    } else if (uartState->chunkHadGarbage) {
+        uartState->garbageChunks++;
+    }
+
+    uint32_t currentTime = k_uptime_get();
+    bool restartAllowed = currentTime - uartState->lastRxRestartTime >= UART_GARBAGE_RESTART_INTERVAL_MS;
+    if (uartState->garbageChunks >= UART_GARBAGE_CHUNKS_TO_RESTART && restartAllowed) {
+        uartState->garbageChunks = 0;
+        uartState->lastRxRestartTime = currentTime;
+        stats.rxRestarts++;
+        UartLink_Reset(&uartState->core);
+    }
+}
+
 static void bridgeReceiveBytes(void *state, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
     uartState->lastLinkActivity = k_uptime_get();
+    uartState->chunkHadValid = false;
+    uartState->chunkHadGarbage = false;
     UartParser_ProcessIncomingBytes(&uartState->parser, data, len);
+    watchForGarbage(uartState);
 }
 
 // UART_RX_DISABLED hook (ISR context), fired on every RX teardown - ours and the
@@ -224,6 +259,11 @@ static void logFrameBytes(const uint8_t* data, uint16_t len) {
 static void receiveMessage(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
     uartState->lastLinkActivity = k_uptime_get();
+    if (messageKind == UartControl_Unexpected) {
+        uartState->chunkHadGarbage = true;
+    } else if (messageKind != UartControl_InvalidMessage) {
+        uartState->chunkHadValid = true;
+    }
     switch (messageKind) {
         case UartControl_Ack:
         case UartControl_Ack0:
@@ -672,9 +712,9 @@ void UartBridge_DumpStats(void) {
     LogU("  resends: timeout=%u nack=%u giveUps=%u txSendFail=%u txAborted=%u\n",
         (unsigned)stats.resendTimeout, (unsigned)stats.resendNack, (unsigned)stats.giveUps,
         (unsigned)stats.txSendFail, (unsigned)core->txAbortedCount);
-    LogU("  rx stopped: overrun=%u framing=%u break=%u other=%u disabled=%u\n",
+    LogU("  rx stopped: overrun=%u framing=%u break=%u other=%u disabled=%u garbageRestarts=%u\n",
         (unsigned)core->rxStoppedOverrun, (unsigned)core->rxStoppedFraming, (unsigned)core->rxStoppedBreak,
-        (unsigned)core->rxStoppedOther, (unsigned)core->rxDisabledCount);
+        (unsigned)core->rxStoppedOther, (unsigned)core->rxDisabledCount, (unsigned)stats.rxRestarts);
     dumpLatency("ackLoop (send->ack)", &stats.ackLoop);
     dumpLatency("ackTurn (rx->ack tx)", &stats.ackTurn);
 }
