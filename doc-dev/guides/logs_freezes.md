@@ -16,6 +16,8 @@ Once the keyboard becomes unresponsive, press the configured key. This reboots t
 
 Continue by opening the Agent. A yellow pane with diagnostics should pop up. Copy & paste & send it to us.
 
+![Recovery state dump](../resources/recovery_dump.png)
+
 ## Method 2 - either half, requires working usb stack
 
 Access UHK's logs via Agent's [advanced settings](logs.md).
