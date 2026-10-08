@@ -142,7 +142,7 @@ static void prependEvent(postponer_event_t event)
         && event.type == PostponerEventType_PressKey
         && bufferSize == 0 ? Timer_GetCurrentTime() : lastPressTime;
     bufferSize = bufferSize < POSTPONER_BUFFER_SIZE ? bufferSize + 1 : bufferSize;
-    bufferPosition--;
+    bufferPosition = pos;
 
     if (bufferSize == 1) {
         EventVector_Set(EventVector_Postponer);
