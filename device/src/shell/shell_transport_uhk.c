@@ -7,6 +7,7 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/logging/log_ctrl.h>
 #include <string.h>
 #include "logger.h"
 #include "usb_log_buffer.h"
@@ -209,6 +210,25 @@ static int uartTx(struct uart_transport_data *data, const uint8_t *buf, size_t l
     }
 }
 
+// Printk output is deferred to the logging thread, which writes to the same UART. Let it
+// drain before the shell thread writes, so that the shell's output (especially the prompt
+// and its color escapes) doesn't get mixed into the output of the command that just ran.
+// Bounded, so a stalled logging thread or a log flood can't hang the shell.
+#define LOG_FLUSH_MAX_WAIT_MS 250
+
+static void waitForLogFlush(struct uart_transport_data *data)
+{
+    const struct shell *sh = (const struct shell *)data->context;
+    bool isShellThread = !k_is_in_isr() && sh != NULL && k_current_get() == sh->ctx->tid;
+
+    if (isShellThread && data->uartEnabled && !data->blocking_tx) {
+        for (uint16_t i = 0; i < LOG_FLUSH_MAX_WAIT_MS && log_buffered_cnt() > 0; i++) {
+            log_thread_trigger();
+            k_msleep(1);
+        }
+    }
+}
+
 // --- shell_transport_api implementation ---
 
 static int uartTransportInit(const struct shell_transport *transport,
@@ -273,6 +293,8 @@ static int uartTransportWrite(const struct shell_transport *transport,
 {
     struct uart_transport_data *data = (struct uart_transport_data *)transport->ctx;
     const uint8_t *bytes = (const uint8_t *)buf;
+
+    waitForLogFlush(data);
 
     // Resolve and route to output sinks
     shell_sinks_t sinks = ShellConfig_GetShellSinks();
