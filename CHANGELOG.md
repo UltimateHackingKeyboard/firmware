@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [18.0.4] - 2026-0-09
+
+Device Protocol: 4.20.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.1
+
+Changelog:
+
+- Fix: uart / bridge cable reliability issues present since 17.2.0. on some units.
+- Fix: color corruptions in the zephyr shell.
+- Fix: crashes and a memory corruption caused by activateKeyPostponed prepend command. `SMARTMACROS:PATCH`
+- Add firmware-side support for autodetection of broken peer bonds. `DEVICEPROTOCOL:MINOR`
+
 ## [18.0.3] - 2026-09-17
 
 Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
