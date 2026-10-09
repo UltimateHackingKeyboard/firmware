@@ -12,6 +12,7 @@ extern "C" {
 #include "usb_left_transfer.h"
 #include "usb_scheduler.h"
 #include "usb_semaphore.h"
+#include "usb_report_updater.h"
 #include "usb_state.h"
 }
 #include <zephyr/kernel.h>
@@ -29,7 +30,9 @@ static relay_transfer_ticket_t tickets[RelayKind_Count + 1];
 static struct {
     relay_transfer_ticket_t ticket;
     bool ready, success;
+    hid_keyboard_report_t keyboard;
 } normalCompletions[RelayKind_Count + 1];
+static hid_keyboard_report_t normalKeyboardSnapshot;
 static uint8_t neutralDone, neutralSubmitted, usbNeutralDone, usbNeutralSubmitted;
 static key_report_buffer relayKeyboardBuffer;
 static double_buffer<mouse_app::mouse_report_base<report_ids::IN_MOUSE>> relayMouseBuffer;
@@ -38,7 +41,8 @@ static double_buffer<controls_app::controls_report_base<report_ids::IN_CONTROLS>
 
 static int trackedSend(uint8_t kind, hid::session *session, std::span<const uint8_t> payload,
     uint64_t token = 0, uint32_t sequence = 0, bool relay = false, bool neutral = false,
-    uint32_t route = HostRoute_Generation(), const relay_transfer_ticket_t *reservation = nullptr)
+    uint32_t route = HostRoute_Generation(), const relay_transfer_ticket_t *reservation = nullptr,
+    const hid_keyboard_report_t *keyboard = nullptr)
 {
     if (!session) {
         return -ENOTCONN;
@@ -53,13 +57,17 @@ static int trackedSend(uint8_t kind, hid::session *session, std::span<const uint
         k_spin_unlock(&ticketLock, key);
         return -ECANCELED;
     }
-    if (tickets[kind].pending && !reservation) {
+    if ((tickets[kind].pending && !reservation) ||
+        (kind == RelayKind_Keyboard && normalCompletions[kind].ready)) {
         k_spin_unlock(&ticketLock, key);
         return -EBUSY;
     }
     tickets[kind] = {session, payload.data(), payload.size(), token, sequence,
         uint32_t(atomic_get(&localUsbGeneration)), true, false, relay, neutral,
         session->channel() == hid::channel::USB, false, false, false, route};
+    if (keyboard) {
+        normalKeyboardSnapshot = *keyboard;
+    }
     k_spin_unlock(&ticketLock, key);
     int result = session->send_report(payload).to_int();
     if (result) {
@@ -91,7 +99,7 @@ extern "C" void Hid_LocalUsbComplete(
         }
     }
     if (!ticket.relay && !ticket.neutral) {
-        normalCompletions[kind] = {ticket, true, success};
+        normalCompletions[kind] = {ticket, true, success, normalKeyboardSnapshot};
     }
     k_spin_unlock(&ticketLock, key);
     if (ticket.relay) {
@@ -122,8 +130,16 @@ extern "C" void Hid_LocalUsbDrainCompletions(void)
         }
         report_send_state_t *states[] = {
             &UsbSemaphore.keyboard, &UsbSemaphore.mouse, &UsbSemaphore.controls};
-        if (states[kind - 1]->inFlight) {
-            UsbSemaphore_Release(states[kind - 1]);
+        if (kind == RelayKind_Keyboard || states[kind - 1]->inFlight) {
+            if (kind == RelayKind_Keyboard) {
+                /* The active report may have been rebuilt after a timeout.
+                 * Record what actually reached the host, including late ACKs,
+                 * without turning the mutable desired state into the baseline. */
+                *GetInactiveKeyboardReport() = completion.keyboard;
+                UsbSemaphore_Confirm(states[kind - 1]);
+            } else {
+                UsbSemaphore_Release(states[kind - 1]);
+            }
             UsbScheduler_ReportDelivered(ticket.usb ? ReportSink_Usb : ReportSink_BleHid);
             if (ticket.usb) {
                 UsbState_Delivered();
@@ -304,10 +320,12 @@ static void failedQueuedUsb(uint8_t kind, const relay_transfer_ticket_t &ticket)
     EventVector_WakeMain();
 }
 static int queueUsb(uint8_t kind, const uint8_t *data, size_t size, uint32_t generation,
-    uint64_t token, uint32_t sequence, bool relay, bool neutral, bool canonical)
+    uint64_t token, uint32_t sequence, bool relay, bool neutral, bool canonical,
+    const hid_keyboard_report_t *keyboard = nullptr)
 {
     auto key = k_spin_lock(&ticketLock);
-    if (tickets[kind].pending || atomic_get(&localUsbFence) ||
+    if (tickets[kind].pending || (kind == RelayKind_Keyboard && normalCompletions[kind].ready) ||
+        atomic_get(&localUsbFence) ||
         generation != uint32_t(atomic_get(&localUsbGeneration))) {
         k_spin_unlock(&ticketLock, key);
         return -EBUSY;
@@ -318,6 +336,9 @@ static int queueUsb(uint8_t kind, const uint8_t *data, size_t size, uint32_t gen
     }
     tickets[kind] = {nullptr, data, size, token, sequence, generation, true, false, relay, neutral,
         true, false, true, canonical, HostRoute_Generation()};
+    if (keyboard) {
+        normalKeyboardSnapshot = *keyboard;
+    }
     k_spin_unlock(&ticketLock, key);
     if (!Hid_LocalUsbQueueSend(kind)) {
         key = k_spin_lock(&ticketLock);
@@ -502,7 +523,7 @@ extern "C" bool Hid_NeutralizeCurrentHost(void)
 bool UsbLeft_KeyboardPending()
 {
     auto key = k_spin_lock(&ticketLock);
-    bool pending = tickets[RelayKind_Keyboard].pending;
+    bool pending = tickets[RelayKind_Keyboard].pending || normalCompletions[RelayKind_Keyboard].ready;
     k_spin_unlock(&ticketLock, key);
     return pending;
 }
@@ -520,11 +541,13 @@ bool UsbLeft_QuiesceKeyboardProtocol()
     }
     return pending;
 }
-int UsbLeft_TrackedSend(uint8_t kind, hid::session *session, std::span<const uint8_t> data)
+int UsbLeft_TrackedSend(uint8_t kind, hid::session *session, std::span<const uint8_t> data,
+    const hid_keyboard_report_t *keyboard)
 {
-    return trackedSend(kind, session, data);
+    return trackedSend(kind, session, data, 0, 0, false, false, HostRoute_Generation(), nullptr, keyboard);
 }
-int UsbLeft_QueueUsb(uint8_t kind, std::span<const uint8_t> data, uint32_t generation)
+int UsbLeft_QueueUsb(uint8_t kind, std::span<const uint8_t> data, uint32_t generation,
+    const hid_keyboard_report_t *keyboard)
 {
-    return queueUsb(kind, data.data(), data.size(), generation, 0, 0, false, false, false);
+    return queueUsb(kind, data.data(), data.size(), generation, 0, 0, false, false, false, keyboard);
 }

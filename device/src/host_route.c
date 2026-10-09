@@ -12,6 +12,7 @@
 static uint8_t target, phase;
 static uint32_t started;
 static bool explicitSelection, wasActive, configWaiting, configReady, deferredUsbNeutral;
+static bool deferredUsbNeutralDrained;
 static uint32_t oldLeftSlots;
 static _Atomic uint32_t routeGeneration;
 static bool isLeft(uint8_t host)
@@ -42,10 +43,15 @@ bool HostRoute_Request(uint8_t host, bool explicitPick)
 }
 void HostRoute_Process(void)
 {
-    if (!phase && deferredUsbNeutral && Hid_NeutralizeLocalUsb()) {
-        deferredUsbNeutral = false;
-        if (Connections_Type(CurrentHostConnectionId) == ConnectionType_UsbHidRight) {
-            UsbReportUpdater_ResetHostInput(true);
+    if (!phase && deferredUsbNeutral) {
+        if (!deferredUsbNeutralDrained) {
+            deferredUsbNeutralDrained = Hid_LocalUsbQuiesce();
+        }
+        if (deferredUsbNeutralDrained && Hid_NeutralizeLocalUsb()) {
+            deferredUsbNeutral = deferredUsbNeutralDrained = false;
+            if (Connections_Type(CurrentHostConnectionId) == ConnectionType_UsbHidRight) {
+                UsbReportUpdater_ResetHostInput(true);
+            }
         }
     }
     bool active = UsbLeft_Active();
@@ -65,6 +71,7 @@ void HostRoute_Process(void)
                 UsbState_HostIsSuspended) {
                 deferredUsbNeutral =
                     true; // Quiescence was proven in phase 1; only neutral output may follow.
+                deferredUsbNeutralDrained = true;
             } else {
                 return;
             }
@@ -94,6 +101,24 @@ void HostRoute_Process(void)
         UsbLeft_Select(true);
     }
 }
+void HostRoute_LocalUsbChanged(void)
+{
+    if (Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
+        return;
+    }
+    /* Clearing the canonical baseline cannot release keys already held by the
+     * host. After reconnect/SET_PROTOCOL, prove old transfers drained and send
+     * all-up before accepting fresh input on this USB session. */
+    if (UsbState_TransportUp && !UsbState_HostIsSuspended) {
+        deferredUsbNeutral = true;
+        deferredUsbNeutralDrained = false;
+        if (!phase) {
+            started = Timer_GetCurrentTime();
+        }
+    }
+    UsbReportUpdater_ResetHostInput(true);
+    EventVector_WakeMain();
+}
 bool HostRoute_Blocked(void)
 {
     return phase || (isLeft(CurrentHostConnectionId) && !UsbLeft_Active()) ||
@@ -114,7 +139,9 @@ uint8_t HostRoute_Target(void)
 }
 bool HostRoute_Transitioning(void)
 {
-    return phase && (uint32_t)(Timer_GetCurrentTime() - started) < 100;
+    bool localUsbBarrier = deferredUsbNeutral &&
+                           Connections_Type(CurrentHostConnectionId) == ConnectionType_UsbHidRight;
+    return (phase || localUsbBarrier) && (uint32_t)(Timer_GetCurrentTime() - started) < 100;
 }
 uint32_t HostRoute_Generation(void)
 {
@@ -187,6 +214,7 @@ bool HostRoute_Request(uint8_t host, bool explicitPick)
     return false;
 }
 void HostRoute_Process(void) {}
+void HostRoute_LocalUsbChanged(void) {}
 bool HostRoute_Blocked(void)
 {
     return false;

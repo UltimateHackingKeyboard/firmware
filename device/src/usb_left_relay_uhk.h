@@ -52,6 +52,7 @@ bool Hid_LocalUsbWakeAllowed(void);
 /* Coordinator APIs are implemented in host_route.c on the master. */
 bool HostRoute_Request(uint8_t host, bool explicitSelection);
 void HostRoute_Process(void);
+void HostRoute_LocalUsbChanged(void);
 bool HostRoute_Blocked(void);
 bool HostRoute_DiscardInput(void);
 bool HostRoute_Transitioning(void);

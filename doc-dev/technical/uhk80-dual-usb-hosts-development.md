@@ -11,10 +11,69 @@ enable it on both halves and enable a temporary host slot on the right. Standard
 presets retain the existing feature selection. No Agent, descriptor, VID/PID,
 configuration-version or bootloader change is included.
 
-**Hardware validation is pending.** Cloud checks compile the actual firmware
+**Hardware acceptance is pending.** Cloud checks compile the actual firmware
 and exercise the portable protocol and route coordinator; they cannot establish
 USB cancellation timing, wakeup behavior, runtime stack headroom or two-computer
-operation. No keyboard was flashed during this implementation.
+operation. The original cloud implementation did not flash a keyboard.
+
+Initial local Windows testing on 2026-10-09 flashed both halves, established
+UART relay negotiation, and exposed blocked switching and repeated keys. The
+completion boundary had reported the Nordic driver's consumed IN buffer
+(`data` advanced, `len` zero) as the sent report. This made successful delivery
+look like failure to the relay adapter. The repository's second c2usb patch
+preserves the submitted IN buffer and length; OUT callbacks retain received
+lengths, and errors/cancellations still report zero transferred bytes. The
+SDK-backed completion regression fails before that patch and passes after it.
+Fresh firmware builds and signed-image verification pass with the patch. Both
+corrected applications were flashed, and a control-path check activated left
+USB and returned to right USB without leaving the route blocked. Relay
+rejection/lease counters increased during that check; physical key-release
+testing and the complete hardware acceptance matrix remain pending.
+
+The user reported improved typing through right USB after that correction.
+Left USB still expired its idle lease. Its poll event was popped after the main
+loop's next-poll request had been ignored by the scheduler's earlier-deadline
+rule, leaving no relay wakeup queued. The relay poll event handler now rearms
+the next poll. An integration regression using that actual handler reproduces
+lease expiry before the fix and maintains an idle session for five lease periods
+after it. The completion, relay and coordinator tests and both signed builds
+pass with both corrections. On hardware, corrected left USB stayed active for
+20 seconds without vendor commands, with zero faults, retries or rejected
+packets. The user reported that typing seemed to work through left USB, and
+returning to right USB completed without faults. Two-computer input isolation,
+held-key switching and the complete acceptance matrix remain pending.
+
+A subsequent direct USB-C test on the right half produced repeating after
+physical release; resetting that half made the same Mac/cable connection work.
+The post-reset capture does not retain the failed transfer state. Code review
+and an integration regression identified that a local USB-generation change
+cleared the report baseline without requiring host-side all-up delivery. The
+coordinator now holds input behind a drain and all-up completion barrier for an
+awake, selected right USB session. The regression fails before this change and
+passes after it. This correction is a candidate for the reported reconnect issue;
+that Mac hot-plug scenario still needs a hardware retest.
+
+A later Windows failure was captured before resetting: the physical/logical
+keys were released, but the last completed right USB keyboard report still
+asserted Backspace while both canonical comparison buffers were empty. A
+filtered Windows Raw Input capture attributed down events without release to
+the right USB interface. Successful normal keyboard completions could be
+discarded after the semaphore timed out, or advance the baseline using a
+working report already rebuilt after release. Normal USB/BLE submissions now
+retain an immutable canonical keyboard snapshot; completion records that
+delivered state even after timeout, leaving key-up distinct and requiring
+delivery. An undrained keyboard completion prevents a new submission from
+replacing its snapshot. Cancelled and stale route/session completions remain
+excluded. The actual adapter queue/completion regression fails before this
+correction and passes after it.
+
+Both experimental release builds and signed-image checks passed. The corrected
+right application was flashed, and the user confirmed key release from both
+halves, including Backspace, after flashing and after a cable-only Windows USB
+reconnect without reset. The existing next-connection key also successfully
+selected the ready left USB host. These checks establish those scenarios;
+direct Mac USB-C reconnect behavior, held-key switching and the remaining
+acceptance matrix still need coverage.
 
 ## Behavior and limits
 
@@ -214,12 +273,15 @@ Run the host tests under WSL:
 
 ```bash
 bash tests/usb_left_relay/run.sh
+bash tests/usb_left_relay/run_c2usb_completion.sh
+bash tests/usb_left_relay/run_relay_poll.sh
+bash tests/usb_left_relay/run_normal_keyboard_completion.sh
 ```
 
 See [test coverage and boundaries](../../tests/usb_left_relay/README.md).
 Release and debug experimental builds for both halves, standard release builds
 for both halves and the dongle, and signed-image verification were exercised
-in the cloud. Final experimental linker sizes are:
+in the cloud. Cloud linker sizes before the local corrections were:
 
 | Target | Flash / 900,608 bytes | RAM / 262,143 bytes |
 | --- | --- | --- |

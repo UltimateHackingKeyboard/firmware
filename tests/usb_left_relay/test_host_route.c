@@ -39,11 +39,12 @@ struct {
     uint8_t peerId, state;
 } Connections[HOST_CONNECTION_COUNT_MAX + 1];
 uint8_t CurrentHostConnectionId;
-bool UsbState_HostIsSuspended;
+bool UsbState_HostIsSuspended, UsbState_TransportUp;
 static bool available, awake, active, quiescent, drained, neutral, usbNeutral, wanted;
 static bool physicalHeld[2];
 static uint8_t held[1];
 static uint32_t clockMs, commits, resets;
+static uint32_t usbGeneration, observedLocalUsbGeneration, quiesceCalls, usbNeutralCalls;
 static uint8_t lastCommitted;
 static bool lastExplicit;
 uint8_t Connections_Type(uint8_t host)
@@ -94,6 +95,7 @@ void UsbLeft_Select(bool selected)
 }
 bool Hid_LocalUsbQuiesce(void)
 {
+    ++quiesceCalls;
     return drained;
 }
 bool Hid_NeutralizeCurrentHost(void)
@@ -103,7 +105,12 @@ bool Hid_NeutralizeCurrentHost(void)
 }
 bool Hid_NeutralizeLocalUsb(void)
 {
+    ++usbNeutralCalls;
     return usbNeutral;
+}
+uint32_t Hid_LocalUsbGeneration(void)
+{
+    return usbGeneration;
 }
 void Hid_BeginNeutralization(void) {}
 void UsbReportUpdater_ResetHostInput(bool suppressHeld)
@@ -116,6 +123,11 @@ void UsbReportUpdater_ResetHostInput(bool suppressHeld)
 
 #include "../../device/src/host_route.c"
 
+static void observeUsbGeneration(void)
+{
+#include "usb_generation_under_test.inc"
+}
+
 static void resetPlatform(void)
 {
     memset(HostConnections, 0, sizeof(HostConnections));
@@ -125,14 +137,51 @@ static void resetPlatform(void)
     CurrentHostConnectionId = 1;
     available = awake = quiescent = drained = neutral = usbNeutral = true;
     active = wanted = UsbState_HostIsSuspended = false;
+    UsbState_TransportUp = true;
     memset(held, 0, sizeof(held));
     memset(physicalHeld, 0, sizeof(physicalHeld));
     clockMs = commits = resets = 0;
     target = phase = 0;
     started = 0;
     explicitSelection = wasActive = configWaiting = configReady = deferredUsbNeutral = false;
+    deferredUsbNeutralDrained = false;
     oldLeftSlots = 0;
     routeGeneration = 0;
+    usbGeneration = observedLocalUsbGeneration = quiesceCalls = usbNeutralCalls = 0;
+}
+static void usbReconnectMustDeliverAllUp(void)
+{
+    resetPlatform();
+    physicalHeld[0] = true;
+    drained = usbNeutral = false;
+    usbGeneration = 4;
+    observeUsbGeneration();
+    assert(resets == 1 && HostRoute_Blocked() && HostRoute_Transitioning());
+    assert(HostInputGate_Suppressed(held, 0, false));
+    clockMs = 10000;
+    HostRoute_Process();
+    assert(HostRoute_Blocked() && !HostRoute_Transitioning() && usbNeutralCalls == 0);
+    drained = true;
+    HostRoute_Process();
+    assert(HostRoute_Blocked() && usbNeutralCalls == 1);
+    uint32_t provenDrainCalls = quiesceCalls;
+    HostRoute_Process();
+    assert(HostRoute_Blocked() && quiesceCalls == provenDrainCalls);
+    usbNeutral = true;
+    HostRoute_Process();
+    assert(!HostRoute_Blocked() && CurrentHostConnectionId == 1 && commits == 0);
+    assert(!HostInputGate_Suppressed(held, 0, true));
+    uint32_t completedResets = resets;
+    observeUsbGeneration();
+    assert(resets == completedResets && !HostRoute_Blocked());
+
+    // Reconfiguring the unused local port must not discard input routed left.
+    resetPlatform();
+    CurrentHostConnectionId = 2;
+    active = true;
+    usbGeneration = 4;
+    observeUsbGeneration();
+    assert(resets == 0 && !HostRoute_Blocked());
 }
 static void healthySwitchAndHeldKeys(void)
 {
@@ -256,5 +305,6 @@ int main(void)
     latestRequestWinsAndFailedDrain();
     sleepingOldUsbKeepsNeutralDebt();
     configReplacementIsBarrier();
+    usbReconnectMustDeliverAllUp();
     puts("host route tests passed");
 }

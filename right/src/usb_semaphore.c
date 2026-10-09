@@ -54,11 +54,15 @@ void UsbSemaphore_Clear(void) {
 }
 
 void UsbSemaphore_Release(report_send_state_t* st) {
+    st->switchActiveReport();
+    UsbSemaphore_Confirm(st);
+}
+
+void UsbSemaphore_Confirm(report_send_state_t* st) {
     if (st == &UsbSemaphore.keyboard) {
         DEBUG_KEY_LIFE(delivered);
     }
 
-    st->switchActiveReport();
     st->retries = 0;
     st->inFlight = false;
     UsbReportSender_GivenUp = false;

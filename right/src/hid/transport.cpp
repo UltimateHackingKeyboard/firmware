@@ -272,7 +272,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
             wakeUsbHostIfNeeded();
 
 #ifdef CONFIG_UHK_USB_LEFT_RELAY
-            err = UsbLeft_QueueUsb(RelayKind_Keyboard, payload, generation);
+            err = UsbLeft_QueueUsb(RelayKind_Keyboard, payload, generation, report);
 #else
             err = session->send_report(payload).to_int();
 #endif
@@ -287,7 +287,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
         }
 
     #ifdef CONFIG_UHK_USB_LEFT_RELAY
-        err = UsbLeft_TrackedSend(RelayKind_Keyboard, session, payload);
+        err = UsbLeft_TrackedSend(RelayKind_Keyboard, session, payload, report);
     #else
         err = session->send_report(payload).to_int();
     #endif
@@ -299,7 +299,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
             payload = keyboard_buffer.insert(*report);
 
     #ifdef CONFIG_UHK_USB_LEFT_RELAY
-            err = UsbLeft_TrackedSend(RelayKind_Keyboard, session, payload);
+            err = UsbLeft_TrackedSend(RelayKind_Keyboard, session, payload, report);
     #else
             err = session->send_report(payload).to_int();
     #endif

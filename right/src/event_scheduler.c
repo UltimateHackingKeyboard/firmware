@@ -253,6 +253,12 @@ static void processEvt(event_scheduler_event_t evt)
             OneShot_OnTimeout();
             break;
         case EventSchedulerEvent_UsbLeftRelay:
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+            // UsbLeft_Process ran before this due event was popped. Schedule
+            // keeps the earlier deadline, so its next-poll request could not
+            // replace this event. Re-arm here to keep idle leases serviced.
+            EventScheduler_Schedule(Timer_GetCurrentTime()+5, EventSchedulerEvent_UsbLeftRelay, "USB left relay");
+#endif
             break; // The main loop advances the relay after processing Messenger.
         case EventSchedulerEvent_KickHid:
 #if DEVICE_IS_UHK80_RIGHT

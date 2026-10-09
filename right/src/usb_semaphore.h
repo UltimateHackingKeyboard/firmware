@@ -57,6 +57,8 @@
     // just-sent report and reset the resend state. Note this means "sent", not "delivered":
     // for USB/BLE the actual delivery confirmation is a separate, later event.
     void UsbSemaphore_Release(report_send_state_t* st);
+    // Confirm delivery when the caller has recorded an immutable delivered baseline.
+    void UsbSemaphore_Confirm(report_send_state_t* st);
 
     // Recompute the in-flight gate: returns false while a report is in flight within its
     // confirmation grace window (caller should not send), and re-arms resends for any report

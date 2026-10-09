@@ -205,7 +205,7 @@ void UsbLeft_Process(void)
     if (localGeneration != observedLocalUsbGeneration) {
         observedLocalUsbGeneration = localGeneration;
         if (Connections_Type(CurrentHostConnectionId) == ConnectionType_UsbHidRight) {
-            UsbReportUpdater_ResetHostInput(true);
+            HostRoute_LocalUsbChanged();
         }
     }
     uint8_t control = atomic_set(&controlRequest, 0);

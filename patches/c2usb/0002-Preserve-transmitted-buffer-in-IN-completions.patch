@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: UHK SDK Setup <setup@localhost>
+Date: Fri, 9 Oct 2026 15:00:00 -0600
+Subject: [PATCH] Preserve transmitted buffer identity in IN completions
+
+The Nordic UDC pulls transmitted bytes from an IN net_buf. At successful
+completion its data pointer is at the end and len is zero. Report the original
+external buffer and submitted size for IN transfers so HID callbacks can
+distinguish successful delivery from cancellation. OUT transfers still use
+their received length; transfer errors still produce zero transferred bytes.
+
+diff --git a/c2usb/port/zephyr/udc_mac.cpp b/c2usb/port/zephyr/udc_mac.cpp
+--- a/c2usb/port/zephyr/udc_mac.cpp
++++ b/c2usb/port/zephyr/udc_mac.cpp
+@@ -805,8 +805,14 @@ void udc_mac::process_ep_event(net_buf* buf)
+         {
+             if (ep_bufs_[i] == buf)
+             {
++                // IN drivers may consume data/len as packets are transmitted.
++                // __buf/size retain the submitted external buffer, including
++                // after partial transmission or cancellation. OUT len is the
++                // number of bytes actually received, not buffer capacity.
++                auto* data = addr.direction() == direction::IN ? buf->__buf : buf->data;
++                auto size = addr.direction() == direction::IN ? buf->size : buf->len;
+                 return ep_transfer_complete(
+-                    addr, transfer(buf->data, buf->len, info.err == 0, create_ep_handle(i + 1)));
++                    addr, transfer(data, size, info.err == 0, create_ep_handle(i + 1)));
+             }
+         }
+         assert(ep_bufs_.size() == 0); // a net_buf was issued out of c2usb scope
