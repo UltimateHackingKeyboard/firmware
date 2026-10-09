@@ -41,6 +41,7 @@
 
     bool DetectJumps(int16_t x, int16_t y, const char* site);
     void MouseController_ProcessMouseActions();
+    void MouseController_ResetHostInput(void);
     void MouseController_RunTests();
 
 #endif

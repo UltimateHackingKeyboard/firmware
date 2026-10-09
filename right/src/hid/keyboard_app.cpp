@@ -1,4 +1,9 @@
 #include "keyboard_app.hpp"
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+extern "C" {
+#include "usb_left_relay_uhk.h"
+}
+#endif
 extern "C" {
 #include "hid/transport.h"
 #include "usb_state.h"
@@ -21,8 +26,11 @@ void keyboard_app::set_rollover(rollover_t mode)
 hid::session &keyboard_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
-    UsbState_SetUsbTransportUp(true);
     auto &session = session_.emplace(params);
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    Hid_LocalUsbSessionChanged();
+#endif
+    UsbState_SetUsbTransportUp(true);
     // has to run after the session is in place - the protocol is read off it
 #ifdef __ZEPHYR__
     if (Connections_IsCurrentHost(ConnectionId_UsbHidRight)) {
@@ -129,7 +137,7 @@ void keyboard_session::set_report(hid::report::type type, const std::span<const 
 
 void keyboard_session::report_sent(const std::span<const uint8_t> &data)
 {
-    keyboard_report_sent_callback(*this);
+    keyboard_report_sent_callback(*this,data);
 }
 
 std::span<const uint8_t> keyboard_session::get_report(

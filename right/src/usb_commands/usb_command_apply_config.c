@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include <string.h>
 #include "ledmap.h"
 #include "usb_commands/usb_command_apply_config.h"
@@ -103,6 +106,12 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 }
 static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericHidInBuffer)
 {
+#if defined(CONFIG_UHK_USB_LEFT_RELAY) && DEVICE_IS_UHK80_RIGHT
+    if (!HostRoute_PrepareConfig()) {
+        EventVector_Set(EventVector_ApplyConfig);
+        return UsbStatusCode_Success; // Deferred on the main loop, keeping the old table alive.
+    }
+#endif
     EventVector_Unset(EventVector_ApplyConfig);
     static bool isBoot = true;
     bool calledFromUsb = GenericHidOutBuffer != NULL;

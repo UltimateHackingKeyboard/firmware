@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include <stdint.h>
 #include <stdbool.h>
 #include "usb_report_sender.h"
@@ -303,6 +306,14 @@ static bool blockedByReportThrottle() {
 // All paths have to call either UsbReportUpdater_UpdateActiveReports or justPreprocessInput(true).
 void UsbReportSender_UpdateAndSendUsbReports(void)
 {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    if (HostRoute_DiscardInput()) {
+        UsbReportUpdater_UpdateActiveReports(); // Scans, releases and connection actions still run.
+        UsbReportUpdater_ResetHostInput(false);
+        clearMouseMovement();
+        return;
+    }
+#endif
     Trace_Printc("u1");
     if (blockedByReportThrottle()) {
         justPreprocessInput(true);

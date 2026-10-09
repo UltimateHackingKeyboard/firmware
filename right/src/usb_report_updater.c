@@ -1,3 +1,8 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#include "host_input_gate.h"
+#include "usb_semaphore.h"
+#endif
 #include <math.h>
 #include <errno.h>
 #include "atomicity.h"
@@ -116,6 +121,52 @@ hid_mouse_report_t mouseReports[2];
 hid_keyboard_report_t * ActiveKeyboardReport = &keyboardReports[0];
 hid_controls_report_t * ActiveControlsReport = &controlsReports[0];
 hid_mouse_report_t * ActiveMouseReport = &mouseReports[0];
+
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+extern uint8_t StickyModifiers, StickyModifiersNegative;
+static uint8_t suppressedSources[(SLOT_COUNT*MAX_KEY_COUNT_PER_MODULE+7)/8];
+void UsbReportUpdater_ResetHostInput(bool suppressHeld) {
+    if (suppressHeld) {
+        for (uint8_t slot=0;slot<SLOT_COUNT;++slot) {
+            for (uint8_t key=0;key<MAX_KEY_COUNT_PER_MODULE;++key) {
+                key_state_t *state=&KeyStates[slot][key];
+                postponer_buffer_record_type_t *press=NULL,*release=NULL;
+                PostponerQuery_InfoByKeystate(state,&press,&release);
+                HostInputGate_Capture(suppressedSources,slot*MAX_KEY_COUNT_PER_MODULE+key,
+                    state->hardwareSwitchState || state->current || state->previous || press);
+            }
+        }
+    }
+    memset(keyboardReports,0,sizeof(keyboardReports));
+    memset(controlsReports,0,sizeof(controlsReports));
+    memset(mouseReports,0,sizeof(mouseReports));
+    UsbReportUpdater_ResetKeyboardReports(&NativeKeyboardReports);
+    UsbReportUpdater_ResetKeyboardReports(&MouseControllerKeyboardReports);
+    memset(&MouseControllerMouseReport,0,sizeof(MouseControllerMouseReport));
+    memset(&MouseKeysMouseReport,0,sizeof(MouseKeysMouseReport));
+    memset(ActiveMouseStates,0,sizeof(ActiveMouseStates));
+    memset(ToggledMouseStates,0,sizeof(ToggledMouseStates));
+    MouseController_ResetHostInput();
+    Cfg.MouseMoveState.xOut=Cfg.MouseMoveState.yOut=0;
+    Cfg.MouseScrollState.xOut=Cfg.MouseScrollState.yOut=0;
+    Cfg.MouseMoveState.xSum=Cfg.MouseMoveState.ySum=Cfg.MouseMoveState.currentSpeed=0;
+    Cfg.MouseScrollState.xSum=Cfg.MouseScrollState.ySum=Cfg.MouseScrollState.currentSpeed=0;
+    memset(&Macros_PersistentReports,0,sizeof(Macros_PersistentReports));
+    for (uint8_t i=0;i<MACRO_STATE_POOL_SIZE;++i) { memset(&MacroState[i].ms.reports,0,sizeof(MacroState[i].ms.reports)); }
+    InputModifiers=InputModifiersPrevious=OutputModifiers=StickyModifiers=StickyModifiersNegative=0;
+    Postponer_LastKeyMods=0;
+    UsbSemaphore_Clear();
+    UsbSemaphore.keyboard.needsResending=UsbSemaphore.mouse.needsResending=UsbSemaphore.controls.needsResending=false;
+    EventVector_Unset(EventVector_SendUsbReports|EventVector_ResendUsbReports);
+    if (suppressHeld) { EventVector_Set(EventVector_NativeActions); }
+}
+static bool suppressedSource(key_state_t *state) {
+    uintptr_t address=(uintptr_t)state, start=(uintptr_t)&KeyStates[0][0];
+    if (address<start || address>=start+sizeof(KeyStates)) { return false; }
+    size_t index=(address-start)/sizeof(key_state_t);
+    return HostInputGate_Suppressed(suppressedSources,index,!state->hardwareSwitchState && !state->current);
+}
+#endif
 
 static void resetActiveReports() {
     memset(ActiveMouseReport, 0, sizeof *ActiveMouseReport);
@@ -316,10 +367,14 @@ void ActivateStickyMods(key_state_t *keyState, uint8_t mods)
 
 static void applyKeystrokePrimary(key_state_t *keyState, key_action_cached_t *cachedAction, usb_keyboard_reports_t* reports)
 {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    if (suppressedSource(keyState)) { return; }
+#endif
     EventVector_Set(EventVector_SendUsbReports);
 
     if (KeyState_Active(keyState)) {
         key_action_t* action = &cachedAction->action;
+
         bool stickyModifiersChanged = false;
         if (action->keystroke.scancode) {
             // On keydown, reset old sticky modifiers and set new ones
@@ -380,6 +435,9 @@ static void applyKeystrokeSecondary(key_state_t *keyState, key_action_t *action,
             EventVector_Set(EventVector_LayerHolds);
         }
     } else if (IS_SECONDARY_ROLE_MODIFIER(secondaryRole)) {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+        if (suppressedSource(keyState)) { return; }
+#endif
         if (KeyState_Active(keyState)) {
             reports->inputModifiers |= SECONDARY_ROLE_MODIFIER_TO_HID_MODIFIER(secondaryRole);
             EventVector_Set(EventVector_SendUsbReports | reports->reportsUsedVectorMask);
@@ -499,6 +557,10 @@ void ApplyKeyAction(key_state_t *keyState, key_action_cached_t *cachedAction, ke
 {
     key_action_t* action = &cachedAction->action;
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    if (suppressedSource(keyState) && (action->type==KeyActionType_Mouse ||
+        action->type==KeyActionType_PlayMacro || action->type==KeyActionType_InlineMacro)) { return; }
+#endif
     switch (action->type) {
         case KeyActionType_Keystroke:
             if (KeyState_NonZero(keyState)) {

@@ -252,6 +252,8 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
             break;
+        case EventSchedulerEvent_UsbLeftRelay:
+            break; // The main loop advances the relay after processing Messenger.
         case EventSchedulerEvent_KickHid:
 #if DEVICE_IS_UHK80_RIGHT
             BtConn_KickHid();

@@ -25,6 +25,7 @@
         MessageId_RoundTripTest = 5,
         MessageId_ResendRequest = 6,
         MessageId_Command = 7,
+        MessageId_UsbLeftRelay = 8,
     } message_id_t;
 
     typedef enum {

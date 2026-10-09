@@ -13,6 +13,8 @@
     typedef struct {
         __attribute__((aligned)) void *fifo_reserved;   /* 1st word reserved for use by FIFO */
         uint16_t len;
+        uint8_t connection;
+        uint32_t generation;
         device_id_t src;
         uint8_t offset;
         const uint8_t* data;
@@ -29,7 +31,7 @@
     uint8_t* MessengerQueue_AllocateMemory();
     void MessengerQueue_FreeMemory(const uint8_t* segment);
 
-    void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset);
+    void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset, uint8_t connection, uint32_t generation);
     messenger_queue_record_t MessengerQueue_Take();
 
     uint8_t MessengerQueue_GetOccupiedCount();

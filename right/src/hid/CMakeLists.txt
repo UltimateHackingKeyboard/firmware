@@ -16,3 +16,7 @@ if(CONFIG_C2USB_HOGP)
         transport_ble.cpp
     )
 endif()
+
+if(CONFIG_UHK_USB_LEFT_RELAY)
+    target_sources(${PROJECT_NAME} PRIVATE usb_left_adapter.cpp)
+endif()

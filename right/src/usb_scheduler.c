@@ -28,6 +28,8 @@ static uint32_t dispatchTimeMs = 0;
 static uint32_t reportIntervalForSink(report_sink_t sink)
 {
     switch (sink) {
+    case ReportSink_UsbLeft:
+        return 8; // UART framing, USB polling and DONE return path.
     case ReportSink_Usb:
         return USB_REPORT_INTERVAL_MS;
     case ReportSink_BleHid:

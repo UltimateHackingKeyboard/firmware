@@ -97,4 +97,4 @@ class controls_app : public hid::application {
     std::optional<controls_session> session_{};
 };
 
-void controls_report_sent_callback(hid::session &session);
+void controls_report_sent_callback(hid::session &session, std::span<const uint8_t> data);

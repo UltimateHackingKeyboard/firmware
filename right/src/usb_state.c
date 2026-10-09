@@ -28,7 +28,7 @@ static void recalculateConnectionState(void) {
     bool hostAwake = !UsbState_HostIsSuspended;
     StateSync_UpdateProperty(StateSyncPropertyId_DongleHostAwake, &hostAwake);
 #elif defined(__ZEPHYR__)
-    Connections_SetStateAsync(ConnectionId_UsbHidRight, UsbState_TransportUp ? ConnectionState_Ready : ConnectionState_Disconnected);
+    Connections_SetStateAsync(DEVICE_IS_UHK80_LEFT ? ConnectionId_UsbHidLeft : ConnectionId_UsbHidRight, UsbState_TransportUp ? ConnectionState_Ready : ConnectionState_Disconnected);
     EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_PowerModeUpdate, "no host short wakeup");
     WIDGET_REFRESH(&TargetWidget);
 #else

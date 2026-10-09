@@ -2020,7 +2020,11 @@ static macro_result_t processSwitchHostCommand(parser_context_t* ctx)
 
 #undef DRY_RUN_FINISH
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    return MacroResult_Finished | MacroResult_YieldFlag;
+#else
     return MacroResult_Finished;
+#endif
 }
 
 static macro_result_t processZephyrCommand(parser_context_t* ctx) {

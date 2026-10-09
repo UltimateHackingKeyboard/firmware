@@ -70,6 +70,38 @@
             "cacheVariables": {
                 "CONF_FILE": "${fileDir}/prj.conf"
             }
+        },
+        {
+            "name": "uhk-80-right-usb-left",
+            "displayName": "Experimental USB left relay (right)",
+            "inherits": "uhk-80-right",
+            "cacheVariables": {
+                "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/uhk-80.conf;${fileDir}/prj.conf.overlays/ble_nus.conf;${fileDir}/prj.conf.overlays/ble_nus_client.conf;${fileDir}/prj.conf.overlays/ble_hid.conf;${fileDir}/prj.conf.overlays/uhk-80-right.conf;${fileDir}/prj.conf.overlays/usb-left-relay.conf;${fileDir}/prj.conf.overlays/usb-left-dev-slot.conf"
+            }
+        },
+        {
+            "name": "uhk-80-left-usb-left",
+            "displayName": "Experimental USB left relay (left)",
+            "inherits": "uhk-80-left",
+            "cacheVariables": {
+                "EXTRA_CONF_FILE": "${fileDir}/prj.conf.overlays/nrf_shared.conf;${fileDir}/prj.conf.overlays/c2usb.conf;${fileDir}/prj.conf.overlays/uhk-80.conf;${fileDir}/prj.conf.overlays/ble_nus.conf;${fileDir}/prj.conf.overlays/usb-left-relay.conf"
+            }
+        },
+        {
+            "name": "uhk-80-right-usb-left-debug",
+            "displayName": "Experimental USB left relay debug (right)",
+            "inherits": "uhk-80-right-usb-left",
+            "cacheVariables": {
+                "CONF_FILE": "${fileDir}/prj.conf"
+            }
+        },
+        {
+            "name": "uhk-80-left-usb-left-debug",
+            "displayName": "Experimental USB left relay debug (left)",
+            "inherits": "uhk-80-left-usb-left",
+            "cacheVariables": {
+                "CONF_FILE": "${fileDir}/prj.conf"
+            }
         }
     ]
 }

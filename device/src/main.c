@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include "main.h"
 #include "bt_advertise.h"
 #include "logger.h"
@@ -257,6 +260,9 @@ void mainRuntime(void) {
 
     // 0.75mA
 
+    #ifdef CONFIG_UHK_USB_LEFT_RELAY
+    UsbLeft_Init();
+    #endif
     USB_Enable();
 
     // 0.75mA
@@ -304,7 +310,13 @@ void mainRuntime(void) {
     while (true)
     {
         Trace_Printc("d1");
+        #ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_Process();
+        #endif
         Messenger_ProcessQueue();
+        #ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_Process();
+        #endif
         Trace_Printc("d2");
         if (EventScheduler_Vector & EventVector_UserLogicUpdateMask) {
             EVENTLOOP_TIMING(EventloopTiming_Start());
@@ -321,7 +333,13 @@ void mainRuntime(void) {
 #elif DEVICE_IS_UHK_DONGLE
     while (true)
     {
+        #ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_Process();
+        #endif
         Messenger_ProcessQueue();
+        #ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_Process();
+        #endif
         RunDongleLogic();
         scheduleNextRun();
         detectSpinningEventLoop();
@@ -329,7 +347,13 @@ void mainRuntime(void) {
 #else
     while (true)
     {
+        #ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_Process();
+        #endif
         Messenger_ProcessQueue();
+        #ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_Process();
+        #endif
         RunUhk80LeftHalfLogic();
         scheduleNextRun();
         detectSpinningEventLoop();

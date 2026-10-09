@@ -118,19 +118,20 @@ std::span<const uint8_t> ble_session::get_report(
 
 void ble_session::report_sent(const std::span<const uint8_t> &data)
 {
+    if (data.empty()) { return; }
     if (protocol() == hid::protocol::BOOT) {
-        keyboard_report_sent_callback(*this);
+        keyboard_report_sent_callback(*this,data);
     } else {
         switch (data.front()) {
         case keys_6kro_report::selector().id():
         case keys_nkro_report::selector().id():
-            keyboard_report_sent_callback(*this);
+            keyboard_report_sent_callback(*this,data);
             break;
         case mouse_report::selector().id():
-            mouse_report_sent_callback(*this);
+            mouse_report_sent_callback(*this,data);
             break;
         case controls_report::selector().id():
-            controls_report_sent_callback(*this);
+            controls_report_sent_callback(*this,data);
             break;
         case command_session::report_in::selector().id():
             break;

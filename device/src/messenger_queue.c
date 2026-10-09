@@ -122,7 +122,7 @@ void freeQueueSegment(const uint8_t* segment) {
     POOL_FREE(segment, queuePool, POOL_SIZE, QUEUE_REGION_SIZE);
 }
 
-void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint8_t offset, uint8_t connection, uint32_t generation) {
     if (data == blackholeBuffer) {
         MessengerQueue_DroppedMessageCount++;
         return;
@@ -131,11 +131,14 @@ void MessengerQueue_Put(device_id_t src, const uint8_t* data, uint16_t len, uint
     messenger_queue_record_t* record = (messenger_queue_record_t*)allocateQueueSegment();
 
     if (record == NULL) {
+        MessengerQueue_FreeMemory(data);
         MessengerQueue_DroppedMessageCount++;
         return;
     }
 
     record->src = src;
+    record->connection = connection;
+    record->generation = generation;
     record->len = len;
     record->data = data;
     record->offset = offset;

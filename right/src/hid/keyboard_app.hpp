@@ -208,5 +208,5 @@ struct key_report_buffer : double_buffer<keys_report_variants> {
     std::span<const uint8_t> insert(const hid_keyboard_report_t &report);
 };
 
-void keyboard_report_sent_callback(hid::session &session);
+void keyboard_report_sent_callback(hid::session &session, std::span<const uint8_t> data);
 void keyboard_leds_changed_callback(keyboard_base_session &session);

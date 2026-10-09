@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include "shell.h"
 #include "bt_conn.h"
 #include "device.h"
@@ -549,6 +552,32 @@ static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv
     return 0;
 }
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+static int cmd_uhk_usbLeft(const struct shell *shell,size_t argc,char *argv[]) {
+    if (argc>1 && strcmp(argv[1],"status")) {
+#ifndef CONFIG_UHK_USB_LEFT_DEV_SLOT
+        return -ENOTSUP;
+#else
+        if (!strcmp(argv[1],"provision") && argc==2) { UsbLeft_RequestControl(1); }
+        else if (!strcmp(argv[1],"retry") && argc==2) { UsbLeft_RequestControl(4); }
+        else if (!strcmp(argv[1],"select") && argc==3) {
+            if (!strcmp(argv[2],"left")) { UsbLeft_RequestControl(2); }
+            else if (!strcmp(argv[2],"right")) { UsbLeft_RequestControl(3); }
+            else { return -EINVAL; }
+        } else { return -EINVAL; }
+#endif
+    }
+    const relay_t *r=UsbLeft_GetState();
+    shell_print(shell,"USB left: link=%u negotiated=%u configured=%u awake=%u active=%u quiescent=%u pending=%u",
+        r->link,r->negotiated,!!(r->usb.flags&RelayFlag_Configured),UsbLeft_Awake(),UsbLeft_Active(),r->quiescent,UsbLeft_Pending());
+    shell_print(shell,"generation=%u selection=%u retries=%u rejected=%u duplicates=%u faults=%u reason=%u",
+        r->right ? r->peer_usb_generation:r->usb_generation,r->selection,r->retries,r->rejected,r->duplicates,r->faults,r->reason);
+    shell_print(shell,"route: current=%u requested=%u pending=%u blocked=%u provisionResult=%d",
+        CurrentHostConnectionId,HostRoute_Target(),HostRoute_Pending(),HostRoute_Blocked(),UsbLeft_ProvisionResult());
+    return 0;
+}
+#endif
+
 void InitShellCommands(void)
 {
 
@@ -574,6 +603,9 @@ void InitShellCommands(void)
 #endif
 
     SHELL_STATIC_SUBCMD_SET_CREATE(uhk_cmds,
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+        SHELL_CMD_ARG(usbLeft,NULL,"status | provision | select left/right | retry",cmd_uhk_usbLeft,1,2),
+#endif
         SHELL_CMD_ARG(keylog, NULL, "get/set key logging", cmd_uhk_keylog, 1, 1),
 #if !DEVICE_IS_UHK_DONGLE
         SHELL_CMD_ARG(statlog, NULL, "get/set stat logging", cmd_uhk_statlog, 1, 1),

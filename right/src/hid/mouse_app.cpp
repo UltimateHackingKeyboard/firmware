@@ -1,4 +1,9 @@
 #include "mouse_app.hpp"
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+extern "C" {
+#include "usb_left_relay_uhk.h"
+}
+#endif
 
 using mouse_report = mouse_app::mouse_report_base<report_ids::IN_MOUSE>;
 
@@ -6,6 +11,9 @@ hid::session &mouse_app::start(const hid::session::params &params)
 {
     assert(!session_.has_value());
     auto &sess = session_.emplace(params);
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    Hid_LocalUsbSessionChanged();
+#endif
     mouse_resolution_changed_callback(sess, sess.resolution_report());
     return sess;
 }
@@ -18,7 +26,7 @@ void mouse_app::stop(hid::session &sess)
 
 void mouse_session::report_sent(const std::span<const uint8_t> &data)
 {
-    mouse_report_sent_callback(*this);
+    mouse_report_sent_callback(*this,data);
 }
 
 void mouse_session::set_report(hid::report::type type, const std::span<const uint8_t> &data)

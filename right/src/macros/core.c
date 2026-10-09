@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include "config_parser/config_globals.h"
 #include "config_parser/parse_macro.h"
 #include "debug.h"
@@ -660,6 +663,9 @@ uint8_t Macros_QueueMacro(uint8_t index, key_state_t *keyState, uint8_t keyActiv
 
 macro_result_t continueMacro(void)
 {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    if (HostRoute_Transitioning()) { return MacroResult_Waiting; }
+#endif
     Macros_ParserError = false;
     S->ls->as.modifierPostpone = false;
     S->ls->as.modifierSuppressMods = false;

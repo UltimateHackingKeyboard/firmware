@@ -360,6 +360,7 @@ int UartBridge_SendMessage(message_t* msg) {
     err = k_sem_take(&uartState->txBufferBusy, K_MSEC(UART_FOREVER_TIMEOUT));
     if (err != 0) {
         LogWrn("Uart: failed to take txBufferBusy semaphore.\n");
+        return err; // The outstanding frame still owns the parser TX buffer.
     }
 
     // Mark the exchange outstanding before waking, so the control thread's sleep gate

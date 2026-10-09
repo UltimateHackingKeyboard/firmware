@@ -647,6 +647,21 @@ static void resetKineticModuleState(module_kinetic_state_t* kineticState)
     //leave caretFakeKeystate & caretAction intact - this will ensure that any ongoing key action will complete properly
 }
 
+void MouseController_ResetHostInput(void)
+{
+    module_kinetic_state_t *states[]={&leftModuleKineticState,&rightModuleKineticState};
+    for (uint8_t i=0;i<2;++i) {
+        resetKineticModuleState(states[i]);
+        states[i]->caretFakeKeystate=(key_state_t){0};
+        states[i]->caretAction=(key_action_cached_t){0};
+        states[i]->zoomActive=false;
+        states[i]->zoomPhase=0;
+    }
+    for (uint8_t i=0;i<UHK_MODULE_MAX_SLOT_COUNT;++i) {
+        UhkModuleStates[i].pointerDelta.x=UhkModuleStates[i].pointerDelta.y=0;
+    }
+}
+
 static layer_id_t determineEffectiveLayer() {
     if (IS_MODIFIER_LAYER(ActiveLayer)) {
         return LayerId_Base;

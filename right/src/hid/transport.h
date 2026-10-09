@@ -21,6 +21,7 @@ typedef enum {
     ReportSink_Dongle,
     ReportSink_TestSuite,
     ReportSink_BlackHole,
+    ReportSink_UsbLeft,
 } report_sink_t;
 
 typedef enum

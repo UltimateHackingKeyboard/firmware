@@ -112,6 +112,9 @@ Release:
 
 ### Manual workspace setup
 
+For the experimental UHK80 dual wired USB feature, see the
+[implementation, Windows/WSL setup and USB testing guide](doc-dev/technical/uhk80-dual-usb-hosts-development.md).
+
 _Note: this and following sections are redundant If you have successfully completed above build.sh procedure._
 
 Unlike most common workflows, where the git repository is the top level directory,

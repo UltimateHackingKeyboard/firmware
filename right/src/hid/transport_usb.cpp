@@ -1,5 +1,10 @@
 extern "C" {
 #include "debug.h"
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    #include "connections.h"
+    #include "usb_left_relay_uhk.h"
+#include "event_scheduler.h"
+#endif
 #include "device.h"
 #include "key_states.h"
 #include "logger.h"
@@ -35,6 +40,45 @@ extern "C" {
 
 using namespace magic_enum::bitwise_operators;
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+class relay_hid_function : public usb::df::hid::function {
+  public:
+    using usb::df::hid::function::function;
+    void cancel()
+    {
+        if (ep_in_handle().valid()) {
+            (void)cancel_ep(ep_in_handle());
+        }
+    }
+};
+static relay_hid_function *relayFunctions[RelayKind_Count + 1];
+/* udc_ep_dequeue waits on the nRF driver. Run it on c2usb's worker,
+ * keeping main-loop scanning and route selection nonblocking. */
+static uint32_t cancellationGeneration[RelayKind_Count + 1];
+static atomic_t lifecycleQueued, lifecycleFinished;
+static uint32_t fenceGeneration;
+template <uint8_t Kind>
+static void cancelOnUsbThread()
+{
+    uint32_t generation;
+    if (Hid_LocalUsbCancellationPending(Kind, &generation) &&
+        generation == cancellationGeneration[Kind] && relayFunctions[Kind]) {
+        relayFunctions[Kind]->cancel();
+    }
+}
+static void lifecycleBarrier()
+{
+    Hid_LocalUsbFinishFence(fenceGeneration);
+    atomic_set(&lifecycleFinished, fenceGeneration);
+    atomic_set(&lifecycleQueued, 0);
+}
+static void lifecycleCancel();
+extern "C" void Hid_LocalUsbRequestFence(void)
+{
+    EventVector_WakeMain();
+}
+
+#endif
 static uint8_t usb_serial_number[5]{};
 
 constexpr usb::product_info product_info{CONFIG_USB_DEVICE_VID, CONFIG_USB_DEVICE_MANUFACTURER,
@@ -71,12 +115,34 @@ struct usb_manager {
         using namespace usb::df;
 
         static constexpr auto speed = usb::speed::FULL;
-        static usb::df::hid::function usb_kb{
-            keyboard_app::usb_handle(), usb::hid::boot_protocol_mode::KEYBOARD};
-        static usb::df::hid::function usb_mouse{mouse_app::usb_handle()};
+        static
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+            relay_hid_function
+#else
+            usb::df::hid::function
+#endif
+                usb_kb{keyboard_app::usb_handle(), usb::hid::boot_protocol_mode::KEYBOARD};
+        static
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+            relay_hid_function
+#else
+            usb::df::hid::function
+#endif
+                usb_mouse{mouse_app::usb_handle()};
         static usb::df::hid::function usb_command{command_app::usb_handle()};
-        static usb::df::hid::function usb_controls{controls_app::usb_handle()};
+        static
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+            relay_hid_function
+#else
+            usb::df::hid::function
+#endif
+                usb_controls{controls_app::usb_handle()};
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+        relayFunctions[RelayKind_Keyboard] = &usb_kb;
+        relayFunctions[RelayKind_Mouse] = &usb_mouse;
+        relayFunctions[RelayKind_Controls] = &usb_controls;
+#endif
         constexpr auto config_header =
             config::header(config::power::bus(500, config::remote_wakeup));
 
@@ -92,6 +158,7 @@ struct usb_manager {
 
     usb_manager()
     {
+
         device_.set_power_event_delegate([](usb::df::device &dev, usb::df::device::event ev) {
             using event = enum usb::df::device::event;
             if ((ev & event::POWER_STATE_CHANGE) != event::NONE) {
@@ -120,7 +187,12 @@ struct usb_manager {
             }
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
                 // reset the semaphore on USB configuration or reset
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+                Hid_LocalUsbConfigurationChanged();
+                // The main loop retires only the local route whose generation changed.
+#else
                 UsbSemaphore_Clear();
+#endif
 
                 if (dev.configured()) {
                     // A host that just selected a configuration is awake and listening.
@@ -146,6 +218,87 @@ struct usb_manager {
     usb::df::device_instance<usb::speeds(usb::speed::FULL)> device_{mac_, product_info, ms_enum_};
 };
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+static void lifecycleCancel()
+{
+    fenceGeneration = Hid_LocalUsbGeneration();
+    uint8_t mask = Hid_LocalUsbRetireTickets();
+    for (uint8_t kind = 1; kind <= RelayKind_Count; ++kind) {
+        if ((mask & (1u << kind)) && relayFunctions[kind]) {
+            relayFunctions[kind]->cancel();
+        }
+    }
+    /* nRF posts dequeued completions before waking the cancellation caller.
+     * FIFO ordering places this barrier after those completions. */
+    auto result = usb_manager::mac().queue_task(etl::delegate<void()>::create<lifecycleBarrier>());
+    if (result != usb::result::ok) {
+        atomic_set(&lifecycleQueued, 0);
+    }
+}
+extern "C" void Hid_LocalUsbService(void)
+{
+    /* Re-requesting a fence while idle is cheap; it is only needed when a
+     * generation has not yet passed its ordered USB-worker barrier. */
+    uint32_t generation = Hid_LocalUsbGeneration();
+    if (uint32_t(atomic_get(&lifecycleFinished)) == generation) {
+        return;
+    }
+    if (atomic_cas(&lifecycleQueued, 0, 1)) {
+        auto result =
+            usb_manager::mac().queue_task(etl::delegate<void()>::create<lifecycleCancel>());
+        if (result != usb::result::ok) {
+            atomic_set(&lifecycleQueued, 0);
+        }
+    }
+}
+template <uint8_t Kind>
+static void sendOnUsbThread()
+{
+    Hid_LocalUsbSendQueued(Kind);
+}
+extern "C" bool Hid_LocalUsbQueueSend(uint8_t kind)
+{
+    etl::delegate<void()> task;
+    switch (kind) {
+    case RelayKind_Keyboard:
+        task = etl::delegate<void()>::create<sendOnUsbThread<RelayKind_Keyboard>>();
+        break;
+    case RelayKind_Mouse:
+        task = etl::delegate<void()>::create<sendOnUsbThread<RelayKind_Mouse>>();
+        break;
+    case RelayKind_Controls:
+        task = etl::delegate<void()>::create<sendOnUsbThread<RelayKind_Controls>>();
+        break;
+    default:
+        return false;
+    }
+    return usb_manager::mac().queue_task(task) == usb::result::ok;
+}
+extern "C" bool Hid_LocalUsbCancel(uint8_t kind)
+{
+    uint32_t generation;
+    if (!Hid_LocalUsbCancellationPending(kind, &generation)) {
+        return true;
+    }
+    cancellationGeneration[kind] = generation;
+    etl::delegate<void()> task;
+    switch (kind) {
+    case RelayKind_Keyboard:
+        task = etl::delegate<void()>::create<cancelOnUsbThread<RelayKind_Keyboard>>();
+        break;
+    case RelayKind_Mouse:
+        task = etl::delegate<void()>::create<cancelOnUsbThread<RelayKind_Mouse>>();
+        break;
+    case RelayKind_Controls:
+        task = etl::delegate<void()>::create<cancelOnUsbThread<RelayKind_Controls>>();
+        break;
+    default:
+        return false;
+    }
+    return usb_manager::mac().queue_task(task) == usb::result::ok;
+}
+#endif
+
 #ifndef __ZEPHYR__
 extern "C" void USB0_IRQHandler(void)
 {
@@ -168,8 +321,20 @@ extern "C" void USB_Enable()
     usb_manager::instance().select_config();
 }
 
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+static void reconfigureOnUsbThread()
+{
+    if (usb_manager::active()) {
+        usb_manager::instance().select_config();
+    }
+}
+#endif
 extern "C" void USB_Reconfigure()
 {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    (void)usb_manager::mac().queue_task(etl::delegate<void()>::create<reconfigureOnUsbThread>());
+    return;
+#endif
     if (usb_manager::active()) {
         usb_manager::instance().select_config();
     }
@@ -214,3 +379,10 @@ extern "C" void USB_SetSerialNumber(uint32_t serialNumber)
         usb_serial_number[i] = byte;
     }
 }
+
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+extern "C" bool Hid_LocalUsbWakeAllowed()
+{
+    return usb_manager::device().allows_remote_wakeup();
+}
+#endif

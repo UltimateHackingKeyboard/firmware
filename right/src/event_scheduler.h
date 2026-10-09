@@ -53,6 +53,7 @@
         EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_RollTargetEllipsis,
         EventSchedulerEvent_CheckConnectionSecurity,
+        EventSchedulerEvent_UsbLeftRelay,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

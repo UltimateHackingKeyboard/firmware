@@ -106,6 +106,6 @@ class mouse_app : public hid::application {
     std::optional<mouse_session> session_{};
 };
 
-void mouse_report_sent_callback(hid::session &session);
+void mouse_report_sent_callback(hid::session &session, std::span<const uint8_t> data);
 void mouse_resolution_changed_callback(
     hid::session &session, const mouse_session::scroll_resolution_report &report);

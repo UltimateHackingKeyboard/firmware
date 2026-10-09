@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include "connections.h"
 #include "bt_conn.h"
 #include "device.h"
@@ -25,6 +28,9 @@
 LOG_MODULE_REGISTER(Conn, LOG_LEVEL_INF);
 
 connection_t Connections[ConnectionId_Count] = {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    [ConnectionId_UsbHidLeft] = { .isAlias = DEVICE_IS_UHK80_RIGHT },
+#endif
     [ConnectionId_UsbHidRight] = { .isAlias = true },
     [ConnectionId_BtHid] = { .isAlias = true },
 };
@@ -55,6 +61,18 @@ static connection_id_t resolveAliases(connection_id_t connectionId) {
         }
     }
 
+#if defined(CONFIG_UHK_USB_LEFT_RELAY) && DEVICE_IS_UHK80_RIGHT
+    if (connectionId == ConnectionId_UsbHidLeft) {
+        connection_id_t found=ConnectionId_Invalid;
+        for (uint8_t i=ConnectionId_HostConnectionFirst;i<=ConnectionId_HostConnectionLast;++i) {
+            if (HostConnection(i)->type==HostConnectionType_UsbHidLeft) {
+                if (found!=ConnectionId_Invalid) { return ConnectionId_UsbHidLeft; }
+                found=i;
+            }
+        }
+        return found==ConnectionId_Invalid ? ConnectionId_UsbHidLeft : found;
+    }
+#endif
     if (connectionId == ConnectionId_BtHid) {
         for (uint8_t peerId = PeerIdFirstHost; peerId <= PeerIdLastHost; peerId++) {
             if (Peers[peerId].conn && Connections_Type(Peers[peerId].connectionId) == ConnectionType_BtHid) {
@@ -162,6 +180,9 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
     // (so observers see it immediately) while deferring the side effects below;
     // the deferred Connections_UpdateStates() then re-enters here to run them.
     if ( Connections[connectionId].state != state || Connections[connectionId].stateNotApplied ) {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_LinkChanged(connectionId);
+#endif
         Connections[connectionId].state = state;
         Connections[connectionId].stateNotApplied = false;
         reportConnectionState(connectionId);
@@ -189,6 +210,9 @@ void Connections_SetStateAsync(connection_id_t connectionId, connection_state_t 
     // value right away, but defer the heavy side effects (switchover, device
     // state updates) to the event loop via Connections_UpdateStates().
     if ( Connections[connectionId].state != state ) {
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+        UsbLeft_LinkChanged(connectionId);
+#endif
         Connections[connectionId].state = state;
         Connections[connectionId].stateNotApplied = true;
         EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ConnectionsUpdateState, "Connections update state");
@@ -488,7 +512,7 @@ static connection_id_t findReadySwitchoverHost(void) {
     return ConnectionId_Invalid;
 }
 
-static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
+void Connections_CommitHost(uint8_t connectionId, bool explicitlySelected) {
     if (connectionId != CurrentHostConnectionId) {
         if (Cfg.Bt_KeepConnectionsAlive || Cfg.Bt_AlwaysAdvertise) {
             setDongleToStandby(CurrentHostConnectionId);
@@ -518,6 +542,13 @@ static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
     BtManager_StartScanningAndAdvertisingAsync(false, "switchover");
 }
 
+static void switchOver(connection_id_t connectionId,bool explicitlySelected) {
+#if defined(CONFIG_UHK_USB_LEFT_RELAY) && DEVICE_IS_UHK80_RIGHT
+    if (HostRoute_Request(connectionId,explicitlySelected)) { return; }
+#endif
+    Connections_CommitHost(connectionId,explicitlySelected);
+}
+
 void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch) {
     connectionId = resolveAliases(connectionId);
 
@@ -532,7 +563,11 @@ void Connections_HandleSwitchover(connection_id_t connectionId, bool forceSwitch
         // connected; BLE will keep trying to reach it.
         switchOver(connectionId, true);
         reportConnectionState(connectionId);
-    } else if (!currentHostConnectionIsExplicit && Connections_GetState(CurrentHostConnectionId) < ConnectionState_Connected) {
+    } else if (
+#if defined(CONFIG_UHK_USB_LEFT_RELAY) && DEVICE_IS_UHK80_RIGHT
+        !HostRoute_Pending() &&
+#endif
+        !currentHostConnectionIsExplicit && Connections_GetState(CurrentHostConnectionId) < ConnectionState_Connected) {
         // An automatic Current connection is not connected: a ready
         // switchover-marked host may take over. An explicitly-selected Current
         // is protected and keeps being pursued.
@@ -558,7 +593,11 @@ bool Connections_IsCurrentHostAwake(void) {
         case ConnectionType_UsbHidRight:
             return DEVICE_IS_UHK80_RIGHT && !UsbState_HostIsSuspended && UsbState_TransportUp;
         case ConnectionType_UsbHidLeft:
+#if defined(CONFIG_UHK_USB_LEFT_RELAY) && DEVICE_IS_UHK80_RIGHT
+            return UsbLeft_Awake();
+#else
             return DEVICE_IS_UHK80_LEFT && !UsbState_HostIsSuspended && UsbState_TransportUp;
+#endif
         case ConnectionType_Unknown:
         case ConnectionType_Empty:
             return false;

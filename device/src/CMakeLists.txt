@@ -38,6 +38,14 @@ if(NOT CONFIG_BOARD_UHK_60_RIGHT)
         state_sync.c
         thread_stats.c
     )
+    if(CONFIG_UHK_USB_LEFT_RELAY)
+        target_sources(${PROJECT_NAME} PRIVATE
+            usb_left_relay_protocol.c
+            usb_left_relay.c
+            usb_left_relay_uhk.c
+            host_route.c
+        )
+    endif()
     if(CONFIG_BT_PERIPHERAL)
         target_sources(${PROJECT_NAME} PRIVATE
             bt_advertise.c

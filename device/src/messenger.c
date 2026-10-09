@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include "messenger.h"
 #include "test_suite/test_hooks.h"
 #include "bt_conn.h"
@@ -261,7 +264,16 @@ static void receiveDongle(device_id_t src, const uint8_t* data, uint16_t len) {
     }
 }
 
-static void receive(const uint8_t* data, uint16_t len) {
+static void receive(const uint8_t* data, uint16_t len, uint8_t connection, uint32_t generation) {
+    if (len < 4) { return; }
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    if (data[MessageOffset_MsgId1] == MessageId_UsbLeftRelay) {
+        if (data[MessageOffset_Dst] == DEVICE_ID) {
+            UsbLeft_Receive(data[MessageOffset_Src], connection, generation, data+4, len-4);
+        }
+        return;
+    }
+#endif
     device_id_t src = data[MessageOffset_Src];
     device_id_t dst = data[MessageOffset_Dst];
 
@@ -408,6 +420,10 @@ static void handleCommand(device_id_t src, const uint8_t* data, uint16_t len) {
 }
 
 void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data, uint16_t len, uint8_t offset) {
+    if (len < 5 || len+offset > MAX_LINK_PACKET_LENGTH || srcConnectionId >= ConnectionId_Count || data == MessengerQueue_BlackholeBuffer) {
+        MessengerQueue_FreeMemory(data);
+        return;
+    }
     logAllMessages(srcConnectionId, src, data, len, offset);
 
     if (data[offset+MessageOffset_MsgId1] == MessageId_Command) {
@@ -424,7 +440,11 @@ void Messenger_Enqueue(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
     if (isSpam(data+offset, srcConnectionId)) {
         MessengerQueue_FreeMemory(data);
     } else {
-        MessengerQueue_Put(src, data, len, offset);
+        uint32_t generation = 0;
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+        generation = UsbLeft_IngressGeneration(srcConnectionId);
+#endif
+        MessengerQueue_Put(src, data, len, offset, srcConnectionId, generation);
         EventVector_Set(EventVector_NewMessage);
         LOG_SCHEDULE(
             const char* desc1;
@@ -441,7 +461,7 @@ void Messenger_ProcessQueue() {
     messenger_queue_record_t rec = MessengerQueue_Take();
     while (rec.data != NULL) {
         Trace_Printc("<8");
-        receive(rec.data+rec.offset, rec.len);
+        receive(rec.data+rec.offset, rec.len, rec.connection, rec.generation);
         MessengerQueue_FreeMemory(rec.data);
         Trace('>');
 

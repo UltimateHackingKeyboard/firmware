@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include "host_connection.h"
 #include "event_scheduler.h"
 #include "macros/status_buffer.h"
@@ -103,14 +106,18 @@ void HostConnection_SetSelectedConnection(uint8_t connectionId) {
 }
 
 static void selectNextConnection(int8_t direction, bool activeOnly) {
-    for (int8_t i = CurrentHostConnectionId + direction; true; i += direction) {
+    uint8_t anchor=CurrentHostConnectionId;
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+    anchor=HostRoute_Target();
+#endif
+    for (int8_t i = anchor + direction; true; i += direction) {
         if (i > ConnectionId_HostConnectionLast) {
             i = ConnectionId_HostConnectionFirst;
         }
         if (i < ConnectionId_HostConnectionFirst) {
             i = ConnectionId_HostConnectionLast;
         }
-        if (i == CurrentHostConnectionId) {
+        if (i == anchor) {
             return;
         }
 

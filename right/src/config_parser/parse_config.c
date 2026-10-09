@@ -1,3 +1,6 @@
+#ifdef CONFIG_UHK_USB_LEFT_RELAY
+#include "usb_left_relay_uhk.h"
+#endif
 #include <string.h>
 #include "basic_types.h"
 #include "macros/status_buffer.h"
@@ -482,5 +485,8 @@ parser_error_t ParseConfig(config_buffer_t *buffer) {
     if (errorCode != ParserError_Success || ParserRunDry) {
         DataModelVersion = oldModelVersion;
     }
+    #ifdef CONFIG_UHK_USB_LEFT_RELAY
+    if (errorCode==ParserError_Success && !ParserRunDry) { HostRoute_ConfigChanged(); }
+    #endif
     return errorCode;
 }
