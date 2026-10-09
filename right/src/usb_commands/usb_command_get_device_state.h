@@ -17,6 +17,7 @@ typedef enum {
     GetDeviceStateByte2_PairingInProgress = 1 << 1,
     GetDeviceStateByte2_NewPairedDevice = 1 << 2,
     GetDeviceStateByte2_ZephyrLog = 1 << 3,
+    GetDeviceStateByte2_PeerBondBroken = 1 << 4,
 } usb_command_get_device_state_byte2_mask_t;
 
     typedef enum {
