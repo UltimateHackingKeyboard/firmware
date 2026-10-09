@@ -26,6 +26,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     case UART_TX_ABORTED:
         // TODO: is this needed?
         // uart_tx(uartState->device, uartState->txBuffer, uartState->txPosition, UART_TIMEOUT);
+        uartState->txAbortedCount++;
         LogU("Tx aborted. Please report this!\n");
         break;
 
@@ -57,6 +58,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_DISABLED:
         uartState->enabled = false;
+        uartState->rxDisabledCount++;
         // Every RX teardown lands here, including driver-initiated ones (framing/break
         // errors are routine when RX is enabled mid-byte after a GPIO wake). Let the owner
         // re-arm RX if it wants it up - otherwise the link stays deaf.
@@ -69,6 +71,18 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         // reason: 1=overrun 2=parity 4=framing 8=break (uart.h uart_rx_stop_reason)
         BridgeDbg("BRIDGE RX_STOPPED reason %d\n", evt->data.rx_stop.reason);
         uartState->enabled = false;
+        {
+            uint8_t reason = evt->data.rx_stop.reason;
+            if (reason & UART_ERROR_OVERRUN) {
+                uartState->rxStoppedOverrun++;
+            } else if (reason & UART_ERROR_FRAMING) {
+                uartState->rxStoppedFraming++;
+            } else if (reason & UART_BREAK) {
+                uartState->rxStoppedBreak++;
+            } else {
+                uartState->rxStoppedOther++;
+            }
+        }
         break;
     }
 }
@@ -110,9 +124,6 @@ void UartLink_Enable(uart_link_t *uartState) {
 }
 
 #if UART_LOWPOWER
-
-// One byte-time on the wire at 115200-8N1 (~87us), rounded up.
-#define UART_BYTE_TIME_US 90
 
 // Edge-sense ISR: an incoming start bit on the slept RXD pin. Deliberately minimal - it
 // only kicks the owning thread and touches no lpState/gpio, so it cannot race
@@ -252,7 +263,8 @@ void UartLink_SendWakeByte(uart_link_t *uartState) {
         return;
     }
 
-    uint8_t wake = UartControlByte_Wake;
+    // uart_tx reads its buffer by DMA after returning; a stack byte doesn't outlive the call.
+    static uint8_t wake = UartControlByte_Wake;
     UartLink_LockBusy(uartState);
     int err = uart_tx(uartState->device, &wake, 1, UART_TRANSPORT_TIMEOUT_US);
     if (err != 0) {

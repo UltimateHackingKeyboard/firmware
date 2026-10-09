@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/uart.h>
 #include <zephyr/pm/device.h>
@@ -20,8 +21,16 @@
 #define THREAD_PRIORITY -5
 
 #define UART_FOREVER_TIMEOUT 10000
-#define UART_RESEND_DELAY 64
-#define UART_RESEND_COUNT 5
+
+#define UART_GARBAGE_CHUNKS_TO_RESTART 3
+#define UART_GARBAGE_RESTART_INTERVAL_MS 100
+
+#define UART_MAX_FRAME_WIRE_TIME_MS \
+    UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
+
+// Assert that the resend budet fits inside uart timeout
+#define UART_RESEND_BUDGET_MS ((UART_RESEND_COUNT + 1) * (UART_RESEND_DELAY + UART_MAX_FRAME_WIRE_TIME_MS))
+_Static_assert(UART_RESEND_BUDGET_MS < UART_BRIDGE_TIMEOUT, "UART resend budget outlives UART_BRIDGE_TIMEOUT");
 
 typedef enum {
     UartTxState_Idle,
@@ -49,9 +58,24 @@ typedef struct {
     uint32_t lastPingTime;
     uint16_t invalidMessagesCounter;
     uint8_t resendTries;
+    uint8_t txWm; // watermark of the frame we await an ack for
+    uint8_t rxWm; // watermark of the frame we owe an ack for
+
+    // Garbage watch, isr context only. See watchForGarbage.
+    bool chunkHadValid;
+    bool chunkHadGarbage;
+    uint8_t garbageChunks;
+    uint32_t lastRxRestartTime;
+
+    // Cycle stamps for the latency stats below.
+    uint32_t sentCyc;   // last uart_tx of a data frame
+    uint32_t ackReqCyc; // last valid frame parsed (ack requested)
 
     uint8_t* rxBuffer;
     uint8_t txBuffer[UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH];
+    // uart_tx reads its buffer by DMA after returning; it has to outlive the call. Control
+    // bytes are serialized by txControlBusy, so one slot is enough.
+    uint8_t controlByte;
 
     struct k_sem txBufferBusy;
     struct k_sem controlThreadSleeper;
@@ -70,6 +94,55 @@ uart_state_t bridgeState = {0};
 
 static bool bridgeSuspended = false;
 static bool bridgeTxSlotHeld = false;
+
+// Diagnostics, cumulative since boot. Printed by UartBridge_DumpStats.
+#define LATENCY_BUCKETS 5
+
+typedef struct {
+    uint32_t maxUs;
+    uint32_t sumUs;
+    uint32_t count;
+    uint16_t hist[LATENCY_BUCKETS]; // <1ms, <4ms, <16ms, <64ms, >=64ms
+} latency_stats_t;
+
+typedef struct {
+    uint32_t framesSent;
+    uint32_t framesReceived;
+    uint16_t ackWhileIdle;   // ack arrived while we weren't waiting for one
+    uint16_t ackStale;       // ack for a frame other than the outstanding one
+    uint16_t nackWhileIdle;
+    uint16_t nackReceived;
+    uint16_t resendTimeout;
+    uint16_t resendNack;
+    uint16_t giveUps;
+    uint16_t txSendFail;     // uart_tx returned an error
+    uint16_t unexpectedBytes;
+    uint16_t rxRestarts;     // rx restarted because of a run of garbage
+    latency_stats_t ackLoop; // sender: uart_tx of a frame -> its ack parsed
+    latency_stats_t ackTurn; // receiver: frame parsed -> ack handed to uart_tx
+} uart_bridge_stats_t;
+
+static uart_bridge_stats_t stats = {0};
+
+static void recordLatency(latency_stats_t* s, uint32_t startCyc) {
+    uint32_t us = k_cyc_to_us_floor32(k_cycle_get_32() - startCyc);
+    uint8_t bucket;
+    if (us < 1000) {
+        bucket = 0;
+    } else if (us < 4000) {
+        bucket = 1;
+    } else if (us < 16000) {
+        bucket = 2;
+    } else if (us < 64000) {
+        bucket = 3;
+    } else {
+        bucket = 4;
+    }
+    s->hist[bucket]++;
+    s->count++;
+    s->sumUs += us;
+    s->maxUs = MAX(s->maxUs, us);
+}
 
 /* UART message format:
  * [START_BYTE,crc16,escaped(messengerPacket), ENDBYTE]
@@ -102,10 +175,35 @@ static bool bridgeCanSleep(void *arg) {
         && (k_uptime_get() - uartState->lastLinkActivity) >= bridgeHoldoffMs(uartState);
 }
 
+// The UARTE receiver can come out of a simultaneous cold start of both halves in a state
+// where it corrupts the first byte after every idle gap: frames lose their Start byte, lone
+// pings and acks are lost, and no rx error is ever raised. One rx restart cures it for good.
+// A single frame tail after an ordinary rx teardown also arrives as garbage, so only a run
+// of garbage chunks with nothing valid in between counts.
+static void watchForGarbage(uart_state_t *uartState) {
+    if (uartState->chunkHadValid) {
+        uartState->garbageChunks = 0;
+    } else if (uartState->chunkHadGarbage) {
+        uartState->garbageChunks++;
+    }
+
+    uint32_t currentTime = k_uptime_get();
+    bool restartAllowed = currentTime - uartState->lastRxRestartTime >= UART_GARBAGE_RESTART_INTERVAL_MS;
+    if (uartState->garbageChunks >= UART_GARBAGE_CHUNKS_TO_RESTART && restartAllowed) {
+        uartState->garbageChunks = 0;
+        uartState->lastRxRestartTime = currentTime;
+        stats.rxRestarts++;
+        UartLink_Reset(&uartState->core);
+    }
+}
+
 static void bridgeReceiveBytes(void *state, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
     uartState->lastLinkActivity = k_uptime_get();
+    uartState->chunkHadValid = false;
+    uartState->chunkHadGarbage = false;
     UartParser_ProcessIncomingBytes(&uartState->parser, data, len);
+    watchForGarbage(uartState);
 }
 
 // UART_RX_DISABLED hook (ISR context), fired on every RX teardown - ours and the
@@ -129,22 +227,78 @@ static void setRxState(uart_state_t *uartState, uart_rx_state_t state) {
     wakeControlThread(uartState);
 }
 
+#define FRAME_DUMP_LINE_LEN 80
+#define FRAME_DUMP_MAX_LINES 2
+
+static void logFrameBytes(const uint8_t* data, uint16_t len) {
+    char line[FRAME_DUMP_LINE_LEN];
+    uint16_t pos = 0;
+    uint16_t shown = len;
+    uint16_t lines = 0;
+
+    for (uint16_t i = 0; i < shown; i++) {
+        int n = snprintf(line + pos, FRAME_DUMP_LINE_LEN - pos, "%02x ", data[i]);
+        bool lineFull = n < 0 || pos + n >= sizeof(line) - 1;
+        if (lineFull) {
+            line[pos] = '\0';
+            LogWrn("  %s\n", line);
+            pos = 0;
+            if (++lines >= FRAME_DUMP_MAX_LINES) {
+                break;
+            }
+            n = snprintf(line, sizeof(line), "%02x ", data[i]);
+        }
+        pos += n;
+    }
+    if (pos > 0) {
+        LogWrn("  %s%s\n", line, shown < len ? "..." : "");
+    }
+}
+
 
 static void receiveMessage(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     uart_state_t *uartState = (uart_state_t *)state;
     uartState->lastLinkActivity = k_uptime_get();
+    if (messageKind == UartControl_Unexpected) {
+        uartState->chunkHadGarbage = true;
+    } else if (messageKind != UartControl_InvalidMessage) {
+        uartState->chunkHadValid = true;
+    }
     switch (messageKind) {
         case UartControl_Ack:
-            if (uartState->txState == UartTxState_WaitingForAck) {
-                uartState->resendTries = 0;
-                uartState->txState = UartTxState_Idle;
-                k_sem_give(&uartState->txBufferBusy);
+        case UartControl_Ack0:
+        case UartControl_Ack1: {
+                // Ack0/Ack1 are matched by watermark parity: a resend is acked twice, and the
+                // second ack must not close the next frame. A bare Ack carries no parity and
+                // is accepted unconditionally, as it was before Ack0/Ack1 existed.
+                bool carriesParity = messageKind != UartControl_Ack;
+                bool ackIsOdd = messageKind == UartControl_Ack1;
+                bool acksOutstandingFrame =
+                    !carriesParity || ackIsOdd == ((uartState->txWm & 1) != 0);
+                bool waiting = uartState->txState == UartTxState_WaitingForAck;
+
+                if (waiting && acksOutstandingFrame) {
+                    recordLatency(&stats.ackLoop, uartState->sentCyc);
+                    uartState->resendTries = 0;
+                    uartState->txState = UartTxState_Idle;
+                    k_sem_give(&uartState->txBufferBusy);
+                } else if (waiting) {
+                    stats.ackStale++;
+                    if (stats.ackStale == 1) {
+                        LogWrn("Uart: ack watermark mismatch\n");
+                    }
+                } else {
+                    stats.ackWhileIdle++;
+                }
             }
             break;
         case UartControl_Nack:
             if (uartState->txState == UartTxState_WaitingForAck) {
+                stats.nackReceived++;
                 uartState->txState = UartTxState_Resend;
                 wakeControlThread(uartState);
+            } else {
+                stats.nackWhileIdle++;
             }
             break;
         case UartControl_Ping:
@@ -153,6 +307,9 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
         case UartControl_ValidMessage:
             {
                 uartState->lastPingTime = k_uptime_get();
+                stats.framesReceived++;
+                uartState->ackReqCyc = k_cycle_get_32();
+                uartState->rxWm = len > MessageOffset_Wm ? data[MessageOffset_Wm] : 0;
                 setRxState(uartState, UartRxState_Ack);
 
                 // message
@@ -171,12 +328,8 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
                 uartState->invalidMessagesCounter++;
                 const char *out1, *out2;
                 Messenger_GetMessageDescription(uartState->rxBuffer, 0, &out1, &out2);
-                LogUO("Crc-invalid UART message received! %s %s ", out1, out2 == NULL ? "" : out2);
-
-                for (uint16_t i = 0; i < uartState->parser.rxPosition; i++) {
-                    LogU("%i ", uartState->rxBuffer[i]);
-                }
-                LogU("\n");
+                LogWrn("Crc-invalid UART message received! %s %s\n", out1, out2 == NULL ? "" : out2);
+                logFrameBytes(uartState->rxBuffer, uartState->parser.rxPosition);
 
                 setRxState(uartState, UartRxState_Nack);
 
@@ -184,15 +337,14 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
             }
             break;
         case UartControl_Unexpected:
-#if UART_LOWPOWER
-            // Out-of-frame garbage is expected here: enabling RX mid-byte after a GPIO wake
-            // yields a partial byte or the tail of the wake byte. The parser resyncs on the
-            // next Start byte, whereas resetting RX (10ms of deafness, wake sense unarmed)
-            // exactly when the real frame is inbound turns one garbled byte into a resend storm.
+            // Out-of-frame garbage: a byte received while the parser is between frames. It is
+            // routine after any RX teardown - bridgeOnRxDisabled resyncs the parser while the
+            // peer's frame may still be streaming in, so its remaining bytes land here. The
+            // parser resyncs itself on the next Start byte. Tearing RX down here instead
+            // (the old UartLink_Reset) made every such byte another teardown, another mid-frame
+            // re-enable, and so on until the frame ended - one lost frame per hiccup.
+            stats.unexpectedBytes++;
             BridgeDbg("BRIDGE RX unexpected byte\n");
-#else
-            UartLink_Reset(&uartState->core);
-#endif
             break;
     }
 }
@@ -207,7 +359,7 @@ int UartBridge_SendMessage(message_t* msg) {
     int err;
     err = k_sem_take(&uartState->txBufferBusy, K_MSEC(UART_FOREVER_TIMEOUT));
     if (err != 0) {
-        LogUOS("Uart: failed to take txBufferBusy semaphore.\n");
+        LogWrn("Uart: failed to take txBufferBusy semaphore.\n");
     }
 
     // Mark the exchange outstanding before waking, so the control thread's sleep gate
@@ -223,14 +375,18 @@ int UartBridge_SendMessage(message_t* msg) {
     UartLink_LockBusy(&uartState->core);
 
     Messenger_UpdateWatermarks(msg);
+    uartState->txWm = msg->wm;
     UartParser_StartMessage(&uartState->parser);
     UartParser_AppendEscapedTxBytes(&uartState->parser, (uint8_t[]){msg->src, msg->dst, msg->wm}, 3);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->messageId, msg->idsUsed);
     UartParser_AppendEscapedTxBytes(&uartState->parser, msg->data, msg->len);
     UartParser_FinalizeMessage(&uartState->parser);
 
+    stats.framesSent++;
+    uartState->sentCyc = k_cycle_get_32();
     err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
     if (err != 0) {
+        stats.txSendFail++;
         k_sem_give(&uartState->core.txControlBusy);
     }
 
@@ -241,27 +397,36 @@ int UartBridge_SendMessage(message_t* msg) {
     return err;
 }
 
-static void sendControl(uart_state_t *uartState, uint8_t byte) {
+static void sendControl(uart_state_t *uartState, uint8_t byte, bool isAck) {
     UartLink_LockBusy(&uartState->core);
-    int err = UartLink_Send(&uartState->core, &byte, 1);
+    if (isAck) {
+        // Measured once we hold the TX slot: includes waiting out our own in-flight frame.
+        recordLatency(&stats.ackTurn, uartState->ackReqCyc);
+    }
+    uartState->controlByte = byte;
+    int err = UartLink_Send(&uartState->core, &uartState->controlByte, 1);
     if (err != 0) {
         // No transfer started -> no TX_DONE -> return the slot ourselves.
+        stats.txSendFail++;
         k_sem_give(&uartState->core.txControlBusy);
     }
 }
 
 // wakePeer: a nack-triggered resend skips the wake handshake, since the peer just parsed
 // our garbled frame and is provably awake; a timeout-triggered one redoes it, because
-// after 64ms+ of silence the peer has almost certainly slept again. This must not
+// after the resend delay of silence the peer may have slept again. This must not
 // k_sleep - it runs on the control thread, where blocking makes us blind to wake edges,
 // acks and pings, which used to cascade into a disconnect + BLE-fallback feedback loop.
 static void resend(uart_state_t *uartState, bool wakePeer) {
-    if (uartState->resendTries++ > UART_RESEND_COUNT) {
-        LogU("Repeatedly failed to send a message! ");
-        for (uint16_t i = 0; i < uartState->parser.txPosition; i++) {
-            LogU("%i ", uartState->parser.txBuffer[i]);
-        }
-        LogU("\n");
+    if (wakePeer) {
+        stats.resendTimeout++;
+    } else {
+        stats.resendNack++;
+    }
+    if (uartState->resendTries++ >= UART_RESEND_COUNT) {
+        stats.giveUps++;
+        LogErr("Repeatedly failed to send a message!\n");
+        logFrameBytes(uartState->parser.txBuffer, uartState->parser.txPosition);
 
         uartState->resendTries = 0;
         uartState->txState = UartTxState_Idle;
@@ -273,9 +438,11 @@ static void resend(uart_state_t *uartState, bool wakePeer) {
             UartLink_SendWakeByte(&uartState->core);
         }
         UartLink_LockBusy(&uartState->core);
+        uartState->sentCyc = k_cycle_get_32();
         int err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
         if (err != 0) {
             // No transfer started -> no TX_DONE -> return the slot ourselves.
+            stats.txSendFail++;
             k_sem_give(&uartState->core.txControlBusy);
         }
         uartState->lastMessageSentTime = k_uptime_get();
@@ -333,7 +500,7 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
         if (currentTime >= lastPingSentTime + UART_BRIDGE_PING_INTERVAL) {
             UartLink_WakeRx(&uartState->core);
             UartLink_SendWakeByte(&uartState->core);
-            sendControl(uartState, UartControlByte_Ping);
+            sendControl(uartState, UartControlByte_Ping, false);
             lastPingSentTime = currentTime;
         }
 
@@ -342,11 +509,11 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
         if (Connections_IsReady(uartState->connectionId)) {
             switch (uartState->rxState) {
                 case UartRxState_Ack:
-                    sendControl(uartState, UartControlByte_Ack);
+                    sendControl(uartState, (uartState->rxWm & 1) ? UartControlByte_Ack1 : UartControlByte_Ack0, true);
                     uartState->rxState = UartRxState_Idle;
                     break;
                 case UartRxState_Nack:
-                    sendControl(uartState, UartControlByte_Nack);
+                    sendControl(uartState, UartControlByte_Nack, false);
                     uartState->rxState = UartRxState_Idle;
                     break;
                 case UartRxState_Idle:
@@ -354,24 +521,27 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             }
 
             if (uartState->txState == UartTxState_Resend) {
-                LogU("Uart: received Nack, resending\n");
+                LogWrn("Uart: received Nack, resending\n");
                 resend(uartState, false);
             }
 
             currentTime = k_uptime_get();
+            uint32_t resendDelay = UART_RESEND_DELAY + UART_FRAME_WIRE_TIME_MS(uartState->parser.txPosition);
+            bool ackOverdue = uartState->txState == UartTxState_WaitingForAck && currentTime >= uartState->lastMessageSentTime + resendDelay;
+            if (ackOverdue) {
+                LogWrn("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
+                resend(uartState, true);
+            }
+
+            // Must be taken after the resend, which restamps lastMessageSentTime
             if (uartState->txState == UartTxState_WaitingForAck) {
-                uint32_t resendDelay = (UART_RESEND_DELAY << uartState->resendTries);
-                uint32_t resendTime = uartState->lastMessageSentTime + resendDelay;
-                if (currentTime >= resendTime) {
-                    LogU("Uart: didn't receive ack %d, resending (delay %d)\n", currentTime, resendDelay);
-                    resend(uartState, true);
-                } else {
-                    wakeTime = MIN(wakeTime, resendTime);
-                }
+                wakeTime = MIN(wakeTime, uartState->lastMessageSentTime + resendDelay);
             }
         } else {
             uartState->txState = UartTxState_Idle;
             uartState->rxState = UartRxState_Idle;
+            // The retry budget belongs to the frame, not to the link.
+            uartState->resendTries = 0;
         }
 
         currentTime = k_uptime_get();
@@ -514,4 +684,37 @@ void UartBridge_Resume(void) {
     }
 
     wakeControlThread(uartState);
+}
+
+static void dumpLatency(const char* label, const latency_stats_t* s) {
+    uint32_t meanUs = s->count == 0 ? 0 : s->sumUs / s->count;
+    LogU("  %s: n=%u mean=%uus max=%uus\n", label, (unsigned)s->count, (unsigned)meanUs, (unsigned)s->maxUs);
+    LogU("    hist <1/<4/<16/<64/>=64ms: %u/%u/%u/%u/%u\n",
+        (unsigned)s->hist[0], (unsigned)s->hist[1], (unsigned)s->hist[2], (unsigned)s->hist[3], (unsigned)s->hist[4]);
+}
+
+void UartBridge_DumpStats(void) {
+    uart_state_t *uartState = &bridgeState;
+    uart_link_t *core = &uartState->core;
+    if (core->device == NULL) {
+        LogU("Uart bridge: no bridge uart on this routing\n");
+        return;
+    }
+    LogU("Uart bridge stats (t=%u ms): enabled=%d txState=%d rxState=%d resendTries=%u\n",
+        (unsigned)Timer_GetCurrentTime(), (int)core->enabled, (int)uartState->txState, (int)uartState->rxState,
+        (unsigned)uartState->resendTries);
+    LogU("  frames: sent=%u received=%u crcInvalid=%u unexpectedBytes=%u\n",
+        (unsigned)stats.framesSent, (unsigned)stats.framesReceived, (unsigned)uartState->invalidMessagesCounter,
+        (unsigned)stats.unexpectedBytes);
+    LogU("  acks: whileIdle=%u stale=%u nack=%u nackWhileIdle=%u\n",
+        (unsigned)stats.ackWhileIdle, (unsigned)stats.ackStale, (unsigned)stats.nackReceived,
+        (unsigned)stats.nackWhileIdle);
+    LogU("  resends: timeout=%u nack=%u giveUps=%u txSendFail=%u txAborted=%u\n",
+        (unsigned)stats.resendTimeout, (unsigned)stats.resendNack, (unsigned)stats.giveUps,
+        (unsigned)stats.txSendFail, (unsigned)core->txAbortedCount);
+    LogU("  rx stopped: overrun=%u framing=%u break=%u other=%u disabled=%u garbageRestarts=%u\n",
+        (unsigned)core->rxStoppedOverrun, (unsigned)core->rxStoppedFraming, (unsigned)core->rxStoppedBreak,
+        (unsigned)core->rxStoppedOther, (unsigned)core->rxDisabledCount, (unsigned)stats.rxRestarts);
+    dumpLatency("ackLoop (send->ack)", &stats.ackLoop);
+    dumpLatency("ackTurn (rx->ack tx)", &stats.ackTurn);
 }

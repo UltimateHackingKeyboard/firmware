@@ -9,11 +9,24 @@
     #include "shared/module/uart_link.h"
 #endif
 
+#include "device.h"
+
 #ifdef DEVICE_ID
 #include "logger.h"
+#include "debug.h" // DEBUG_STRESS_UART
 #else
 #define LogU(...)
+#define LogWrn(...)
+#define DEBUG_STRESS_UART false
 #endif
+
+// Do NOT change these - test_link.c statistics are calibrated against them.
+#define STRESS_RANDOM_RANGE 65536
+#define STRESS_BYTE_FAULT_RECIPROCAL 512
+#define STRESS_ACK_DROP_RECIPROCAL 16
+
+#define STRESS_BYTE_FAULT_THRESHOLD (STRESS_RANDOM_RANGE / STRESS_BYTE_FAULT_RECIPROCAL)
+#define STRESS_ACK_DROP_THRESHOLD (STRESS_RANDOM_RANGE / STRESS_ACK_DROP_RECIPROCAL)
 
 #define CRC_SALT 0x1234
 #define CRC_LEN UART_CRC_LEN
@@ -25,17 +38,18 @@ static void appendRxByte(uart_parser_t *uartState, uint8_t byte) {
         uartState->rxBuffer[uartState->rxPosition++ - CRC_LEN] = byte;
     } else if (!uartState->rxTooLong) {
         uartState->rxTooLong = true;
-        LogU("Uart error: too long message, discarding [len %i: src %i, dst %i, msgId %i, propId %i]\n",
+        LogWrn("Uart error: too long message, discarding [len %i: src %i, dst %i, msgId %i, propId %i]\n",
             uartState->rxLength, uartState->rxBuffer[0], uartState->rxBuffer[1], uartState->rxBuffer[3], uartState->rxBuffer[4]);
     }
 }
 
 ATTR_UNUSED static uint16_t get_random(void)
 {
-    static uint16_t lfsr = 0xACE1;  // Non-zero seed
-    uint16_t bit = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5)) & 1;
-    lfsr = (lfsr >> 1) | (bit << 15);
-    return lfsr;
+    static uint32_t state = 0x2545F491;  // Non-zero seed
+    state ^= state << 13;
+    state ^= state >> 17;
+    state ^= state << 5;
+    return (uint16_t)(state >> 16);
 }
 
 static bool isCrcValid(uart_parser_t *uartState, const uint8_t* buf, uint16_t len) {
@@ -50,16 +64,40 @@ static bool isCrcValid(uart_parser_t *uartState, const uint8_t* buf, uint16_t le
     return CRC16_IsMessageValidExt(&msg);
 }
 
-static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
-#if DEBUG_STRESS_UART
-    uint16_t r1 = get_random();
-    uint8_t r2 = get_random();
+bool UartStress_Active = DEBUG_STRESS_UART;
 
-    if (r1 < 128) {
-        LogU("Oops!\n");
-        byte = byte ^ r2;
+// Returns true when the byte should be swallowed. Mutates `byte` in place otherwise.
+static bool stressByte(uart_parser_t *uartState, uint8_t *byte) {
+    uint16_t corruptRoll = get_random();
+    uint8_t corruptMask = get_random();
+    uint16_t dropRoll = get_random();
+
+    if (corruptRoll < STRESS_BYTE_FAULT_THRESHOLD) {
+        LogWrn("UartStress: Oops!\n");
+        *byte = *byte ^ corruptMask;
     }
-#endif
+
+    if (dropRoll < STRESS_BYTE_FAULT_THRESHOLD) {
+        LogWrn("UartStress: Oops lost!\n");
+        return true;
+    }
+
+    // More dropped acks, more fun: CRC mutation alone never reaches the resend path.
+    bool isAckLike = *byte == UartControlByte_Ack || *byte == UartControlByte_Ack0
+        || *byte == UartControlByte_Ack1 || *byte == UartControlByte_Nack;
+
+    if (dropRoll < STRESS_ACK_DROP_THRESHOLD && isAckLike && !uartState->receivingMessage) {
+        LogWrn("UartStress: Oops lost control!\n");
+        return true;
+    }
+
+    return false;
+}
+
+static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
+    if (UartStress_Active && stressByte(uartState, &byte)) {
+        return;
+    }
 
 
     switch (byte) {
@@ -69,6 +107,20 @@ static void processIncomingByte(uart_parser_t *uartState, uint8_t byte) {
             }
 
             uartState->receiveMessage(uartState->userArg, UartControl_Ack, NULL, 0);
+            break;
+        case UartControlByte_Ack0:
+            if (uartState->receivingMessage) {
+                goto msg_byte;
+            }
+
+            uartState->receiveMessage(uartState->userArg, UartControl_Ack0, NULL, 0);
+            break;
+        case UartControlByte_Ack1:
+            if (uartState->receivingMessage) {
+                goto msg_byte;
+            }
+
+            uartState->receiveMessage(uartState->userArg, UartControl_Ack1, NULL, 0);
             break;
         case UartControlByte_Nack:
             if (uartState->receivingMessage) {
@@ -157,7 +209,7 @@ void appendByte(uart_parser_t *uartState, uint8_t byte) {
     if (uartState->txPosition < uartState->txLength) {
         uartState->txBuffer[uartState->txPosition++] = byte;
     } else {
-        LogU("Uart error: too long message in tx buffer\n");
+        LogWrn("Uart error: too long message in tx buffer\n");
     }
 }
 
@@ -174,6 +226,8 @@ static void escapeAndAppend(uart_parser_t *uartState, uint8_t byte) {
         case UartControlByte_End:
         case UartControlByte_Escape:
         case UartControlByte_Ack:
+        case UartControlByte_Ack0:
+        case UartControlByte_Ack1:
         case UartControlByte_Nack:
         case UartControlByte_Ping:
         case UartControlByte_Wake:

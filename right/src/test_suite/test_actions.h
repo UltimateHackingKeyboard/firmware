@@ -123,6 +123,11 @@ typedef struct {
 typedef struct {
     const char *name;
     const test_action_t *actions;
+    // Nonzero marks a link test: the left half runs the same script and produces its own key presses physically.
+    uint8_t linkTestId;
+    // How many times to run the action list. 0 and 1 both mean once. Lets a short cycle be
+    // soaked without spending flash on a long static array.
+    uint16_t repeatCount;
 } test_t;
 
 #endif

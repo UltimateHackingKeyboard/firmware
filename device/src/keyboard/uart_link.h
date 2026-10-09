@@ -41,6 +41,7 @@
     // UART_WAKE_DISPATCH_DELAY_US, or that stop lands on the frame following a wake byte.
     #define UART_TRANSPORT_TIMEOUT_US 700
 
+
 // Typedefs:
 
     typedef enum {
@@ -59,6 +60,14 @@
 
         struct k_sem txControlBusy;
         bool enabled;
+
+        // Diagnostics, printed by UartBridge_DumpStats.
+        uint16_t rxStoppedOverrun;
+        uint16_t rxStoppedFraming;
+        uint16_t rxStoppedBreak;
+        uint16_t rxStoppedOther;
+        uint16_t rxDisabledCount;
+        uint16_t txAbortedCount;
 
         // Low-power (UART_LOWPOWER) state
         struct gpio_dt_spec rxWakePin;      // RXD as a GPIO; .port == NULL disables LP

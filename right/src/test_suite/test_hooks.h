@@ -14,4 +14,8 @@ void TestHooks_CaptureReport(const hid_keyboard_report_t *report);
 // Called each update cycle to advance the test state machine
 void TestHooks_Tick(void);
 
+// Joins a link test the peer has started, or stops the running one when given 0. Called from
+// the bridge's receive path, so it must only flip state.
+void TestHooks_StartLinkTest(uint8_t linkTestId);
+
 #endif

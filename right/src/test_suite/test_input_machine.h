@@ -14,6 +14,10 @@ extern bool InputMachine_TimedOut;
 // Initialize the input machine for a new test
 void InputMachine_Start(const test_t *test);
 
+// Resolves a test-script key id string to slot/key. Shared with the left half's link-test
+// producer, so both sides read the same script identically.
+bool TestInput_ParseKeyId(const char *keyIdStr, uint8_t *slotId, uint8_t *keyId);
+
 // Process one tick - called from scanner
 // Processes Press, Release, Delay, SetAction, CheckNow
 // Skips (advances past) Expect

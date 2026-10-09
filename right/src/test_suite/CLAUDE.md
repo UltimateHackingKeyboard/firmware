@@ -50,12 +50,24 @@ This matters when you want a base-layer macro to run while a layer is held (e.g.
 ## Key Timing
 
 - **Debouncing**: 50ms on press and another 50ms on release.
-- Always `TEST_DELAY__(50)` (or more) after a press/release to let the key register.
+- Delays run on one schedule from the test's start (start + all delays so far), not from when
+  each delay began - so ticks spent on other actions do not add up. A delay therefore separates
+  two actions by its length *minus* the ticks of the actions between them: a key held or released
+  across exactly `TEST_DELAY__(50)` can land inside the debounce window. Use `TEST_DELAY__(60)`
+  where a phase has to clear debouncing.
 
 ## Key Selection
 
 - **Always use right-half keys**: j, k, l, ;, p, o, i, u, m, n, h, y, 7, 8, 9, 0, etc.
 - Never use left-half keys (a, s, d, f, q, w, e, r, etc.) — the test rig only drives the right half.
+
+### Exception: link tests
+
+A test with a nonzero `linkTestId` is a *link test* and may use left-half keys. The left half
+runs the same script and presses those keys itself, so they genuinely traverse the bridge;
+the right half skips them locally (`skipLocally` in `test_input_machine.c`). See
+`tests/test_link.c`. Such tests must space input actions by debounce + margin, not the usual
+50ms, because both halves run independent timelines.
 
 ## Macro Formatting
 
@@ -100,4 +112,7 @@ TEST_SET_MACRO("j", "ifShortcut k final tapKey n\n holdKey j")
 - `LOG_VERBOSE(fmt, ...)` is conditional.
 - `TEST_EXPECT___________MAYBE` only logs in verbose mode.
 - Failures are always logged immediately via `LOG_FAILURE(fmt, ...)`, which prints a separator before the first failure of a test; failed tests are auto-rerun with verbose enabled.
+- Tests with `repeatCount > 1` are never verbose, even when run as a single test, and never auto-rerun: every repetition runs, a repetition with any
+  failure counts as one failed repetition, and the verdict line reports `N passed, M failed`.
+- The left half (link tests) logs no test actions; its log stays reserved for bridge diagnostics.
 - Reset `TestSuite_Verbose = false` after a verbose rerun.

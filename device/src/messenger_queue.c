@@ -8,6 +8,7 @@
 #include "logger.h"
 #include "thread_stats.h"
 #include "trace.h"
+#include "atomicity.h"
 
 uint16_t MessengerQueue_DroppedMessageCount = 0;
 
@@ -53,7 +54,6 @@ uint8_t* MessengerQueue_BlackholeBuffer = blackholeBuffer;
 POOL(regionPool, POOL_SIZE, POOL_REGION_SIZE);
 POOL(queuePool, POOL_SIZE, QUEUE_REGION_SIZE);
 
-#define FIFO_RETRIES 10
 struct k_fifo messageQueue;
 
 struct {
@@ -62,49 +62,29 @@ struct {
 } fifo = { .first = NULL, .last = NULL } ;
 
 
-static void panic(const char* reason) {
-    printk("%s", reason);
-    k_panic();
-}
-
+// Producers are the uart isr and the bt rx thread, the consumer is the main thread.
 static void fifoPut(messenger_queue_record_t* node) {
-    for (uint8_t tries = 0; tries < FIFO_RETRIES; tries++) {
-        if (fifo.first == NULL) {
-            node->fifo_reserved = NULL;
-            if (!__sync_bool_compare_and_swap((intptr_t*)&fifo.first, NULL, node)) {
-                continue;
-            }
-            fifo.last = fifo.first;
-            return;
-        } else {
-            node->fifo_reserved = NULL;
-            if (!__sync_bool_compare_and_swap((intptr_t*)&fifo.last->fifo_reserved, NULL, (intptr_t)node)) {
-                continue;
-            }
-            while ( fifo.last->fifo_reserved != NULL ) {
-                fifo.last = fifo.last->fifo_reserved;
-            }
-            return;
-        }
+    node->fifo_reserved = NULL;
+
+    DISABLE_IRQ();
+    if (fifo.first == NULL) {
+        fifo.first = node;
+    } else {
+        fifo.last->fifo_reserved = node;
     }
-    panic("failed to insert message into fifo\n");
+    fifo.last = node;
+    ENABLE_IRQ();
 }
 
 static messenger_queue_record_t* fifoTake() {
-    for (uint8_t tries = 0; tries < FIFO_RETRIES; tries++) {
-        if (fifo.first == NULL) {
-            return NULL;
-        } else {
-            messenger_queue_record_t* node = fifo.first;
-            messenger_queue_record_t* next = node->fifo_reserved;
-            if (!__sync_bool_compare_and_swap((intptr_t*)&fifo.first, (intptr_t)node, (intptr_t)next)) {
-                continue;
-            }
-            return node;
-        }
+    DISABLE_IRQ();
+    messenger_queue_record_t* node = fifo.first;
+    if (node != NULL) {
+        fifo.first = node->fifo_reserved;
     }
-    panic("failed to retrieve next message from fifo\n");
-    return NULL;
+    ENABLE_IRQ();
+
+    return node;
 }
 
 

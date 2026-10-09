@@ -1,4 +1,5 @@
 #include "messenger.h"
+#include "test_suite/test_hooks.h"
 #include "bt_conn.h"
 #include "connections.h"
 #include "device.h"
@@ -377,7 +378,16 @@ bool processWatermarks(uint8_t srcConnectionId, uint8_t src, const uint8_t* data
         return false;
     }
 
-    Connections[srcConnectionId].watermarks.rxIdx = data[offset+MessageOffset_Wm];
+    connection_watermarks_t* wm = &Connections[srcConnectionId].watermarks;
+    uint8_t rxIdx = data[offset+MessageOffset_Wm];
+
+    // A frame whose ack got lost is resent with the same watermark; don't apply it twice
+    if (wm->rxIdxValid && rxIdx == wm->rxIdx) {
+        return false;
+    }
+
+    wm->rxIdx = rxIdx;
+    wm->rxIdxValid = true;
 
     return true;
 }
@@ -387,6 +397,9 @@ static void handleCommand(device_id_t src, const uint8_t* data, uint16_t len) {
     switch (command) {
         case MessengerCommand_Reboot:
             Reboot(false);
+            break;
+        case MessengerCommand_StartTest:
+            TestHooks_StartLinkTest(data[MessageOffset_MsgId1+2]);
             break;
         default:
             printk("Unknown command: %d\n", command);
