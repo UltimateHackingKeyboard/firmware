@@ -1,0 +1,176 @@
+From b31dc3aae54d07a927f3d0ca06450a90d69aa06c Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Mon, 12 Oct 2026 17:29:25 +0200
+Subject: [PATCH] Add bus event totals and wakeup diagnostics.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ c2usb/usb/df/mac.cpp      |  6 +++-
+ c2usb/usb/df/mac_diag.cpp | 61 ++++++++++++++++++++++++++++++++++++---
+ c2usb/usb/df/mac_diag.hpp |  2 ++
+ 3 files changed, 64 insertions(+), 5 deletions(-)
+
+diff --git a/c2usb/usb/df/mac.cpp b/c2usb/usb/df/mac.cpp
+index 0233e2b..277b1a2 100644
+--- a/c2usb/usb/df/mac.cpp
++++ b/c2usb/usb/df/mac.cpp
+@@ -3,6 +3,8 @@
+ #include "usb/df/device.hpp"
+ #include "usb/df/function.hpp"
+ #include "usb/standard/requests.hpp"
++// UHK patch: anomaly diagnostics, see usb/df/mac_diag.hpp.
++#include "usb/df/mac_diag.hpp"
+ 
+ namespace usb::df
+ {
+@@ -93,7 +95,9 @@ usb::result mac::remote_wakeup()
+     {
+         return usb::result::not_connected;
+     }
+-    return signal_remote_wakeup();
++    auto res = signal_remote_wakeup();
++    diag::record(diag::REMOTE_WAKEUP, 0, res.to_int());
++    return res;
+ }
+ 
+ transfer mac::control_ep_setup()
+diff --git a/c2usb/usb/df/mac_diag.cpp b/c2usb/usb/df/mac_diag.cpp
+index 243d1ed..870d6dd 100644
+--- a/c2usb/usb/df/mac_diag.cpp
++++ b/c2usb/usb/df/mac_diag.cpp
+@@ -18,7 +18,7 @@ namespace
+ {
+ const char* const category_names[diag::CATEGORY_COUNT] = {
+     "enqueue fail", "EP error",       "ctrl error",      "ctrl stall",
+-    "evt dropped",  "EP busy reject", "no-power reject",
++    "evt dropped",  "EP busy reject", "no-power reject", "remote wakeup",
+ };
+ 
+ struct diag_stat
+@@ -37,11 +37,22 @@ struct diag_bus_entry
+     diag::bus_event type;
+ };
+ 
++struct diag_bus_total
++{
++    uint32_t count;
++    uint32_t last_time;
++};
++
+ constexpr size_t BUS_RING_SIZE = 16;
++constexpr size_t BUS_EVENT_COUNT = static_cast<size_t>(diag::bus_event::COUNT);
+ 
+ struct
+ {
+     diag_stat stats[diag::CATEGORY_COUNT];
++    diag_bus_total bus_totals[BUS_EVENT_COUNT];
++    diag_bus_total failed_wakeups;
++    bool wakeup_requested; // remote wakeup signalled, no bus event since
++    bool wakeup_resume;    // last bus event is the resume of our own wakeup, no ok transfer since
+     diag_bus_entry bus_ring[BUS_RING_SIZE];
+     uint8_t bus_ring_next;
+     uint32_t last_ok_time;
+@@ -105,6 +116,10 @@ void record(category cat, uint8_t ep, int err)
+     s.last_time = c2usb_diag_time_ms();
+     s.last_err = err;
+     s.last_ep = ep;
++    if ((cat == REMOTE_WAKEUP) and (err == 0))
++    {
++        state.wakeup_requested = true;
++    }
+ }
+ 
+ void success(uint8_t ep)
+@@ -112,6 +127,7 @@ void success(uint8_t ep)
+     state.ok_count++;
+     state.last_ok_time = c2usb_diag_time_ms();
+     state.last_ok_ep = ep;
++    state.wakeup_resume = false;
+     for (auto& s : state.stats)
+     {
+         s.since_ok = 0;
+@@ -120,14 +136,35 @@ void success(uint8_t ep)
+ 
+ void bus(bus_event event)
+ {
+-    auto& last = state.bus_ring[(state.bus_ring_next + BUS_RING_SIZE - 1) % BUS_RING_SIZE];
++    uint32_t now = c2usb_diag_time_ms();
++    auto& total = state.bus_totals[static_cast<size_t>(event)];
++    total.count++;
++    total.last_time = now;
++
++    uint8_t last_idx = (state.bus_ring_next + BUS_RING_SIZE - 1) % BUS_RING_SIZE;
++    auto& last = state.bus_ring[last_idx];
++    bool wakeup_resume = state.wakeup_resume;
++    state.wakeup_resume = (event == bus_event::RESUME) and state.wakeup_requested;
++    state.wakeup_requested = false;
++
++    // A remote wakeup the host ignores shows up as resume + suspend on each keypress.
++    // Count those separately, so that they don't flush the ring.
++    if (wakeup_resume and (event == bus_event::SUSPEND) and (last.type == bus_event::RESUME) and
++        (last.count == 1))
++    {
++        last = {};
++        state.bus_ring_next = last_idx;
++        state.failed_wakeups.count++;
++        state.failed_wakeups.last_time = now;
++        return;
++    }
+     if (last.count and (last.type == event))
+     {
+         last.count++;
+-        last.time = c2usb_diag_time_ms();
++        last.time = now;
+         return;
+     }
+-    state.bus_ring[state.bus_ring_next] = {c2usb_diag_time_ms(), 1, event};
++    state.bus_ring[state.bus_ring_next] = {now, 1, event};
+     state.bus_ring_next = (state.bus_ring_next + 1) % BUS_RING_SIZE;
+ }
+ 
+@@ -179,6 +216,22 @@ extern "C" void c2usb_diag_dump(void)
+                       s.last_err, (unsigned)(now - s.last_time));
+         }
+     }
++    for (size_t i = 0; i < BUS_EVENT_COUNT; i++)
++    {
++        const auto& t = state.bus_totals[i];
++        if (t.count)
++        {
++            c2usb_log("  bus total: %s x%u, last %u ms ago\n",
++                      bus_name(static_cast<diag::bus_event>(i)), (unsigned)t.count,
++                      (unsigned)(now - t.last_time));
++        }
++    }
++    if (state.failed_wakeups.count)
++    {
++        c2usb_log("  failed wakeups (resume+suspend, not in bus events): x%u, last %u ms ago\n",
++                  (unsigned)state.failed_wakeups.count,
++                  (unsigned)(now - state.failed_wakeups.last_time));
++    }
+     for (size_t i = 0; i < BUS_RING_SIZE; i++)
+     {
+         const auto& e = state.bus_ring[(state.bus_ring_next + i) % BUS_RING_SIZE];
+diff --git a/c2usb/usb/df/mac_diag.hpp b/c2usb/usb/df/mac_diag.hpp
+index d240521..349c976 100644
+--- a/c2usb/usb/df/mac_diag.hpp
++++ b/c2usb/usb/df/mac_diag.hpp
+@@ -56,6 +56,7 @@ enum category : uint8_t
+     EVENT_DROPPED,    // driver event lost (e.g. queue full)
+     EP_BUSY,          // transfer rejected: endpoint busy
+     EP_NO_POWER,      // transfer rejected: bus not in L0
++    REMOTE_WAKEUP,    // device-initiated wakeup signalled (not an anomaly; err is the result)
+     CATEGORY_COUNT
+ };
+ 
+@@ -70,6 +71,7 @@ enum class bus_event : uint8_t
+     ERROR,
+     SET_CONFIG,   // host-initiated SET_CONFIGURATION with a nonzero config
+     DECONFIG,     // host-initiated SET_CONFIGURATION 0 (configuration cleared)
++    COUNT
+ };
+ 
+ // all callable from any context including ISR - they must not log
+-- 
+2.51.0
+

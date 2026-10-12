@@ -42,6 +42,40 @@ constexpr usb::product_info product_info{CONFIG_USB_DEVICE_VID, CONFIG_USB_DEVIC
     usb::version(CONFIG_USB_DEVICE_PRODUCT_VERSION >> 8, CONFIG_USB_DEVICE_PRODUCT_VERSION),
     usb_serial_number};
 
+#ifdef __ZEPHYR__
+// Diagnostics for #1639: udc_nrf leaves USBD low power mode only on remote wakeup. On bus reset
+// and host resume it relies on the hardware; no transfer can start while low power is set.
+static struct {
+    uint32_t count;
+    uint32_t resetCount;
+    uint32_t lastTime;
+} lowPowerOnWake;
+
+static void noteUsbWake(bool isReset)
+{
+    if (NRF_USBD->LOWPOWER != 0) {
+        lowPowerOnWake.count++;
+        lowPowerOnWake.resetCount += isReset ? 1 : 0;
+        lowPowerOnWake.lastTime = Timer_GetCurrentTime();
+    }
+}
+
+extern "C" void USB_DumpState(void)
+{
+    c2usb_log("  usbd: lowpower=%u, woke in lowpower x%u (by reset x%u), last %u ms ago\n",
+        (unsigned)NRF_USBD->LOWPOWER, (unsigned)lowPowerOnWake.count, (unsigned)lowPowerOnWake.resetCount,
+        (unsigned)(Timer_GetCurrentTime() - lowPowerOnWake.lastTime));
+}
+#else
+static void noteUsbWake(bool isReset)
+{
+}
+
+extern "C" void USB_DumpState(void)
+{
+}
+#endif
+
 struct usb_manager {
     static auto &mac() { return instance().mac_; }
     static usb::df::device &device() { return instance().device_; }
@@ -106,6 +140,8 @@ struct usb_manager {
 #endif
                     break;
                 case usb::power::state::L0_ON:
+                    // a bus reset drops the configuration, a resume keeps it
+                    noteUsbWake((ev & event::CONFIGURATION_CHANGE) != event::NONE);
                     UsbState_SetHostSuspended(false);
                     break;
                 case usb::power::state::L3_OFF:

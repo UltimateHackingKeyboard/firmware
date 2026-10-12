@@ -57,6 +57,7 @@ void Hid_UpdateKeyboardProtocol(void);
 void USB_SetSerialNumber(uint32_t serialNumber);
 void USB_Enable(void);
 bool USB_RemoteWakeup(void);
+void USB_DumpState(void);
 void USB_Reconfigure(void);
 bool USB_IsMsHost(void);
 
