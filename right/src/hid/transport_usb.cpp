@@ -51,6 +51,20 @@ static struct {
     uint32_t lastTime;
 } lowPowerOnWake;
 
+// Recovery for #1639: a host that is awake but left our port dead ignores remote wakeups.
+// Reattaching makes it enumerate us from scratch.
+#define WAKEUP_RECONNECT_FAILURES 3
+#define WAKEUP_RECONNECT_INTERVAL_MS (10 * 1000)
+// A sleeping host that honours the wakeup needs time before it resumes the bus. Wakeups
+// signalled meanwhile fail the same way, so don't reattach under a host that is just waking up.
+#define WAKEUP_RECONNECT_GRACE_MS (5 * 1000)
+
+static struct {
+    uint32_t count;
+    uint32_t lastTime;
+    uint32_t firstFailureTime;
+} wakeupReconnect;
+
 static void noteUsbWake(bool isReset)
 {
     if (NRF_USBD->LOWPOWER != 0) {
@@ -65,6 +79,9 @@ extern "C" void USB_DumpState(void)
     c2usb_log("  usbd: lowpower=%u, woke in lowpower x%u (by reset x%u), last %u ms ago\n",
         (unsigned)NRF_USBD->LOWPOWER, (unsigned)lowPowerOnWake.count, (unsigned)lowPowerOnWake.resetCount,
         (unsigned)(Timer_GetCurrentTime() - lowPowerOnWake.lastTime));
+    c2usb_log("  wakeup: unanswered=%d failed=%u, reconnects x%u, last %u ms ago\n",
+        (int)UsbState_WakeupUnanswered, (unsigned)UsbState_FailedWakeups, (unsigned)wakeupReconnect.count,
+        (unsigned)(Timer_GetCurrentTime() - wakeupReconnect.lastTime));
 }
 #else
 static void noteUsbWake(bool isReset)
@@ -136,6 +153,13 @@ struct usb_manager {
                         UsbState_SetHostSuspended(true);
                     }
 #else
+                    if (UsbState_WakeupUnanswered) {
+                        UsbState_WakeupUnanswered = false;
+                        if (UsbState_FailedWakeups == 0) {
+                            wakeupReconnect.firstFailureTime = Timer_GetCurrentTime();
+                        }
+                        UsbState_FailedWakeups++;
+                    }
                     UsbState_SetHostSuspended(true);
 #endif
                     break;
@@ -211,7 +235,7 @@ extern "C" void USB_Reconfigure()
     }
 }
 
-extern "C" bool USB_RemoteWakeup()
+static bool signalRemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
     if (err.to_int() == -1 /* not permitted; treat it as awake */) {
@@ -220,9 +244,32 @@ extern "C" bool USB_RemoteWakeup()
     } else if (err != usb::result::ok) {
         LogErr("USB: remote wakeup request failed: %d\n", err.to_int());
     } else {
+        UsbState_WakeupUnanswered = true;
         LogInf("USB: remote wakeup request succeeded\n");
     }
     return err == usb::result::ok;
+}
+
+extern "C" bool USB_RemoteWakeup()
+{
+    bool wakeupSignalled = false;
+#ifdef __ZEPHYR__
+    bool wakeupsIgnored = UsbState_FailedWakeups >= WAKEUP_RECONNECT_FAILURES;
+    bool hostHadTimeToWake = Timer_GetCurrentTime() - wakeupReconnect.firstFailureTime >= WAKEUP_RECONNECT_GRACE_MS;
+    bool reconnectAllowed = Timer_GetCurrentTime() - wakeupReconnect.lastTime >= WAKEUP_RECONNECT_INTERVAL_MS;
+    if (wakeupsIgnored && hostHadTimeToWake && reconnectAllowed) {
+        LogInf("USB: %u remote wakeups ignored, reconnecting\n", (unsigned)UsbState_FailedWakeups);
+        wakeupReconnect.count++;
+        wakeupReconnect.lastTime = Timer_GetCurrentTime();
+        UsbState_FailedWakeups = 0;
+        USB_Reconfigure();
+    } else {
+        wakeupSignalled = signalRemoteWakeup();
+    }
+#else
+    wakeupSignalled = signalRemoteWakeup();
+#endif
+    return wakeupSignalled;
 }
 
 extern "C" bool USB_IsMsHost(void)

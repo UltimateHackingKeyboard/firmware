@@ -4,12 +4,15 @@
 // Includes:
 
     #include <stdbool.h>
+    #include <stdint.h>
 
 
 // Variables:
 
     extern bool UsbState_TransportUp;
     extern bool UsbState_HostIsSuspended;
+    extern bool UsbState_WakeupUnanswered;
+    extern uint32_t UsbState_FailedWakeups;
 
 // Functions:
 

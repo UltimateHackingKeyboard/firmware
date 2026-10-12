@@ -21,6 +21,11 @@ bool UsbState_TransportUp = false;
 bool UsbState_HostIsSuspended = false;
 bool UsbState_ProvablyAwake = false;
 
+// Remote wakeup signalled, no report delivered since.
+bool UsbState_WakeupUnanswered = false;
+// Remote wakeups that only led to another suspend, since the last delivered report.
+uint32_t UsbState_FailedWakeups = 0;
+
 static void recalculateConnectionState(void) {
 #if DEVICE_IS_UHK_DONGLE
     // DongleHostAwake keeps awake polarity - it is a state sync wire value shared with
@@ -67,6 +72,8 @@ void UsbState_SetHostSuspended(bool suspended) {
 
 // Remote wakeup doesn't work on some devices. Require a delivered report as a witness.
 void UsbState_Delivered(void) {
+    UsbState_WakeupUnanswered = false;
+    UsbState_FailedWakeups = 0;
     if (UsbState_ProvablyAwake) {
         UsbState_ProvablyAwake = true;
         recalculateConnectionState();
