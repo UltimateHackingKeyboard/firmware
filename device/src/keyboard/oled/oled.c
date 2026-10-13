@@ -9,6 +9,7 @@
 #include "led_manager.h"
 #include "keyboard/oled/screens/screens.h"
 #include "state_sync.h"
+#include "lock_hints.h"
 
 #if DEVICE_HAS_OLED
 
@@ -95,7 +96,7 @@ static uint16_t currentYShift = 0;
 static bool wantScreenShift;
 
 static uint8_t computeBrightness() {
-    if (ActiveScreen == ScreenId_Debug && DisplayBrightness == 0) {
+    if ((ActiveScreen == ScreenId_Debug || LockHints_WakeHintShown) && DisplayBrightness == 0) {
         return 255;
     } else if (StateSync_BatteryBacklightPowersavingMode) {
         return MIN(DisplayBrightness, 1);

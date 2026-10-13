@@ -53,6 +53,8 @@
         EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_RollTargetEllipsis,
         EventSchedulerEvent_CheckConnectionSecurity,
+        EventSchedulerEvent_LockHintsLeftHalf,
+        EventSchedulerEvent_LockHintsHideWakeHint,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

@@ -54,6 +54,11 @@
     extern void StateSync_CheckFirmwareVersions();
     extern void StateSync_CheckDongleProtocolVersion();
     extern void PowerMode_PutBackToSleepMaybe(void);
+    extern void LockHints_ShowWakeHint(void);
+    extern void LockHints_HideWakeHint(void);
+    extern void LockHints_RestartLeftHalfGracePeriod(void);
+    extern void LockHints_UpdateLeftHalfHint(void);
+    extern void LockHints_OnPowerModeChanged(void);
     extern void BtAdvertise_DisableAdvertisingIcon(void);
     extern void NotificationScreen_NotifyFor(const char* message, uint16_t duration);
 

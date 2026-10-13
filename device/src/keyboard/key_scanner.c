@@ -8,6 +8,7 @@
 #include "nus_client.h"
 #include "nus_server.h"
 #include "oled/oled_buffer.h"
+#include "oled/lock_hints.h"
 #include "logger.h"
 #include "key_states.h"
 #include "bool_array_converter.h"
@@ -164,6 +165,10 @@ static bool scanSfjlWithBlinking(bool fullScan) {
     if (result == SfjlScanResult_NonePressed || !fullScan || !shouldBlink) {
         previousResult = result;
         return result == SfjlScanResult_FullMatch;
+    }
+
+    if (result == SfjlScanResult_SomethingPressed) {
+        LockHints_ShowWakeHint();
     }
 
     for (uint16_t i=0; i<blinkCount; i++) {
