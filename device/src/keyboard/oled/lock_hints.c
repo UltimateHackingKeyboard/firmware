@@ -13,10 +13,11 @@
 
 // Left half takes a while to reconnect, so hint only after a grace period.
 #define LEFT_HALF_GRACE_PERIOD 5000
-#define LEFT_HALF_HINT_DURATION 1000
-#define LEFT_HALF_HINT_REFRESH_PERIOD 2000
+#define LEFT_HALF_HINT_DURATION 2000
+#define LEFT_HALF_HINT_REFRESH_PERIOD 4000
 
-bool LockHints_WakeHintShown = false;
+static uint8_t wakeHintId = NotificationId_Invalid;
+static uint8_t leftHalfHintId = NotificationId_Invalid;
 
 static bool isAwake() {
     return CurrentPowerMode <= PowerMode_LastAwake;
@@ -24,17 +25,7 @@ static bool isAwake() {
 
 // Shown when a wrong key is pressed while we are locked or asleep.
 void LockHints_ShowWakeHint(void) {
-    LockHints_WakeHintShown = true;
-    NotificationScreen_NotifyFor("Press J+L", 0);
-    EventScheduler_Reschedule(Timer_GetCurrentTime() + WAKE_HINT_DURATION, EventSchedulerEvent_LockHintsHideWakeHint, "hide wake hint");
-}
-
-void LockHints_HideWakeHint(void) {
-    if (LockHints_WakeHintShown) {
-        LockHints_WakeHintShown = false;
-        EventScheduler_Unschedule(EventSchedulerEvent_LockHintsHideWakeHint);
-        NotificationScreen_Hide();
-    }
+    wakeHintId = NotificationScreen_NotifyFor("Press J+L", WAKE_HINT_DURATION, true);
 }
 
 void LockHints_RestartLeftHalfGracePeriod(void) {
@@ -46,18 +37,17 @@ void LockHints_UpdateLeftHalfHint(void) {
     bool leftMissing = isAwake() && !DeviceState_IsTargetConnected(ConnectionTarget_Left);
 
     if (leftMissing) {
-        NotificationScreen_NotifyFor("Press S+F / charge left", LEFT_HALF_HINT_DURATION);
+        leftHalfHintId = NotificationScreen_NotifyFor("Press S+F / charge left", LEFT_HALF_HINT_DURATION, false);
         EventScheduler_Reschedule(Timer_GetCurrentTime() + LEFT_HALF_HINT_REFRESH_PERIOD, EventSchedulerEvent_LockHintsLeftHalf, "left half hint refresh");
     }
 }
 
 void LockHints_OnPowerModeChanged(void) {
     if (isAwake()) {
-        LockHints_HideWakeHint();
+        NotificationScreen_Hide(wakeHintId);
         LockHints_RestartLeftHalfGracePeriod();
-    } else if (!LockHints_WakeHintShown) {
-        // Don't carry the left half hint over into sleep.
-        NotificationScreen_Hide();
+    } else {
+        NotificationScreen_Hide(leftHalfHintId);
     }
 }
 

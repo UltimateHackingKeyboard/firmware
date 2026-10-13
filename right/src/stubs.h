@@ -55,12 +55,12 @@
     extern void StateSync_CheckDongleProtocolVersion();
     extern void PowerMode_PutBackToSleepMaybe(void);
     extern void LockHints_ShowWakeHint(void);
-    extern void LockHints_HideWakeHint(void);
     extern void LockHints_RestartLeftHalfGracePeriod(void);
     extern void LockHints_UpdateLeftHalfHint(void);
     extern void LockHints_OnPowerModeChanged(void);
     extern void BtAdvertise_DisableAdvertisingIcon(void);
-    extern void NotificationScreen_NotifyFor(const char* message, uint16_t duration);
+    extern uint8_t NotificationScreen_NotifyFor(const char* message, uint16_t duration, bool forceAwake);
+    extern void NotificationScreen_EndForceAwake(void);
 
 #if DEVICE_HAS_OLED
 #define WIDGET_REFRESH(W) Widget_Refresh(W)

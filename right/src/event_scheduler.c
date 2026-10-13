@@ -252,8 +252,8 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_LockHintsLeftHalf:
             LockHints_UpdateLeftHalfHint();
             break;
-        case EventSchedulerEvent_LockHintsHideWakeHint:
-            LockHints_HideWakeHint();
+        case EventSchedulerEvent_NotificationForceAwakeEnd:
+            NotificationScreen_EndForceAwake();
             break;
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
