@@ -3,6 +3,7 @@
 #include "keyboard/oled/widgets/widgets.h"
 #include "keyboard/oled/screens/screens.h"
 #include "keyboard/oled/oled.h"
+#include "keyboard/oled/lock_hints.h"
 #include "notification_screen.h"
 #include "timer.h"
 #include "event_scheduler.h"
@@ -63,4 +64,5 @@ void ScreenManager_Init()
     MainScreen_Init();
     DebugScreen_Init();
     NotificationScreen_Init();
+    LockHints_RestartLeftHalfGracePeriod();
 }

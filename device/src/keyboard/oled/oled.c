@@ -9,6 +9,7 @@
 #include "led_manager.h"
 #include "keyboard/oled/screens/screens.h"
 #include "state_sync.h"
+#include "keyboard/oled/screens/notification_screen.h"
 
 #if DEVICE_HAS_OLED
 
@@ -21,7 +22,6 @@
 
 #define THREAD_STACK_SIZE 1000
 #define THREAD_PRIORITY 5
-#define OLED_FADE_TIME 2*255
 #define OLED_FADE_STEP 1
 
 static K_THREAD_STACK_DEFINE(stack_area, THREAD_STACK_SIZE);
@@ -95,7 +95,7 @@ static uint16_t currentYShift = 0;
 static bool wantScreenShift;
 
 static uint8_t computeBrightness() {
-    if (ActiveScreen == ScreenId_Debug && DisplayBrightness == 0) {
+    if ((ActiveScreen == ScreenId_Debug || NotificationScreen_ForceAwake) && DisplayBrightness == 0) {
         return 255;
     } else if (StateSync_BatteryBacklightPowersavingMode) {
         return MIN(DisplayBrightness, 1);
@@ -320,7 +320,14 @@ void oledUpdater() {
         if (!oledNeedsRedraw && lastBrightness == computeBrightness() && lastBrightness > 0) {
             k_sleep(K_FOREVER);
         } else {
-            k_sleep(K_MSEC(OLED_FADE_TIME / (255/OLED_FADE_STEP)));
+            // anchor to real time to avoid drift.
+            static uint32_t nextUpdate = 0;
+            uint32_t currentTime = Timer_GetCurrentTime();
+            uint32_t stepTime = OLED_FADE_TIME / (255/OLED_FADE_STEP);
+            uint32_t sleepFor = MAX(nextUpdate, currentTime) - currentTime;
+            nextUpdate = nextUpdate + stepTime;
+            nextUpdate = MAX(nextUpdate, currentTime);
+            k_sleep(K_MSEC(sleepFor));
         }
 
         if (lastBrightness == 0) {

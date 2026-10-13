@@ -126,7 +126,6 @@ static void wake() {
     EventScheduler_Schedule(lastWakeEvent + LIGHT_SLEEP_NOHOST_WAKEUP_LENGTH, EventSchedulerEvent_PowerModeUpdate, "waked - check for short wake condition");
     CurrentPowerMode = PowerMode_Awake;
     notifyEveryone();
-
 }
 
 void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const char* reason) {
@@ -179,6 +178,8 @@ void PowerMode_ActivateMode(power_mode_t mode, bool toggle, bool force, const ch
         BtConn_UpdateConnectionLatencies();
     }
 #endif
+
+    LockHints_OnPowerModeChanged();
 
 #ifdef __ZEPHYR__
     // Leaving deep sleep has to bring the links back before anything wants to talk over

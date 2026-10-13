@@ -150,7 +150,7 @@ static void showStringInSlot(bool show, display_string_slot_t slotId, char* text
     switch (slotId) {
         case DisplayStringSlot_Notify:
             if (show) {
-                NotificationScreen_NotifyFor(text, time);
+                NotificationScreen_NotifyFor(text, time, false);
             }
             break;
         case DisplayStringSlot_LeftStatus:
@@ -236,6 +236,10 @@ macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
     }
 }
 
+#if DEVICE_HAS_OLED
+static uint8_t notifyPrintfId = NotificationId_Invalid;
+#endif
+
 void NotifyPrintf(const char *fmt, ...)
 {
 #if DEVICE_HAS_OLED
@@ -251,14 +255,14 @@ void NotifyPrintf(const char *fmt, ...)
 
     buf[bufLen - 1] = '\0';
 
-    NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
+    notifyPrintfId = NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT, false);
 #endif
 }
 
 void UnNotify()
 {
 #if DEVICE_HAS_OLED
-    NotificationScreen_Hide();
+    NotificationScreen_Hide(notifyPrintfId);
 #endif
 }
 
@@ -271,7 +275,7 @@ macro_result_t Macros_ProcessNotifyCommand(parser_context_t* ctx)
     consumeDisplayString(ctx, buf, bufLen);
     if (!Macros_DryRun) {
 #if DEVICE_HAS_OLED
-        NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
+        NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT, false);
 #endif
     }
 
