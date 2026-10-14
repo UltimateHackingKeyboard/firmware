@@ -25,8 +25,8 @@ void UsbCommand_FlashModule(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
     }
 
     ModuleFlashBusy = true;
-    ModuleFlashErrorCode = 0;
-    ModuleFlashState = ModuleFlashState_Erasing;
+    ModuleFlashErrorCode = ModuleFlashError_None;
+    ModuleFlashState = ModuleFlashState_TryingToReach;
     KbootDriverState.slotId = slotId;
     KbootDriverState.moduleBootloaderAddress = bootloaderI2cAddress;
     KbootDriverState.firmwareOffset = 0;

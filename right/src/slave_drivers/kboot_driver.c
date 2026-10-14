@@ -174,18 +174,19 @@ static void togglePingAddress(void)
         : KbootDriverState.moduleBootloaderAddress;
 }
 
-typedef void (*abort_fn_t)(const char *);
+typedef void (*abort_fn_t)(module_flash_error_t, const char *);
 
-static void abortFlash(const char *reason)
+static void abortFlash(module_flash_error_t error, const char *reason)
 {
     LogU("Kboot: ABORT - %s\n", reason);
+    ModuleFlashErrorCode = error;
     ModuleFlashState = ModuleFlashState_Error;
     ModuleFlashBusy = false;
     KbootDriverState.command = KbootCommand_Idle;
     KbootDriverState.phase = 0;
 }
 
-static void abortReset(const char *reason)
+static void abortReset(module_flash_error_t error, const char *reason)
 {
     LogU("Kboot: ABORT - %s\n", reason);
     KbootDriverState.command = KbootCommand_Idle;
@@ -233,7 +234,7 @@ static bool handleCmdTransaction(slave_result_t *res)
             status_t s = previousI2cStatus();
             LogU("Kboot: [%s] TX i2c=%d\n", cmdName(KbootDriverState.cmdId), s);
             if (s != kStatus_Success) {
-                cmdAbort("Command TX failed");
+                cmdAbort(ModuleFlashError_CommandTxFailed, "Command TX failed");
                 break;
             }
             KbootDriverState.phase = KbootCmdPhase_RxAck;
@@ -256,7 +257,7 @@ static bool handleCmdTransaction(slave_result_t *res)
                     logBuffer("ACK poll", rxBuffer, KBOOT_PACKAGE_LENGTH_ACK);
                 }
                 if (cmdElapsedMs() > KbootDriverState.cmdTimeoutMs) {
-                    cmdAbort("ACK timeout");
+                    cmdAbort(ModuleFlashError_AckTimeout, "ACK timeout");
                     break;
                 }
                 KbootDriverState.phase = KbootCmdPhase_RxAck;
@@ -275,7 +276,7 @@ static bool handleCmdTransaction(slave_result_t *res)
                 if (!verifyRxCrc(KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE)) {
                     logBuffer("Response CRC bad", rxBuffer, KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE);
                     if (cmdElapsedMs() > KbootDriverState.cmdTimeoutMs) {
-                        cmdAbort("Response timeout (CRC mismatches)");
+                        cmdAbort(ModuleFlashError_ResponseTimeout, "Response timeout (CRC mismatches)");
                         break;
                     }
                     KbootDriverState.phase = KbootCmdPhase_RxResponse;
@@ -288,7 +289,7 @@ static bool handleCmdTransaction(slave_result_t *res)
                 LogU("Kboot: [%s] Response status=0x%x (%dms)\n",
                      cmdName(KbootDriverState.cmdId), respStatus, cmdElapsedMs());
                 if (respStatus != 0) {
-                    cmdAbort("Command failed");
+                    cmdAbort(ModuleFlashError_CommandFailed, "Command failed");
                     break;
                 }
                 KbootDriverState.phase = KbootCmdPhase_TxAck;
@@ -298,7 +299,7 @@ static bool handleCmdTransaction(slave_result_t *res)
                 }
                 if (cmdElapsedMs() > KbootDriverState.cmdTimeoutMs) {
                     logBuffer("Response(timeout)", rxBuffer, KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE);
-                    cmdAbort("Response timeout");
+                    cmdAbort(ModuleFlashError_ResponseTimeout, "Response timeout");
                     break;
                 }
                 KbootDriverState.phase = KbootCmdPhase_RxResponse;
@@ -380,7 +381,7 @@ static bool handlePing(slave_result_t *res, uint8_t sendPingPhase, uint8_t nextP
             if (KbootDriverState.status == kStatus_Success) {
                 KbootDriverState.phase = sendPingPhase + 2;
             } else if (elapsedMs() > KBOOT_PING_TIMEOUT_MS) {
-                abortFn("Ping timeout");
+                abortFn(ModuleFlashError_PingTimeout, "Ping timeout");
                 break;
             } else {
                 if (shouldLogPing()) {
@@ -404,7 +405,7 @@ static bool handlePing(slave_result_t *res, uint8_t sendPingPhase, uint8_t nextP
                      KbootDriverState.i2cAddress, elapsedMs(), pingAttemptCount);
                 KbootDriverState.phase = nextPhase;
             } else if (elapsedMs() > KBOOT_PING_TIMEOUT_MS) {
-                abortFn("Ping response timeout");
+                abortFn(ModuleFlashError_PingResponseTimeout, "Ping response timeout");
                 break;
             } else {
                 if (shouldLogPing()) {
@@ -574,7 +575,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     KbootDriverState.firmwareData = buf->buffer;
                     KbootDriverState.firmwareSize = ModuleFirmwareValidatedSize;
                     if (KbootDriverState.firmwareSize == 0) {
-                        abortFlash("No validated firmware (size=0)");
+                        abortFlash(ModuleFlashError_NoFirmware, "No validated firmware (size=0)");
                         break;
                     }
                     LogU("Kboot: Firmware ready, %u bytes. Jumping to bootloader\n",
@@ -638,7 +639,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     if (s != kStatus_Success) {
                         LogU("Kboot: Data TX failed (i2c=%d, offset=%u)\n",
                              s, KbootDriverState.firmwareOffset);
-                        abortFlash("Data chunk TX failed");
+                        abortFlash(ModuleFlashError_DataTxFailed, "Data chunk TX failed");
                         break;
                     }
                     KbootDriverState.phase = KbootFlashPhase_DataChunkRxAck;
@@ -692,7 +693,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                         uint32_t respStatus = getResponseStatus();
                         LogU("Kboot: [Write] Final status=0x%x\n", respStatus);
                         if (respStatus != 0) {
-                            abortFlash("WriteMemory data failed");
+                            abortFlash(ModuleFlashError_WriteFailed, "WriteMemory data failed");
                             break;
                         }
                         KbootDriverState.phase = KbootFlashPhase_FinalTxAck;
@@ -702,7 +703,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                         }
                         if (cmdElapsedMs() > KbootDriverState.cmdTimeoutMs) {
                             logBuffer("Final(timeout)", rxBuffer, KBOOT_PACKAGE_LENGTH_GENERIC_RESPONSE);
-                            abortFlash("Final response timeout");
+                            abortFlash(ModuleFlashError_FinalResponseTimeout, "Final response timeout");
                             break;
                         }
                         KbootDriverState.phase = KbootFlashPhase_FinalRxResponse;
