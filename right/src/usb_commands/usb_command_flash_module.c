@@ -29,6 +29,8 @@ void UsbCommand_FlashModule(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
     ModuleFlashState = ModuleFlashState_Erasing;
     KbootDriverState.slotId = slotId;
     KbootDriverState.moduleBootloaderAddress = bootloaderI2cAddress;
+    KbootDriverState.firmwareOffset = 0;
+    KbootDriverState.firmwareSize = 0;
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_Flash;
 }
