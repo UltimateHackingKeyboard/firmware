@@ -533,6 +533,12 @@ static int cmd_uhk_uartStats(const struct shell *shell, size_t argc, char *argv[
     UartBridge_DumpStats();
     return 0;
 }
+
+static int cmd_uhk_uartReset(const struct shell *shell, size_t argc, char *argv[])
+{
+    UartBridge_ResetRx();
+    return 0;
+}
 #endif
 
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
@@ -611,6 +617,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
 #if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
         SHELL_CMD_ARG(uartStats, NULL, "print bridge uart link statistics", cmd_uhk_uartStats, 1, 0),
+        SHELL_CMD_ARG(uartReset, NULL, "restart bridge uart rx", cmd_uhk_uartReset, 1, 0),
 #endif
         SHELL_CMD_ARG(printStatus, NULL, "print the macro status buffer", cmd_uhk_printStatus, 1, 0),
         SHELL_CMD_ARG(recover, NULL, "dump diagnostics into the status buffer and reboot", cmd_uhk_recover, 1, 0),
