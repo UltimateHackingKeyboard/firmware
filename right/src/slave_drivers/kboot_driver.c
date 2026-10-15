@@ -10,6 +10,9 @@
 #include "module_flash.h"
 #include <string.h>
 #include <stdio.h>
+#ifndef __ZEPHYR__
+    #include "i2c_watchdog.h"
+#endif
 
 kboot_driver_state_t KbootDriverState;
 
@@ -35,6 +38,8 @@ static bool shouldLogPing(void)
 #define KBOOT_DEFAULT_I2C_ADDRESS 0x10
 #define KBOOT_DATA_CHUNK_SIZE    32
 #define KBOOT_ERASE_TIMEOUT_MS   30000
+// Upper bound of the module's flash erase; see KbootCmdPhase_WaitForCommand
+#define KBOOT_ERASE_DURATION_MS  750
 #define KBOOT_CMD_TIMEOUT_MS     5000
 #define KBOOT_PROGRESS_LOG_BYTES 8192
 
@@ -75,6 +80,16 @@ static uint32_t cmdElapsedMs(void)
 // Result helpers
 // ---------------------------------------------------------------------------
 
+// Bus resets by the I2C watchdog lose the bytes the module is shifting out, so they are logged.
+static uint32_t i2cWatchdogResets(void)
+{
+#ifdef __ZEPHYR__
+    return 0;
+#else
+    return I2cWatchdog_RecoveryCounter;
+#endif
+}
+
 static slave_result_t holdResult(void)
 {
     return (slave_result_t){ .status = kStatus_Uhk_IdleCycle, .hold = true };
@@ -91,6 +106,7 @@ static char logFmtBuf[200];
 static void logBuffer(const char *label, const uint8_t *buf, uint8_t len)
 {
     int pos = 0;
+    logFmtBuf[0] = '\0';
     for (uint8_t i = 0; i < len && pos < (int)sizeof(logFmtBuf) - 4; i++) {
         pos += snprintf(logFmtBuf + pos, sizeof(logFmtBuf) - pos, " %02x", buf[i]);
     }
@@ -157,6 +173,10 @@ static bool collectPacket(const char *pollLabel, uint8_t length, uint8_t packetT
     while (packetFill >= 2 && packetBuffer[1] != packetType) {
         logBuffer("Unexpected packet start", packetBuffer, packetFill);
         dropPacketStart();
+    }
+
+    if (!readSucceeded) {
+        LogU("Kboot: %s: read failed i2c=%d, i2c watchdog resets %u\n", pollLabel, previousI2cStatus(), i2cWatchdogResets());
     }
 
     bool isComplete = packetFill == length;
@@ -242,7 +262,7 @@ typedef void (*abort_fn_t)(module_flash_error_t, const char *);
 
 static void abortFlash(module_flash_error_t error, const char *reason)
 {
-    LogU("Kboot: ABORT - %s\n", reason);
+    LogU("Kboot: ABORT - %s (i2c watchdog resets %u)\n", reason, i2cWatchdogResets());
     ModuleFlashErrorCode = error;
     ModuleFlashState = ModuleFlashState_Error;
     ModuleFlashBusy = false;
@@ -252,7 +272,7 @@ static void abortFlash(module_flash_error_t error, const char *reason)
 
 static void abortReset(module_flash_error_t error, const char *reason)
 {
-    LogU("Kboot: ABORT - %s\n", reason);
+    LogU("Kboot: ABORT - %s (i2c watchdog resets %u)\n", reason, i2cWatchdogResets());
     KbootDriverState.command = KbootCommand_Idle;
     KbootDriverState.phase = 0;
 }
@@ -302,8 +322,20 @@ static bool handleCmdTransaction(slave_result_t *res)
                 cmdAbort(ModuleFlashError_CommandTxFailed, "Command TX failed");
                 break;
             }
-            KbootDriverState.phase = KbootCmdPhase_RxAck;
+            KbootDriverState.phase = KbootCmdPhase_WaitForCommand;
             *res = holdResult();
+            break;
+        }
+
+        // The bootloader sends the ACK only after executing the command. While it erases, its interrupts are
+        // disabled, so it stretches the clock of any read, the I2C watchdog then resets the bus, and the bytes
+        // shifted out meanwhile are lost. Hence no reads until the erase is surely done.
+        case KbootCmdPhase_WaitForCommand: {
+            bool isErasing = KbootDriverState.cmdId == KbootCmdId_Erase && cmdElapsedMs() < KBOOT_ERASE_DURATION_MS;
+            if (!isErasing) {
+                KbootDriverState.phase = KbootCmdPhase_RxAck;
+                *res = holdResult();
+            }
             break;
         }
 
@@ -314,7 +346,7 @@ static bool handleCmdTransaction(slave_result_t *res)
 
         case KbootCmdPhase_CheckAck: {
             if (collectPacket("ACK poll", KBOOT_PACKAGE_LENGTH_ACK, 0xa1)) {
-                LogU("Kboot: [%s] ACK OK (%ums)\n", cmdName(KbootDriverState.cmdId), cmdElapsedMs());
+                LogU("Kboot: [%s] ACK OK (%ums, i2c watchdog resets %u)\n", cmdName(KbootDriverState.cmdId), cmdElapsedMs(), i2cWatchdogResets());
                 resetPacket();
                 KbootDriverState.phase = KbootCmdPhase_RxResponse;
             } else {
@@ -620,7 +652,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                     KbootDriverState.firmwareOffset = 0;
                     ModuleFlashState = ModuleFlashState_Erasing;
                     buildEraseCommand();
-                    LogU("Kboot: Starting erase\n");
+                    LogU("Kboot: Starting erase (i2c watchdog resets %u)\n", i2cWatchdogResets());
                     startCmdTransaction(KbootCmdId_Erase, KbootFlashPhase_StartWrite, KBOOT_ERASE_TIMEOUT_MS);
                 }
                 break;
@@ -807,7 +839,7 @@ slave_result_t KbootSlaveDriver_Update(uint8_t kbootInstanceId)
                 // ===========================================================
 
                 case KbootFlashPhase_FlashDone:
-                    LogU("Kboot: Flash complete (%dms total)\n", elapsedMs());
+                    LogU("Kboot: Flash complete (%dms total, i2c watchdog resets %u)\n", elapsedMs(), i2cWatchdogResets());
                     ModuleFlashState = ModuleFlashState_Done;
                     ModuleFlashBusy = false;
                     KbootDriverState.command = KbootCommand_Idle;
