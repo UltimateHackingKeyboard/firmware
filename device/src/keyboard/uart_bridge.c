@@ -693,6 +693,15 @@ static void dumpLatency(const char* label, const latency_stats_t* s) {
         (unsigned)s->hist[0], (unsigned)s->hist[1], (unsigned)s->hist[2], (unsigned)s->hist[3], (unsigned)s->hist[4]);
 }
 
+void UartBridge_ResetRx(void) {
+    uart_state_t *uartState = &bridgeState;
+    if (uartState->core.device == NULL) {
+        LogU("Uart bridge: no bridge uart on this routing\n");
+        return;
+    }
+    UartLink_Reset(&uartState->core);
+}
+
 void UartBridge_DumpStats(void) {
     uart_state_t *uartState = &bridgeState;
     uart_link_t *core = &uartState->core;
