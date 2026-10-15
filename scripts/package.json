@@ -19,7 +19,7 @@
     "shelljs": "^0.8.4"
   },
   "firmwareVersion": "18.0.4",
-  "deviceProtocolVersion": "4.20.0",
+  "deviceProtocolVersion": "4.21.0",
   "moduleProtocolVersion": "4.3.0",
   "dongleProtocolVersion": "2.0.0",
   "userConfigVersion": "15.0.0",
