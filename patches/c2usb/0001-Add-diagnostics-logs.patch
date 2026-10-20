@@ -1,16 +1,16 @@
-From cc50da82ff470b268b4d0f775a15ce7e9a8e500c Mon Sep 17 00:00:00 2001
+From 6288efc0c8aff6cd2158f2b9e0757056aead2444 Mon Sep 17 00:00:00 2001
 From: Karel Tucek <kareltucek@centrum.cz>
 Date: Sat, 11 Jul 2026 13:05:57 +0200
 Subject: [PATCH] Add diagnostics logs.
 
 ---
  c2usb/CMakeLists.txt                   |   1 +
- c2usb/usb/df/device.cpp                |   3 +
- c2usb/usb/df/mac_diag.cpp              | 191 +++++++++++++++++++++++++
- c2usb/usb/df/mac_diag.hpp              |  84 +++++++++++
- c2usb/usb/df/vendor/nxp/mcux_mac.cpp   |  43 +++++-
- c2usb/usb/df/vendor/zephyr/udc_mac.cpp |  62 ++++++++
- 6 files changed, 382 insertions(+), 2 deletions(-)
+ c2usb/usb/df/mac.cpp                   |  16 +-
+ c2usb/usb/df/mac_diag.cpp              | 455 +++++++++++++++++++++++++
+ c2usb/usb/df/mac_diag.hpp              |  84 +++++
+ c2usb/usb/df/vendor/nxp/mcux_mac.cpp   |  43 ++-
+ c2usb/usb/df/vendor/zephyr/udc_mac.cpp |  62 ++++
+ 6 files changed, 655 insertions(+), 6 deletions(-)
  create mode 100644 c2usb/usb/df/mac_diag.cpp
  create mode 100644 c2usb/usb/df/mac_diag.hpp
 
@@ -26,39 +26,72 @@ index 9f4874e..3cd72f2 100644
              usb/df/message.cpp
              usb/standard/descriptors.cpp
              usb/serial_buffer.cpp
-diff --git a/c2usb/usb/df/device.cpp b/c2usb/usb/df/device.cpp
-index 9bc8841..b66de8b 100644
---- a/c2usb/usb/df/device.cpp
-+++ b/c2usb/usb/df/device.cpp
-@@ -2,6 +2,8 @@
+diff --git a/c2usb/usb/df/mac.cpp b/c2usb/usb/df/mac.cpp
+index 68c9090..470257b 100644
+--- a/c2usb/usb/df/mac.cpp
++++ b/c2usb/usb/df/mac.cpp
+@@ -2,6 +2,7 @@
+ #include "usb/df/mac.hpp"
  #include "usb/df/device.hpp"
  #include "usb/df/function.hpp"
- #include "usb/standard/descriptors.hpp"
-+// UHK patch: anomaly diagnostics, see usb/df/mac_diag.hpp.
 +#include "usb/df/mac_diag.hpp"
+ #include "usb/standard/requests.hpp"
  
- using namespace magic_enum::bitwise_operators;
+ namespace usb::df
+@@ -89,23 +90,30 @@ void mac::set_config(config::view config)
  
-@@ -171,6 +173,7 @@ void device::set_configuration(message& msg)
-         }
+ usb::result mac::remote_wakeup()
+ {
++    const auto finish = [](usb::result result)
++    {
++        diag::remote_wakeup_result(result.to_int());
++        return result;
++    };
+     if (!std_status().remote_wakeup)
+     {
+-        return usb::result::operation_not_permitted;
++        return finish(usb::result::operation_not_permitted);
      }
+     if (power_state() == power::state::L0_ON)
+     {
+-        return usb::result::already_connected;
++        return finish(usb::result::already_connected);
+     }
+     if (power_state() == power::state::L3_OFF)
+     {
+-        return usb::result::not_connected;
++        return finish(usb::result::not_connected);
+     }
+-    return signal_remote_wakeup();
++    return finish(signal_remote_wakeup());
+ }
  
-+    diag::bus(config_index ? diag::bus_event::SET_CONFIG : diag::bus_event::DECONFIG);
-     set_configuration(config);
- 
-     return msg.confirm();
+ transfer mac::control_ep_setup()
+ {
++    diag::control_setup(request().bmRequestType, request().bRequest,
++                        static_cast<uint16_t>(request().wValue));
+     ctrl_msg_.set_pending();
+     dev_if_->on_control_setup(ctrl_msg_);
+     assert(!ctrl_msg_.pending_);
 diff --git a/c2usb/usb/df/mac_diag.cpp b/c2usb/usb/df/mac_diag.cpp
 new file mode 100644
-index 0000000..243d1ed
+index 0000000..c3461e6
 --- /dev/null
 +++ b/c2usb/usb/df/mac_diag.cpp
-@@ -0,0 +1,191 @@
+@@ -0,0 +1,455 @@
 +/// @file
 +///
 +/// UHK patch: port-agnostic MAC anomaly diagnostics, see mac_diag.hpp.
 +///
 +#include "usb/df/mac_diag.hpp"
++#include <cstddef>
 +#include "usb/df/mac.hpp"
++
++#ifdef __ZEPHYR__
++#include <zephyr/kernel.h>
++#else
++#include <fsl_common.h>
++#endif
 +
 +extern "C" __attribute__((weak)) void c2usb_log(const char*, ...) {}
 +extern "C" __attribute__((weak)) uint32_t c2usb_diag_time_ms(void)
@@ -74,6 +107,21 @@ index 0000000..243d1ed
 +const char* const category_names[diag::CATEGORY_COUNT] = {
 +    "enqueue fail", "EP error",       "ctrl error",      "ctrl stall",
 +    "evt dropped",  "EP busy reject", "no-power reject",
++};
++
++enum class event_type : uint8_t
++{
++    BUS,
++    CONTROL_SETUP,
++    ENQUEUE_FAIL,
++    EP_ERROR,
++    CTRL_ERROR,
++    CTRL_STALL,
++    EVENT_DROPPED,
++    EP_BUSY,
++    EP_NO_POWER,
++    EP_SUCCESS,
++    REMOTE_WAKEUP_RESULT,
 +};
 +
 +struct diag_stat
@@ -93,17 +141,144 @@ index 0000000..243d1ed
 +};
 +
 +constexpr size_t BUS_RING_SIZE = 16;
++constexpr size_t EVENT_RING_SIZE = 64;
++constexpr size_t EVENT_DUMP_SIZE = 16;
++constexpr size_t DATA_EP_COUNT = 30;
 +
-+struct
++struct diag_event
++{
++    uint32_t time;
++    uint32_t sequence;
++    int32_t value;
++    uint8_t type;
++    uint8_t ep;
++    uint8_t detail0;
++    uint8_t detail1;
++};
++
++struct diag_ep_success
++{
++    uint32_t count;
++    uint32_t last_time;
++};
++
++struct diag_state
 +{
 +    diag_stat stats[diag::CATEGORY_COUNT];
 +    diag_bus_entry bus_ring[BUS_RING_SIZE];
++    diag_event event_ring[EVENT_RING_SIZE];
++    diag_ep_success ep_success[DATA_EP_COUNT];
 +    uint8_t bus_ring_next;
++    uint8_t event_ring_next;
++    uint8_t event_count;
++    uint32_t event_sequence;
++    uint32_t event_overwritten;
++    bool event_activity_since_success;
 +    uint32_t last_ok_time;
 +    uint8_t last_ok_ep;
 +    uint32_t ok_count;
 +    mac* mac_;
-+} state;
++};
++
++#ifdef __ZEPHYR__
++static k_spinlock state_lock;
++
++class state_guard
++{
++  public:
++    state_guard()
++        : key_(k_spin_lock(&state_lock))
++    {}
++    ~state_guard() { k_spin_unlock(&state_lock, key_); }
++    state_guard(const state_guard&) = delete;
++    state_guard& operator=(const state_guard&) = delete;
++    state_guard(state_guard&&) = delete;
++    state_guard& operator=(state_guard&&) = delete;
++
++  private:
++    k_spinlock_key_t key_;
++};
++#else
++class state_guard
++{
++  public:
++    state_guard()
++        : primask_(__get_PRIMASK())
++    {
++        __disable_irq();
++    }
++    ~state_guard()
++    {
++        if (primask_ == 0)
++        {
++            __enable_irq();
++        }
++    }
++    state_guard(const state_guard&) = delete;
++    state_guard& operator=(const state_guard&) = delete;
++    state_guard(state_guard&&) = delete;
++    state_guard& operator=(state_guard&&) = delete;
++
++  private:
++    uint32_t primask_;
++};
++#endif
++
++diag_state state{};
++
++void append_event(event_type type, uint8_t ep, uint8_t detail0, uint8_t detail1, int32_t value,
++                  uint32_t time)
++{
++    state.event_ring[state.event_ring_next] = {
++        time, ++state.event_sequence, value, static_cast<uint8_t>(type), ep, detail0, detail1};
++    state.event_ring_next = (state.event_ring_next + 1) % EVENT_RING_SIZE;
++    if (state.event_count < EVENT_RING_SIZE)
++    {
++        state.event_count++;
++    }
++    else
++    {
++        state.event_overwritten++;
++    }
++}
++
++event_type event_type_for(diag::category cat)
++{
++    switch (cat)
++    {
++    case diag::ENQUEUE_FAIL:
++        return event_type::ENQUEUE_FAIL;
++    case diag::EP_ERROR:
++        return event_type::EP_ERROR;
++    case diag::CTRL_ERROR:
++        return event_type::CTRL_ERROR;
++    case diag::CTRL_STALL:
++        return event_type::CTRL_STALL;
++    case diag::EVENT_DROPPED:
++        return event_type::EVENT_DROPPED;
++    case diag::EP_BUSY:
++        return event_type::EP_BUSY;
++    case diag::EP_NO_POWER:
++        return event_type::EP_NO_POWER;
++    default:
++        return event_type::EP_ERROR;
++    }
++}
++
++int endpoint_index(uint8_t ep)
++{
++    const uint8_t number = ep & 0x0F;
++    if (number == 0 or (ep & 0x70) != 0)
++    {
++        return -1;
++    }
++    return ((ep & 0x80) ? 15 : 0) + number - 1;
++}
++
++uint8_t endpoint_address(size_t index)
++{
++    return index < 15 ? static_cast<uint8_t>(index + 1) : static_cast<uint8_t>(0x80 + index - 14);
++}
 +
 +const char* bus_name(diag::bus_event type)
 +{
@@ -123,10 +298,33 @@ index 0000000..243d1ed
 +        return "vbus-off";
 +    case diag::bus_event::ERROR:
 +        return "error";
-+    case diag::bus_event::SET_CONFIG:
-+        return "set-config";
-+    case diag::bus_event::DECONFIG:
-+        return "deconfig";
++    default:
++        return "?";
++    }
++}
++
++const char* event_name(event_type type)
++{
++    switch (type)
++    {
++    case event_type::ENQUEUE_FAIL:
++        return "enqueue-fail";
++    case event_type::EP_ERROR:
++        return "ep-error";
++    case event_type::CTRL_ERROR:
++        return "ctrl-error";
++    case event_type::CTRL_STALL:
++        return "ctrl-stall";
++    case event_type::EVENT_DROPPED:
++        return "event-dropped";
++    case event_type::EP_BUSY:
++        return "ep-busy";
++    case event_type::EP_NO_POWER:
++        return "ep-no-power";
++    case event_type::EP_SUCCESS:
++        return "ep-ok-after-anomaly";
++    case event_type::REMOTE_WAKEUP_RESULT:
++        return "wakeup-result";
 +    default:
 +        return "?";
 +    }
@@ -154,19 +352,36 @@ index 0000000..243d1ed
 +{
 +void record(category cat, uint8_t ep, int err)
 +{
++    state_guard guard;
 +    auto& s = state.stats[cat];
 +    s.total++;
 +    s.since_ok++;
 +    s.last_time = c2usb_diag_time_ms();
 +    s.last_err = err;
 +    s.last_ep = ep;
++    state.event_activity_since_success = true;
++    append_event(event_type_for(cat), ep, 0, 0, err, s.last_time);
 +}
 +
 +void success(uint8_t ep)
 +{
++    state_guard guard;
++    const uint32_t now = c2usb_diag_time_ms();
++    const bool recovery = state.event_activity_since_success;
 +    state.ok_count++;
-+    state.last_ok_time = c2usb_diag_time_ms();
++    state.last_ok_time = now;
 +    state.last_ok_ep = ep;
++    if (int index = endpoint_index(ep); index >= 0)
++    {
++        auto& endpoint = state.ep_success[index];
++        endpoint.count++;
++        endpoint.last_time = now;
++    }
++    if (recovery)
++    {
++        append_event(event_type::EP_SUCCESS, ep, 0, 0, 0, now);
++    }
++    state.event_activity_since_success = false;
 +    for (auto& s : state.stats)
 +    {
 +        s.since_ok = 0;
@@ -175,25 +390,48 @@ index 0000000..243d1ed
 +
 +void bus(bus_event event)
 +{
++    state_guard guard;
++    const uint32_t now = c2usb_diag_time_ms();
 +    auto& last = state.bus_ring[(state.bus_ring_next + BUS_RING_SIZE - 1) % BUS_RING_SIZE];
 +    if (last.count and (last.type == event))
 +    {
 +        last.count++;
-+        last.time = c2usb_diag_time_ms();
-+        return;
++        last.time = now;
 +    }
-+    state.bus_ring[state.bus_ring_next] = {c2usb_diag_time_ms(), 1, event};
-+    state.bus_ring_next = (state.bus_ring_next + 1) % BUS_RING_SIZE;
++    else
++    {
++        state.bus_ring[state.bus_ring_next] = {now, 1, event};
++        state.bus_ring_next = (state.bus_ring_next + 1) % BUS_RING_SIZE;
++    }
++    append_event(event_type::BUS, 0, static_cast<uint8_t>(event), 0, 0, now);
++    state.event_activity_since_success = true;
++}
++
++void control_setup(uint8_t bm_request_type, uint8_t b_request, uint16_t w_value)
++{
++    state_guard guard;
++    append_event(event_type::CONTROL_SETUP, 0, bm_request_type, b_request, w_value,
++                 c2usb_diag_time_ms());
++    state.event_activity_since_success = true;
++}
++
++void remote_wakeup_result(int err)
++{
++    state_guard guard;
++    append_event(event_type::REMOTE_WAKEUP_RESULT, 0, 0, 0, err, c2usb_diag_time_ms());
++    state.event_activity_since_success = true;
 +}
 +
 +void set_mac(mac* m)
 +{
++    state_guard guard;
 +    state.mac_ = m;
 +}
 +} // namespace usb::df::diag
 +
 +extern "C" void c2usb_diag_reset(void)
 +{
++    state_guard guard;
 +    auto* mac_ = state.mac_;
 +    state = {};
 +    state.mac_ = mac_;
@@ -201,7 +439,12 @@ index 0000000..243d1ed
 +
 +extern "C" void c2usb_diag_dump(void)
 +{
-+    auto* mac_ = state.mac_;
++    diag_state snapshot;
++    {
++        state_guard guard;
++        snapshot = state;
++    }
++    auto* mac_ = snapshot.mac_;
 +    uint32_t now = c2usb_diag_time_ms();
 +
 +    c2usb_log("c2usb diag (t=%u ms):\n", (unsigned)now);
@@ -215,10 +458,10 @@ index 0000000..243d1ed
 +        c2usb_log("  no MAC instance\n");
 +    }
 +    c2usb_diag_dump_port();
-+    if (state.ok_count)
++    if (snapshot.ok_count)
 +    {
-+        c2usb_log("  last ok transfer: EP %02x, %u ms ago (%u total)\n", state.last_ok_ep,
-+                  (unsigned)(now - state.last_ok_time), (unsigned)state.ok_count);
++        c2usb_log("  last ok transfer: EP %02x, %u ms ago (%u total)\n", snapshot.last_ok_ep,
++                  (unsigned)(now - snapshot.last_ok_time), (unsigned)snapshot.ok_count);
 +    }
 +    else
 +    {
@@ -226,7 +469,7 @@ index 0000000..243d1ed
 +    }
 +    for (uint8_t i = 0; i < diag::CATEGORY_COUNT; i++)
 +    {
-+        const auto& s = state.stats[i];
++        const auto& s = snapshot.stats[i];
 +        if (s.total)
 +        {
 +            c2usb_log("  %s: total=%u sinceOk=%u, last: EP %02x err=%d %u ms ago\n",
@@ -234,19 +477,66 @@ index 0000000..243d1ed
 +                      s.last_err, (unsigned)(now - s.last_time));
 +        }
 +    }
++    for (size_t i = 0; i < DATA_EP_COUNT; ++i)
++    {
++        const auto& endpoint = snapshot.ep_success[i];
++        if (endpoint.count)
++        {
++            c2usb_log("  EP %02x successful transfers: %u, last %u ms ago\n", endpoint_address(i),
++                      (unsigned)endpoint.count, (unsigned)(now - endpoint.last_time));
++        }
++    }
 +    for (size_t i = 0; i < BUS_RING_SIZE; i++)
 +    {
-+        const auto& e = state.bus_ring[(state.bus_ring_next + i) % BUS_RING_SIZE];
++        const auto& e = snapshot.bus_ring[(snapshot.bus_ring_next + i) % BUS_RING_SIZE];
 +        if (e.count)
 +        {
 +            c2usb_log("  bus event: %s x%u, last %u ms ago\n", bus_name(e.type), (unsigned)e.count,
 +                      (unsigned)(now - e.time));
 +        }
 +    }
++    const size_t event_dump_count = std::min<size_t>(snapshot.event_count, EVENT_DUMP_SIZE);
++    c2usb_log("  event journal: %u retained, showing %u, %u overwritten\n", snapshot.event_count,
++              (unsigned)event_dump_count, (unsigned)snapshot.event_overwritten);
++    const size_t first =
++        (snapshot.event_ring_next + EVENT_RING_SIZE - event_dump_count) % EVENT_RING_SIZE;
++    for (size_t i = 0; i < event_dump_count; ++i)
++    {
++        const auto& event = snapshot.event_ring[(first + i) % EVENT_RING_SIZE];
++        const auto type = static_cast<event_type>(event.type);
++        const auto age = (unsigned)(now - event.time);
++        if (type == event_type::BUS)
++        {
++            c2usb_log("    #%u +%u ms bus %s\n", (unsigned)event.sequence, age,
++                      bus_name(static_cast<diag::bus_event>(event.detail0)));
++        }
++        else if (type == event_type::CONTROL_SETUP)
++        {
++            c2usb_log("    #%u +%u ms setup bm=%02x req=%02x wValue=%04x\n",
++                      (unsigned)event.sequence, age, event.detail0, event.detail1,
++                      (unsigned)event.value);
++        }
++        else
++        {
++            c2usb_log("    #%u +%u ms %s", (unsigned)event.sequence, age, event_name(type));
++            if (type == event_type::EP_SUCCESS)
++            {
++                c2usb_log(" ep=%02x\n", event.ep);
++            }
++            else if (type == event_type::REMOTE_WAKEUP_RESULT)
++            {
++                c2usb_log(" err=%d\n", event.value);
++            }
++            else
++            {
++                c2usb_log(" ep=%02x value=%d\n", event.ep, event.value);
++            }
++        }
++    }
 +}
 diff --git a/c2usb/usb/df/mac_diag.hpp b/c2usb/usb/df/mac_diag.hpp
 new file mode 100644
-index 0000000..d240521
+index 0000000..20b57ee
 --- /dev/null
 +++ b/c2usb/usb/df/mac_diag.hpp
 @@ -0,0 +1,84 @@
@@ -320,14 +610,14 @@ index 0000000..d240521
 +    VBUS_ON,
 +    VBUS_OFF,
 +    ERROR,
-+    SET_CONFIG,   // host-initiated SET_CONFIGURATION with a nonzero config
-+    DECONFIG,     // host-initiated SET_CONFIGURATION 0 (configuration cleared)
 +};
 +
 +// all callable from any context including ISR - they must not log
 +void record(category cat, uint8_t ep, int err);
 +void success(uint8_t ep);
 +void bus(bus_event event);
++void control_setup(uint8_t bm_request_type, uint8_t b_request, uint16_t w_value);
++void remote_wakeup_result(int err);
 +void set_mac(mac* m);
 +} // namespace diag
 +} // namespace usb::df
