@@ -1,31 +1,20 @@
-From 6288efc0c8aff6cd2158f2b9e0757056aead2444 Mon Sep 17 00:00:00 2001
+From 6317717014d505488061e012b34266792b6882fc Mon Sep 17 00:00:00 2001
 From: Karel Tucek <kareltucek@centrum.cz>
 Date: Sat, 11 Jul 2026 13:05:57 +0200
 Subject: [PATCH] Add diagnostics logs.
 
 ---
- c2usb/CMakeLists.txt                   |   1 +
- c2usb/usb/df/mac.cpp                   |  16 +-
- c2usb/usb/df/mac_diag.cpp              | 455 +++++++++++++++++++++++++
- c2usb/usb/df/mac_diag.hpp              |  84 +++++
- c2usb/usb/df/vendor/nxp/mcux_mac.cpp   |  43 ++-
- c2usb/usb/df/vendor/zephyr/udc_mac.cpp |  62 ++++
- 6 files changed, 655 insertions(+), 6 deletions(-)
+ c2usb/usb/df/mac.cpp                      |  16 +-
+ c2usb/usb/df/mac_diag.cpp                 | 454 ++++++++++++++++++++++
+ c2usb/usb/df/mac_diag.hpp                 |  84 ++++
+ c2usb/usb/df/vendor/nxp/CMakeLists.txt    |   1 +
+ c2usb/usb/df/vendor/nxp/mcux_mac.cpp      |  43 +-
+ c2usb/usb/df/vendor/zephyr/CMakeLists.txt |   1 +
+ c2usb/usb/df/vendor/zephyr/udc_mac.cpp    |  62 +++
+ 7 files changed, 655 insertions(+), 6 deletions(-)
  create mode 100644 c2usb/usb/df/mac_diag.cpp
  create mode 100644 c2usb/usb/df/mac_diag.hpp
 
-diff --git a/c2usb/CMakeLists.txt b/c2usb/CMakeLists.txt
-index 9f4874e..3cd72f2 100644
---- a/c2usb/CMakeLists.txt
-+++ b/c2usb/CMakeLists.txt
-@@ -101,6 +101,7 @@ if(CONFIG_C2USB_DF)
-             usb/df/device.cpp
-             usb/df/function.cpp
-             usb/df/mac.cpp
-+            usb/df/mac_diag.cpp
-             usb/df/message.cpp
-             usb/standard/descriptors.cpp
-             usb/serial_buffer.cpp
 diff --git a/c2usb/usb/df/mac.cpp b/c2usb/usb/df/mac.cpp
 index 68c9090..470257b 100644
 --- a/c2usb/usb/df/mac.cpp
@@ -75,10 +64,10 @@ index 68c9090..470257b 100644
      assert(!ctrl_msg_.pending_);
 diff --git a/c2usb/usb/df/mac_diag.cpp b/c2usb/usb/df/mac_diag.cpp
 new file mode 100644
-index 0000000..c3461e6
+index 0000000..7ac5d9b
 --- /dev/null
 +++ b/c2usb/usb/df/mac_diag.cpp
-@@ -0,0 +1,455 @@
+@@ -0,0 +1,454 @@
 +/// @file
 +///
 +/// UHK patch: port-agnostic MAC anomaly diagnostics, see mac_diag.hpp.
@@ -86,7 +75,6 @@ index 0000000..c3461e6
 +#include "usb/df/mac_diag.hpp"
 +#include <cstddef>
 +#include "usb/df/mac.hpp"
-+
 +#ifdef __ZEPHYR__
 +#include <zephyr/kernel.h>
 +#else
@@ -624,6 +612,18 @@ index 0000000..20b57ee
 +#endif
 +
 +#endif // __USB_DF_MAC_DIAG_HPP_
+diff --git a/c2usb/usb/df/vendor/nxp/CMakeLists.txt b/c2usb/usb/df/vendor/nxp/CMakeLists.txt
+index 4b5cbc7..c92a599 100644
+--- a/c2usb/usb/df/vendor/nxp/CMakeLists.txt
++++ b/c2usb/usb/df/vendor/nxp/CMakeLists.txt
+@@ -6,6 +6,7 @@ if(CONFIG_C2USB_MCUX_MAC)
+     target_sources(${MCUX_SDK_PROJECT_NAME}
+         PRIVATE
+             mcux_mac.cpp
++            ../../mac_diag.cpp
+     )
+     if(NOT DEFINED CONFIG_C2USB_MCUX_USB_COEXISTENCE)
+         # since MCUX_COMPONENT_middleware.usb.device.controller.driver cannot be disabled
 diff --git a/c2usb/usb/df/vendor/nxp/mcux_mac.cpp b/c2usb/usb/df/vendor/nxp/mcux_mac.cpp
 index b5a0fdf..bafd44a 100644
 --- a/c2usb/usb/df/vendor/nxp/mcux_mac.cpp
@@ -766,6 +766,18 @@ index b5a0fdf..bafd44a 100644
          break;
  #endif
      case kUSB_DeviceNotifyNoop:
+diff --git a/c2usb/usb/df/vendor/zephyr/CMakeLists.txt b/c2usb/usb/df/vendor/zephyr/CMakeLists.txt
+index 50b20d8..1d33864 100644
+--- a/c2usb/usb/df/vendor/zephyr/CMakeLists.txt
++++ b/c2usb/usb/df/vendor/zephyr/CMakeLists.txt
+@@ -3,6 +3,7 @@
+ target_sources_ifdef(CONFIG_C2USB_UDC_MAC c2usb
+     PRIVATE
+         udc_mac.cpp
++        ../../mac_diag.cpp
+ )
+ target_sources_ifdef(CONFIG_C2USB_SHELL_BACKEND c2usb
+     PRIVATE
 diff --git a/c2usb/usb/df/vendor/zephyr/udc_mac.cpp b/c2usb/usb/df/vendor/zephyr/udc_mac.cpp
 index a256906..aa4b95d 100644
 --- a/c2usb/usb/df/vendor/zephyr/udc_mac.cpp
