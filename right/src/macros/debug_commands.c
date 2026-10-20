@@ -152,6 +152,7 @@ extern void c2usb_diag_dump(void);
 #ifdef __ZEPHYR__
 #include <zephyr/kernel.h>
 #include <stdio.h>
+#include <nrfx.h>
 
 extern k_tid_t Main_ThreadId;
 
@@ -188,19 +189,35 @@ static void dumpMainThread(void) {
         LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "%s\n", line);
     }
 }
+
+// Raw USBD/POWER state. The nRF52840 can't read the D+/D- levels; framecntr advances only
+// while the host sends SOFs.
+static void dumpUsbdRegisters(void) {
+    uint32_t regStatus = NRF_POWER->USBREGSTATUS;
+
+    LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "usbd regs: enable=%d pullup=%d lowpower=%d addr=%d eventcause=%x framecntr=%d\n",
+            NRF_USBD->ENABLE, NRF_USBD->USBPULLUP, NRF_USBD->LOWPOWER, NRF_USBD->USBADDR, NRF_USBD->EVENTCAUSE, NRF_USBD->FRAMECNTR);
+    LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "  vbusdetect=%d outputrdy=%d\n", regStatus & 1, (regStatus >> 1) & 1);
+}
 #endif
 
-void Macros_RecoverDiagnostics(void)
+void Macros_DumpDiagnostics(void)
 {
-    Macros_ProcessClearStatusCommand(true);
 #ifdef __ZEPHYR__
     dumpMainThread();
+    dumpUsbdRegisters();
 #endif
     c2usb_diag_dump();
     Hid_DumpTransportState();
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
     UartBridge_DumpStats();
 #endif
+}
+
+void Macros_RecoverDiagnostics(void)
+{
+    Macros_ProcessClearStatusCommand(true);
+    Macros_DumpDiagnostics();
     Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
     StateWormhole.persistStatusBuffer = true;
     Reboot(false);
