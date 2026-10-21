@@ -1884,7 +1884,6 @@ static macro_result_t processProgressHueCommand()
     }
 
     Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return MacroResult_Finished;
 #undef C
 }

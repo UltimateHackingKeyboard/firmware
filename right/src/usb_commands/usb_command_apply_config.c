@@ -63,7 +63,6 @@ static uint8_t validateConfigAndSwapBuffers(uint8_t *GenericHidInBuffer) {
 static void setLedsWhite() {
     // Set the led test backlight mode, but don't activate the switch test mode.
     Ledmap_SetLedBacklightingMode(BacklightingMode_LightAll);
-    EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
 static bool hwConfigEmpty() {

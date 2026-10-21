@@ -1,5 +1,4 @@
 #include "config_manager.h"
-#include "event_scheduler.h"
 #include <string.h>
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
@@ -324,6 +323,5 @@ void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks) {
 #endif
     if (updateLeds) {
         Ledmap_SetLedBacklightingMode(Cfg.BacklightingMode);
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
     }
 }
