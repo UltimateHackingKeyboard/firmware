@@ -141,7 +141,7 @@ static void startTest(const test_t *test, const test_module_t *module) {
     }
 
     Macros_StopAllMacros();
-    ConfigManager_ResetConfiguration(false, false);
+    ConfigManager_ResetConfiguration(false, false, false);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
     if (!isRerunning) {
@@ -307,7 +307,7 @@ static void finishSuite(void) {
     }
     LogU("[TEST] ----------------------\n");
     TestHooks_Active = false;
-    ConfigManager_ResetConfiguration(false, false);
+    ConfigManager_ResetConfiguration(true, true, true);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
 }

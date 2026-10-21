@@ -1904,7 +1904,7 @@ static macro_result_t processResetConfigurationCommand(parser_context_t* ctx)
         return MacroResult_Finished;
     }
 
-    ConfigManager_ResetConfiguration(true, true);
+    ConfigManager_ResetConfiguration(true, true, true);
     return MacroResult_Finished;
 }
 
