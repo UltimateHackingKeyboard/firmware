@@ -1,4 +1,4 @@
-From 5e92c6d9d3af3f864523ba1c3b16c3b9e7e91f39 Mon Sep 17 00:00:00 2001
+From 644228a65e69b2980e47a7c3aa76855a8b6a02da Mon Sep 17 00:00:00 2001
 From: Benedek Kupper <kupper.benedek@gmail.com>
 Date: Tue, 9 Jul 2024 22:32:55 +0200
 Subject: [PATCH] Remove __ASSERT() build warning
@@ -8,10 +8,10 @@ Subject: [PATCH] Remove __ASSERT() build warning
  1 file changed, 1 deletion(-)
 
 diff --git a/CMakeLists.txt b/CMakeLists.txt
-index 10196c435..a934cf0ba 100644
+index 7dfdaebe1e3..925c3d77dd0 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1954,7 +1954,6 @@ add_subdirectory(cmake/reports)
+@@ -2347,7 +2347,6 @@ add_subdirectory(cmake/reports)
  
  if(NOT CONFIG_TEST)
  if(CONFIG_ASSERT AND (NOT CONFIG_FORCE_NO_ASSERT))
@@ -20,5 +20,5 @@ index 10196c435..a934cf0ba 100644
  endif()
  
 -- 
-2.44.0
+2.43.0
 
