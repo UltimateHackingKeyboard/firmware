@@ -507,6 +507,26 @@ navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx)
 }
 
 
+touchpad_drag_style_t ConsumeTouchpadDragStyle(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "tapAndHold")) {
+        return TouchpadDragStyle_TapAndHold;
+    }
+    else if (ConsumeToken(ctx, "doubleTapAndHold")) {
+        return TouchpadDragStyle_DoubleTapAndHold;
+    }
+    else if (ConsumeToken(ctx, "eitherTapAndHold")) {
+        return TouchpadDragStyle_EitherTapAndHold;
+    }
+    else if (ConsumeToken(ctx, "none")) {
+        return TouchpadDragStyle_None;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return TouchpadDragStyle_EitherTapAndHold;
+    }
+}
+
 secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "primary")) {

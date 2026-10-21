@@ -39,6 +39,13 @@
         NavigationMode_RemappableCount = NavigationMode_RemappableLast - NavigationMode_RemappableFirst + 1,
     } navigation_mode_t;
 
+    typedef enum {
+        TouchpadDragStyle_None = 0,
+        TouchpadDragStyle_TapAndHold = 1,
+        TouchpadDragStyle_DoubleTapAndHold = 2,
+        TouchpadDragStyle_EitherTapAndHold = TouchpadDragStyle_TapAndHold | TouchpadDragStyle_DoubleTapAndHold,
+    } touchpad_drag_style_t;
+
     typedef struct {
         // working 'cache'
         float currentSpeed; // px/ms
