@@ -90,7 +90,7 @@ jobs:
           retention-days: 90
 
       - name: Run build-archiver
-        uses: UltimateHackingKeyboard/build-archiver@v0.0.9
+        uses: UltimateHackingKeyboard/build-archiver@v0.0.10
         if: github.repository == 'UltimateHackingKeyboard/firmware' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
         with:
           FILE_PATTERN: "firmware/scripts/uhk-firmware-*.tar.gz"
