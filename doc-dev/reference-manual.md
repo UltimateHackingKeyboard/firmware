@@ -150,6 +150,8 @@ COMMAND = set module.MODULEID.invertScrollDirectionY BOOL
 COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
 COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
 COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
+COMMAND = set module.touchpad.dragStyle { tapAndHold | doubleTapAndHold | eitherTapAndHold | none }
+COMMAND = set module.touchpad.doubleTapAndHold.timeout <0-65535 (INT)>
 COMMAND = set secondaryRole.defaultStrategy { simple | advanced }
 COMMAND = set secondaryRole.advanced.timeout <ms, 0-500 (INT)>
 COMMAND = set secondaryRole.advanced.timeoutAction { primary | secondary | none }
@@ -717,6 +719,12 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
   - `caretAxisLock BOOL` - turns axis locking on for all discrete modes.
 
 - `set module.touchpad.holdContinuationTimeout <0-65535 (INT)>` If non-zero, touchpad allows you to release your finger for the specified amount of time during drag-and-drop (without the left click getting released).
+- `set module.touchpad.dragStyle { tapAndHold | doubleTapAndHold | eitherTapAndHold | none }` determines which gestures start drag-and-drop (i.e., keep the left click pressed while the finger moves). Default is `eitherTapAndHold`.
+  - `tapAndHold` - touch and keep the finger still until the touchpad recognizes the hold gesture.
+  - `doubleTapAndHold` - tap and touch again within `doubleTapAndHold.timeout`.
+  - `eitherTapAndHold` - both of the above.
+  - `none` - tap-to-drag is disabled. Taps still produce clicks.
+- `set module.touchpad.doubleTapAndHold.timeout <0-65535 (INT)>` (default: 200) - maximum delay in ms between a tap and the next touch for the touch to be recognized as a double-tap-and-hold. This is also how long the left click is held after a tap.
 
 - Remapping keys:
   - `set navigationModeAction.{caret|media}.{DIRECTION|none} ACTION` can be used to customize the caret or media mode behaviour by binding directions to macros. This action is global and reversible only by powercycling.

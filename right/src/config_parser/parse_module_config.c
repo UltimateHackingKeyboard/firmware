@@ -69,12 +69,34 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
                         case SerializedModuleProperty_Touchpad_PinchZoomSpeedDivisor:
                             moduleConfiguration->pinchZoomSpeedDivisor = ReadUInt16(buffer);
                             break;
-                        case SerializedModuleProperty_Touchpad_PinchZoomMode:
-                            Cfg.TouchpadPinchZoomMode = ReadUInt8(buffer);
+                        case SerializedModuleProperty_Touchpad_PinchZoomMode: {
+                            uint8_t pinchZoomMode = ReadUInt8(buffer);
+                            if (!ParserRunDry) {
+                                Cfg.TouchpadPinchZoomMode = pinchZoomMode;
+                            }
                             break;
-                        case SerializedModuleProperty_Touchpad_HoldContinuationTimeout:
-                            Cfg.HoldContinuationTimeout = ReadUInt16(buffer);
+                        }
+                        case SerializedModuleProperty_Touchpad_HoldContinuationTimeout: {
+                            uint16_t holdContinuationTimeout = ReadUInt16(buffer);
+                            if (!ParserRunDry) {
+                                Cfg.HoldContinuationTimeout = holdContinuationTimeout;
+                            }
                             break;
+                        }
+                        case SerializedModuleProperty_Touchpad_DragStyle: {
+                            uint8_t dragStyle = ReadUInt8(buffer);
+                            if (!ParserRunDry) {
+                                Cfg.TouchpadDragStyle = dragStyle;
+                            }
+                            break;
+                        }
+                        case SerializedModuleProperty_Touchpad_DoubleTapAndHoldTimeout: {
+                            uint16_t doubleTapAndHoldTimeout = ReadUInt16(buffer);
+                            if (!ParserRunDry) {
+                                Cfg.TouchpadDoubleTapAndHoldTimeout = doubleTapAndHoldTimeout;
+                            }
+                            break;
+                        }
                         default:
                             ConfigParser_Error(buffer, "Invalid module property id: %d", propertyId);
                             return ParserError_InvalidModuleProperty;
