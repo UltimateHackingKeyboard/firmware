@@ -118,7 +118,7 @@
 
 // Functions:
 
-    void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks);
+    void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks, bool updateStateSync);
     void ConfigManager_ResetWormConfiguration(void);
 
 #endif

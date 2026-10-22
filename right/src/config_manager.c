@@ -1,10 +1,11 @@
 #include "config_manager.h"
-#include "event_scheduler.h"
 #include <string.h>
 #include "arduino_hid/ConsumerAPI.h"
 #include "arduino_hid/SystemAPI.h"
 
-#ifndef __ZEPHYR__
+#ifdef __ZEPHYR__
+#include "state_sync.h"
+#else
 #include "i2c.h"
 #include "init_peripherals.h"
 #endif
@@ -315,15 +316,20 @@ void ConfigManager_ResetWormConfiguration(void) {
     memcpy(WormCfg, &DefaultWormCfg, sizeof(worm_config_t));
 }
 
-void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks) {
+void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks, bool updateStateSync) {
     memcpy(&Cfg, &DefaultCfg, sizeof(Cfg));
-#ifndef __ZEPHYR__
+
+#ifdef __ZEPHYR__
+    if (updateStateSync) {
+        StateSync_ResetRightLeftLink(false);
+    }
+#else
     if (updateHooks) {
         ChangeI2cBaudRate(Cfg.I2cBaudRate);
     }
+
 #endif
     if (updateLeds) {
         Ledmap_SetLedBacklightingMode(Cfg.BacklightingMode);
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
     }
 }

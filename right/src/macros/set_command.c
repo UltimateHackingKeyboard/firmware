@@ -527,7 +527,6 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
     }
 
     Ledmap_SetLedBacklightingMode(res);
-    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
 
@@ -596,7 +595,6 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 
         Cfg.LedMap_ConstantRGB = rgb;
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
 
         return noneVar();
     }
