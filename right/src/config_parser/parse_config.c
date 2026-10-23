@@ -462,7 +462,6 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 #endif
         WormCfg->devMode = Cfg.DevMode;
         LedManager_FullUpdate();
-        MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
 
         // Update counts

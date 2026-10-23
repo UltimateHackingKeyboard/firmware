@@ -112,6 +112,8 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
         return UsbStatusCode_Success;
     }
 
+    Macros_StopEngine();
+
     ConfigManager_ResetConfiguration(false, true, true);
 
     AppliedUserConfigBuffer = ValidatedUserConfigBuffer;
@@ -119,6 +121,9 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
     ParserRunDry = false;
     AppliedUserConfigBuffer.offset = 0;
     parseConfigStatus = ParseConfig(&AppliedUserConfigBuffer);
+
+    Macros_Initialize();
+    Macros_StartEngine();
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         Macros_ReportErrorPrintf(NULL, "UserConfig validated successfuly, but failed to parse. This wasn't supposed to happen.");
