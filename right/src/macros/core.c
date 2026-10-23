@@ -326,9 +326,9 @@ static void loadAction()
         ASSERT(S->ms.currentMacroAction.cmd.text != NULL);
     } else {
         // parse one macro action from EEPROM
-        ValidatedUserConfigBuffer.offset = S->ms.bufferOffset;
-        ParseMacroAction(&ValidatedUserConfigBuffer, &S->ms.currentMacroAction);
-        S->ms.bufferOffset = ValidatedUserConfigBuffer.offset;
+        AppliedUserConfigBuffer.offset = S->ms.bufferOffset;
+        ParseMacroAction(&AppliedUserConfigBuffer, &S->ms.currentMacroAction);
+        S->ms.bufferOffset = AppliedUserConfigBuffer.offset;
     }
 
     memset(&S->as, 0, sizeof S->as);

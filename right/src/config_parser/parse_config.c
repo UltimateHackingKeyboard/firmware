@@ -98,7 +98,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
     // Save device name as string_ref_t
-    Cfg.DeviceName.offset = deviceName - (const char*)ValidatedUserConfigBuffer.buffer;
+    Cfg.DeviceName.offset = deviceName - (const char*)buffer->buffer;
     Cfg.DeviceName.len = len;
 
     (void)doubleTapSwitchLayerTimeout;
