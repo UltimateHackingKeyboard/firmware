@@ -543,6 +543,24 @@ set keymapAction.base.192 macro TouchpadLeft
 set keymapAction.base.193 macro TouchpadRight
 ```
 
+### Key Chords
+
+A different kind of gestures exists: Chords.  A chord is when a set of keys are associated with each other such that if they are pressed all at once, like a chord on a piano, they do something different from the functionality of each key on it's own.
+
+In order to define a macro, you can use the command `set chord[.LAYERID_BASIC] KEYID KEYID [KEYID]* ACTION`.  Up to five keys can be used for each chord.
+
+An example could be to use it for the Vim user's eternal quest for an ergonomical Esc button.  But on the mod layer, we want that chord to perform another action, in this case a macro.  Also, to spare the right pinky, we can put an Enter key near the home row on the right hand, but only on the base layer.
+
+```
+set chord q w keystroke escape
+set chord.mod q w macro DetachScreen
+set chord.base u i keystroke enter
+```
+
+All defined chords are cleared/undefined on keymap change, so chords are most sensibly set using the `$onKeymapChange` macro triggers.
+
+The behavior of chords can be fine-tuned using `set chordTimeout`, `set chordPriorIdleTime` and `set chordLifetime`
+
 ### Macro recorder
 
 Runtime macro recorder allows capturing and replaying sequences of scancodes. Each such macro is identified by a number or a character (or `$thisKeyId` which resolves to the `KEYID` of the current key, therefore allowing generic key-associated macros). (Runtime macros are unrelated to the macros that can be created via Agent.)
