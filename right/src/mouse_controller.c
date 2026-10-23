@@ -270,21 +270,17 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         lastSingleTapTimerActive = true;
     }
     if (action & Action_Release) {
-        LogInf("Release");
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
     }
     if (action & Action_Press) {
-        LogInf("Press");
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_Tap) {
-        LogInf("Tap");
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
         PostponerCore_TrackDelay(minPressDelay);
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
     }
     if (action & Action_Doubletap) {
-        LogInf("Doubletap");
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
         PostponerCore_TrackDelay(minReleaseDelay);
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
