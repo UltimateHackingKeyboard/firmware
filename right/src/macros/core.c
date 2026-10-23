@@ -268,7 +268,7 @@ void Macros_StopAllMacros() {
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (&MacroState[i] != S) {
             MacroState[i].ms.macroBroken = true;
-            MacroState[i].ms.macroSleeping = false;
+            wakeMacroInSlot(i);
         }
     }
 }
