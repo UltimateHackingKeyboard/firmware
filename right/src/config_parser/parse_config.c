@@ -329,12 +329,13 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         ATTR_UNUSED const char *lastSaveFirmwareTag = ReadString(buffer, &len);
     }
 
+    // Set already on validation, since the validated buffer may get saved before it is applied.
+    ValidatedUserConfigLength = userConfigLength;
+
     // If parsing succeeded then apply the parsed values.
 
     if (!ParserRunDry) {
         // Update LED brightnesses and reinitialize LED drivers
-
-        ValidatedUserConfigLength = userConfigLength;
 
         // removed in version 8
         // Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
