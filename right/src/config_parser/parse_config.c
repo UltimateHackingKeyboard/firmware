@@ -98,7 +98,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
     uint16_t doubleTapSwitchLayerTimeout = ReadUInt16(buffer);
 
     // Save device name as string_ref_t
-    Cfg.DeviceName.offset = deviceName - (const char*)ValidatedUserConfigBuffer.buffer;
+    Cfg.DeviceName.offset = deviceName - (const char*)buffer->buffer;
     Cfg.DeviceName.len = len;
 
     (void)doubleTapSwitchLayerTimeout;
@@ -329,12 +329,13 @@ parser_error_t parseConfig(config_buffer_t *buffer)
         ATTR_UNUSED const char *lastSaveFirmwareTag = ReadString(buffer, &len);
     }
 
+    // Set already on validation, since the validated buffer may get saved before it is applied.
+    ValidatedUserConfigLength = userConfigLength;
+
     // If parsing succeeded then apply the parsed values.
 
     if (!ParserRunDry) {
         // Update LED brightnesses and reinitialize LED drivers
-
-        ValidatedUserConfigLength = userConfigLength;
 
         // removed in version 8
         // Cfg.IconsAndLayerTextsBrightnessDefault = iconsAndLayerTextsBrightness;
@@ -461,7 +462,6 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 #endif
         WormCfg->devMode = Cfg.DevMode;
         LedManager_FullUpdate();
-        MacroVariables_Reset();
         WIDGET_REFRESH(&TargetWidget); // the target may have been renamed
 
         // Update counts

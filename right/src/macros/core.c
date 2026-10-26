@@ -24,6 +24,7 @@
 #include "keyid_parser.h"
 #include "utils.h"
 #include "bool_array_converter.h"
+#include "macros/vars.h"
 
 macro_reference_t AllMacros[MacroIndex_MaxCount] = {
     // 254 is reserved for USB command execution and inline macros
@@ -50,6 +51,7 @@ bool Macros_ParserError = false;
 bool Macros_DryRun = false;
 bool Macros_ValidationInProgress = false;
 bool SchedulerPostponing = false;
+macro_engine_state_t Macros_EngineState = MacroEngineState_Running;
 
 scheduler_state_t Macros_SchedulerState = {
     .previousSlotIdx = 0,
@@ -252,6 +254,8 @@ static bool findFreeStateSlot()
 
 
 void Macros_Initialize() {
+    MacroVariables_Reset();
+    Macros_ResetScheduler();
     LayerStack_Reset();
 }
 
@@ -268,7 +272,7 @@ void Macros_StopAllMacros() {
     for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
         if (&MacroState[i] != S) {
             MacroState[i].ms.macroBroken = true;
-            MacroState[i].ms.macroSleeping = false;
+            wakeMacroInSlot(i);
         }
     }
 }
@@ -326,9 +330,9 @@ static void loadAction()
         ASSERT(S->ms.currentMacroAction.cmd.text != NULL);
     } else {
         // parse one macro action from EEPROM
-        ValidatedUserConfigBuffer.offset = S->ms.bufferOffset;
-        ParseMacroAction(&ValidatedUserConfigBuffer, &S->ms.currentMacroAction);
-        S->ms.bufferOffset = ValidatedUserConfigBuffer.offset;
+        AppliedUserConfigBuffer.offset = S->ms.bufferOffset;
+        ParseMacroAction(&AppliedUserConfigBuffer, &S->ms.currentMacroAction);
+        S->ms.bufferOffset = AppliedUserConfigBuffer.offset;
     }
 
     memset(&S->as, 0, sizeof S->as);
@@ -452,7 +456,7 @@ uint8_t initMacro(
     uint8_t parentMacroSlot,
     const char *inlineText
 ) {
-    if (!macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
+    if (Macros_EngineState != MacroEngineState_Running || !macroIsValid(index) || !findFreeStateSlot() || !findFreeScopeStateSlot())  {
        return 255;
     }
 
@@ -877,7 +881,7 @@ static void unscheduleCurrentSlot()
         Macros_SchedulerState.lastQueuedSlot = Macros_SchedulerState.lastQueuedSlot == Macros_SchedulerState.currentSlotIdx ? Macros_SchedulerState.previousSlotIdx : Macros_SchedulerState.lastQueuedSlot;
         Macros_SchedulerState.currentSlotIdx = Macros_SchedulerState.previousSlotIdx;
         Macros_SchedulerState.activeSlotCount--;
-    } else if (Macros_SchedulerState.currentSlotIdx != (S - MacroState) && !S->ms.macroScheduled) {
+    } else if (!S->ms.macroScheduled) {
         // This means that current slot is already unscheduled but scheduler state is fine.
         // This may happen (for instance) if callMacro is the last command of a macro.
         // (We get one unschedule attempt for sleeping the macro, but at the same time for macro end.)
@@ -886,6 +890,14 @@ static void unscheduleCurrentSlot()
         // this means that the state is inconsistent for some reason
         ERR("Unsechuling non-scheduled slot attempted!");
     }
+}
+
+void Macros_ResetScheduler()
+{
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        MacroState[i].ms.macroScheduled = false;
+    }
+    memset(&Macros_SchedulerState, 0, sizeof Macros_SchedulerState);
 }
 
 static void getNextScheduledSlot()
@@ -1039,6 +1051,28 @@ void Macros_ContinueMacro(void)
     }
 }
 
+
+void Macros_StopEngine(void)
+{
+    Macros_EngineState = MacroEngineState_Stopped;
+
+    Macros_ResetScheduler();
+
+    for (uint8_t i = 0; i < MACRO_STATE_POOL_SIZE; i++) {
+        if (MacroState[i].ms.macroPlaying) {
+            S = &MacroState[i];
+            S->ms.parentMacroSlot = 255;
+            endMacro();
+        }
+    }
+
+    recalculateSleepingMods();
+}
+
+void Macros_StartEngine(void)
+{
+    Macros_EngineState = MacroEngineState_Running;
+}
 
 bool Macros_MacroHasActiveInstance(macro_index_t macroIdx)
 {
