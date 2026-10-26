@@ -748,7 +748,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         }
     }
 
-    if (!BtManager_Restarting) {
+    if (!BtManager_Stopped) {
         BtManager_StartScanningAndAdvertisingAsync(true, "disconnected");
     }
 
