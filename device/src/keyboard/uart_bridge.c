@@ -25,6 +25,8 @@
 #define UART_GARBAGE_CHUNKS_TO_RESTART 3
 #define UART_GARBAGE_RESTART_INTERVAL_MS 100
 
+#define UART_GIVE_UP_POWER_CYCLE_INTERVAL_MS 1000
+
 #define UART_MAX_FRAME_WIRE_TIME_MS \
     UART_FRAME_WIRE_TIME_MS(UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH)
 
@@ -95,6 +97,11 @@ uart_state_t bridgeState = {0};
 static bool bridgeSuspended = false;
 static bool bridgeTxSlotHeld = false;
 
+// Set by a give-up or by the shell. The control thread runs the power cycle itself, so
+// nothing else re-arms RX on the UARTE while it is suspended.
+static volatile bool powerCycleRequested = false;
+static uint32_t lastGiveUpPowerCycleTime = 0;
+
 // Diagnostics, cumulative since boot. Printed by UartBridge_DumpStats.
 #define LATENCY_BUCKETS 5
 
@@ -118,6 +125,7 @@ typedef struct {
     uint16_t txSendFail;     // uart_tx returned an error
     uint16_t unexpectedBytes;
     uint16_t rxRestarts;     // rx restarted because of a run of garbage
+    uint16_t powerCycles;    // uarte suspended and resumed, after a give-up or by hand
     latency_stats_t ackLoop; // sender: uart_tx of a frame -> its ack parsed
     latency_stats_t ackTurn; // receiver: frame parsed -> ack handed to uart_tx
 } uart_bridge_stats_t;
@@ -193,7 +201,9 @@ static void watchForGarbage(uart_state_t *uartState) {
         uartState->garbageChunks = 0;
         uartState->lastRxRestartTime = currentTime;
         stats.rxRestarts++;
-        UartLink_Reset(&uartState->core);
+        // We are in the rx callback, which must not block; the control thread does it.
+        powerCycleRequested = true;
+        wakeControlThread(uartState);
     }
 }
 
@@ -341,7 +351,7 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
             // routine after any RX teardown - bridgeOnRxDisabled resyncs the parser while the
             // peer's frame may still be streaming in, so its remaining bytes land here. The
             // parser resyncs itself on the next Start byte. Tearing RX down here instead
-            // (the old UartLink_Reset) made every such byte another teardown, another mid-frame
+            // (as an old rx restart did) made every such byte another teardown, another mid-frame
             // re-enable, and so on until the frame ended - one lost frame per hiccup.
             stats.unexpectedBytes++;
             BridgeDbg("BRIDGE RX unexpected byte\n");
@@ -431,6 +441,14 @@ static void resend(uart_state_t *uartState, bool wakePeer) {
         uartState->resendTries = 0;
         uartState->txState = UartTxState_Idle;
         k_sem_give(&uartState->txBufferBusy);
+
+        // An rx restart does not clear every bad receive state we have seen, so power cycle
+        // the whole UARTE. It blocks, so the control loop does it, not resend.
+        uint32_t currentTime = k_uptime_get();
+        if (currentTime - lastGiveUpPowerCycleTime >= UART_GIVE_UP_POWER_CYCLE_INTERVAL_MS) {
+            lastGiveUpPowerCycleTime = currentTime;
+            powerCycleRequested = true;
+        }
     } else {
         uartState->txState = UartTxState_WaitingForAck;
         if (wakePeer) {
@@ -469,6 +487,47 @@ static void updateConnectionState(uart_state_t *uartState) {
     }
 }
 
+// Returns whether we got the TX slot, which bringUpUarte hands back.
+static bool takeDownUarte(uart_state_t *uartState) {
+    bridgeSuspended = true;
+
+    // Every send takes the TX slot before uart_tx and only the UART_TX_DONE callback
+    // returns it, so taking it here both waits out any in-flight TX and blocks new ones -
+    // the control thread simply parks on its next send. On timeout we hold no slot and
+    // must not hand one back on resume.
+    bool txSlotHeld = (k_sem_take(&uartState->core.txControlBusy, K_MSEC(200)) == 0);
+
+    // The disable completes asynchronously in the UART_RX_DISABLED callback; suspending
+    // while RX is still armed asserts in the driver.
+    uart_rx_disable(uartState->core.device);
+    k_msleep(20);
+
+    pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_SUSPEND);
+    return txSlotHeld;
+}
+
+static void bringUpUarte(uart_state_t *uartState, bool txSlotHeld) {
+    pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_RESUME);
+
+    bridgeSuspended = false;
+    UartBridge_Enable();
+
+    if (txSlotHeld) {
+        k_sem_give(&uartState->core.txControlBusy);
+    }
+}
+
+// Suspend clears the driver's TIMER byte counter, which a plain rx restart keeps.
+static void powerCycle(uart_state_t *uartState) {
+    if (bridgeSuspended) {
+        return;
+    }
+    stats.powerCycles++;
+    LogWrn("Uart: power cycling the bridge uart\n");
+    bool txSlotHeld = takeDownUarte(uartState);
+    bringUpUarte(uartState, txSlotHeld);
+}
+
 static void uartLoop(void *arg1, void *arg2, void *arg3) {
     uart_state_t *uartState = (uart_state_t *)arg1;
     uint32_t lastPingSentTime = 0;
@@ -482,6 +541,11 @@ static void uartLoop(void *arg1, void *arg2, void *arg3) {
             k_sem_take(&uartState->controlThreadSleeper, K_FOREVER);
             lastPingSentTime = k_uptime_get();
             continue;
+        }
+
+        if (powerCycleRequested) {
+            powerCycleRequested = false;
+            powerCycle(uartState);
         }
 
         // If a GPIO edge woke us out of RX-sleep, bring RX back before doing anything and
@@ -635,8 +699,8 @@ void InitUartBridge(void) {
 
 
 void UartBridge_Enable() {
-    // While suspended, ignore re-arm requests - in particular the ReenableUart event that
-    // our own uart_rx_disable schedules - so RX is never armed on a suspended UARTE.
+    // While suspended, ignore re-arm requests - in particular the onRxDisabled re-arm that
+    // our own uart_rx_disable triggers - so RX is never armed on a suspended UARTE.
     if (bridgeSuspended) {
         return;
     }
@@ -649,20 +713,7 @@ void UartBridge_Suspend(void) {
         return;
     }
 
-    bridgeSuspended = true;
-
-    // Every send takes the TX slot before uart_tx and only the UART_TX_DONE callback
-    // returns it, so taking it here both waits out any in-flight TX and blocks new ones -
-    // the control thread simply parks on its next send. On timeout we hold no slot and
-    // must not hand one back on resume.
-    bridgeTxSlotHeld = (k_sem_take(&uartState->core.txControlBusy, K_MSEC(200)) == 0);
-
-    // The disable completes asynchronously in the UART_RX_DISABLED callback; suspending
-    // while RX is still armed asserts in the driver.
-    uart_rx_disable(uartState->core.device);
-    k_msleep(20);
-
-    pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_SUSPEND);
+    bridgeTxSlotHeld = takeDownUarte(uartState);
 
     Connections_SetStateAsync(uartState->connectionId, ConnectionState_Disconnected);
 }
@@ -673,15 +724,8 @@ void UartBridge_Resume(void) {
         return;
     }
 
-    pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_RESUME);
-
-    bridgeSuspended = false;
-    UartBridge_Enable();
-
-    if (bridgeTxSlotHeld) {
-        k_sem_give(&uartState->core.txControlBusy);
-        bridgeTxSlotHeld = false;
-    }
+    bringUpUarte(uartState, bridgeTxSlotHeld);
+    bridgeTxSlotHeld = false;
 
     wakeControlThread(uartState);
 }
@@ -693,13 +737,14 @@ static void dumpLatency(const char* label, const latency_stats_t* s) {
         (unsigned)s->hist[0], (unsigned)s->hist[1], (unsigned)s->hist[2], (unsigned)s->hist[3], (unsigned)s->hist[4]);
 }
 
-void UartBridge_ResetRx(void) {
+void UartBridge_PowerCycle(void) {
     uart_state_t *uartState = &bridgeState;
     if (uartState->core.device == NULL) {
         LogU("Uart bridge: no bridge uart on this routing\n");
         return;
     }
-    UartLink_Reset(&uartState->core);
+    powerCycleRequested = true;
+    wakeControlThread(uartState);
 }
 
 void UartBridge_DumpStats(void) {
@@ -724,6 +769,7 @@ void UartBridge_DumpStats(void) {
     LogU("  rx stopped: overrun=%u framing=%u break=%u other=%u disabled=%u garbageRestarts=%u\n",
         (unsigned)core->rxStoppedOverrun, (unsigned)core->rxStoppedFraming, (unsigned)core->rxStoppedBreak,
         (unsigned)core->rxStoppedOther, (unsigned)core->rxDisabledCount, (unsigned)stats.rxRestarts);
+    LogU("  powerCycles=%u\n", (unsigned)stats.powerCycles);
     dumpLatency("ackLoop (send->ack)", &stats.ackLoop);
     dumpLatency("ackTurn (rx->ack tx)", &stats.ackTurn);
 }

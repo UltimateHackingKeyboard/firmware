@@ -6,14 +6,6 @@
 #include "config_manager.h"
 #include "shared/uart_parser.h"
 
-#define UART_RESET_DELAY 10
-
-void UartLink_Reset(uart_link_t *uartState) {
-    // This will probably not reset uart, but at least will give main thread some time to run
-    uart_rx_disable(uartState->device);
-    EventScheduler_Schedule(k_uptime_get() + UART_RESET_DELAY, EventSchedulerEvent_ReenableUart, "reenable uart");
-}
-
 static void uart_callback(const struct device *dev, struct uart_event *evt, void *user_data) {
     uart_link_t *uartState = (uart_link_t *)user_data;
     int err;
@@ -105,8 +97,8 @@ void UartLink_Enable(uart_link_t *uartState) {
         return;
     }
 #if UART_LOWPOWER
-    // While RX is intentionally slept, suppress re-enables (including the ReenableUart
-    // event our own uart_rx_disable schedules). UartLink_WakeRx re-enables explicitly.
+    // While RX is intentionally slept, suppress re-enables (including the onRxDisabled
+    // re-arm our own uart_rx_disable triggers). UartLink_WakeRx re-enables explicitly.
     if (uartState->rxWakePin.port != NULL && uartState->lpState != UartLp_Active) {
         return;
     }
