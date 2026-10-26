@@ -67,6 +67,9 @@
         // arming one step, against UartLink_Enable from any thread.
         struct k_mutex armLock;
         bool rxHeld;
+        // Set for the duration of receiveBytes: the chunk runs up to the end of its rx
+        // buffer, so the driver may have cut a burst there.
+        bool rxChunkFillsBuffer;
 
         // Diagnostics, printed by UartBridge_DumpStats.
         uint16_t rxStoppedOverrun;

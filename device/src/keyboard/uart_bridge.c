@@ -64,6 +64,7 @@ typedef struct {
     // Garbage watch, isr context only. See watchForGarbage.
     bool chunkHadValid;
     bool chunkHadGarbage;
+    bool prevChunkFilledBuffer;
     uint8_t garbageChunks;
     uint32_t lastRxRestartTime;
 
@@ -72,10 +73,12 @@ typedef struct {
     uint32_t ackReqCyc; // last valid frame parsed (ack requested)
 
     uint8_t* rxBuffer;
-    uint8_t txBuffer[UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH];
+    // The parser writes the frame from txBuffer[1]; [0] and the byte after the frame hold
+    // the wake pads, so the whole padded frame goes out as one transfer.
+    uint8_t txBuffer[UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH + 2];
     // uart_tx reads its buffer by DMA after returning; it has to outlive the call. Control
     // bytes are serialized by txControlBusy, so one slot is enough.
-    uint8_t controlByte;
+    uint8_t controlBytes[3];
 
     struct k_sem txBufferBusy;
     struct k_sem controlThreadSleeper;
@@ -124,6 +127,9 @@ typedef struct {
     uint16_t unexpectedBytes;
     uint16_t rxRestarts;     // rx restarted because of a run of garbage
     uint16_t powerCycles;    // uarte suspended and resumed, after a give-up or by hand
+    uint32_t rxChunks;
+    uint16_t leadPadMissing;  // rx chunk not starting with a wake pad
+    uint16_t trailPadMissing; // rx chunk not ending with a wake pad
     latency_stats_t ackLoop; // sender: uart_tx of a frame -> its ack parsed
     latency_stats_t ackTurn; // receiver: frame parsed -> ack handed to uart_tx
 } uart_bridge_stats_t;
@@ -210,6 +216,20 @@ static void bridgeReceiveBytes(void *state, const uint8_t* data, uint16_t len) {
     uartState->lastLinkActivity = k_uptime_get();
     uartState->chunkHadValid = false;
     uartState->chunkHadGarbage = false;
+
+    // A chunk is what arrived between two idle gaps, so with a padding peer it should
+    // start and end with a pad - except where the driver cut a burst at an rx buffer end.
+    // A sender stalling mid-burst would also split one and miscount.
+    bool fillsBuffer = uartState->core.rxChunkFillsBuffer;
+    stats.rxChunks++;
+    if (len > 0 && data[0] != UartControlByte_Wake && !uartState->prevChunkFilledBuffer) {
+        stats.leadPadMissing++;
+    }
+    if (len > 0 && data[len - 1] != UartControlByte_Wake && !fillsBuffer) {
+        stats.trailPadMissing++;
+    }
+    uartState->prevChunkFilledBuffer = fillsBuffer;
+
     UartParser_ProcessIncomingBytes(&uartState->parser, data, len);
     watchForGarbage(uartState);
 }
@@ -222,6 +242,7 @@ static void bridgeOnRxDisabled(void *arg) {
     uart_state_t *uartState = (uart_state_t *)arg;
 
     UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer, UART_MAX_BRIDGE_PAYLOAD_LENGTH);
+    uartState->prevChunkFilledBuffer = false;
 
     if (UartLink_IsAsleep(&uartState->core)) {
         return;
@@ -357,6 +378,17 @@ static void receiveMessage(void *state, uart_control_t messageKind, const uint8_
     }
 }
 
+// Every transmission (frames here, control bytes in sendControl) is wrapped in sacrificial
+// wake bytes, which the parser swallows. The receiver has been seen to lose the first byte
+// of a burst after idle; a lone ack was then lost whole. The trailing pad covers a byte held
+// back until the next burst.
+static int sendFrame(uart_state_t *uartState) {
+    uint16_t frameLen = uartState->parser.txPosition;
+    uartState->txBuffer[0] = UartControlByte_Wake;
+    uartState->txBuffer[1 + frameLen] = UartControlByte_Wake;
+    return UartLink_Send(&uartState->core, uartState->txBuffer, frameLen + 2);
+}
+
 int UartBridge_SendMessage(message_t* msg) {
     uart_state_t *uartState = &bridgeState;
 
@@ -392,7 +424,7 @@ int UartBridge_SendMessage(message_t* msg) {
 
     stats.framesSent++;
     uartState->sentCyc = k_cycle_get_32();
-    err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+    err = sendFrame(uartState);
     if (err != 0) {
         stats.txSendFail++;
         k_sem_give(&uartState->core.txControlBusy);
@@ -411,8 +443,10 @@ static void sendControl(uart_state_t *uartState, uint8_t byte, bool isAck) {
         // Measured once we hold the TX slot: includes waiting out our own in-flight frame.
         recordLatency(&stats.ackTurn, uartState->ackReqCyc);
     }
-    uartState->controlByte = byte;
-    int err = UartLink_Send(&uartState->core, &uartState->controlByte, 1);
+    uartState->controlBytes[0] = UartControlByte_Wake;
+    uartState->controlBytes[1] = byte;
+    uartState->controlBytes[2] = UartControlByte_Wake;
+    int err = UartLink_Send(&uartState->core, uartState->controlBytes, sizeof(uartState->controlBytes));
     if (err != 0) {
         // No transfer started -> no TX_DONE -> return the slot ourselves.
         stats.txSendFail++;
@@ -455,7 +489,7 @@ static void resend(uart_state_t *uartState, bool wakePeer) {
         }
         UartLink_LockBusy(&uartState->core);
         uartState->sentCyc = k_cycle_get_32();
-        int err = UartLink_Send(&uartState->core, uartState->parser.txBuffer, uartState->parser.txPosition);
+        int err = sendFrame(uartState);
         if (err != 0) {
             // No transfer started -> no TX_DONE -> return the slot ourselves.
             stats.txSendFail++;
@@ -662,7 +696,7 @@ static void initUart(
 
     uartState->rxBuffer = MessengerQueue_AllocateMemory();
     UartParser_SetRxBuffer(&uartState->parser, uartState->rxBuffer, UART_MAX_BRIDGE_PAYLOAD_LENGTH);
-    UartParser_SetTxBuffer(&uartState->parser, uartState->txBuffer, UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH);
+    UartParser_SetTxBuffer(&uartState->parser, uartState->txBuffer + 1, UART_MAX_BRIDGE_SERIALIZED_MESSAGE_LENGTH);
 }
 
 void InitUartBridge(void) {
@@ -770,6 +804,8 @@ void UartBridge_DumpStats(void) {
         (unsigned)core->rxStoppedOverrun, (unsigned)core->rxStoppedFraming, (unsigned)core->rxStoppedBreak,
         (unsigned)core->rxStoppedOther, (unsigned)core->rxDisabledCount, (unsigned)stats.rxRestarts);
     LogU("  powerCycles=%u armedMidStop=%u\n", (unsigned)stats.powerCycles, (unsigned)core->rxArmedMidStop);
+    LogU("  rx pads: chunks=%u leadMissing=%u trailMissing=%u\n",
+        (unsigned)stats.rxChunks, (unsigned)stats.leadPadMissing, (unsigned)stats.trailPadMissing);
     dumpLatency("ackLoop (send->ack)", &stats.ackLoop);
     dumpLatency("ackTurn (rx->ack tx)", &stats.ackTurn);
 }

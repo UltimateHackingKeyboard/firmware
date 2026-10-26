@@ -23,6 +23,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         break;
 
     case UART_RX_RDY:
+        uartState->rxChunkFillsBuffer = evt->data.rx.offset + evt->data.rx.len == UART_MAX_SERIALIZED_MESSAGE_LENGTH;
         uartState->receiveBytes(uartState->userArg, &evt->data.rx.buf[evt->data.rx.offset], evt->data.rx.len);
         break;
 
