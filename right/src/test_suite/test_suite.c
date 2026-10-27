@@ -19,6 +19,7 @@
 #include "key_states.h"
 #include "module.h"
 #include <string.h>
+#include <stdio.h>
 
 #ifdef __ZEPHYR__
 #include "messenger.h"
@@ -132,12 +133,17 @@ static uint16_t repeatsLeft = 0;
 static uint16_t repetitionsPassed = 0;
 static uint16_t repetitionsFailed = 0;
 
+// A long repeated test logs its standing this often, at the end of a repetition.
+#define REPEATED_TEST_PROGRESS_MS 5000
+static uint32_t lastProgressTime = 0;
+
 static void startTest(const test_t *test, const test_module_t *module) {
     if (test != repeatingTest) {
         repeatingTest = test;
         repeatsLeft = test->repeatCount > 0 ? test->repeatCount - 1 : 0;
         repetitionsPassed = 0;
         repetitionsFailed = 0;
+        lastProgressTime = Timer_GetCurrentTime();
     }
 
     Macros_StopAllMacros();
@@ -322,7 +328,9 @@ static void moveToNextTest(void) {
     }
 }
 
-static void concludeRepeatedTest(const test_t *test, const test_module_t *module) {
+// Logs a repeated test's standing after the repetitions so far, `stage` naming the point it is
+// at; returns whether the test is broken likely enough to fail.
+static bool logRepetitions(const test_t *test, const test_module_t *module, const char *stage) {
     uint16_t repetitions = repetitionsPassed + repetitionsFailed;
     bool failed = false;
 
@@ -330,12 +338,17 @@ static void concludeRepeatedTest(const test_t *test, const test_module_t *module
         double broken = TestStatistics_BrokenProbability(repetitionsFailed, repetitions, test->spuriousFailureRate);
         unsigned expectedHundredths = TestStatistics_AsPercent(repetitions * test->spuriousFailureRate);
         failed = broken >= TEST_FAIL_PROBABILITY;
-        LogU("[TEST] Finished: %s/%s - %s (%u/%u failed, %u.%02u expected, %u%% likely broken)\n", module->name, test->name,
+        LogU("[TEST] %s: %s/%s - %s (%u/%u failed, %u.%02u expected, %u%% likely broken)\n", stage, module->name, test->name,
                 failed ? "FAIL" : "PASS", (unsigned)repetitionsFailed, (unsigned)repetitions,
                 expectedHundredths / 100, expectedHundredths % 100, TestStatistics_AsPercent(broken));
     } else {
-        LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
+        LogU("[TEST] %s: %s/%s - PASS (0/%u failed)\n", stage, module->name, test->name, (unsigned)repetitions);
     }
+    return failed;
+}
+
+static void concludeRepeatedTest(const test_t *test, const test_module_t *module) {
+    bool failed = logRepetitions(test, module, "Finished");
     TestStatistics_AddRepeatedTest(failed);
     repeatingTest = NULL;
     moveToNextTest();
@@ -358,6 +371,13 @@ static void concludeRepetition(const test_t *test, const test_module_t *module, 
     }
 
     if (repeatsLeft > 0) {
+        if (Timer_GetElapsedTime(&lastProgressTime) >= REPEATED_TEST_PROGRESS_MS) {
+            char stage[24];
+            snprintf(stage, sizeof(stage), "Progress(%u/%u)", (unsigned)(repetitionsPassed + repetitionsFailed),
+                    (unsigned)test->repeatCount);
+            logRepetitions(test, module, stage);
+            lastProgressTime = Timer_GetCurrentTime();
+        }
         repeatsLeft--;
         startTest(test, module);
     } else {

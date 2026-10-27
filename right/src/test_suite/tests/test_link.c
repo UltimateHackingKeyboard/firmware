@@ -80,7 +80,8 @@ _Static_assert(2 * LINK_SLOT_MS >= LINK_PHASE_MIN_MS,
 // only the stress's dropped acks (1/16), not its byte drops and corruptions (1/512 each), which
 // lose frames and acks too: in the logs, senders time out ~1.28x as often as acks are dropped,
 // and with three timeouts to fail, 1.28^3 ~ 2.1x.
-#define LINK_PROBE_CYCLES 500
+#define LINK_CYCLE_MS (2 * LINK_QUIET_MS + LINK_PROBES_PER_CYCLE * LINK_SLOT_MS)
+#define LINK_PROBE_CYCLES (TEST_REPEAT_FOR_SECONDS * 1000 / LINK_CYCLE_MS)
 
 // How often one probe cycle fails in a healthy run, reverse-engineered from the test's original
 // design, 70 cycles (280 probes) failing 20% of runs while ~72% saw a two-timeout streak:

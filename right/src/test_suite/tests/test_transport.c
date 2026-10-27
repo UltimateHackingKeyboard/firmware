@@ -11,7 +11,8 @@
 #define TRANSPORT_ATTEMPT_FAILURE_RATE (1.0 - TRANSPORT_ATTEMPT_PASS_RATE * TRANSPORT_ATTEMPT_PASS_RATE)
 #define TRANSPORT_RUN_FAILURE_RATE \
     (TRANSPORT_REPORTS_PER_RUN * __builtin_pow(TRANSPORT_ATTEMPT_FAILURE_RATE, THROTTLE_MAX_RETRIES + 1))
-#define TRANSPORT_RUNS 10
+#define TRANSPORT_CYCLE_MS 3600 // the script's delays: 60 keystrokes, (10 + 50) ms each
+#define TRANSPORT_RUNS (TEST_REPEAT_FOR_SECONDS * 1000 / TRANSPORT_CYCLE_MS)
 
 // Enable the unreliable transport test mode, type a short (non-meaningful)
 // paragraph by pressing and releasing several keys over the normal key path, and
