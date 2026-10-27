@@ -163,9 +163,14 @@ static void startTest(const test_t *test, const test_module_t *module) {
     }
 #endif
 
+    // Seeded with the last confirmed report, the inactive buffer: reports are captured on
+    // confirmation, so it is the state the previous test last saw. The active one may already
+    // hold the report before it, or be mid-rebuild.
+    const hid_keyboard_report_t *lastConfirmedReport =
+        ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0];
     InputMachine_Start(test);
     OutputMachine_Start(test);
-    OutputMachine_OnReportChange(ActiveKeyboardReport);
+    OutputMachine_OnReportChange(lastConfirmedReport);
 }
 
 void TestHooks_CaptureReport(const hid_keyboard_report_t *report) {

@@ -260,8 +260,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 #endif
     case ReportSink_TestSuite:
         err = 0;
-        TestHooks_CaptureReport(report);
-        Hid_KeyboardReportSentCallback(ReportSink_Usb);
+        Hid_KeyboardReportSentCallback(ReportSink_TestSuite);
         break;
     case ReportSink_BlackHole:
         err = -EHOSTUNREACH;
@@ -283,6 +282,11 @@ extern "C" void Hid_KeyboardReportSentCallback(report_sink_t sink)
 {
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
+    }
+    // The test suite sees a report only once its delivery is confirmed, before the release
+    // switches the sent report out of ActiveKeyboardReport.
+    if (sink == ReportSink_TestSuite) {
+        TestHooks_CaptureReport(ActiveKeyboardReport);
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
     UsbScheduler_ReportDelivered(sink);
