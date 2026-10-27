@@ -215,7 +215,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z11,%d", sink);
     errno_t err = -ECONNRESET;
-    if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
+    if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return -EAGAIN;
     }
     switch (sink) {
@@ -281,7 +281,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 
 extern "C" void Hid_KeyboardReportSentCallback(report_sink_t sink)
 {
-    if (UnreliableTransportTestMode && Utils_Random() % 7 == 0) {
+    if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
     }
     UsbSemaphore_Release(&UsbSemaphore.keyboard);
@@ -360,7 +360,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 void mouse_report_sent_callback(hid::session &session)
 {
-    if (UnreliableTransportTestMode && (Utils_Random() % 7 == 0 || Timer_GetCurrentTime() / (1024*32) == 0)) {
+    if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
     }
     report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;

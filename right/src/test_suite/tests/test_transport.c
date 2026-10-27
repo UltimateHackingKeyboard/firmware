@@ -1,5 +1,17 @@
 #include "tests.h"
 #include "hid/transport.h"
+#include "usb_report_sender.h"
+
+// A report attempt fails when its send is dropped or, sent, its callback is. The engine holds
+// the report until it is delivered, so a run fails only when one of its reports - a press and a
+// release for each of the 60 keystrokes - fails THROTTLE_MAX_RETRIES + 1 attempts in a row and
+// is given up. Folded at compile time.
+#define TRANSPORT_REPORTS_PER_RUN 120
+#define TRANSPORT_ATTEMPT_PASS_RATE (1.0 - 1.0 / UNRELIABLE_TRANSPORT_DROP_RECIPROCAL)
+#define TRANSPORT_ATTEMPT_FAILURE_RATE (1.0 - TRANSPORT_ATTEMPT_PASS_RATE * TRANSPORT_ATTEMPT_PASS_RATE)
+#define TRANSPORT_RUN_FAILURE_RATE \
+    (TRANSPORT_REPORTS_PER_RUN * __builtin_pow(TRANSPORT_ATTEMPT_FAILURE_RATE, THROTTLE_MAX_RETRIES + 1))
+#define TRANSPORT_RUNS 10
 
 // Enable the unreliable transport test mode, type a short (non-meaningful)
 // paragraph by pressing and releasing several keys over the normal key path, and
@@ -384,7 +396,12 @@ static const test_action_t test_transport_unreliable_typing[] = {
 };
 
 static const test_t transport_tests[] = {
-    { .name = "unreliable_typing", .actions = test_transport_unreliable_typing },
+    {
+        .name = "unreliable_typing",
+        .actions = test_transport_unreliable_typing,
+        .repeatCount = TRANSPORT_RUNS,
+        .spuriousFailureRate = TRANSPORT_RUN_FAILURE_RATE,
+    },
 };
 
 const test_module_t TestModule_Transport = {
