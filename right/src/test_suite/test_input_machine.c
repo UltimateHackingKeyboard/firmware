@@ -387,6 +387,14 @@ void InputMachine_Tick(void) {
                 InputMachine_ActionIndex++;
                 break;
 
+            case TestAction_Call:
+                if (!action->callFn()) {
+                    InputMachine_Failed = true;
+                    return;
+                }
+                InputMachine_ActionIndex++;
+                break;
+
             case TestAction_CheckNow:
                 if (!validateReport(action->expectShortcuts, true)) {  // Always log failures
                     InputMachine_Failed = true;
