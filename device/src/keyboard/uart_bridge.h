@@ -31,7 +31,7 @@
     // Print bridge link diagnostics (frame/ack/resend counters, ack latencies) to the uart log.
     void UartBridge_DumpStats(void);
 
-    // Restart bridge RX by hand (the same restart the garbage watch does).
-    void UartBridge_ResetRx(void);
+    // Suspend and resume the bridge UARTE by hand (the same power cycle a give-up does).
+    void UartBridge_PowerCycle(void);
 
 #endif // __UART_H__

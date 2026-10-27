@@ -96,6 +96,7 @@ void OutputMachine_OnReportChange(const usb_basic_keyboard_report_t *report) {
             case TestAction_SetGenericAction:
             case TestAction_SetConfig:
             case TestAction_SetBool:
+            case TestAction_Call:
                 OutputMachine_ActionIndex++;
                 break;
 
@@ -150,6 +151,12 @@ bool OutputMachine_IsDone(void) {
     if (OutputMachine_Failed) {
         return true;
     }
-    bool atEnd = OutputMachine_CurrentTest->actions[OutputMachine_ActionIndex].type == TestAction_End;
-    return atEnd;
+    // The machine only moves on report changes, so a test whose remaining actions expect no
+    // report (e.g. one that checks through TEST_CALL only) would otherwise never get done.
+    bool expectationsLeft = false;
+    for (uint16_t i = OutputMachine_ActionIndex; OutputMachine_CurrentTest->actions[i].type != TestAction_End; i++) {
+        test_action_type_t type = OutputMachine_CurrentTest->actions[i].type;
+        expectationsLeft |= type == TestAction_Expect || type == TestAction_ExpectMaybe || type == TestAction_CheckNow;
+    }
+    return !expectationsLeft;
 }

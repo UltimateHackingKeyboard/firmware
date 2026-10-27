@@ -31,7 +31,6 @@
         EventSchedulerEvent_AgentLed,
         EventSchedulerEvent_UpdateLedSleepModes,
         EventSchedulerEvent_MouseController,
-        EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_PowerModeUpdate,
         EventSchedulerEvent_EnterDeepSleep,
