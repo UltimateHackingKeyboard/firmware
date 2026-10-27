@@ -299,10 +299,7 @@ static void finishSuite(void) {
     uint16_t repeated = TestStatistics_RepeatedTestCount();
     uint16_t repeatedFailed = TestStatistics_FailedRepeatedTestCount();
     uint16_t repeatedSucceeded = repeated - repeatedFailed;
-    if (repeatedFailed > 0) {
-        LogU("[TEST] Repeated tests: %u passed, %u failed, %u%% fail confidence\n", (unsigned)repeatedSucceeded,
-                (unsigned)repeatedFailed, TestStatistics_AsPercent(TestStatistics_SuiteConfidence()));
-    } else if (repeated > 0) {
+    if (repeated > 0) {
         LogU("[TEST] Repeated tests: %u passed, %u failed\n", (unsigned)repeatedSucceeded, (unsigned)repeatedFailed);
     }
     LogU("[TEST] ----------------------\n");
@@ -327,16 +324,19 @@ static void moveToNextTest(void) {
 
 static void concludeRepeatedTest(const test_t *test, const test_module_t *module) {
     uint16_t repetitions = repetitionsPassed + repetitionsFailed;
-    bool anyFailed = repetitionsFailed > 0;
-    float confidence = TestStatistics_RepeatedTestConfidence(repetitionsFailed, repetitions);
+    bool failed = false;
 
-    if (anyFailed) {
-        LogU("[TEST] Finished: %s/%s - FAIL (%u/%u failed, %u%% fail confidence)\n", module->name, test->name,
-                (unsigned)repetitionsFailed, (unsigned)repetitions, TestStatistics_AsPercent(confidence));
+    if (repetitionsFailed > 0) {
+        double broken = TestStatistics_BrokenProbability(repetitionsFailed, repetitions, test->spuriousFailureRate);
+        unsigned expectedHundredths = TestStatistics_AsPercent(repetitions * test->spuriousFailureRate);
+        failed = broken >= TEST_FAIL_PROBABILITY;
+        LogU("[TEST] Finished: %s/%s - %s (%u/%u failed, %u.%02u expected, %u%% likely broken)\n", module->name, test->name,
+                failed ? "FAIL" : "PASS", (unsigned)repetitionsFailed, (unsigned)repetitions,
+                expectedHundredths / 100, expectedHundredths % 100, TestStatistics_AsPercent(broken));
     } else {
         LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
     }
-    TestStatistics_AddRepeatedTest(confidence, anyFailed);
+    TestStatistics_AddRepeatedTest(failed);
     repeatingTest = NULL;
     moveToNextTest();
 }

@@ -113,6 +113,9 @@ TEST_SET_MACRO("j", "ifShortcut k final tapKey n\n holdKey j")
 - `TEST_EXPECT___________MAYBE` only logs in verbose mode.
 - Failures are always logged immediately via `LOG_FAILURE(fmt, ...)`, which prints a separator before the first failure of a test; failed tests are auto-rerun with verbose enabled.
 - Tests with `repeatCount > 1` are never verbose, even when run as a single test, and never auto-rerun: every repetition runs, a repetition with any
-  failure counts as one failed repetition, and the verdict line reports `N passed, M failed`.
+  failure counts as one failed repetition, and the verdict line reports `M/N failed` with the expected count and how likely the test is broken.
+- A repeated test sets `spuriousFailureRate`: how often one repetition fails in a healthy run, a hard-wired constant, not derived from
+  `repeatCount`. The probability it is broken weighs that rate against a broken rate log-uniform in [2x the rate, 0.5], at a 50% prior
+  (`test_statistics.c`); the test FAILs at `TEST_FAIL_PROBABILITY` (95%) or above.
 - The left half (link tests) logs no test actions; its log stays reserved for bridge diagnostics.
 - Reset `TestSuite_Verbose = false` after a verbose rerun.

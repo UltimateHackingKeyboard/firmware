@@ -128,6 +128,9 @@ typedef struct {
     // How many times to run the action list. 0 and 1 both mean once. Lets a short cycle be
     // soaked without spending flash on a long static array.
     uint16_t repeatCount;
+    // How often one repetition of a healthy repeated test fails: its timings are set against
+    // random stress, so some failures are expected and only their number is evidence.
+    double spuriousFailureRate;
 } test_t;
 
 #endif
