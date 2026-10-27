@@ -60,6 +60,10 @@
 
         struct k_sem txControlBusy;
         bool enabled;
+        // UartLink_HoldRx keeps RX down for a power cycle. armLock makes checking rxHeld and
+        // arming one step, against UartLink_Enable from any thread.
+        struct k_mutex armLock;
+        bool rxHeld;
 
         // Diagnostics, printed by UartBridge_DumpStats.
         uint16_t rxStoppedOverrun;
@@ -94,6 +98,8 @@
 
     void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*receiveBytes)(void* state, const uint8_t* data, uint16_t len), void* userArg);
     void UartLink_Enable(uart_link_t *uartState);
+    // Disables RX and keeps UartLink_Enable from re-arming it until released (thread context).
+    void UartLink_HoldRx(uart_link_t *uartState, bool hold);
 
     void UartLink_LockBusy(uart_link_t *uartState);
     int UartLink_Send(uart_link_t *uartState, uint8_t* data, uint16_t len);

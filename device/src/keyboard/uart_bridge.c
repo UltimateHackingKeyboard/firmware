@@ -498,8 +498,9 @@ static bool takeDownUarte(uart_state_t *uartState) {
     bool txSlotHeld = (k_sem_take(&uartState->core.txControlBusy, K_MSEC(200)) == 0);
 
     // The disable completes asynchronously in the UART_RX_DISABLED callback; suspending
-    // while RX is still armed asserts in the driver.
-    uart_rx_disable(uartState->core.device);
+    // while RX is still armed asserts in the driver. The hold also stops senders on other
+    // threads, which bring RX up before they wait for the TX slot, from re-arming it.
+    UartLink_HoldRx(&uartState->core, true);
     k_msleep(20);
 
     pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_SUSPEND);
@@ -510,6 +511,7 @@ static void bringUpUarte(uart_state_t *uartState, bool txSlotHeld) {
     pm_device_action_run(uartState->core.device, PM_DEVICE_ACTION_RESUME);
 
     bridgeSuspended = false;
+    UartLink_HoldRx(&uartState->core, false);
     UartBridge_Enable();
 
     if (txSlotHeld) {

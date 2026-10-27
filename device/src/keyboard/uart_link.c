@@ -93,6 +93,7 @@ void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*rece
     uartState->userArg = userArg;
 
     k_sem_init(&uartState->txControlBusy, UART_LINK_SLOTS, UART_LINK_SLOTS);
+    k_mutex_init(&uartState->armLock);
 
     uartState->device = dev;
 
@@ -100,17 +101,7 @@ void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*rece
 }
 
 
-void UartLink_Enable(uart_link_t *uartState) {
-    if (uartState == NULL || uartState->enabled || uartState->device == NULL) {
-        return;
-    }
-#if UART_LOWPOWER
-    // While RX is intentionally slept, suppress re-enables (including the onRxDisabled
-    // re-arm our own uart_rx_disable triggers). UartLink_WakeRx re-enables explicitly.
-    if (uartState->rxWakePin.port != NULL && uartState->lpState != UartLp_Active) {
-        return;
-    }
-#endif
+static void armRx(uart_link_t *uartState) {
     int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_TRANSPORT_TIMEOUT_US);
     if (err == 0) {
         uartState->enabled = true;
@@ -125,6 +116,33 @@ void UartLink_Enable(uart_link_t *uartState) {
     } else {
         LogU("Failed to enable UART RX because %d\n", err);
     }
+}
+
+void UartLink_Enable(uart_link_t *uartState) {
+    if (uartState == NULL || uartState->enabled || uartState->device == NULL) {
+        return;
+    }
+#if UART_LOWPOWER
+    // While RX is intentionally slept, suppress re-enables (including the onRxDisabled
+    // re-arm our own uart_rx_disable triggers). UartLink_WakeRx re-enables explicitly.
+    if (uartState->rxWakePin.port != NULL && uartState->lpState != UartLp_Active) {
+        return;
+    }
+#endif
+    k_mutex_lock(&uartState->armLock, K_FOREVER);
+    if (!uartState->rxHeld) {
+        armRx(uartState);
+    }
+    k_mutex_unlock(&uartState->armLock);
+}
+
+void UartLink_HoldRx(uart_link_t *uartState, bool hold) {
+    k_mutex_lock(&uartState->armLock, K_FOREVER);
+    uartState->rxHeld = hold;
+    if (hold) {
+        uart_rx_disable(uartState->device);
+    }
+    k_mutex_unlock(&uartState->armLock);
 }
 
 #if UART_LOWPOWER
