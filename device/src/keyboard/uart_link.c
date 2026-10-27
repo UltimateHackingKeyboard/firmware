@@ -51,6 +51,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     case UART_RX_DISABLED:
         uartState->enabled = false;
         uartState->rxDisabledCount++;
+        uartState->rxStopPending = false;
         // Every RX teardown lands here, including driver-initiated ones (framing/break
         // errors are routine when RX is enabled mid-byte after a GPIO wake). Let the owner
         // re-arm RX if it wants it up - otherwise the link stays deaf.
@@ -63,6 +64,13 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         // reason: 1=overrun 2=parity 4=framing 8=break (uart.h uart_rx_stop_reason)
         BridgeDbg("BRIDGE RX_STOPPED reason %d\n", evt->data.rx_stop.reason);
         uartState->enabled = false;
+        uartState->rxStopPending = true;
+        // After an error the driver (NCS 3.3.0) stops RX on its own, but neither flushes the
+        // FIFO nor refuses uart_rx_enable until that stop completes. Re-armed in between, it
+        // books the stopped buffer against the new one, and its TIMER byte counting stays off
+        // until the UARTE is power cycled. Stopping through the API restores both: the FIFO is
+        // flushed and counted, and uart_rx_enable returns -EBUSY until UART_RX_DISABLED.
+        uart_rx_disable(dev);
         {
             uint8_t reason = evt->data.rx_stop.reason;
             if (reason & UART_ERROR_OVERRUN) {
@@ -106,6 +114,10 @@ void UartLink_Enable(uart_link_t *uartState) {
     int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_TRANSPORT_TIMEOUT_US);
     if (err == 0) {
         uartState->enabled = true;
+        if (uartState->rxStopPending) {
+            uartState->rxArmedMidStop++;
+            uartState->rxStopPending = false;
+        }
     } else if (err == -EBUSY) {
         // The previous uart_rx_disable is still draining, or RX is already up. Harmless
         // either way - the pending UART_RX_DISABLED event re-arms via the onRxDisabled hook.

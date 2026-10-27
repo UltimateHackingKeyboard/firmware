@@ -68,6 +68,8 @@
         uint16_t rxStoppedOther;
         uint16_t rxDisabledCount;
         uint16_t txAbortedCount;
+        bool rxStopPending;         // UART_RX_STOPPED seen, its UART_RX_DISABLED not yet
+        uint16_t rxArmedMidStop;    // uart_rx_enable accepted while rxStopPending
 
         // Low-power (UART_LOWPOWER) state
         struct gpio_dt_spec rxWakePin;      // RXD as a GPIO; .port == NULL disables LP

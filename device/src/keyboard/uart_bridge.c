@@ -769,7 +769,7 @@ void UartBridge_DumpStats(void) {
     LogU("  rx stopped: overrun=%u framing=%u break=%u other=%u disabled=%u garbageRestarts=%u\n",
         (unsigned)core->rxStoppedOverrun, (unsigned)core->rxStoppedFraming, (unsigned)core->rxStoppedBreak,
         (unsigned)core->rxStoppedOther, (unsigned)core->rxDisabledCount, (unsigned)stats.rxRestarts);
-    LogU("  powerCycles=%u\n", (unsigned)stats.powerCycles);
+    LogU("  powerCycles=%u armedMidStop=%u\n", (unsigned)stats.powerCycles, (unsigned)core->rxArmedMidStop);
     dumpLatency("ackLoop (send->ack)", &stats.ackLoop);
     dumpLatency("ackTurn (rx->ack tx)", &stats.ackTurn);
 }
