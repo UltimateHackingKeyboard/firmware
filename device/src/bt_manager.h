@@ -15,7 +15,7 @@
 
 // Variables:
 
-    extern bool BtManager_Restarting;
+    extern bool BtManager_Stopped;
 
 // Functions:
 

@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "logger.h"
+#include "config_manager.h"
 #include "device.h"
 #include "macros/status_buffer.h"
 #include "macro_events.h"
@@ -93,7 +94,8 @@ void c2usb_log(const char *fmt, ...) {
     REENTRANCY_GUARD_BEGIN;
     EXPAND_STRING(buffer);
 
-    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+
     REENTRANCY_GUARD_END;
 }
 

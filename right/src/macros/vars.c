@@ -136,7 +136,7 @@ static macro_variable_t consumeStringLiteral(parser_context_t* ctx)
         return noneVar();
     }
 
-    uint16_t offset = stringStart - (const char*)ValidatedUserConfigBuffer.buffer;
+    uint16_t offset = stringStart - (const char*)AppliedUserConfigBuffer.buffer;
     uint8_t len = ctx->at - stringStart;
 
     return stringVar((string_ref_t){ .offset = offset, .len = len });
@@ -226,7 +226,7 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
 
     macro_variable_t* res = &macroVariables[macroVariableCount];
     macroVariables[macroVariableCount].name = (string_ref_t) {
-        .offset = ctx->at - (const char*)ValidatedUserConfigBuffer.buffer,
+        .offset = ctx->at - (const char*)AppliedUserConfigBuffer.buffer,
         .len = len
     };
     macroVariableCount++;

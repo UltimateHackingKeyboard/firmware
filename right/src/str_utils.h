@@ -19,7 +19,7 @@
 // Macros:
 
     #define EXPAND_SEGMENT(SEGMENT) SegmentLen(SEGMENT), SEGMENT.start
-    #define EXPAND_REF(REF) REF.len, (const char*)ValidatedUserConfigBuffer.buffer + REF.offset
+    #define EXPAND_REF(REF) REF.len, (const char*)AppliedUserConfigBuffer.buffer + REF.offset
     #define CHAR_IS_VALID(C) ((C >= 32 && C < 127) || (C == '\n') || (C == '\r') || (C == '\t'))
 
     #define PARSER_CONTEXT_STACK_SIZE 4
