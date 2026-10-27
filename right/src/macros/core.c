@@ -255,7 +255,6 @@ static bool findFreeStateSlot()
 
 void Macros_Initialize() {
     MacroVariables_Reset();
-    Macros_ResetScheduler();
     LayerStack_Reset();
 }
 
