@@ -41,6 +41,9 @@
     // UART_WAKE_DISPATCH_DELAY_US, or that stop lands on the frame following a wake byte.
     #define UART_TRANSPORT_TIMEOUT_US 700
 
+    // Bound on waits that should never expire, so that a stuck one cannot freeze the keyboard.
+    #define UART_FOREVER_TIMEOUT 10000
+
 
 // Typedefs:
 

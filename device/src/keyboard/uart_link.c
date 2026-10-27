@@ -129,20 +129,28 @@ void UartLink_Enable(uart_link_t *uartState) {
         return;
     }
 #endif
-    k_mutex_lock(&uartState->armLock, K_FOREVER);
+    bool locked = k_mutex_lock(&uartState->armLock, K_MSEC(UART_FOREVER_TIMEOUT)) == 0;
     if (!uartState->rxHeld) {
         armRx(uartState);
     }
-    k_mutex_unlock(&uartState->armLock);
+    if (locked) {
+        k_mutex_unlock(&uartState->armLock);
+    }
 }
 
+// Keeps RX down while the owner power cycles the UARTE: suspending it with RX armed asserts in
+// the driver, and senders on other threads arm RX before they wait for the TX slot. armLock
+// makes UartLink_Enable's rxHeld check and arm one step; should it ever get stuck, both go on
+// without it after UART_FOREVER_TIMEOUT rather than freeze the keyboard.
 void UartLink_HoldRx(uart_link_t *uartState, bool hold) {
-    k_mutex_lock(&uartState->armLock, K_FOREVER);
+    bool locked = k_mutex_lock(&uartState->armLock, K_MSEC(UART_FOREVER_TIMEOUT)) == 0;
     uartState->rxHeld = hold;
     if (hold) {
         uart_rx_disable(uartState->device);
     }
-    k_mutex_unlock(&uartState->armLock);
+    if (locked) {
+        k_mutex_unlock(&uartState->armLock);
+    }
 }
 
 #if UART_LOWPOWER
