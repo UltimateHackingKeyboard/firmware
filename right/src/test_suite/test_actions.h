@@ -120,9 +120,6 @@ typedef struct {
 
 // Test definition
 
-// How long a repeated test runs: each sizes its repeatCount from this and its cycle time.
-#define TEST_REPEAT_FOR_SECONDS 30
-
 typedef struct {
     const char *name;
     const test_action_t *actions;

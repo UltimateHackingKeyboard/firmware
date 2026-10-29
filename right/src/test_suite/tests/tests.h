@@ -4,6 +4,9 @@
 #include "test_suite/test_actions.h"
 #include <stdint.h>
 
+// How long a repeated test runs: each sizes its repeatCount from this and its cycle time.
+#define TEST_REPEAT_FOR_SECONDS 30
+
 // Test module: a collection of related tests
 typedef struct {
     const char *name;
