@@ -31,10 +31,8 @@ LOG_MODULE_REGISTER(UsbReportSender, LOG_LEVEL_INF);
 #include "stubs.h"
 #endif
 
-// Backoff sizing. MAX_RETRIES is sized so that the cumulative wait from
-// GetResendThrottleDelay() is ~255 ms (1+2+4+8+16+32 + 6*32 = 1023).
-#define THROTTLE_MAX_RETRIES 12
-#define THROTTLE_MAX_SHIFT 5 // 1 << 5 == 32 ms
+// Backoff sizing: 1 << 5 == 32 ms. THROTTLE_MAX_RETRIES is in the header.
+#define THROTTLE_MAX_SHIFT 5
 #define THROTTLE_MAX_DELAY_MS 32
 
 bool Resending = false;

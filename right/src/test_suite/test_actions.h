@@ -126,6 +126,9 @@ typedef struct {
 
 // Test definition
 
+// How long a repeated test runs: each sizes its repeatCount from this and its cycle time.
+#define TEST_REPEAT_FOR_SECONDS 30
+
 typedef struct {
     const char *name;
     const test_action_t *actions;
@@ -134,6 +137,9 @@ typedef struct {
     // How many times to run the action list. 0 and 1 both mean once. Lets a short cycle be
     // soaked without spending flash on a long static array.
     uint16_t repeatCount;
+    // How often one repetition of a healthy repeated test fails: its timings are set against
+    // random stress, so some failures are expected and only their number is evidence.
+    double spuriousFailureRate;
 } test_t;
 
 #endif

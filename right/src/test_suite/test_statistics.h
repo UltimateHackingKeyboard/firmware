@@ -8,22 +8,21 @@
 
 // Macros:
 
-    // How often a healthy repeated test is allowed to fail, over the whole test: its timings are
-    // set against random stress, so some failures are expected and only their number is evidence.
-    #define TEST_SPURIOUS_FAILURE_RATE 0.2f
+    // A repeated test fails once it is broken with at least this probability.
+    #define TEST_FAIL_PROBABILITY 0.95
 
 // Functions:
 
-    // Confidence that `failed` failed repetitions out of `repetitions` are more than chance.
-    float TestStatistics_RepeatedTestConfidence(uint16_t failed, uint16_t repetitions);
+    // Probability that a test is broken, given `failed` >= 1 failed repetitions out of
+    // `repetitions`, a healthy repetition failing with probability `rate`.
+    double TestStatistics_BrokenProbability(uint16_t failed, uint16_t repetitions, double rate);
 
-    // The repeated tests of a suite run, combined by Fisher's method.
+    // The repeated tests of a suite run.
     void TestStatistics_Reset(void);
-    void TestStatistics_AddRepeatedTest(float confidence, bool failed);
+    void TestStatistics_AddRepeatedTest(bool failed);
     uint16_t TestStatistics_RepeatedTestCount(void);
     uint16_t TestStatistics_FailedRepeatedTestCount(void);
-    float TestStatistics_SuiteConfidence(void);
 
-    unsigned TestStatistics_AsPercent(float probability);
+    unsigned TestStatistics_AsPercent(double probability);
 
 #endif
