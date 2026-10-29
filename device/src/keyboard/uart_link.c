@@ -157,6 +157,11 @@ void UartLink_HoldRx(uart_link_t *uartState, bool hold) {
     uartState->rxHeld = hold;
     if (hold) {
         uart_rx_disable(uartState->device);
+    } else {
+        // RX stayed down through the hold whatever the flag says: no UART_RX_DISABLED comes when the
+        // driver had no buffer left to stop (uart_rx_disable returns -EFAULT), and a flag left up
+        // would skip the re-arm that follows.
+        uartState->enabled = false;
     }
     if (locked) {
         k_mutex_unlock(&uartState->armLock);
