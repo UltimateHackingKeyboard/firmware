@@ -101,20 +101,28 @@ void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*rece
 }
 
 
+// The flag goes up before the call: the driver can stop and finalize RX inside uart_rx_enable
+// already (an rx error pending when it enables its interrupts), and the UART_RX_STOPPED and
+// UART_RX_DISABLED callbacks that lower the flag must not be overwritten afterwards. A flag left
+// up while the driver is down skips every re-arm, and RX stays deaf for good.
 static void armRx(uart_link_t *uartState) {
+    bool stopWasPending = uartState->rxStopPending;
+    uartState->enabled = true;
     int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_TRANSPORT_TIMEOUT_US);
     if (err == 0) {
-        uartState->enabled = true;
-        if (uartState->rxStopPending) {
+        if (stopWasPending) {
             uartState->rxArmedMidStop++;
             uartState->rxStopPending = false;
         }
-    } else if (err == -EBUSY) {
-        // The previous uart_rx_disable is still draining, or RX is already up. Harmless
-        // either way - the pending UART_RX_DISABLED event re-arms via the onRxDisabled hook.
-        BridgeDbg("UART RX enable deferred (-EBUSY)\n");
     } else {
-        LogU("Failed to enable UART RX because %d\n", err);
+        uartState->enabled = false;
+        if (err == -EBUSY) {
+            // The previous uart_rx_disable is still draining, or RX is already up. Harmless
+            // either way - the pending UART_RX_DISABLED event re-arms via the onRxDisabled hook.
+            BridgeDbg("UART RX enable deferred (-EBUSY)\n");
+        } else {
+            LogU("Failed to enable UART RX because %d\n", err);
+        }
     }
 }
 
@@ -129,8 +137,10 @@ void UartLink_Enable(uart_link_t *uartState) {
         return;
     }
 #endif
+    // The flag is checked again under the lock: a caller that queued behind another one's arm
+    // would get -EBUSY and lower the flag of a running RX.
     bool locked = k_mutex_lock(&uartState->armLock, K_MSEC(UART_FOREVER_TIMEOUT)) == 0;
-    if (!uartState->rxHeld) {
+    if (!uartState->rxHeld && !uartState->enabled) {
         armRx(uartState);
     }
     if (locked) {
