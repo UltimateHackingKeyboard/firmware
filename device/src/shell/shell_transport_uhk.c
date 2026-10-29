@@ -102,6 +102,20 @@ static void uartAsyncCallback(const struct device *dev, struct uart_event *evt, 
         uart_async_rx_on_buf_rel(&data->async_rx, evt->data.rx_buf.buf);
         break;
     case UART_RX_DISABLED:
+        // The driver stops RX by itself after an rx error, e.g. a glitch or a break on the console
+        // line. Without a re-arm the console stays deaf until the transport is re-initialized.
+        if (data->uartEnabled) {
+            uint8_t *buf = uart_async_rx_buf_req(&data->async_rx);
+            if (buf != NULL) {
+                int err = uartRxEnable(dev, buf, uart_async_rx_get_buf_len(&data->async_rx));
+                if (err < 0) {
+                    uart_async_rx_on_buf_rel(&data->async_rx, buf);
+                }
+            } else {
+                // No free buffer until the shell has read; the read path re-enables RX then.
+                atomic_inc(&data->pending_rx_req);
+            }
+        }
         break;
     default:
         break;
@@ -384,11 +398,12 @@ void ShellUartTransport_Uninit(void)
 
     ShellLogBackend_ClearUart();
 
+    // Lowered first, or the UART_RX_DISABLED callback would re-arm what we are tearing down.
+    data->uartEnabled = false;
+
     if (data->dev) {
         uart_rx_disable(data->dev);
     }
-
-    data->uartEnabled = false;
 }
 
 void ShellUartTransport_Reinit(void)
@@ -399,7 +414,9 @@ void ShellUartTransport_Reinit(void)
         return;
     }
 
-    // Defensive: force-disable UART RX to handle stale state after soft reset
+    // Defensive: force-disable UART RX to handle stale state after soft reset. The flag stays
+    // down until we have armed RX ourselves, so the callback does not re-arm it in between.
+    data->uartEnabled = false;
     uart_rx_disable(data->dev);
 
     // Re-register callback and re-enable RX
