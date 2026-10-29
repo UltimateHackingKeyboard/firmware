@@ -27,6 +27,7 @@ const config_t DefaultCfg = (config_t){
             .swapAxes = false,
             .invertScrollDirectionX = false,
             .invertScrollDirectionY = false,
+            .angle = 0.0f,
             .navigationModes = {
                 NavigationMode_Scroll, // Base layer
                 NavigationMode_Cursor, // Mod layer
@@ -49,6 +50,7 @@ const config_t DefaultCfg = (config_t){
             .swapAxes = false,
             .invertScrollDirectionX = false,
             .invertScrollDirectionY = false,
+            .angle = 0.0f,
             .navigationModes = {
                 NavigationMode_Cursor, // Base layer
                 NavigationMode_Scroll, // Mod layer
@@ -71,6 +73,7 @@ const config_t DefaultCfg = (config_t){
             .swapAxes = false,
             .invertScrollDirectionX = false,
             .invertScrollDirectionY = false,
+            .angle = 0.0f,
             .navigationModes = {
                 NavigationMode_Cursor, // Base layer
                 NavigationMode_Scroll, // Mod layer
@@ -93,6 +96,7 @@ const config_t DefaultCfg = (config_t){
             .swapAxes = false,
             .invertScrollDirectionX = false,
             .invertScrollDirectionY = false,
+            .angle = 0.0f,
             .navigationModes = {
                 NavigationMode_Cursor, // Base layer
                 NavigationMode_Scroll, // Mod layer
@@ -115,6 +119,7 @@ const config_t DefaultCfg = (config_t){
             .swapAxes = false,
             .invertScrollDirectionX = false,
             .invertScrollDirectionY = false,
+            .angle = 0.0f,
             .navigationModes = {
                 NavigationMode_Cursor, // Base layer
                 NavigationMode_Scroll, // Mod layer

@@ -147,6 +147,7 @@ COMMAND = set module.MODULEID.caretAxisLock BOOL
 COMMAND = set module.MODULEID.swapAxes BOOL
 COMMAND = set module.MODULEID.invertScrollDirectionX BOOL
 COMMAND = set module.MODULEID.invertScrollDirectionY BOOL
+COMMAND = set module.MODULEID.angle <-180-180, counterclockwise rotation of the module in degrees (FLOAT)>
 COMMAND = set module.touchpad.pinchZoomDivisor <1-100 (FLOAT)>
 COMMAND = set module.touchpad.pinchZoomMode NAVIGATION_MODE
 COMMAND = set module.touchpad.holdContinuationTimeout <0-65535 (INT)>
@@ -688,11 +689,12 @@ Key actions can be parametrized with macro arguments. These arguments can be exp
     - at 3000 px/s, speed multiplier is 1x
     - at 6000 px/s, speed multiplier is 4x
     - not recommended - the curve will behave in a very non-linear fashion.
-- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|invertScrollDirection|invertScrollDirectionX|invertScrollDirectionY}` modifies scrolling and caret behaviour:
+- `set module.MODULEID.{caretSpeedDivisor|scrollSpeedDivisor|zoomSpeedDivisor|swapAxes|angle|invertScrollDirection|invertScrollDirectionX|invertScrollDirectionY}` modifies scrolling and caret behaviour:
   - `caretSpeedDivisor` (default: 16) is used to divide input in caret mode. This means that per one tick, you have to move by 16 pixels (or whatever the unit is). (This is further modified by axisLocking skew, as well as by acceleration.)
   - `scrollSpeedDivisor` (default: 8) is used to divide input in scroll mode. This means that while scrolling, every 8 pixels produce one scroll tick. (This is further modified by axisLocking skew, as well as acceleration.)
   - `pinchZoomDivisor` (default: 4 (?)) is used specifically for the touchpad's zoom gesture, therefore its default value is nonstandard. Only valid for touchpad.
   - `swapAxes` swaps the x and y coordinates of the module. The intended use is for the keycluster trackball, since sideways scrolling is easier.
+  - `angle` (default: 0) compensates for a module that is rotated on the desk, e.g., by a split setup. It is the counterclockwise rotation of the module in degrees; movement is rotated back so that pushing away from you moves the cursor up. Applies to all navigation modes.
   - `invertScrollDirection` inverts the scroll direction in the y-axis...
   - `invertScrollDirectionX` explicitly inverts the scroll direction in the x-axis...
   - `invertScrollDirectionY` explicitly inverts the scroll direction in the y-axis...
