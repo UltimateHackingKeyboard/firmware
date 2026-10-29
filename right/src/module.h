@@ -63,6 +63,8 @@
         float axisLockSkew;
         float axisLockFirstTickSkew;
 
+        float angle; // degrees, counterclockwise rotation of the module on the desk
+
         navigation_mode_t navigationModes[LayerId_Count];
 
         bool scrollAxisLock;
