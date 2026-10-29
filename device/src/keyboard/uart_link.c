@@ -28,18 +28,25 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_BUF_REQUEST:
     {
-        uint8_t *nextBuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
+        // No buffer while RX is stopping: when an error and a buffer switch reach the driver in one
+        // interrupt, it asks for the next buffer after it has started the stop, and handing one over
+        // re-enables the ENDRX->STARTRX short. The stop then becomes a buffer switch - no RXTO, no
+        // UART_RX_DISABLED, and uart_rx_enable keeps returning -EBUSY. Without a buffer it completes.
+        bool stopping = uartState->rxStopPending || uartState->rxHeld;
+        if (!stopping) {
+            uint8_t *nextBuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
 
-        err = uart_rx_buf_rsp(uartState->device, nextBuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH);
+            err = uart_rx_buf_rsp(uartState->device, nextBuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH);
 
-        if (err == 0) {
-            uartState->rxbuf = nextBuf;
-        } else if (err == -EACCES) {
-            // Not fatal. It went down in the meantime and so the buffer is no longer wanted.
-            BridgeDbg("BRIDGE buf_rsp declined, rx down\n");
-        } else {
-            LogU("Uart: buffer request rejected because %i\n", err);
-            __ASSERT(false, "Uart: buffer request rejected because %i\n", err);
+            if (err == 0) {
+                uartState->rxbuf = nextBuf;
+            } else if (err == -EACCES) {
+                // Not fatal. It went down in the meantime and so the buffer is no longer wanted.
+                BridgeDbg("BRIDGE buf_rsp declined, rx down\n");
+            } else {
+                LogU("Uart: buffer request rejected because %i\n", err);
+                __ASSERT(false, "Uart: buffer request rejected because %i\n", err);
+            }
         }
 
         break;
