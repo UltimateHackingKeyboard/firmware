@@ -26,6 +26,8 @@ LOG_MODULE_REGISTER(shell_transport_uhk);
 #define UART_RX_BUF_SIZE 16
 #define UART_RX_TOTAL_SIZE (UART_RX_BUF_COUNT * \
     (UART_RX_BUF_SIZE + UART_ASYNC_RX_BUF_OVERHEAD))
+// After the driver stops RX on an rx error, the shell re-enables it this much later.
+#define UART_RX_REARM_DELAY_MS 10
 
 // --- UART transport state ---
 
@@ -54,6 +56,7 @@ struct uart_transport_data {
     struct uart_async_rx async_rx;
     struct uart_async_rx_config async_rx_config;
     atomic_t pending_rx_req;
+    struct k_timer rxRearmTimer;
     uint8_t rx_data[UART_RX_TOTAL_SIZE];
 
     // Injected input (Shell_Input)
@@ -69,6 +72,14 @@ static struct uart_transport_data uartTransportData;
 static int uartRxEnable(const struct device *dev, uint8_t *buf, size_t len)
 {
     return uart_rx_enable(dev, buf, len, 10000);
+}
+
+static void rxRearmTimerExpired(struct k_timer *timer)
+{
+    struct uart_transport_data *data = CONTAINER_OF(timer, struct uart_transport_data, rxRearmTimer);
+
+    // Wakes the shell; its read re-enables RX.
+    data->handler(SHELL_TRANSPORT_EVT_RX_RDY, data->context);
 }
 
 static void uartAsyncCallback(const struct device *dev, struct uart_event *evt, void *user_data)
@@ -103,18 +114,12 @@ static void uartAsyncCallback(const struct device *dev, struct uart_event *evt, 
         break;
     case UART_RX_DISABLED:
         // The driver stops RX by itself after an rx error, e.g. a glitch or a break on the console
-        // line. Without a re-arm the console stays deaf until the transport is re-initialized.
+        // line. The shell's read re-enables it (see uartTransportRead); taking a buffer here instead
+        // would race the read path for the same one. With RX off nothing wakes the shell, so a timer
+        // does, and its delay keeps a line held low from becoming a busy loop.
         if (data->uartEnabled) {
-            uint8_t *buf = uart_async_rx_buf_req(&data->async_rx);
-            if (buf != NULL) {
-                int err = uartRxEnable(dev, buf, uart_async_rx_get_buf_len(&data->async_rx));
-                if (err < 0) {
-                    uart_async_rx_on_buf_rel(&data->async_rx, buf);
-                }
-            } else {
-                // No free buffer until the shell has read; the read path re-enables RX then.
-                atomic_inc(&data->pending_rx_req);
-            }
+            atomic_inc(&data->pending_rx_req);
+            k_timer_start(&data->rxRearmTimer, K_MSEC(UART_RX_REARM_DELAY_MS), K_NO_WAIT);
         }
         break;
     default:
@@ -265,6 +270,7 @@ static int uartTransportInit(const struct shell_transport *transport,
     };
 
     k_sem_init(&data->tx_sem, 0, 1);
+    k_timer_init(&data->rxRearmTimer, rxRearmTimerExpired, NULL);
 
     int err = uart_async_rx_init(&data->async_rx, &data->async_rx_config);
     __ASSERT_NO_MSG(err == 0);
@@ -287,6 +293,7 @@ static int uartTransportUninit(const struct shell_transport *transport)
     data->uartEnabled = false;
 
     if (data->dev) {
+        k_timer_stop(&data->rxRearmTimer);
         uart_rx_disable(data->dev);
     }
 
@@ -353,7 +360,8 @@ static int uartTransportRead(const struct shell_transport *transport,
     bool buf_available = uart_async_rx_data_consume(async_rx, blen);
     *cnt = blen;
 
-    if (data->pending_rx_req && buf_available) {
+    // Not after an uninit: a request left over from before must not arm RX again.
+    if (data->pending_rx_req && buf_available && data->uartEnabled) {
         uint8_t *newBuf = uart_async_rx_buf_req(async_rx);
         size_t newLen = uart_async_rx_get_buf_len(async_rx);
         int err;
@@ -402,6 +410,7 @@ void ShellUartTransport_Uninit(void)
     data->uartEnabled = false;
 
     if (data->dev) {
+        k_timer_stop(&data->rxRearmTimer);
         uart_rx_disable(data->dev);
     }
 }
@@ -418,6 +427,9 @@ void ShellUartTransport_Reinit(void)
     // down until we have armed RX ourselves, so the callback does not re-arm it in between.
     data->uartEnabled = false;
     uart_rx_disable(data->dev);
+    k_timer_stop(&data->rxRearmTimer);
+    // RX gets a fresh buffer below, so requests left over from before are void.
+    atomic_clear(&data->pending_rx_req);
 
     // Re-register callback and re-enable RX
     int err = uart_callback_set(data->dev, uartAsyncCallback, (void *)data);
