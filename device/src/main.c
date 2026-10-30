@@ -165,8 +165,8 @@ void mainRuntime(void) {
     // NEW (uninitializing uart doesn't seem to have further effect)
 
     {
-        flash_area_open(FLASH_AREA_ID(hardware_config_partition), &hardwareConfigArea);
-        flash_area_open(FLASH_AREA_ID(user_config_partition), &userConfigArea);
+        flash_area_open(FIXED_PARTITION_ID(hardware_config_partition), &hardwareConfigArea);
+        flash_area_open(FIXED_PARTITION_ID(user_config_partition), &userConfigArea);
     }
 
     // 0.83mA
