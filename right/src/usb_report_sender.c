@@ -92,19 +92,19 @@ static void handleUltimateFail(errno_t errorCode) {
 
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
-        LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode));
+        WATCH(LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode)));
     } else {
-        LOG_ERR("Send failed (gave up resending): %d (%s)", errorCode, ErrToStr(errorCode));
+        WATCH(LOG_ERR("Send failed (gave up resending): %d (%s)", errorCode, ErrToStr(errorCode)));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
             // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
             if (!WormCfg->devMode && Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
-                LOG_ERR("Send failed. Trying to reconnect.");
+                WATCH(LOG_ERR("Send failed. Trying to reconnect."));
                 HostConnections_Reconnect();
             }
         }
     }
 #else
-    LOG_ERR("Send failed: %d (%s)", errorCode, ErrToStr(errorCode));
+    WATCH(LOG_ERR("Send failed: %d (%s)", errorCode, ErrToStr(errorCode)));
 #endif
 }
 
