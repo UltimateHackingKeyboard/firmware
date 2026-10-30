@@ -298,7 +298,7 @@ extern "C" void Hid_KeyboardReportSentCallback(report_sink_t sink)
 #endif
 }
 
-void keyboard_report_sent_callback(hid::session &session)
+void keyboard_report_sent_callback(hid::session &session, [[maybe_unused]] int result)
 {
     Hid_KeyboardReportSentCallback(
         session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
@@ -362,7 +362,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     return err;
 }
 
-void mouse_report_sent_callback(hid::session &session)
+void mouse_report_sent_callback(hid::session &session, [[maybe_unused]] int result)
 {
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
@@ -435,7 +435,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     return err;
 }
 
-void controls_report_sent_callback(hid::session &session)
+void controls_report_sent_callback(hid::session &session, [[maybe_unused]] int result)
 {
     report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
     UsbSemaphore_Release(&UsbSemaphore.controls);

@@ -20,7 +20,7 @@ class controls_session : public hid::session {
     using hid::session::session;
 
   protected:
-    void report_sent(const std::span<const uint8_t> &data) override;
+    void send_report_callback(hid::report::selector select, c2usb::result result) override;
 
     std::span<const uint8_t> get_report(
         hid::report::selector select, const std::span<uint8_t> &buffer) override;
@@ -97,4 +97,4 @@ class controls_app : public hid::application {
     std::optional<controls_session> session_{};
 };
 
-void controls_report_sent_callback(hid::session &session);
+void controls_report_sent_callback(hid::session &session, int result);

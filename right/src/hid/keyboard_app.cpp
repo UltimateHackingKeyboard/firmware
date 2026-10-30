@@ -7,7 +7,7 @@ extern "C" {
     #include <zephyr/sys/printk.h>
 #endif
 #ifdef __ZEPHYR__
-#include "connections.h"
+    #include "connections.h"
 #endif
 }
 
@@ -127,9 +127,10 @@ void keyboard_session::set_report(hid::report::type type, const std::span<const 
     receive_report(&leds_buffer_);
 }
 
-void keyboard_session::report_sent(const std::span<const uint8_t> &data)
+void keyboard_session::send_report_callback(
+    [[maybe_unused]] hid::report::selector select, c2usb::result result)
 {
-    keyboard_report_sent_callback(*this);
+    keyboard_report_sent_callback(*this, result.to_int());
 }
 
 std::span<const uint8_t> keyboard_session::get_report(

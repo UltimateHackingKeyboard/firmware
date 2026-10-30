@@ -27,7 +27,7 @@ class mouse_session : public hid::session {
   protected:
     C2USB_USB_TRANSFER_ALIGN(scroll_resolution_report, resolution_buffer_) {};
 
-    void report_sent(const std::span<const uint8_t> &data) override;
+    void send_report_callback(hid::report::selector select, c2usb::result result) override;
 
     std::span<const uint8_t> get_report(
         hid::report::selector select, const std::span<uint8_t> &buffer) override;
@@ -106,6 +106,6 @@ class mouse_app : public hid::application {
     std::optional<mouse_session> session_{};
 };
 
-void mouse_report_sent_callback(hid::session &session);
+void mouse_report_sent_callback(hid::session &session, int result);
 void mouse_resolution_changed_callback(
     hid::session &session, const mouse_session::scroll_resolution_report &report);

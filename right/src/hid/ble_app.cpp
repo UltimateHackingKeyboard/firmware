@@ -116,23 +116,23 @@ std::span<const uint8_t> ble_session::get_report(
     }
 }
 
-void ble_session::report_sent(const std::span<const uint8_t> &data)
+void ble_session::send_report_callback(hid::report::selector select, c2usb::result result)
 {
     if (protocol() == hid::protocol::BOOT) {
-        keyboard_report_sent_callback(*this);
+        keyboard_report_sent_callback(*this, result.to_int());
     } else {
-        switch (data.front()) {
-        case keys_6kro_report::selector().id():
-        case keys_nkro_report::selector().id():
-            keyboard_report_sent_callback(*this);
+        switch (select) {
+        case keys_6kro_report::selector():
+        case keys_nkro_report::selector():
+            keyboard_report_sent_callback(*this, result.to_int());
             break;
-        case mouse_report::selector().id():
-            mouse_report_sent_callback(*this);
+        case mouse_report::selector():
+            mouse_report_sent_callback(*this, result.to_int());
             break;
-        case controls_report::selector().id():
-            controls_report_sent_callback(*this);
+        case controls_report::selector():
+            controls_report_sent_callback(*this, result.to_int());
             break;
-        case command_session::report_in::selector().id():
+        case command_session::report_in::selector():
             break;
         default:
             break;
