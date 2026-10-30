@@ -193,10 +193,6 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_MouseController:
             EventVector_Set(EventVector_MouseController);
             break;
-        case EventSchedulerEvent_ReenableUart:
-            UartBridge_Enable();
-            UartModules_Enable();
-            break;
         case EventSchedulerEvent_ModuleConnectionStatusUpdate:
             UhkModuleSlaveDriver_UpdateConnectionStatus();
             break;

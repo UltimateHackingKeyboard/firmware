@@ -76,6 +76,10 @@
 #define TEST_SET_BOOL(bool_ptr, bool_value) \
     { .type = TestAction_SetBool, .boolPtr = (bool_ptr), .boolValue = (bool_value) }
 
+// Call: run a check or a hook; returning false fails the test (the function logs why)
+#define TEST_CALL(fn) \
+    { .type = TestAction_Call, .callFn = (fn) }
+
 #define TEST_END() \
     { .type = TestAction_End }
 
@@ -94,6 +98,7 @@ typedef enum {
     TestAction_SetGenericAction,
     TestAction_SetConfig,
     TestAction_SetBool,
+    TestAction_Call,
     TestAction_Expect,       // OutputMachine only
     TestAction_ExpectMaybe,  // OutputMachine only, optional
     TestAction_CheckNow,     // Both machines
@@ -115,6 +120,7 @@ typedef struct {
         const char *macroText;        // For SetMacro
         const char *configText;       // For SetConfig
         key_action_t keyAction;       // For SetGenericAction
+        bool (*callFn)(void);         // For Call
     };
 } test_action_t;
 

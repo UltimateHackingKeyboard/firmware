@@ -41,6 +41,9 @@
     // UART_WAKE_DISPATCH_DELAY_US, or that stop lands on the frame following a wake byte.
     #define UART_TRANSPORT_TIMEOUT_US 700
 
+    // Bound on waits that should never expire, so that a stuck one cannot freeze the keyboard.
+    #define UART_FOREVER_TIMEOUT 10000
+
 
 // Typedefs:
 
@@ -60,6 +63,10 @@
 
         struct k_sem txControlBusy;
         bool enabled;
+        // UartLink_HoldRx keeps RX down for a power cycle. armLock makes checking rxHeld and
+        // arming one step, against UartLink_Enable from any thread.
+        struct k_mutex armLock;
+        bool rxHeld;
 
         // Diagnostics, printed by UartBridge_DumpStats.
         uint16_t rxStoppedOverrun;
@@ -68,6 +75,8 @@
         uint16_t rxStoppedOther;
         uint16_t rxDisabledCount;
         uint16_t txAbortedCount;
+        bool rxStopPending;         // UART_RX_STOPPED seen, its UART_RX_DISABLED not yet
+        uint16_t rxArmedMidStop;    // uart_rx_enable accepted while rxStopPending
 
         // Low-power (UART_LOWPOWER) state
         struct gpio_dt_spec rxWakePin;      // RXD as a GPIO; .port == NULL disables LP
@@ -92,7 +101,8 @@
 
     void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*receiveBytes)(void* state, const uint8_t* data, uint16_t len), void* userArg);
     void UartLink_Enable(uart_link_t *uartState);
-    void UartLink_Reset(uart_link_t *uartState);
+    // Disables RX and keeps UartLink_Enable from re-arming it until released (thread context).
+    void UartLink_HoldRx(uart_link_t *uartState, bool hold);
 
     void UartLink_LockBusy(uart_link_t *uartState);
     int UartLink_Send(uart_link_t *uartState, uint8_t* data, uint16_t len);
