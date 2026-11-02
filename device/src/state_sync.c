@@ -196,6 +196,11 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
 }
 
 void StateSync_UpdateProperty(state_sync_prop_id_t propId, void *data) {
+    if (propId >= StateSyncPropertyId_Count) {
+        LOG_WRN("Ignoring unknown state sync property id %d.", propId);
+        return;
+    }
+
     state_sync_prop_t *prop = &stateSyncProps[propId];
 
     if (DEVICE_ID == DeviceId_Uhk80_Left && prop->leftData && data) {
@@ -547,7 +552,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     default:
         LOG_ERR("Property %i ('%s') has no receive handler. If this is correct, please add a "
                "separate empty case...",
-            propId, prop->name);
+            propId, StateSync_PropertyIdToString(propId));
         break;
     }
 }
