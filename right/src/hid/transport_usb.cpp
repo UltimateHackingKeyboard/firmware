@@ -19,15 +19,16 @@ extern "C" {
 #endif
 }
 #ifdef __ZEPHYR__
-    #include "port/zephyr/udc_mac.hpp"
+    #include "usb/df/vendor/zephyr/udc_mac.hpp"
 #else
-    #include "port/nxp/mcux_mac.hpp"
+    #include "usb/df/vendor/nxp/mcux_mac.hpp"
 #endif
 #include "command_app.hpp"
 #include "controls_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
 #include "usb/df/class/hid.hpp"
+#include "usb/df/config_factory.hpp"
 #include "usb/df/device.hpp"
 #include "usb/df/vendor/microsoft/os_extension.hpp"
 #include "usb/df/vendor/microsoft/xinput.hpp"
@@ -134,7 +135,7 @@ struct usb_manager {
     }
 
 #ifdef __ZEPHYR__
-    usb::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256,
+    usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256,
         (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED)
             ? usb::power::state::L2_SUSPEND
             : usb::power::state::L3_OFF};
