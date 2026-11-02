@@ -62,6 +62,9 @@ static parser_error_t parseProperty(config_buffer_t* buffer, module_configuratio
         case SerializedModuleProperty_InvertScrollDirectionX:
             moduleConfiguration->invertScrollDirectionX = ReadBool(buffer);
             break;
+        case SerializedModuleProperty_Angle:
+            moduleConfiguration->angle = ReadFloat(buffer);
+            break;
         default:
             switch (moduleId) {
                 case ModuleId_TouchpadRight:

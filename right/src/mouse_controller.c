@@ -541,6 +541,46 @@ static void processAxisLocking(
     }
 }
 
+static bool moduleYIsInverted(uint8_t moduleId)
+{
+    return moduleId == ModuleId_KeyClusterLeft || moduleId == ModuleId_TouchpadRight;
+}
+
+// Avoids libm's sinf, which costs ~4 KB of flash with soft float. Folds deg into [-90, 90] and uses
+// the Taylor series up to x^9; the error is below 4e-6. Valid for deg in [-540, 540].
+static float fastSinDeg(float deg)
+{
+    if (deg > 180.0f) {
+        deg -= 360.0f;
+    } else if (deg < -180.0f) {
+        deg += 360.0f;
+    }
+
+    if (deg > 90.0f) {
+        deg = 180.0f - deg;
+    } else if (deg < -90.0f) {
+        deg = -180.0f - deg;
+    }
+
+    float x = deg * (3.14159265f / 180.0f);
+    float x2 = x * x;
+    return x * (1.0f + x2 * (-1.0f / 6.0f + x2 * (1.0f / 120.0f + x2 * (-1.0f / 5040.0f + x2 * (1.0f / 362880.0f)))));
+}
+
+// Compensates a module that is rotated counterclockwise by angleDeg on the desk. Rotation happens in the y-up frame.
+static void rotateDelta(float* x, float* y, float angleDeg, bool yInverted)
+{
+    float sinA = fastSinDeg(angleDeg);
+    float cosA = fastSinDeg(angleDeg + 90.0f);
+    float yUp = yInverted ? -*y : *y;
+
+    float rotatedX = *x * cosA - yUp * sinA;
+    float rotatedYUp = *x * sinA + yUp * cosA;
+
+    *x = rotatedX;
+    *y = yInverted ? -rotatedYUp : rotatedYUp;
+}
+
 static void processModuleKineticState(
         float x,
         float y,
@@ -550,7 +590,7 @@ static void processModuleKineticState(
  ) {
     float speed;
 
-    bool moduleYInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight;
+    bool moduleYInversion = moduleYIsInverted(ks->currentModuleId);
     bool scrollYInversion = moduleConfiguration->invertScrollDirectionY && ks->currentNavigationMode == NavigationMode_Scroll;
     bool scrollXInversion = moduleConfiguration->invertScrollDirectionX && ks->currentNavigationMode == NavigationMode_Scroll;
     int16_t yInversion = moduleYInversion != scrollYInversion ? -1 : 1;
@@ -731,6 +771,10 @@ static void processModuleActions(
         float tmp = x;
         x = y;
         y = tmp;
+    }
+
+    if (moduleConfiguration->angle != 0.0f) {
+        rotateDelta(&x, &y, moduleConfiguration->angle, moduleYIsInverted(moduleId));
     }
 
     //we want to process kinetic state even if x == 0 && y == 0, at least as
