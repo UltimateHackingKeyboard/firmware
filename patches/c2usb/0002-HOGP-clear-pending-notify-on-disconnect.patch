@@ -1,0 +1,141 @@
+From ef772c0866d82beac4455174e677be2e43014edf Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Fri, 30 Oct 2026 14:20:29 +0100
+Subject: [PATCH] HOGP: clear pending notify on disconnect.
+
+The notify completion callback isn't called for a notification lost with
+the link, which left the report's pending_notify set. Every later send of
+that report then returned device_or_resource_busy, across reconnects, until
+reboot. Track the owning connection, and clear the flag when it disconnects.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ c2usb/bluetooth/hid_over_gatt.cpp | 50 +++++++++++++++++++++++++------
+ c2usb/bluetooth/hid_over_gatt.hpp |  4 ++-
+ 2 files changed, 44 insertions(+), 10 deletions(-)
+
+diff --git a/c2usb/bluetooth/hid_over_gatt.cpp b/c2usb/bluetooth/hid_over_gatt.cpp
+index 330abe0..d757b7c 100644
+--- a/c2usb/bluetooth/hid_over_gatt.cpp
++++ b/c2usb/bluetooth/hid_over_gatt.cpp
+@@ -293,7 +293,7 @@ c2usb::result service::receive_report(session& sess, const std::span<uint8_t>& d
+     return c2usb::result::ok;
+ }
+ 
+-std::span<const uint8_t>& service::get_pending_notify(const gatt::attribute* attr)
++service::ccc_data& service::get_ccc_data(const gatt::attribute* attr)
+ {
+     attr += report_reference_offset() - 1;
+     if (!IS_ENABLED(CONFIG_C2USB_HID_BOOT_PROTOCOL) or
+@@ -305,7 +305,17 @@ std::span<const uint8_t>& service::get_pending_notify(const gatt::attribute* att
+     }
+     // now attr points to the CCC descriptor
+     assert(attr->uuid == &uuid16<BT_UUID_GATT_CCC_VAL>());
+-    return static_cast<ccc_data*>(const_cast<void*>(attr->user_data))->pending_notify;
++    return *static_cast<ccc_data*>(const_cast<void*>(attr->user_data));
++}
++
++void service::clear_pending_notify(const gatt::attribute* attr, ::bt_conn* conn)
++{
++    auto& ccc = get_ccc_data(attr);
++    if (ccc.pending_conn == conn)
++    {
++        ccc.pending_notify = {};
++        ccc.pending_conn = nullptr;
++    }
+ }
+ 
+ c2usb::result service::send_report(session& sess, const std::span<const uint8_t>& data)
+@@ -340,13 +350,14 @@ c2usb::result service::send_report(session& sess, const std::span<const uint8_t>
+ 
+     // alternatively we could allow queueing more than one notification per characteristic,
+     // at the cost of losing track of what message was sent, breaking report_sent() callback
+-    auto& pending_notify = get_pending_notify(attr);
+-    if (pending_notify.size() > 0)
++    auto& ccc = get_ccc_data(attr);
++    if (ccc.pending_notify.size() > 0)
+     {
+         return c2usb::result::device_or_resource_busy;
+     }
+ 
+-    pending_notify = data;
++    ccc.pending_notify = data;
++    ccc.pending_conn = it->conn;
+     auto result = c2usb::result(attr->notify(
+         data.subspan(offset),
+         [](::bt_conn* conn, void* user_data)
+@@ -358,17 +369,24 @@ c2usb::result service::send_report(session& sess, const std::span<const uint8_t>
+         attr, it->conn));
+     if (result != c2usb::result::ok)
+     {
+-        pending_notify = {};
++        ccc.pending_notify = {};
++        ccc.pending_conn = nullptr;
+     }
+     return result;
+ }
+ 
+ void service::notify_callback(::bt_conn* conn, const gatt::attribute* attr)
+ {
++    auto& ccc = get_ccc_data(attr);
++    // already cleared by disconnected(), a newer notify may be pending
++    if (ccc.pending_conn != conn)
++    {
++        return;
++    }
+     // clear pending notify before the callback
+-    auto& pending_notify = get_pending_notify(attr);
+-    auto buf = pending_notify;
+-    pending_notify = {};
++    auto buf = ccc.pending_notify;
++    ccc.pending_notify = {};
++    ccc.pending_conn = nullptr;
+     LOG_DBG("input report %x sent (size %u)",
+             std::bit_cast<uint16_t>(report_attr_props(attr).selector), buf.size());
+ 
+@@ -399,6 +417,20 @@ ssize_t service::ccc_cfg_write(::bt_conn* conn, const gatt::attribute* attr, gat
+ 
+ void service::disconnected(::bt_conn* conn)
+ {
++    // the stack doesn't call back for notifications lost with the link
++    for (const gatt::attribute* attr = &attributes()[base_attribute_count()];
++         attr[report_reference_offset() + 1].uuid == &uuid16<BT_UUID_GATT_CCC_VAL>();
++         attr += report_attribute_count(report::type::INPUT))
++    {
++        clear_pending_notify(attr + 1, conn);
++    }
++#if CONFIG_C2USB_HID_BOOT_PROTOCOL
++    if (auto* attr = input_boot_attr(boot_mode()); attr != nullptr)
++    {
++        clear_pending_notify(attr, conn);
++    }
++#endif
++
+     auto it = std::ranges::find_if(sessions_, [&](const auto& s) { return s.conn == conn; });
+     if (it != sessions_.end())
+     {
+diff --git a/c2usb/bluetooth/hid_over_gatt.hpp b/c2usb/bluetooth/hid_over_gatt.hpp
+index 7342fcc..24b7e53 100644
+--- a/c2usb/bluetooth/hid_over_gatt.hpp
++++ b/c2usb/bluetooth/hid_over_gatt.hpp
+@@ -63,6 +63,7 @@ class service : public hid::transport
+     struct ccc_data : public gatt::ccc_store
+     {
+         std::span<const uint8_t> pending_notify{};
++        ::bt_conn* pending_conn{};
+         ccc_data() = default;
+     };
+ 
+@@ -176,7 +177,8 @@ class service : public hid::transport
+         return {static_cast<const gatt::attribute*>(gatt_service_.attrs), gatt_service_.attr_count};
+     }
+ 
+-    std::span<const uint8_t>& get_pending_notify(const gatt::attribute* attr);
++    ccc_data& get_ccc_data(const gatt::attribute* attr);
++    void clear_pending_notify(const gatt::attribute* attr, ::bt_conn* conn);
+ 
+     static ssize_t get_report_map(::bt_conn* conn, const ::bt_gatt_attr* attr, void* buf,
+                                   uint16_t len, uint16_t offset);
+-- 
+2.51.0
+
