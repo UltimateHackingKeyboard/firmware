@@ -1,0 +1,41 @@
+From 8c249e7e0f221c98b48cb063ac8d0d2591c8ac4d Mon Sep 17 00:00:00 2001
+From: Karel Tucek <kareltucek@centrum.cz>
+Date: Mon, 2 Nov 2026 10:28:43 +0100
+Subject: [PATCH] Bluetooth: Host: ATT: clear TX metadata when releasing a
+ channel
+
+Buffers destroyed during disconnect reach att_tx_destroy_work_handler() after
+bt_att_released() has freed their channel. k_mem_slab_free() overwrites chan->att
+with the free-list link, so the guard in att_on_sent_cb() passes and bt_att_sent()
+treats the next free slab block as a struct bt_att.
+
+Same change as bt_att_released() in upstream Zephyr main.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ subsys/bluetooth/host/att.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/subsys/bluetooth/host/att.c b/subsys/bluetooth/host/att.c
+index efe59cee9cb..19a923f0006 100644
+--- a/subsys/bluetooth/host/att.c
++++ b/subsys/bluetooth/host/att.c
+@@ -3427,6 +3427,18 @@ static void bt_att_released(struct bt_l2cap_chan *ch)
+ 
+ 	LOG_DBG("chan %p", chan);
+ 
++	/* Drop any pending/in-flight ATT TX metadata still referencing this
++	 * channel, so the deferred att_on_sent_cb()/bt_att_sent() work cannot
++	 * dereference the channel after it is freed here. Bluetooth uses a
++	 * cooperative system workqueue, so this runs serialized with
++	 * att_tx_destroy_work_handler() and aligned pointer writes are atomic.
++	 */
++	ARRAY_FOR_EACH(tx_meta_data_storage, i) {
++		if (tx_meta_data_storage[i].att_chan == chan) {
++			tx_meta_data_storage[i].att_chan = NULL;
++		}
++	}
++
+ 	k_mem_slab_free(&chan_slab, (void *)chan);
+ }
+ 
