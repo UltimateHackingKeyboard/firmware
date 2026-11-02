@@ -21,7 +21,7 @@ manifest:
     - name: sdk-nrf
       remote: sdk
       path: nrf
-      revision: v3.3.0
+      revision: v3.4.1
       clone-depth: 1
       import:
         # path-prefix: nrfconnect
