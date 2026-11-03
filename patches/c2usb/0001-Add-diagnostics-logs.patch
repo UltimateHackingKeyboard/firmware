@@ -427,7 +427,7 @@ index 0000000..7ac5d9b
 +
 +extern "C" void c2usb_diag_dump(void)
 +{
-+    diag_state snapshot;
++    static diag_state snapshot;
 +    {
 +        state_guard guard;
 +        snapshot = state;
