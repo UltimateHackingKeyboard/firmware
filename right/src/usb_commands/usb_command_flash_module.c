@@ -3,6 +3,8 @@
 #include "module_flash.h"
 #include "slot.h"
 #include "slave_drivers/kboot_driver.h"
+#include "slave_drivers/uhk_module_driver.h"
+#include "logger.h"
 
 typedef enum {
     UsbStatusCode_FlashModule_InvalidSlotId = 2,
@@ -24,11 +26,17 @@ void UsbCommand_FlashModule(const uint8_t *GenericHidOutBuffer, uint8_t *Generic
         return;
     }
 
+    uint8_t driverId = UhkModuleSlaveDriver_SlotIdToDriverId(slotId);
+    LogU("Kboot: FlashModule requested: slot %u, connected module id %u, bootloader address 0x%02x, validated firmware %u bytes\n",
+         slotId, ModuleConnectionStates[driverId].moduleId, bootloaderI2cAddress, ModuleFirmwareValidatedSize);
+
     ModuleFlashBusy = true;
-    ModuleFlashErrorCode = 0;
-    ModuleFlashState = ModuleFlashState_Erasing;
+    ModuleFlashErrorCode = ModuleFlashError_None;
+    ModuleFlashState = ModuleFlashState_TryingToReach;
     KbootDriverState.slotId = slotId;
     KbootDriverState.moduleBootloaderAddress = bootloaderI2cAddress;
+    KbootDriverState.firmwareOffset = 0;
+    KbootDriverState.firmwareSize = 0;
     KbootDriverState.phase = 0;
     KbootDriverState.command = KbootCommand_Flash;
 }
