@@ -76,6 +76,10 @@
 #define TEST_SET_BOOL(bool_ptr, bool_value) \
     { .type = TestAction_SetBool, .boolPtr = (bool_ptr), .boolValue = (bool_value) }
 
+// Call: run a check or a hook; returning false fails the test (the function logs why)
+#define TEST_CALL(fn) \
+    { .type = TestAction_Call, .callFn = (fn) }
+
 #define TEST_END() \
     { .type = TestAction_End }
 
@@ -94,6 +98,7 @@ typedef enum {
     TestAction_SetGenericAction,
     TestAction_SetConfig,
     TestAction_SetBool,
+    TestAction_Call,
     TestAction_Expect,       // OutputMachine only
     TestAction_ExpectMaybe,  // OutputMachine only, optional
     TestAction_CheckNow,     // Both machines
@@ -115,6 +120,7 @@ typedef struct {
         const char *macroText;        // For SetMacro
         const char *configText;       // For SetConfig
         key_action_t keyAction;       // For SetGenericAction
+        bool (*callFn)(void);         // For Call
     };
 } test_action_t;
 
@@ -128,6 +134,9 @@ typedef struct {
     // How many times to run the action list. 0 and 1 both mean once. Lets a short cycle be
     // soaked without spending flash on a long static array.
     uint16_t repeatCount;
+    // How often one repetition of a healthy repeated test fails: its timings are set against
+    // random stress, so some failures are expected and only their number is evidence.
+    double spuriousFailureRate;
 } test_t;
 
 #endif

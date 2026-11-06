@@ -23,6 +23,7 @@ uint16_t ValidatedUserConfigLength;
 config_buffer_t HardwareConfigBuffer = { .buffer = hardwareConfig, .offset = 0 };
 config_buffer_t StagingUserConfigBuffer = { .buffer = stagingUserConfig, .offset = 0 };
 config_buffer_t ValidatedUserConfigBuffer = { .buffer = validatedUserConfig, .offset = 0 };
+config_buffer_t AppliedUserConfigBuffer = { .buffer = validatedUserConfig, .offset = 0 };
 
 hardware_config_t *HardwareConfig = (hardware_config_t*)hardwareConfig;
 

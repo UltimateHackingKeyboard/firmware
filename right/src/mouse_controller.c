@@ -132,9 +132,32 @@ typedef enum {
     Action_Release = 4,
     Action_Doubletap = 8,
     Action_ResetHoldContinuationTimeout = 16,
+    Action_Tap = 32,
 } tap_hold_action_t;
 
 static tap_hold_state_t tapHoldAutomatonState = State_Zero;
+
+static bool tapAndHoldEnabled()
+{
+    return Cfg.TouchpadDragStyle & TouchpadDragStyle_TapAndHold;
+}
+
+static bool doubleTapAndHoldEnabled()
+{
+    return Cfg.TouchpadDragStyle & TouchpadDragStyle_DoubleTapAndHold;
+}
+
+// Without doubleTapAndHold, there is no reason to keep the tap pressed, so we release it right away.
+static tap_hold_action_t newTap(tap_hold_action_t pressAndHoldAction)
+{
+    if (doubleTapAndHoldEnabled()) {
+        tapHoldAutomatonState = State_Tap;
+        return Action_ResetTimer | pressAndHoldAction;
+    } else {
+        tapHoldAutomatonState = State_Zero;
+        return Action_Tap;
+    }
+}
 
 static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
 {
@@ -143,11 +166,13 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     case State_Zero:
         switch (event) {
         case Event_NewTap:
-            tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Press;
+            return newTap(Action_Press);
         case Event_TapAndHold:
-            tapHoldAutomatonState = State_TapAndHold;
-            return Action_Press;
+            if (tapAndHoldEnabled()) {
+                tapHoldAutomatonState = State_TapAndHold;
+                return Action_Press;
+            }
+            return 0;
         default:
             return 0;
         }
@@ -155,8 +180,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     // Last event was tap. We keep the tap active until timeout or next event, so that in case of doubletap-induced tap and hold, there is no release.
         switch (event) {
         case Event_NewTap:
-            tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Doubletap;
+            return newTap(Action_Doubletap);
         case Event_Timeout:
             tapHoldAutomatonState = State_Zero;
             return Action_Release;
@@ -172,8 +196,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     // It still might turn out that finger event was just beginning of another tap.
         switch (event) {
         case Event_NewTap:
-            tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Doubletap;
+            return newTap(Action_Doubletap);
         case Event_FingerOut:
             if (Cfg.HoldContinuationTimeout == 0) {
                 tapHoldAutomatonState = State_Zero;
@@ -188,8 +211,7 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     case State_HoldContinuationDelay:
         switch (event) {
         case Event_NewTap:
-            tapHoldAutomatonState = State_Tap;
-            return Action_ResetTimer | Action_Doubletap;
+            return newTap(Action_Doubletap);
         case Event_TapAndHold:
         case Event_FingerIn:
             tapHoldAutomatonState = State_TapAndHold;
@@ -204,17 +226,20 @@ static tap_hold_action_t tapHoldStateMachine(tap_hold_event_t event)
     return 0;
 }
 
+
+static bool lastSingleTapValue = false;
+static bool lastTapAndHoldValue = false;
+
 static bool feedTapHoldStateMachine(touchpad_events_t events)
 {
     key_state_t* singleTap = &KeyStates[SlotId_RightModule][0];
-    //todo: finetune this value. Low value will yield natural doubletaps, but requires fast doubletap to trigger tapAndHold.
-    //      Or add artificial delay bellow.
-    const uint16_t tapTimeout = 200;
+    const uint16_t tapTimeout = Cfg.TouchpadDoubleTapAndHoldTimeout;
+    // some systems do debouncing because mouse switches are unreliable
+    const uint16_t minReleaseDelay = 20;
+    const uint16_t minPressDelay = 50;
     static uint32_t lastSingleTapTime = 0;
     static uint32_t continuationDelayStart = 0;
     static bool lastFinger = false;
-    static bool lastSingleTapValue = false;
-    static bool lastTapAndHoldValue = false;
     static bool lastSingleTapTimerActive = false;
     static bool holdContinuationTimerActive = false;
     tap_hold_action_t action = 0;
@@ -250,11 +275,14 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
     if (action & Action_Press) {
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
-    if (action & Action_Doubletap) {
-        // some systems do debouncing because mouse switches are unreliable
-        const uint16_t delay = 20;
+    if (action & Action_Tap) {
+        PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
+        PostponerCore_TrackDelay(minPressDelay);
         PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
-        PostponerCore_TrackDelay(delay);
+    }
+    if (action & Action_Doubletap) {
+        PostponerCore_TrackKeyEvent(singleTap, false, 0xff);
+        PostponerCore_TrackDelay(minReleaseDelay);
         PostponerCore_TrackKeyEvent(singleTap, true, 0xff);
     }
     if (action & Action_ResetHoldContinuationTimeout) {
@@ -270,9 +298,6 @@ static bool feedTapHoldStateMachine(touchpad_events_t events)
         EventScheduler_Schedule(continuationDelayStart + Cfg.HoldContinuationTimeout, EventSchedulerEvent_MouseController, "MouseController hold continuation timer");
     }
 
-    lastSingleTapValue &= events.singleTap;
-    lastTapAndHoldValue &= events.tapAndHold;
-
     return event != 0;
 }
 
@@ -281,6 +306,9 @@ static void processTouchpadActions(touchpad_events_t events) {
     if (events.singleTap || events.tapAndHold || tapHoldAutomatonState != State_Zero) {
         while (feedTapHoldStateMachine(events)) {}
     }
+
+    lastSingleTapValue &= events.singleTap;
+    lastTapAndHoldValue &= events.tapAndHold;
 
     KeyStates[SlotId_RightModule][1].hardwareSwitchState = events.twoFingerTap;
     EventVector_Set(EventVector_StateMatrix);
@@ -513,6 +541,46 @@ static void processAxisLocking(
     }
 }
 
+static bool moduleYIsInverted(uint8_t moduleId)
+{
+    return moduleId == ModuleId_KeyClusterLeft || moduleId == ModuleId_TouchpadRight;
+}
+
+// Avoids libm's sinf, which costs ~4 KB of flash with soft float. Folds deg into [-90, 90] and uses
+// the Taylor series up to x^9; the error is below 4e-6. Valid for deg in [-540, 540].
+static float fastSinDeg(float deg)
+{
+    if (deg > 180.0f) {
+        deg -= 360.0f;
+    } else if (deg < -180.0f) {
+        deg += 360.0f;
+    }
+
+    if (deg > 90.0f) {
+        deg = 180.0f - deg;
+    } else if (deg < -90.0f) {
+        deg = -180.0f - deg;
+    }
+
+    float x = deg * (3.14159265f / 180.0f);
+    float x2 = x * x;
+    return x * (1.0f + x2 * (-1.0f / 6.0f + x2 * (1.0f / 120.0f + x2 * (-1.0f / 5040.0f + x2 * (1.0f / 362880.0f)))));
+}
+
+// Compensates a module that is rotated counterclockwise by angleDeg on the desk. Rotation happens in the y-up frame.
+static void rotateDelta(float* x, float* y, float angleDeg, bool yInverted)
+{
+    float sinA = fastSinDeg(angleDeg);
+    float cosA = fastSinDeg(angleDeg + 90.0f);
+    float yUp = yInverted ? -*y : *y;
+
+    float rotatedX = *x * cosA - yUp * sinA;
+    float rotatedYUp = *x * sinA + yUp * cosA;
+
+    *x = rotatedX;
+    *y = yInverted ? -rotatedYUp : rotatedYUp;
+}
+
 static void processModuleKineticState(
         float x,
         float y,
@@ -522,7 +590,7 @@ static void processModuleKineticState(
  ) {
     float speed;
 
-    bool moduleYInversion = ks->currentModuleId == ModuleId_KeyClusterLeft || ks->currentModuleId == ModuleId_TouchpadRight;
+    bool moduleYInversion = moduleYIsInverted(ks->currentModuleId);
     bool scrollYInversion = moduleConfiguration->invertScrollDirectionY && ks->currentNavigationMode == NavigationMode_Scroll;
     bool scrollXInversion = moduleConfiguration->invertScrollDirectionX && ks->currentNavigationMode == NavigationMode_Scroll;
     int16_t yInversion = moduleYInversion != scrollYInversion ? -1 : 1;
@@ -703,6 +771,10 @@ static void processModuleActions(
         float tmp = x;
         x = y;
         y = tmp;
+    }
+
+    if (moduleConfiguration->angle != 0.0f) {
+        rotateDelta(&x, &y, moduleConfiguration->angle, moduleYIsInverted(moduleId));
     }
 
     //we want to process kinetic state even if x == 0 && y == 0, at least as

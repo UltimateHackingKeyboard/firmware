@@ -240,8 +240,8 @@ void ConsumeAnyChar(parser_context_t* ctx) {
 bool ConsumeTokenByRef(parser_context_t* ctx, string_ref_t ref)
 {
     const char* at = ctx->at;
-    const char* b = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset);
-    const char* bEnd = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
+    const char* b = (const char*)(AppliedUserConfigBuffer.buffer + ref.offset);
+    const char* bEnd = (const char*)(AppliedUserConfigBuffer.buffer + ref.offset + ref.len);
     while(at < ctx->end && b < bEnd) {
         if (*at <= 32 || at == ctx->end || *b <= 32 || b == bEnd) {
             bool res = (*at <= 32 || at == ctx->end) && *b <= 32;
@@ -286,8 +286,8 @@ bool IsIdentifierChar(char c)
 bool ConsumeIdentifierByRef(parser_context_t* ctx, string_ref_t ref)
 {
     const char* at = ctx->at;
-    const char* b = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset);
-    const char* bEnd = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
+    const char* b = (const char*)(AppliedUserConfigBuffer.buffer + ref.offset);
+    const char* bEnd = (const char*)(AppliedUserConfigBuffer.buffer + ref.offset + ref.len);
     while(at < ctx->end && b < bEnd) {
         if (!isIdentifierChar(*at) || at == ctx->end || !isIdentifierChar(*b) || b == bEnd) {
             bool res = (!isIdentifierChar(*at) || at == ctx->end) && (!isIdentifierChar(*b) || b == bEnd);
@@ -507,6 +507,26 @@ navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx)
 }
 
 
+touchpad_drag_style_t ConsumeTouchpadDragStyle(parser_context_t* ctx)
+{
+    if (ConsumeToken(ctx, "tapAndHold")) {
+        return TouchpadDragStyle_TapAndHold;
+    }
+    else if (ConsumeToken(ctx, "doubleTapAndHold")) {
+        return TouchpadDragStyle_DoubleTapAndHold;
+    }
+    else if (ConsumeToken(ctx, "eitherTapAndHold")) {
+        return TouchpadDragStyle_EitherTapAndHold;
+    }
+    else if (ConsumeToken(ctx, "none")) {
+        return TouchpadDragStyle_None;
+    }
+    else {
+        Macros_ReportError("Parameter not recognized:", ctx->at, ctx->end);
+        return TouchpadDragStyle_EitherTapAndHold;
+    }
+}
+
 secondary_role_state_t ConsumeSecondaryRoleTimeoutAction(parser_context_t* ctx)
 {
     if (ConsumeToken(ctx, "primary")) {
@@ -671,9 +691,9 @@ parser_context_t CreateStringRefContext(string_ref_t ref)
 {
     return (parser_context_t) {
         .macroState = NULL,
-        .begin = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset,
-        .at = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset,
-        .end = (const char*)ValidatedUserConfigBuffer.buffer + ref.offset + ref.len,
+        .begin = (const char*)AppliedUserConfigBuffer.buffer + ref.offset,
+        .at = (const char*)AppliedUserConfigBuffer.buffer + ref.offset,
+        .end = (const char*)AppliedUserConfigBuffer.buffer + ref.offset + ref.len,
         .nestingLevel = PARSER_CONTEXT_STACK_SIZE,
         .nestingBound = PARSER_CONTEXT_STACK_SIZE,
     };

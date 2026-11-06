@@ -19,7 +19,7 @@
 // Macros:
 
     #define EXPAND_SEGMENT(SEGMENT) SegmentLen(SEGMENT), SEGMENT.start
-    #define EXPAND_REF(REF) REF.len, (const char*)ValidatedUserConfigBuffer.buffer + REF.offset
+    #define EXPAND_REF(REF) REF.len, (const char*)AppliedUserConfigBuffer.buffer + REF.offset
     #define CHAR_IS_VALID(C) ((C >= 32 && C < 127) || (C == '\n') || (C == '\r') || (C == '\t'))
 
     #define PARSER_CONTEXT_STACK_SIZE 4
@@ -95,6 +95,7 @@
     secondary_role_triggering_event_t ConsumeSecondaryRoleTriggerByRelease(parser_context_t* ctx, secondary_role_triggering_event_t current);
     secondary_role_strategy_t ConsumeSecondaryRoleStrategy(parser_context_t* ctx);
     navigation_mode_t ConsumeNavigationModeId(parser_context_t* ctx);
+    touchpad_drag_style_t ConsumeTouchpadDragStyle(parser_context_t* ctx);
     const char* DeviceModelName(device_id_t device);
 
     bool PushParserContext(parser_context_t* ctx, const char* begin, const char* at, const char* end);

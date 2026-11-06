@@ -521,6 +521,12 @@ static int cmd_uhk_printStatus(const struct shell *shell, size_t argc, char *arg
     return 0;
 }
 
+static int cmd_uhk_diagnose(const struct shell *shell, size_t argc, char *argv[])
+{
+    Macros_DumpDiagnostics();
+    return 0;
+}
+
 static int cmd_uhk_recover(const struct shell *shell, size_t argc, char *argv[])
 {
     Macros_RecoverDiagnostics();
@@ -531,6 +537,12 @@ static int cmd_uhk_recover(const struct shell *shell, size_t argc, char *argv[])
 static int cmd_uhk_uartStats(const struct shell *shell, size_t argc, char *argv[])
 {
     UartBridge_DumpStats();
+    return 0;
+}
+
+static int cmd_uhk_uartReset(const struct shell *shell, size_t argc, char *argv[])
+{
+    UartBridge_PowerCycle();
     return 0;
 }
 #endif
@@ -611,8 +623,10 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
 #if DEVICE_IS_UHK80_LEFT || DEVICE_IS_UHK80_RIGHT
         SHELL_CMD_ARG(uartStats, NULL, "print bridge uart link statistics", cmd_uhk_uartStats, 1, 0),
+        SHELL_CMD_ARG(uartReset, NULL, "power cycle the bridge uart", cmd_uhk_uartReset, 1, 0),
 #endif
         SHELL_CMD_ARG(printStatus, NULL, "print the macro status buffer", cmd_uhk_printStatus, 1, 0),
+        SHELL_CMD_ARG(diagnose, NULL, "dump diagnostics without rebooting", cmd_uhk_diagnose, 1, 0),
         SHELL_CMD_ARG(recover, NULL, "dump diagnostics into the status buffer and reboot", cmd_uhk_recover, 1, 0),
         SHELL_CMD_ARG(reportEventVector, NULL, "decode an EventVector mask value", cmd_uhk_reportEventVector, 2, 0),
         SHELL_SUBCMD_SET_END);

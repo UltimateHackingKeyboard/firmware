@@ -11,7 +11,6 @@
 #include "macros/status_buffer.h"
 #include "ledmap.h"
 #include "keymap_pairing.h"
-#include "event_scheduler.h"
 
 static widget_t splitterWidget;
 static widget_t questionLine;
@@ -28,13 +27,11 @@ static char passwordTextBuffer[2*PASSWORD_LENGTH] = { ' ', ' ', ' ', ' ', ' ', '
 static void deactivateKeymap() {
     Keymap_DeactivatePairingKeymap();
     Ledmap_ResetTemporaryLedBacklightingMode();
-    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
 }
 
 static void activateKeymap() {
     Keymap_ActivatePairingKeymap();
     Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_Numpad);
-    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
     Ledmap_UpdateBacklightLeds();
 }
 

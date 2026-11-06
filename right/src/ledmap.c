@@ -15,7 +15,6 @@
 #ifdef __ZEPHYR__
 #include "keyboard/leds.h"
 #include "keyboard/oled/screens/pairing_screen.h"
-#include "state_sync.h"
 #include "stubs.h"
 #else
 #include "device.h"
@@ -582,6 +581,10 @@ static void setEntireMatrix(uint8_t v) {
     for (uint8_t i = 0; i < UHK80_LED_DRIVER_LED_COUNT_MAX; i++) {
         Uhk80LedDriverValues[i] = v;
     }
+    uint8_t keyclusterSlotId = SlotId_LeftKeyboardHalf;
+    for (uint8_t i=0; i<LED_DRIVER_LED_COUNT_MAX; i++) {
+        LedDriverValues[keyclusterSlotId][i] = v;
+    }
 #endif
 #else
     for (uint8_t slotId=0; slotId<SLOT_COUNT; slotId++) {
@@ -657,12 +660,8 @@ void Ledmap_ActivateTestLedMode(bool active) {
     if (active) {
         backlightingLedTestStart = Timer_GetCurrentTime();
         Ledmap_SetTemporaryLedBacklightingMode(BacklightingMode_LightAll);
-        EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
-        EventVector_WakeMain();
     } else {
         Ledmap_ResetTemporaryLedBacklightingMode();
-        EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
-        EventVector_WakeMain();
     }
 }
 
@@ -759,27 +758,24 @@ static void updateAlwaysOn() {
     Ledmap_AlwaysOn = mode == BacklightingMode_LightAll || mode == BacklightingMode_LedTest;
 }
 
+static void applyBacklightingMode() {
+    updateAlwaysOn();
+    EventVector_Set(EventVector_LedManagerFullUpdateNeeded);
+    EventVector_WakeMain();
+}
+
 void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode) {
     TemporaryBacklightingMode = newMode;
-    updateAlwaysOn();
-#ifdef __ZEPHYR__
-    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
-#endif
+    applyBacklightingMode();
 }
 
 void Ledmap_ResetTemporaryLedBacklightingMode() {
     TemporaryBacklightingMode = BacklightingMode_Unspecified;
-    updateAlwaysOn();
-#ifdef __ZEPHYR__
-    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
-#endif
+    applyBacklightingMode();
 }
 
 void Ledmap_SetLedBacklightingMode(backlighting_mode_t newMode)
 {
     Cfg.BacklightingMode = newMode;
-    updateAlwaysOn();
-#ifdef __ZEPHYR__
-    StateSync_UpdateProperty(StateSyncPropertyId_Backlight, NULL);
-#endif
+    applyBacklightingMode();
 }

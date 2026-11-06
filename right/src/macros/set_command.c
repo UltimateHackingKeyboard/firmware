@@ -248,6 +248,10 @@ static macro_variable_t moduleSpeed(parser_context_t* ctx, set_command_action_t 
     else if (ConsumeToken(ctx, "swapAxes")) {
         ASSIGN_BOOL(module->swapAxes);
     }
+    else if (ConsumeToken(ctx, "angle")) {
+        DEFINE_FLOAT_LIMITS(-180.0f, 180.0f);
+        ASSIGN_FLOAT(module->angle);
+    }
     else if (ConsumeToken(ctx, "invertScrollDirection")) {
         Macros_ReportWarn("Command deprecated. Please, replace invertScrollDirection by invertScrollDirectionY.", ConsumedToken(ctx), ConsumedToken(ctx));
         ASSIGN_BOOL(module->invertScrollDirectionY);
@@ -282,6 +286,20 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
     else if (ConsumeToken(ctx, "holdContinuationTimeout") && moduleId == ModuleId_TouchpadRight) {
         DEFINE_INT_LIMITS(0, 65535);
         ASSIGN_INT(Cfg.HoldContinuationTimeout);
+    }
+    else if (ConsumeToken(ctx, "dragStyle") && moduleId == ModuleId_TouchpadRight) {
+        DEFINE_NONE_LIMITS();
+        ASSIGN_CUSTOM(int32_t, intVar, Cfg.TouchpadDragStyle, ConsumeTouchpadDragStyle(ctx));
+    }
+    else if (ConsumeToken(ctx, "doubleTapAndHold") && moduleId == ModuleId_TouchpadRight) {
+        ConsumeUntilDot(ctx);
+        if (ConsumeToken(ctx, "timeout")) {
+            DEFINE_INT_LIMITS(0, 65535);
+            ASSIGN_INT(Cfg.TouchpadDoubleTapAndHoldTimeout);
+        }
+        else {
+            Macros_ReportErrorTok(ctx, "Parameter not recognized:");
+        }
     }
     else {
         return moduleSpeed(ctx, action, module, moduleId);
@@ -527,7 +545,6 @@ static macro_variable_t backlightStrategy(parser_context_t* ctx, set_command_act
     }
 
     Ledmap_SetLedBacklightingMode(res);
-    EventVector_Set(EventVector_LedMapUpdateNeeded);
     return noneVar();
 }
 
@@ -596,7 +613,6 @@ static macro_variable_t constantRgb(parser_context_t* ctx, set_command_action_t 
 
         Cfg.LedMap_ConstantRGB = rgb;
         Ledmap_SetLedBacklightingMode(BacklightingMode_ConstantRGB);
-        EventVector_Set(EventVector_LedMapUpdateNeeded);
 
         return noneVar();
     }

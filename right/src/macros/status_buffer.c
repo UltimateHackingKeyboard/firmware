@@ -320,7 +320,7 @@ static void reportError(
     Macros_SetStatusString(err, NULL);
 
     if (S != NULL) {
-        bool argIsCommand = ValidatedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
+        bool argIsCommand = AppliedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < AppliedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
         if (arg != NULL && arg != argEnd) {
             Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(arg, TokEnd(arg, argEnd));

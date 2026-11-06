@@ -3,7 +3,6 @@
 #include "module.h"
 #include "uart_defs.h"
 #include "uart_parser.h"
-#include "test_suite/test_statistics.h"
 
 // Tests that the left-right bridge recovers from a stressed link without losing or reordering
 // key events. Both halves run the script; each presses only the keys it owns, so what the
@@ -77,10 +76,17 @@ _Static_assert(2 * LINK_SLOT_MS >= LINK_PHASE_MIN_MS,
 
 #define LINK_PROBES_PER_CYCLE 4
 
-// Sized so a healthy run fails at TEST_SPURIOUS_FAILURE_RATE, the rate the suite's confidence
-// figures assume: measured, a probe fails ~8e-4 of the time (the model above says ~4e-4, the
-// excess unexplained), so 280 probes fail ~20% of runs while ~72% see a two-timeout streak.
-#define LINK_PROBE_CYCLES 70
+// Measured, a probe fails ~8e-4 of the time. The model above says ~4e-4, but it likely counts
+// only the stress's dropped acks (1/16), not its byte drops and corruptions (1/512 each), which
+// lose frames and acks too: in the logs, senders time out ~1.28x as often as acks are dropped,
+// and with three timeouts to fail, 1.28^3 ~ 2.1x.
+#define LINK_CYCLE_MS (2 * LINK_QUIET_MS + LINK_PROBES_PER_CYCLE * LINK_SLOT_MS)
+#define LINK_PROBE_CYCLES (TEST_REPEAT_FOR_SECONDS * 1000 / LINK_CYCLE_MS)
+
+// How often one probe cycle fails in a healthy run, reverse-engineered from the test's original
+// design, 70 cycles (280 probes) failing 20% of runs while ~72% saw a two-timeout streak:
+// 1 - 0.8^(1/70).
+#define LINK_PROBE_CYCLE_FAILURE_RATE 0.0032
 
 static const test_action_t test_link_probe[] = {
     LINK_STRESS_ON,
@@ -110,6 +116,7 @@ static const test_t link_tests[] = {
         .actions = test_link_probe,
         .linkTestId = LinkTestId_Probe,
         .repeatCount = LINK_PROBE_CYCLES,
+        .spuriousFailureRate = LINK_PROBE_CYCLE_FAILURE_RATE,
     },
 };
 

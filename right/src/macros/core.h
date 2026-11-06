@@ -232,6 +232,11 @@
         uint8_t remainingCount;
     } scheduler_state_t;
 
+    typedef enum {
+        MacroEngineState_Running,
+        MacroEngineState_Stopped,
+    } macro_engine_state_t;
+
 // Variables:
 
     extern macro_reference_t AllMacros[MacroIndex_MaxCount];
@@ -253,6 +258,7 @@
     extern bool Macros_ParserError;
     extern bool Macros_DryRun;
     extern bool Macros_ValidationInProgress;
+    extern macro_engine_state_t Macros_EngineState;
     extern macro_usb_keyboard_reports_t Macros_PersistentReports;
 
 // Functions:
@@ -285,7 +291,10 @@
     void Macros_Initialize();
     bool Macros_AnyMacroRunning();
     void Macros_StopAllMacros();
+    void Macros_StopEngine(void);
+    void Macros_StartEngine(void);
     void Macros_ResetBasicKeyboardReports();
+    void Macros_ResetScheduler();
     void Macros_SignalInterrupt(void);
     void Macros_ValidateAllMacros();
     void Macros_ValidateMacro(uint8_t macroIndex, uint16_t argumentOffset, uint8_t moduleId, uint8_t keyIdx, uint8_t keymapIdx, uint8_t layerIdx);

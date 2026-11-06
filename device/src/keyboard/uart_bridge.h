@@ -31,4 +31,7 @@
     // Print bridge link diagnostics (frame/ack/resend counters, ack latencies) to the uart log.
     void UartBridge_DumpStats(void);
 
+    // Suspend and resume the bridge UARTE by hand (the same power cycle a give-up does).
+    void UartBridge_PowerCycle(void);
+
 #endif // __UART_H__

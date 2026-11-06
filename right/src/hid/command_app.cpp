@@ -31,7 +31,7 @@ void command_session::set_report(hid::report::type type, const std::span<const u
     UsbProtocolHandler(out_buffer_.payload.data(), in_buffer_.payload.data());
     auto err = send_report(&in_buffer_);
     if (err != c2usb::result::ok) {
-        c2usb_log("command app failed to send report: %d\n", std::bit_cast<int>(err));
+        WATCH(c2usb_log("command app failed to send report: %d\n", std::bit_cast<int>(err)));
     }
     receive_report(&out_buffer_);
 }

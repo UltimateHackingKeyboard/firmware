@@ -63,7 +63,6 @@ static uint8_t validateConfigAndSwapBuffers(uint8_t *GenericHidInBuffer) {
 static void setLedsWhite() {
     // Set the led test backlight mode, but don't activate the switch test mode.
     Ledmap_SetLedBacklightingMode(BacklightingMode_LightAll);
-    EventVector_Set(EventVector_LedMapUpdateNeeded);
 }
 
 static bool hwConfigEmpty() {
@@ -79,7 +78,7 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
     // We may be applying factory configuration because we failed to apply User Configuration, therefore we don't want to rest the buffer.
     // Macros_ClearStatus(false);
 
-    ConfigManager_ResetConfiguration(false, true);
+    ConfigManager_ResetConfiguration(false, true, true);
 
 #ifdef __ZEPHYR__
     printk(
@@ -113,11 +112,18 @@ static uint8_t applyConfig(const uint8_t *GenericHidOutBuffer, uint8_t *GenericH
         return UsbStatusCode_Success;
     }
 
-    ConfigManager_ResetConfiguration(false, true);
+    Macros_StopEngine();
+
+    ConfigManager_ResetConfiguration(false, true, true);
+
+    AppliedUserConfigBuffer = ValidatedUserConfigBuffer;
 
     ParserRunDry = false;
-    ValidatedUserConfigBuffer.offset = 0;
-    parseConfigStatus = ParseConfig(&ValidatedUserConfigBuffer);
+    AppliedUserConfigBuffer.offset = 0;
+    parseConfigStatus = ParseConfig(&AppliedUserConfigBuffer);
+
+    Macros_Initialize();
+    Macros_StartEngine();
 
     if (parseConfigStatus != UsbStatusCode_Success) {
         Macros_ReportErrorPrintf(NULL, "UserConfig validated successfuly, but failed to parse. This wasn't supposed to happen.");

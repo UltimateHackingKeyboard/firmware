@@ -3,6 +3,7 @@
 
 // All test modules registered here
 const test_module_t * const AllTestModules[] = {
+    // Binary tests - either pass or fail
     &TestModule_Basic,
     &TestModule_Modifiers,
     &TestModule_Layers,
@@ -18,11 +19,12 @@ const test_module_t * const AllTestModules[] = {
     &TestModule_ParserBenevolence,
     &TestModule_Sticky,
     &TestModule_Playtime,
-    &TestModule_Transport,
     &TestModule_TapKeySeq,
+    // Statistical tests - have a known chance of false positives
+    &TestModule_Transport,
+    &TestModule_Link,
     // Always fails; uncomment to check that the framework reports failures.
     // &TestModule_Fail,
-    &TestModule_Link,
 };
 
 const uint16_t AllTestModulesCount = sizeof(AllTestModules) / sizeof(AllTestModules[0]);

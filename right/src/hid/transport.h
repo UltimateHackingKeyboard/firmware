@@ -30,6 +30,9 @@ typedef enum
 } rollover_t;
 
 extern float HidReportBleLatencyAvgMs;
+// In UnreliableTransportTestMode, one in this many sends, and of the rest one in this many
+// sent-callbacks, are dropped.
+#define UNRELIABLE_TRANSPORT_DROP_RECIPROCAL 7
 extern bool UnreliableTransportTestMode;
 void Hid_DumpTransportState(void);
 

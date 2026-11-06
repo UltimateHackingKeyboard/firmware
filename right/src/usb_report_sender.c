@@ -31,10 +31,8 @@ LOG_MODULE_REGISTER(UsbReportSender, LOG_LEVEL_INF);
 #include "stubs.h"
 #endif
 
-// Backoff sizing. MAX_RETRIES is sized so that the cumulative wait from
-// GetResendThrottleDelay() is ~255 ms (1+2+4+8+16+32 + 6*32 = 1023).
-#define THROTTLE_MAX_RETRIES 12
-#define THROTTLE_MAX_SHIFT 5 // 1 << 5 == 32 ms
+// Backoff sizing: 1 << 5 == 32 ms. THROTTLE_MAX_RETRIES is in the header.
+#define THROTTLE_MAX_SHIFT 5
 #define THROTTLE_MAX_DELAY_MS 32
 
 bool Resending = false;
@@ -94,19 +92,19 @@ static void handleUltimateFail(errno_t errorCode) {
 
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
-        LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode));
+        WATCH(LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode)));
     } else {
-        LOG_ERR("Send failed (gave up resending): %d (%s)", errorCode, ErrToStr(errorCode));
+        WATCH(LOG_ERR("Send failed (gave up resending): %d (%s)", errorCode, ErrToStr(errorCode)));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
             // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
             if (!WormCfg->devMode && Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
-                LOG_ERR("Send failed. Trying to reconnect.");
+                WATCH(LOG_ERR("Send failed. Trying to reconnect."));
                 HostConnections_Reconnect();
             }
         }
     }
 #else
-    LOG_ERR("Send failed: %d (%s)", errorCode, ErrToStr(errorCode));
+    WATCH(LOG_ERR("Send failed: %d (%s)", errorCode, ErrToStr(errorCode)));
 #endif
 }
 
