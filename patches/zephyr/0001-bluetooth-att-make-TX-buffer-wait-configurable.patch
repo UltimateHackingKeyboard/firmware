@@ -1,0 +1,54 @@
+From b7d74cd16b7ce9be2a97402d067bf28c231d6130 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Sat, 7 Nov 2026 22:25:43 +0100
+Subject: [PATCH] bluetooth: att: make TX buffer wait configurable
+
+Add BT_ATT_TX_ALLOC_TIMEOUT to bound allocation waits in thread contexts
+that may block. Keep infinite wait as the default.
+
+Signed-off-by: Benedek Kupper <kupper.benedek@gmail.com>
+---
+ subsys/bluetooth/host/Kconfig.gatt | 10 ++++++++++
+ subsys/bluetooth/host/att.c        |  4 ++++
+ 2 files changed, 14 insertions(+)
+
+diff --git a/subsys/bluetooth/host/Kconfig.gatt b/subsys/bluetooth/host/Kconfig.gatt
+index 3403e8d308b..4d62856c02d 100644
+--- a/subsys/bluetooth/host/Kconfig.gatt
++++ b/subsys/bluetooth/host/Kconfig.gatt
+@@ -22,6 +22,16 @@ config BT_ATT_TX_COUNT
+ 	  These buffers are only used for sending anything over ATT.
+ 	  Requests, responses, indications, confirmations, notifications.
+ 
++config BT_ATT_TX_ALLOC_TIMEOUT
++	int "ATT TX buffer allocation timeout (ms)"
++	default -1
++	range -1 2147483647
++	help
++	  Timeout when allocating an ATT TX buffer from a thread that may block.
++	  Set to -1 to wait forever, 0 to return immediately, or a positive
++	  value to wait for that many milliseconds. System workqueue and ATT
++	  response handler contexts continue to use no-wait allocation.
++
+ config BT_ATT_PREPARE_COUNT
+ 	int "Number of ATT prepare write buffers"
+ 	default 0
+diff --git a/subsys/bluetooth/host/att.c b/subsys/bluetooth/host/att.c
+index efe59cee9cb..5a7c399de25 100644
+--- a/subsys/bluetooth/host/att.c
++++ b/subsys/bluetooth/host/att.c
+@@ -823,7 +823,11 @@ static struct net_buf *bt_att_chan_create_pdu(struct bt_att_chan *chan, uint8_t
+ 			/* Blocking would cause deadlock. */
+ 			timeout = K_NO_WAIT;
+ 		} else {
++#if CONFIG_BT_ATT_TX_ALLOC_TIMEOUT < 0
+ 			timeout = K_FOREVER;
++#else
++			timeout = K_MSEC(CONFIG_BT_ATT_TX_ALLOC_TIMEOUT);
++#endif
+ 		}
+ 	}
+ 	}
+-- 
+2.43.0
+
