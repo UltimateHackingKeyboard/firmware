@@ -28,7 +28,13 @@ LOG_MODULE_REGISTER(NusClient, LOG_LEVEL_INF);
 static struct bt_nus_client nus_client;
 
 #define NUS_SLOTS 1
+// A link that doesn't free a slot within this time is considered stalled and gets torn down.
+#define NUS_SLOT_TIMEOUT_MS 1000
 static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
+
+static connection_id_t serverConnectionId(void) {
+    return DEVICE_ID == DeviceId_Uhk_Dongle ? ConnectionId_NusServerRight : ConnectionId_NusServerLeft;
+}
 
 static void ble_data_sent(struct bt_nus_client *nus, uint8_t err, const uint8_t *const data, uint16_t len) {
     k_sem_give(&nusBusy);
@@ -189,7 +195,12 @@ int NusClient_SendMessage(message_t* msg) {
         return -1;
     }
 
-    SEM_TAKE(&nusBusy);
+    if (k_sem_take(&nusBusy, K_MSEC(NUS_SLOT_TIMEOUT_MS)) != 0) {
+        LOG_ERR("No NUS send slot freed within %d ms.", NUS_SLOT_TIMEOUT_MS);
+        BtConn_DisconnectOne(serverConnectionId());
+        Trace_Printc("r2");
+        return -ETIMEDOUT;
+    }
 
     // From here on every exit path must release the semaphore: send_raw_buffer
     // gives it back on error, and the `sent` callback gives it back on success.
