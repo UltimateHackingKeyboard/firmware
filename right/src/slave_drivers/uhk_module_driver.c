@@ -10,6 +10,7 @@
 #include "messenger.h"
 #include "link_protocol.h"
 #include "state_sync.h"
+#include "device_state.h"
 #include "keyboard/uart_bridge.h"
 #else
 #include "peripherals/test_led.h"
@@ -218,9 +219,9 @@ static void forwardKeystates(uint8_t uhkModuleDriverId, uhk_module_state_t* uhkM
     bool thisDeltasAreZero = pointerDelta->x == 0 && pointerDelta->y == 0;
 
     if (UhkModuleDriver_ResendKeyStates || stateChanged || !lastDeltasWereZero || !thisDeltasAreZero) {
-        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
+        int err = Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftModuleKeyStates, rxMessage->data, rxMessage->length);
         lastDeltasWereZero = thisDeltasAreZero;
-        UhkModuleDriver_ResendKeyStates = false;
+        UhkModuleDriver_ResendKeyStates = err != 0 && DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right);
     }
 #endif
 }
