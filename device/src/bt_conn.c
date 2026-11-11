@@ -1187,6 +1187,10 @@ void BtConn_DisconnectOne(connection_id_t connectionId) {
     safeDisconnect(conn, BT_REASON_NOT_SELECTED);
 }
 
+void BtConn_DisconnectOneByConn(struct bt_conn *conn) {
+    safeDisconnect(conn, BT_REASON_NOT_SELECTED);
+}
+
 void BtConn_KickHid(void) {
 #if DEVICE_IS_UHK80_RIGHT
      LOG_INF("Kicking HID connections to check if HOGP is healthy.");
