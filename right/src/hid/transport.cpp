@@ -202,12 +202,24 @@ extern "C" void Hid_UpdateKeyboardProtocol()
 #endif
 }
 
+// HOGP keeps an accepted report queued until the host takes it, so it isn't resent on timeout.
+static void noteSendTarget(report_send_state_t *st, report_sink_t sink)
+{
+#if DEVICE_IS_UHK80_RIGHT
+    uint8_t connectionId = CurrentHostConnectionId;
+#else
+    uint8_t connectionId = 0;
+#endif
+    UsbSemaphore_NoteSendTarget(st, sink, connectionId);
+}
+
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 {
     // TODO: not needed when dongle is sink
     auto payload = keyboard_buffer.insert(*report);
 
     report_sink_t sink = determineSink();
+    noteSendTarget(&UsbSemaphore.keyboard, sink);
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z11,%d", sink);
     errno_t err = -ECONNRESET;
@@ -306,6 +318,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     auto payload = mouse_buffer.insert(*report);
 
     report_sink_t sink = determineSink();
+    noteSendTarget(&UsbSemaphore.mouse, sink);
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z21,%d", sink);
     errno_t err = -ECONNRESET;
@@ -380,6 +393,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     auto payload = controls_buffer.insert(*report);
 
     report_sink_t sink = determineSink();
+    noteSendTarget(&UsbSemaphore.controls, sink);
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z31,%d", sink);
     errno_t err = -ECONNRESET;

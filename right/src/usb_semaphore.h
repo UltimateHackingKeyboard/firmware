@@ -11,6 +11,8 @@
 
     #define USB_SEMAPHORE_TIMEOUT 32 // ms
     #define USB_GIVEUP_RESEND_DELAY_MS 1024 // ms; don't spam logs or host
+    // A link that doesn't confirm a report within this time is considered stalled and gets torn down.
+    #define USB_SEMAPHORE_STALL_TIMEOUT 1000 // ms
 
 // Typedefs:
 
@@ -31,10 +33,17 @@
     // volatile because it is written from the async transport sent callbacks. The legacy uint8
     // bitfield view (for the bus-reset reset and the debug get/set-variable command) is
     // reassembled on demand by UsbSemaphore_Get() & co.
+    //
+    // sink is where the report in flight went. HOGP keeps an accepted report queued until it is
+    // delivered: resending there only duplicates the report and grows the queue. Such a report
+    // is waited for instead, and its connection is torn down after USB_SEMAPHORE_STALL_TIMEOUT.
     typedef struct {
         uint8_t retries;
         bool needsResending;
         volatile bool inFlight;
+        report_sink_t sink;
+        uint8_t connectionId;
+        uint32_t sentTime;
         void (*switchActiveReport)(void);
     } report_send_state_t;
 
@@ -68,5 +77,17 @@
     uint8_t UsbSemaphore_Get(void);
     void UsbSemaphore_Set(uint8_t bits);
     void UsbSemaphore_Clear(void);
+
+    // Consider the reports sent to this sink delivered.
+    void UsbSemaphore_ClearSink(report_sink_t sink);
+
+    // Consider all reports delivered, except HOGP ones, which stay for the stall teardown.
+    void UsbSemaphore_ClearResendable(void);
+
+    // Note where a report is being sent, right before handing it to the transport.
+    void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId);
+
+    // The connection went down: its unconfirmed reports will never be confirmed.
+    void UsbSemaphore_ClearConnection(uint8_t connectionId);
 
 #endif

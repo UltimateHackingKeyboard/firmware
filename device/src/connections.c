@@ -20,6 +20,7 @@
 #include "timer.h"
 #include <zephyr/logging/log.h>
 #include "usb_state.h"
+#include "usb_semaphore.h"
 #include "bt_manager.h"
 
 LOG_MODULE_REGISTER(Conn, LOG_LEVEL_INF);
@@ -167,6 +168,10 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
         reportConnectionState(connectionId);
 
         Connections_ResetWatermarks(connectionId);
+
+        if (state == ConnectionState_Disconnected) {
+            UsbSemaphore_ClearConnection(connectionId);
+        }
 
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
             Connections_HandleSwitchover(connectionId, false);

@@ -121,7 +121,7 @@ struct usb_manager {
             }
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
                 // reset the semaphore on USB configuration or reset
-                UsbSemaphore_Clear();
+                UsbSemaphore_ClearSink(ReportSink_Usb);
 
                 if (dev.configured()) {
                     // A host that just selected a configuration is awake and listening.
