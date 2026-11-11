@@ -80,6 +80,8 @@ void RunDongleLogic() {
 #endif
 
     EventVector_Unset(EventVector_KeyboardLedState);
+    // The dongle resends its reports in the messenger, not the report sender.
+    EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     LOG_SCHEDULE(
             EventVector_ReportMask("=== ", EventScheduler_Vector)
