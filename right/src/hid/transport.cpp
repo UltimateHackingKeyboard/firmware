@@ -321,10 +321,23 @@ extern "C" void Hid_KeyboardReportSentCallback(report_sink_t sink)
 #endif
 }
 
-void keyboard_report_sent_callback(hid::session &session, [[maybe_unused]] int result)
+// The transfer completed without reaching the host (e.g. the endpoint was aborted).
+static void reportSendFailed(report_send_state_t *st, int result)
 {
-    Hid_KeyboardReportSentCallback(
-        session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
+    UsbSemaphore_Fail(st, result);
+#if DEVICE_IS_UHK_DONGLE
+    Dongle_SignalUsbReportSent();
+#endif
+}
+
+void keyboard_report_sent_callback(hid::session &session, int result)
+{
+    if (result == 0) {
+        Hid_KeyboardReportSentCallback(
+            session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
+    } else {
+        reportSendFailed(&UsbSemaphore.keyboard, result);
+    }
 }
 
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
@@ -386,9 +399,13 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     return err;
 }
 
-void mouse_report_sent_callback(hid::session &session, [[maybe_unused]] int result)
+void mouse_report_sent_callback(hid::session &session, int result)
 {
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
+        return;
+    }
+    if (result != 0) {
+        reportSendFailed(&UsbSemaphore.mouse, result);
         return;
     }
     report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
@@ -460,8 +477,12 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     return err;
 }
 
-void controls_report_sent_callback(hid::session &session, [[maybe_unused]] int result)
+void controls_report_sent_callback(hid::session &session, int result)
 {
+    if (result != 0) {
+        reportSendFailed(&UsbSemaphore.controls, result);
+        return;
+    }
     report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
     UsbSemaphore_Release(&UsbSemaphore.controls);
     UsbScheduler_ReportDelivered(sink);

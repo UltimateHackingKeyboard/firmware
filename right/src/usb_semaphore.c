@@ -111,12 +111,20 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     }
 }
 
+void UsbSemaphore_Fail(report_send_state_t* st, errno_t result) {
+    // Not released: the baseline stays, so the same report goes out again.
+    st->inFlight = false;
+    UsbReportSender_ResendOrGiveUp(st, result, true);
+}
+
 // NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
 // Returns true while the report still blocks sending.
 static bool recalculateReport(report_send_state_t* st) {
     bool blocks = false;
     if (st->inFlight) {
-        if (resendsOnTimeout(st)) {
+        if (Timer_GetElapsedTime(&st->sentTime) < USB_SEMAPHORE_TIMEOUT) {
+            blocks = true;
+        } else if (resendsOnTimeout(st)) {
             st->inFlight = false;
             UsbReportSender_ResendOrGiveUp(st, -ETIMEDOUT, false);
         } else if (Timer_GetElapsedTime(&st->sentTime) >= USB_SEMAPHORE_STALL_TIMEOUT) {
@@ -132,14 +140,10 @@ static bool recalculateReport(report_send_state_t* st) {
 bool UsbSemaphore_RecalculateIsReady(void) {
     bool ready = true;
     if (UsbSemaphore_AnyInFlight() && CurrentPowerMode <= PowerMode_LastAwake) {
-        if (Timer_GetElapsedTime(&UpdateUsbReports_LastUpdateTime) < USB_SEMAPHORE_TIMEOUT) {
-            ready = false;
-        } else {
-            bool keyboardBlocks = recalculateReport(&UsbSemaphore.keyboard);
-            bool controlsBlocks = recalculateReport(&UsbSemaphore.controls);
-            bool mouseBlocks = recalculateReport(&UsbSemaphore.mouse);
-            ready = !keyboardBlocks && !controlsBlocks && !mouseBlocks;
-        }
+        bool keyboardBlocks = recalculateReport(&UsbSemaphore.keyboard);
+        bool controlsBlocks = recalculateReport(&UsbSemaphore.controls);
+        bool mouseBlocks = recalculateReport(&UsbSemaphore.mouse);
+        ready = !keyboardBlocks && !controlsBlocks && !mouseBlocks;
     }
     return ready;
 }
