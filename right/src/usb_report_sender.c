@@ -179,12 +179,11 @@ static void sendActiveReports(bool resending) {
                 //just switch reports without sending the report
                 UsbReportUpdater_SwitchActiveKeyboardReport();
             } else {
-                //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
-                UsbSemaphore.keyboard.inFlight = true;
+                // Hid_SendKeyboardReport marks the report in flight (UsbSemaphore_NoteSendTarget).
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
                 // On success the report is accepted by the transport, but NOT yet confirmed
                 // delivered. We advance the baseline (switchActiveKeyboardReport) only once
-                // delivery is confirmed: USB/BLE asynchronously via Hid_KeyboardReportSentCallback,
+                // delivery is confirmed: USB/BLE asynchronously via the sent callback in transport.cpp,
                 // NUS/dongle synchronously inside Hid_SendKeyboardReport. If a USB/BLE confirmation
                 // never arrives, the IsReadyForTransfers timeout re-arms the resend - the baseline
                 // was not advanced, so HasChange stays true and we re-send the current state instead
@@ -202,7 +201,6 @@ static void sendActiveReports(bool resending) {
     }
 
     if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending)) {
-        UsbSemaphore.controls.inFlight = true;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
             UsbSemaphore.controls.inFlight = false;
@@ -216,7 +214,6 @@ static void sendActiveReports(bool resending) {
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
         bool usbMouseButtonsChanged = mouseButtonsChanged();
 
-        UsbSemaphore.mouse.inFlight = true;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
             UsbSemaphore.mouse.inFlight = false;

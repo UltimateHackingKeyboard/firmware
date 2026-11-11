@@ -235,7 +235,6 @@ static void sendDongleReportUntilDone(uint8_t propertyId, const uint8_t* message
         if (st->needsResending && !st->inFlight) {
             st->needsResending = false;
             k_sem_reset(&dongleUsbSem);
-            st->inFlight = true;
             errno_t ret = sendDongleReport(propertyId, message);
             if (ret != 0) {
                 st->inFlight = false;

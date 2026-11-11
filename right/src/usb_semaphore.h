@@ -87,7 +87,8 @@
     // Consider all reports delivered, except HOGP ones, which stay for the stall teardown.
     void UsbSemaphore_ClearResendable(void);
 
-    // Note where a report is being sent, right before handing it to the transport.
+    // Note where a report is being sent and mark it in flight, right before handing it to the
+    // transport. Before, not after: a bus reset clearing the semaphore in between would deadlock it.
     void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId);
 
     // The connection went down: its unconfirmed reports will never be confirmed.

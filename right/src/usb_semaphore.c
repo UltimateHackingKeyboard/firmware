@@ -76,6 +76,8 @@ void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, ui
     st->sink = sink;
     st->connectionId = connectionId;
     st->sentTime = Timer_GetCurrentTime();
+    // Last, so that a late callback of the previous send can't match the new target.
+    st->inFlight = true;
 }
 
 static bool clearIfSentTo(report_send_state_t* st, uint8_t connectionId) {
