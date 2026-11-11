@@ -24,5 +24,6 @@
     bool UsbReportSender_ShouldGiveUp(int err, uint8_t* counter);
     bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay);
     uint16_t UsbReportSender_ComputeResendDelay(uint8_t counter);
+    void UsbReportSender_TearDownStalledLink(report_send_state_t* st);
 
 #endif

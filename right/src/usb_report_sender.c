@@ -108,6 +108,22 @@ static void handleUltimateFail(errno_t errorCode) {
 #endif
 }
 
+// The report was accepted but never confirmed: the link stopped taking data while staying up.
+// Its queued reports hold shared BLE buffers until the link goes down, so take it down.
+void UsbReportSender_TearDownStalledLink(report_send_state_t* st) {
+#ifdef __ZEPHYR__
+    connection_id_t connectionId = st->connectionId;
+    WATCH(LOG_ERR("Report unconfirmed for %d ms, disconnecting %s.", USB_SEMAPHORE_STALL_TIMEOUT, GetPeerStringByConnId(connectionId)));
+    if (connectionId != ConnectionId_Invalid && Connections_IsReady(connectionId)) {
+        BtConn_DisconnectOne(connectionId);
+    }
+#endif
+    st->retries = 0;
+    st->needsResending = false;
+    // The report wasn't released, so the current state goes out again once a link is up.
+    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "stalled-link");
+}
+
 bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay) {
     if (!UsbReportSender_ShouldGiveUp(ret, &st->retries)) {
         st->needsResending = true;
@@ -225,7 +241,7 @@ static void sendActiveReports(bool resending) {
     if (UsbSemaphore_AnyInFlight()) {
         // Schedule semaphore timeout. Don't spam if we given up though - consider report as delivered.
         if (UsbReportSender_GivenUp) {
-            UsbSemaphore_Clear();
+            UsbSemaphore_ClearResendable();
         } else {
             EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
         }
