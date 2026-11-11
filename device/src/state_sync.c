@@ -594,7 +594,10 @@ void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t *data, uint8_t 
 
 static void submitPreparedData(device_id_t dst, state_sync_prop_id_t propId, const uint8_t *data, uint8_t len) {
     STATE_SYNC_LOG("    Sending %s data to %s\n", stateSyncProps[propId].name, Utils_DeviceIdToString(dst));
-    Messenger_Send2(dst, MessageId_StateSync, propId, data, len);
+    int err = Messenger_Send2(dst, MessageId_StateSync, propId, data, len);
+    if (err != 0) {
+        invalidateProperty(propId);
+    }
 }
 
 static void prepareLayerActions(layer_id_t layerId, uint8_t slotId, uint8_t bufferOffset, uint8_t actionOffset, uint8_t count, sync_command_layer_t *buffer) {

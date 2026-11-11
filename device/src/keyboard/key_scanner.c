@@ -25,6 +25,7 @@
 #include "layouts/key_layout_80_to_universal.h"
 #include "test_switches.h"
 #include "power_mode.h"
+#include "device_state.h"
 #include "keyboard/leds.h"
 #include "test_suite/test_hooks.h"
 #include "macros/debug_commands.h"
@@ -308,7 +309,10 @@ static void scanAllKeys() {
     if (DEVICE_IS_UHK80_LEFT) {
         // If ack gets lost, second key state change will block (because uart is busy with control of the first one). That blocks us. Third keystate change may be lost.
         // TODO: consider passing this via postponer queue.
-        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+        int err = Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+        if (err != 0 && DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right)) {
+            KeyScanner_ResendKeyStates = true;
+        }
     }
 }
 
