@@ -7,6 +7,7 @@ extern "C" {
     #include "messenger.h"
     #include "nus_server.h"
     #include "state_sync.h"
+    #include <zephyr/bluetooth/gatt.h>
 #endif
 #include "debug.h"
 #include "event_scheduler.h"
@@ -160,7 +161,7 @@ static bool wakeUsbHostIfNeeded()
 }
 
 #if DEVICE_IS_UHK80_RIGHT
-static ble_session *currentHostBleSession()
+static struct bt_conn *currentHostBleConn()
 {
     connection_id_t connId = CurrentHostConnectionId;
     if (connId <= ConnectionId_Invalid || connId >= ConnectionId_Count) {
@@ -170,8 +171,21 @@ static ble_session *currentHostBleSession()
     if (peerId < PeerIdFirstHost || peerId > PeerIdLastHost) {
         return nullptr;
     }
-    struct bt_conn *conn = Peers[peerId].conn;
+    return Peers[peerId].conn;
+}
+
+static ble_session *currentHostBleSession()
+{
+    struct bt_conn *conn = currentHostBleConn();
     return conn ? ble_session::lookup_by_conn(conn) : nullptr;
+}
+
+// A notification carries at most MTU - 3 bytes. The payload may start with a report ID that isn't
+// sent, so this errs towards "doesn't fit".
+static bool fitsBleMtu(size_t payloadSize)
+{
+    struct bt_conn *conn = currentHostBleConn();
+    return conn && payloadSize + 3 <= bt_gatt_get_mtu(conn);
 }
 #endif
 
@@ -246,8 +260,9 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
             break;
         }
         err = session->send_report(payload).to_int();
-        if (err == -ENOMEM) {
-            // this only happens on Android with NKRO mode when the transport MTU is too small
+        // -ENOMEM also means that the ATT buffer pool is empty; only an MTU too small for NKRO
+        // (seen on Android) calls for the fallback.
+        if (err == -ENOMEM && !fitsBleMtu(payload.size())) {
             LOG_WRN("keyboard NKRO mode fails, falling back to 6KRO");
 
             keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_6_KEY);
