@@ -714,7 +714,7 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
 
     STATE_SYNC_LOG("<<< Preparing %s data for %s\n", prop->name, Utils_DeviceIdToString(dst));
 
-    uint8_t oldState = DirtyState_Clean;
+    uint8_t oldState = prop->dirtyState;
     prop->dirtyState = DirtyState_Clean;
 
     switch (propId) {
