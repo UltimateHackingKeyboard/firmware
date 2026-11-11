@@ -216,6 +216,8 @@ extern "C" void Hid_UpdateKeyboardProtocol()
 #endif
 }
 
+static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int result);
+
 // HOGP keeps an accepted report queued until the host takes it, so it isn't resent on timeout.
 static void noteSendTarget(report_send_state_t *st, report_sink_t sink)
 {
@@ -283,7 +285,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
 #endif
     case ReportSink_TestSuite:
         err = 0;
-        Hid_KeyboardReportSentCallback(ReportSink_TestSuite);
+        reportSentCallback(&UsbSemaphore.keyboard, ReportSink_TestSuite, 0);
         break;
     case ReportSink_BlackHole:
         err = -EHOSTUNREACH;
@@ -301,30 +303,37 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     return err;
 }
 
-extern "C" void Hid_KeyboardReportSentCallback(report_sink_t sink)
+static report_sink_t sinkOf(hid::session &session)
+{
+    return session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
+}
+
+// A delivered report is released; one whose transfer failed (e.g. the endpoint was aborted) is resent.
+static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int result)
 {
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
     }
-    // The test suite sees a report only once its delivery is confirmed, before the release
-    // switches the sent report out of ActiveKeyboardReport.
-    if (sink == ReportSink_TestSuite) {
-        TestHooks_CaptureReport(ActiveKeyboardReport);
+    // A late callback of a report the semaphore no longer waits for (cleared, timed out, or sent
+    // over the other transport since) would release the wrong report.
+    if (!st->inFlight || st->sink != sink) {
+        LOG_WRN("Ignoring a stale report sent callback, result %d.", result);
+        return;
     }
-    UsbSemaphore_Release(&UsbSemaphore.keyboard);
-    UsbScheduler_ReportDelivered(sink);
-    if (sink == ReportSink_Usb) {
-        UsbState_Delivered();
+    if (result == 0) {
+        // The test suite sees a report only once its delivery is confirmed, before the release
+        // switches the sent report out of ActiveKeyboardReport.
+        if (sink == ReportSink_TestSuite && st == &UsbSemaphore.keyboard) {
+            TestHooks_CaptureReport(ActiveKeyboardReport);
+        }
+        UsbSemaphore_Release(st);
+        UsbScheduler_ReportDelivered(sink);
+        if (sink == ReportSink_Usb) {
+            UsbState_Delivered();
+        }
+    } else {
+        UsbSemaphore_Fail(st, result);
     }
-#if DEVICE_IS_UHK_DONGLE
-    Dongle_SignalUsbReportSent();
-#endif
-}
-
-// The transfer completed without reaching the host (e.g. the endpoint was aborted).
-static void reportSendFailed(report_send_state_t *st, int result)
-{
-    UsbSemaphore_Fail(st, result);
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
 #endif
@@ -332,12 +341,7 @@ static void reportSendFailed(report_send_state_t *st, int result)
 
 void keyboard_report_sent_callback(hid::session &session, int result)
 {
-    if (result == 0) {
-        Hid_KeyboardReportSentCallback(
-            session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid);
-    } else {
-        reportSendFailed(&UsbSemaphore.keyboard, result);
-    }
+    reportSentCallback(&UsbSemaphore.keyboard, sinkOf(session), result);
 }
 
 extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
@@ -401,22 +405,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
 
 void mouse_report_sent_callback(hid::session &session, int result)
 {
-    if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
-        return;
-    }
-    if (result != 0) {
-        reportSendFailed(&UsbSemaphore.mouse, result);
-        return;
-    }
-    report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
-    UsbSemaphore_Release(&UsbSemaphore.mouse);
-    UsbScheduler_ReportDelivered(sink);
-    if (sink == ReportSink_Usb) {
-        UsbState_Delivered();
-    }
-#if DEVICE_IS_UHK_DONGLE
-    Dongle_SignalUsbReportSent();
-#endif
+    reportSentCallback(&UsbSemaphore.mouse, sinkOf(session), result);
 }
 
 extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
@@ -479,19 +468,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
 
 void controls_report_sent_callback(hid::session &session, int result)
 {
-    if (result != 0) {
-        reportSendFailed(&UsbSemaphore.controls, result);
-        return;
-    }
-    report_sink_t sink = session.channel() == hid::channel::USB ? ReportSink_Usb : ReportSink_BleHid;
-    UsbSemaphore_Release(&UsbSemaphore.controls);
-    UsbScheduler_ReportDelivered(sink);
-    if (sink == ReportSink_Usb) {
-        UsbState_Delivered();
-    }
-#if DEVICE_IS_UHK_DONGLE
-    Dongle_SignalUsbReportSent();
-#endif
+    reportSentCallback(&UsbSemaphore.controls, sinkOf(session), result);
 }
 
 static void setKeyboardLedsState(hid::app::keyboard::output_report<0> report)
