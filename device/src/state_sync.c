@@ -234,9 +234,12 @@ void StateSync_UpdateProperty(state_sync_prop_id_t propId, void *data) {
     }
 }
 
+// Same result as a full update of an empty layer: no actions, colors or overrides on the left half and its module.
 void receiveLayerActionsClear(layer_id_t layerId) {
     memset(&CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][0], 0,
-        sizeof(key_action_t) * MAX_KEY_COUNT_PER_MODULE);
+        sizeof(key_definition_t) * MAX_KEY_COUNT_PER_MODULE);
+    memset(&CurrentKeymap[layerId][SlotId_LeftModule][0], 0,
+        sizeof(key_definition_t) * MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE);
 }
 
 void receiveLayerModuleActions(sync_command_action_t* actions, uint8_t layerId, uint8_t slotId, uint8_t bufferOffset, uint8_t actionOffset, uint8_t count) {
@@ -711,7 +714,7 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
 
     STATE_SYNC_LOG("<<< Preparing %s data for %s\n", prop->name, Utils_DeviceIdToString(dst));
 
-    uint8_t oldState = DirtyState_Clean;
+    uint8_t oldState = prop->dirtyState;
     prop->dirtyState = DirtyState_Clean;
 
     switch (propId) {
