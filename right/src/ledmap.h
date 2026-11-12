@@ -16,6 +16,9 @@
         BacklightingMode_LightAll,
         BacklightingMode_LightNone,
         BacklightingMode_Unspecified,
+        // https://www.usb.org/sites/default/files/hutrr84_-_lighting_and_illumination_page.pdf
+        // https://learn.microsoft.com/en-us/windows-hardware/design/component-guidelines/dynamic-lighting-devices
+        BacklightingMode_HidLampArray,
     } backlighting_mode_t;
 
     typedef enum {
@@ -59,5 +62,7 @@
     void Ledmap_SetTemporaryLedBacklightingMode(backlighting_mode_t newMode);
     void Ledmap_ResetTemporaryLedBacklightingMode();
     backlighting_mode_t Ledmap_GetEffectiveBacklightMode();
+    void Ledmap_SetKeyColor(const rgb_t* color, uint8_t slotId, uint8_t keyId);
+    void Ledmap_TriggerFullUpdate(void);
 
 #endif

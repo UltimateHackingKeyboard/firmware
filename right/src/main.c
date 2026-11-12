@@ -42,10 +42,15 @@
 #include "trace_reasons.h"
 #include "config_manager.h"
 #include "hid/transport.h"
+#if __has_include("fsl_debug_console.h")
+    #include "fsl_debug_console.h"
+#endif
 
 static volatile bool IsEepromInitialized = false;
 static volatile bool IsConfigInitialized = false;
 static volatile bool IsHardwareConfigInitialized = false;
+
+ATTR_WEAK void DbgConsole_Init(void) {}
 
 static void userConfigurationReadFinished(void)
 {
@@ -196,6 +201,7 @@ static void checkSleepMode() {
 
 int main(void)
 {
+    DbgConsole_Init();
     Debug_InitStackCanary();
     Trace_Init();
     if (StateWormhole_IsOpen()) {
