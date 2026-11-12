@@ -246,7 +246,8 @@ int main(void)
         while (1) {
             if (TestHooks_Active) {
                 TestHooks_Tick();
-            } else {
+            }
+            if (!TestHooks_Active || TestHooks_AwaitingRelease) {
                 CopyRightKeystateMatrix();
             }
 

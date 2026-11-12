@@ -1,0 +1,681 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="4000.0" height="3225.5"
+     viewBox="-1274.5 -1362.7 2584.7 2084.3"
+     font-family="sans-serif">
+  <g class="edges">
+    <line x1="-0.6" y1="-1269.3" x2="-0.2" y2="-1233.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-0.2" cy="-1233.4" r="4.0" fill="#000000"/>
+    <line x1="-128.2" y1="-1296.3" x2="-1041.0" y2="-1262.2" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1041.0" cy="-1262.2" r="4.0" fill="#000000"/>
+    <line x1="126.2" y1="-1287.2" x2="407.9" y2="-1256.5" stroke="#000000" stroke-width="1"/>
+    <circle cx="407.9" cy="-1256.5" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1235.6" x2="-1100.0" y2="-1238.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1238.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1205.6" x2="-1100.0" y2="-1203.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1203.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1170.6" x2="-1100.0" y2="-1168.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1168.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1135.6" x2="-1100.0" y2="-1133.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1133.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1100.6" x2="-1100.0" y2="-1098.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1098.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1065.6" x2="-1100.0" y2="-1063.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1063.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-1030.6" x2="-1100.0" y2="-1028.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-1028.4" r="4.0" fill="#000000"/>
+    <line x1="-1100.0" y1="-995.6" x2="-1100.0" y2="-993.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-1100.0" cy="-993.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-1200.6" x2="0.0" y2="-1122.7" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-1122.7" r="4.0" fill="#000000"/>
+    <line x1="-60.1" y1="-1200.6" x2="-410.7" y2="-1116.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-410.7" cy="-1116.6" r="4.0" fill="#000000"/>
+    <line x1="60.1" y1="-1200.6" x2="419.7" y2="-1114.5" stroke="#000000" stroke-width="1"/>
+    <circle cx="419.7" cy="-1114.5" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-1081.3" x2="0.0" y2="-1070.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-1070.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-1023.4" x2="0.0" y2="-1010.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-1010.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-963.4" x2="0.0" y2="-948.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-948.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-915.6" x2="0.0" y2="-882.7" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-882.7" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-1081.3" x2="-480.0" y2="-1068.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-1068.4" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-1035.6" x2="-480.0" y2="-1015.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-1015.6" r="4.0" fill="#000000"/>
+    <line x1="-400.2" y1="-968.4" x2="-60.0" y2="-876.2" stroke="#000000" stroke-width="1"/>
+    <circle cx="-60.0" cy="-876.2" r="4.0" fill="#000000"/>
+    <line x1="480.0" y1="-1081.3" x2="480.0" y2="-1068.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="480.0" cy="-1068.4" r="4.0" fill="#000000"/>
+    <line x1="480.0" y1="-1035.6" x2="480.0" y2="-1018.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="480.0" cy="-1018.4" r="4.0" fill="#000000"/>
+    <line x1="430.6" y1="-985.6" x2="59.6" y2="-877.3" stroke="#000000" stroke-width="1"/>
+    <circle cx="59.6" cy="-877.3" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-841.3" x2="0.0" y2="-830.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-830.6" r="4.0" fill="#000000"/>
+    <line x1="56.4" y1="-860.0" x2="300.9" y2="-860.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="300.9" cy="-860.0" r="4.0" fill="#000000"/>
+    <line x1="-95.0" y1="-783.4" x2="-260.5" y2="-745.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="-260.5" cy="-745.8" r="4.0" fill="#000000"/>
+    <line x1="95.0" y1="-783.4" x2="297.8" y2="-737.3" stroke="#000000" stroke-width="1"/>
+    <circle cx="297.8" cy="-737.3" r="4.0" fill="#000000"/>
+    <line x1="-330.0" y1="-711.3" x2="-330.0" y2="-698.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-330.0" cy="-698.4" r="4.0" fill="#000000"/>
+    <line x1="-330.0" y1="-665.6" x2="-330.0" y2="-648.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-330.0" cy="-648.4" r="4.0" fill="#000000"/>
+    <line x1="-330.0" y1="-615.6" x2="-330.0" y2="-600.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-330.0" cy="-600.6" r="4.0" fill="#000000"/>
+    <line x1="-235.0" y1="-553.4" x2="-103.1" y2="-522.3" stroke="#000000" stroke-width="1"/>
+    <circle cx="-103.1" cy="-522.3" r="4.0" fill="#000000"/>
+    <line x1="330.0" y1="-711.3" x2="330.0" y2="-698.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="330.0" cy="-698.4" r="4.0" fill="#000000"/>
+    <line x1="330.0" y1="-665.6" x2="330.0" y2="-650.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="330.0" cy="-650.6" r="4.0" fill="#000000"/>
+    <line x1="330.0" y1="-603.4" x2="330.0" y2="-588.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="330.0" cy="-588.4" r="4.0" fill="#000000"/>
+    <line x1="262.1" y1="-555.6" x2="103.7" y2="-521.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="103.7" cy="-521.4" r="4.0" fill="#000000"/>
+    <line x1="431.1" y1="-625.0" x2="571.8" y2="-625.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="571.8" cy="-625.0" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-478.4" x2="0.0" y2="-452.7" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-452.7" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-411.3" x2="0.0" y2="-398.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-398.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-365.6" x2="0.0" y2="-342.7" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-342.7" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-301.3" x2="0.0" y2="-290.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-290.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-243.4" x2="0.0" y2="-217.7" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-217.7" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-176.3" x2="0.0" y2="-165.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="-165.6" r="4.0" fill="#000000"/>
+    <line x1="-54.0" y1="-118.4" x2="-667.8" y2="127.1" stroke="#000000" stroke-width="1"/>
+    <circle cx="-667.8" cy="127.1" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="-118.4" x2="0.0" y2="117.3" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="117.3" r="4.0" fill="#000000"/>
+    <line x1="58.6" y1="-118.4" x2="714.3" y2="123.2" stroke="#000000" stroke-width="1"/>
+    <circle cx="714.3" cy="123.2" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="158.7" x2="-700.0" y2="171.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="171.6" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="204.4" x2="-700.0" y2="219.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="219.4" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="266.6" x2="-700.0" y2="281.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="281.6" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="314.4" x2="-700.0" y2="326.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="326.6" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="359.4" x2="-700.0" y2="369.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="369.4" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="416.6" x2="-700.0" y2="429.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="429.4" r="4.0" fill="#000000"/>
+    <line x1="-700.0" y1="476.6" x2="-700.0" y2="496.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-700.0" cy="496.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="158.7" x2="0.0" y2="171.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="171.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="204.4" x2="0.0" y2="219.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="219.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="266.6" x2="0.0" y2="279.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="279.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="326.6" x2="0.0" y2="339.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="339.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="386.6" x2="0.0" y2="401.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="401.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="434.4" x2="0.0" y2="449.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="449.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="496.6" x2="0.0" y2="511.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="511.6" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="544.4" x2="0.0" y2="559.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="559.4" r="4.0" fill="#000000"/>
+    <line x1="0.0" y1="606.6" x2="0.0" y2="626.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="0.0" cy="626.6" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="158.7" x2="760.0" y2="169.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="169.4" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="216.6" x2="760.0" y2="229.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="229.4" r="4.0" fill="#000000"/>
+    <line x1="839.5" y1="255.0" x2="971.2" y2="255.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="971.2" cy="255.0" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="276.6" x2="760.0" y2="291.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="291.6" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="324.4" x2="760.0" y2="339.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="339.4" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="386.6" x2="760.0" y2="399.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="399.4" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="446.6" x2="760.0" y2="461.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="461.6" r="4.0" fill="#000000"/>
+    <line x1="760.0" y1="494.4" x2="760.0" y2="511.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="760.0" cy="511.6" r="4.0" fill="#000000"/>
+    <line x1="-36.7" y1="-213.7" x2="-429.8" y2="-414.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-429.8" cy="-414.4" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-418.4" x2="-480.0" y2="-410.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-410.6" r="4.0" fill="#000000"/>
+    <line x1="-624.5" y1="-385.0" x2="-774.9" y2="-385.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="-774.9" cy="-385.0" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-363.4" x2="-480.0" y2="-355.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-355.6" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-308.4" x2="-480.0" y2="-300.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-300.6" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-253.4" x2="-480.0" y2="-243.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-243.4" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-210.6" x2="-480.0" y2="-195.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-195.6" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-148.4" x2="-480.0" y2="-135.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-135.6" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-88.4" x2="-480.0" y2="-75.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-75.6" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-28.4" x2="-480.0" y2="-15.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-15.6" r="4.0" fill="#000000"/>
+    <line x1="-694.5" y1="285.6" x2="-489.8" y2="-249.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-489.8" cy="-249.4" r="4.0" fill="#000000"/>
+    <line x1="-13.7" y1="563.4" x2="-463.7" y2="-144.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-463.7" cy="-144.4" r="4.0" fill="#000000"/>
+    <line x1="730.7" y1="343.4" x2="30.8" y2="-172.3" stroke="#000000" stroke-width="1"/>
+    <circle cx="30.8" cy="-172.3" r="4.0" fill="#000000"/>
+    <line x1="355.6" y1="-711.9" x2="645.5" y2="-502.1" stroke="#000000" stroke-width="1"/>
+    <circle cx="645.5" cy="-502.1" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-460.7" x2="677.0" y2="-457.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-457.8" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-425.0" x2="677.0" y2="-422.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-422.8" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-390.0" x2="677.0" y2="-385.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-385.0" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-337.8" x2="677.0" y2="-330.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-330.0" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-282.8" x2="677.0" y2="-275.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-275.0" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-227.8" x2="677.0" y2="-220.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-220.0" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-172.8" x2="677.0" y2="-165.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-165.0" r="4.0" fill="#000000"/>
+    <line x1="677.0" y1="-117.8" x2="677.0" y2="-105.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="677.0" cy="-105.0" r="4.0" fill="#000000"/>
+    <line x1="358.2" y1="-603.4" x2="643.6" y2="-385.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="643.6" cy="-385.0" r="4.0" fill="#000000"/>
+    <line x1="24.0" y1="283.4" x2="648.6" y2="-278.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="648.6" cy="-278.8" r="4.0" fill="#000000"/>
+    <line x1="22.2" y1="175.6" x2="637.6" y2="-223.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="637.6" cy="-223.8" r="4.0" fill="#000000"/>
+    <line x1="104.8" y1="464.8" x2="285.6" y2="447.2" stroke="#000000" stroke-width="1"/>
+    <circle cx="285.6" cy="447.2" r="4.0" fill="#000000"/>
+    <line x1="330.6" y1="-603.4" x2="359.4" y2="417.3" stroke="#000000" stroke-width="1"/>
+    <circle cx="359.4" cy="417.3" r="4.0" fill="#000000"/>
+    <line x1="360.0" y1="458.7" x2="360.0" y2="461.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="360.0" cy="461.6" r="4.0" fill="#000000"/>
+    <line x1="360.0" y1="494.4" x2="360.0" y2="499.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="360.0" cy="499.4" r="4.0" fill="#000000"/>
+    <line x1="360.0" y1="546.6" x2="360.0" y2="551.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="360.0" cy="551.6" r="4.0" fill="#000000"/>
+    <line x1="360.0" y1="584.4" x2="360.0" y2="589.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="360.0" cy="589.4" r="4.0" fill="#000000"/>
+    <line x1="360.0" y1="636.6" x2="360.0" y2="644.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="360.0" cy="644.4" r="4.0" fill="#000000"/>
+    <line x1="551.9" y1="-1218.4" x2="339.6" y2="-650.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="339.6" cy="-650.6" r="4.0" fill="#000000"/>
+    <line x1="552.2" y1="-1218.4" x2="9.3" y2="279.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="9.3" cy="279.4" r="4.0" fill="#000000"/>
+    <line x1="562.7" y1="-1218.4" x2="756.8" y2="339.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="756.8" cy="339.4" r="4.0" fill="#000000"/>
+    <line x1="-320.5" y1="-941.6" x2="-189.0" y2="-959.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-189.0" cy="-959.4" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-941.6" x2="-480.0" y2="-964.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-964.4" r="4.0" fill="#000000"/>
+    <line x1="-299.4" y1="-935.1" x2="317.9" y2="-986.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="317.9" cy="-986.8" r="4.0" fill="#000000"/>
+    <line x1="-480.0" y1="-898.4" x2="-480.0" y2="-300.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="-480.0" cy="-300.6" r="4.0" fill="#000000"/>
+    <line x1="-718.6" y1="-301.6" x2="-610.4" y2="-314.5" stroke="#000000" stroke-width="1"/>
+    <circle cx="-610.4" cy="-314.5" r="4.0" fill="#000000"/>
+    <line x1="-735.1" y1="-258.4" x2="-620.5" y2="-243.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="-620.5" cy="-243.4" r="4.0" fill="#000000"/>
+    <line x1="-170.2" y1="245.0" x2="-141.3" y2="245.0" stroke="#000000" stroke-width="1"/>
+    <circle cx="-141.3" cy="245.0" r="4.0" fill="#000000"/>
+    <line x1="969.6" y1="-363.4" x2="850.8" y2="-361.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="850.8" cy="-361.8" r="4.0" fill="#000000"/>
+    <line x1="273.6" y1="406.6" x2="102.3" y2="449.8" stroke="#000000" stroke-width="1"/>
+    <circle cx="102.3" cy="449.8" r="4.0" fill="#000000"/>
+    <line x1="359.4" y1="363.4" x2="330.8" y2="-599.4" stroke="#000000" stroke-width="1"/>
+    <circle cx="330.8" cy="-599.4" r="4.0" fill="#000000"/>
+    <line x1="360.0" y1="406.6" x2="360.0" y2="551.6" stroke="#000000" stroke-width="1"/>
+    <circle cx="360.0" cy="551.6" r="4.0" fill="#000000"/>
+  </g>
+  <g class="nodes">
+    <g class="node">
+      <rect x="-128.2" y="-1332.7" width="254.3" height="63.4" rx="5" ry="5" fill="#2f4f6f" stroke="#ffffff" stroke-width="1"/>
+      <text x="-104.3" y="-1293.5" font-size="26.4" fill="#ffffff">Life of a key</text>
+    </g>
+    <g class="node">
+      <rect x="-231.2" y="-1229.4" width="462.4" height="28.8" rx="5" ry="5" fill="#e8e8f4" stroke="#000000" stroke-width="1"/>
+      <text x="-220.4" y="-1211.6" font-size="12.0" fill="#000000">matrix scan -&gt; host: resends, timeouts, stalled-link teardown</text>
+    </g>
+    <g class="node">
+      <rect x="411.9" y="-1261.6" width="296.2" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="422.7" y="-1243.8" font-size="12.0" fill="#141911">nothing waits on a peer forever:</text>
+      <text x="422.7" y="-1229.4" font-size="12.0" fill="#141911">every wait on a link ends in a timeout</text>
+    </g>
+    <g class="node">
+      <rect x="-1155.0" y="-1284.4" width="110.0" height="48.7" rx="5" ry="5" fill="#2f4f6f" stroke="#ffffff" stroke-width="1"/>
+      <text x="-1136.7" y="-1254.3" font-size="20.3" fill="#ffffff">Legend</text>
+    </g>
+    <g class="node">
+      <rect x="-1201.1" y="-1234.4" width="202.3" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-1190.3" y="-1216.6" font-size="12.0" fill="#000000">module / step on the path</text>
+    </g>
+    <g class="node">
+      <rect x="-1201.1" y="-1199.4" width="202.3" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-1190.3" y="-1181.6" font-size="12.0" fill="#000000">mechanism in our firmware</text>
+    </g>
+    <g class="node">
+      <rect x="-1244.5" y="-1164.4" width="289.0" height="28.8" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="-1233.7" y="-1146.6" font-size="12.0" fill="#000000">[owner] mechanism in third-party code</text>
+    </g>
+    <g class="node">
+      <rect x="-1212.0" y="-1129.4" width="224.0" height="28.8" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="-1201.1" y="-1111.6" font-size="12.0" fill="#141911">invariant: must keep holding</text>
+    </g>
+    <g class="node">
+      <rect x="-1143.3" y="-1094.4" width="86.7" height="28.8" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="-1132.5" y="-1076.6" font-size="12.0" fill="#000000">known gap</text>
+    </g>
+    <g class="node">
+      <rect x="-1204.8" y="-1059.4" width="209.5" height="28.8" rx="5" ry="5" fill="#e8e8f4" stroke="#000000" stroke-width="1"/>
+      <text x="-1193.9" y="-1041.6" font-size="12.0" fill="#000000">rationale / history / test</text>
+    </g>
+    <g class="node">
+      <rect x="-1125.3" y="-1024.4" width="50.6" height="28.8" rx="5" ry="5" fill="#cfcfcf" stroke="#000000" stroke-width="1"/>
+      <text x="-1114.4" y="-1006.6" font-size="12.0" fill="#000000">host</text>
+    </g>
+    <g class="node">
+      <rect x="-1208.4" y="-989.4" width="216.7" height="28.8" rx="5" ry="5" fill="#2f4f6f" stroke="#ffffff" stroke-width="1"/>
+      <text x="-1197.5" y="-971.6" font-size="12.0" fill="#ffffff">topic spanning several hops</text>
+    </g>
+    <g class="node">
+      <rect x="-545.7" y="-1118.7" width="131.5" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-531.7" y="-1095.6" font-size="15.6" fill="#000000">Left module</text>
+    </g>
+    <g class="node">
+      <rect x="-588.4" y="-1064.4" width="216.7" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-577.5" y="-1046.6" font-size="12.0" fill="#000000">key states + pointer deltas</text>
+    </g>
+    <g class="node">
+      <rect x="-657.0" y="-1011.6" width="354.0" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-646.2" y="-993.8" font-size="12.0" fill="#000000">send error while the right half is up</text>
+      <text x="-646.2" y="-979.4" font-size="12.0" fill="#000000">-&gt; resend flag (lost pointer deltas stay lost)</text>
+    </g>
+    <g class="node">
+      <rect x="-65.7" y="-1118.7" width="131.5" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-51.7" y="-1095.6" font-size="15.6" fill="#000000">Key scanner</text>
+    </g>
+    <g class="node">
+      <rect x="-119.2" y="-1066.6" width="238.4" height="43.2" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-108.4" y="-1048.8" font-size="12.0" fill="#000000">left half matrix: full bitmap,</text>
+      <text x="-108.4" y="-1034.4" font-size="12.0" fill="#000000">sent only on change</text>
+    </g>
+    <g class="node">
+      <rect x="-205.9" y="-1006.6" width="411.8" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-195.1" y="-988.8" font-size="12.0" fill="#000000">send error while the right half is up</text>
+      <text x="-195.1" y="-974.4" font-size="12.0" fill="#000000">-&gt; KeyScanner_ResendKeyStates, resent on the next scan</text>
+    </g>
+    <g class="node">
+      <rect x="-137.3" y="-944.4" width="274.5" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-126.4" y="-926.6" font-size="12.0" fill="#000000">link reset -&gt; full key state resend</text>
+    </g>
+    <g class="node">
+      <rect x="423.6" y="-1118.7" width="112.7" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="437.7" y="-1095.6" font-size="15.6" fill="#000000">StateSync</text>
+    </g>
+    <g class="node">
+      <rect x="346.3" y="-1064.4" width="267.3" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="357.2" y="-1046.6" font-size="12.0" fill="#000000">synced properties with dirty flags</text>
+    </g>
+    <g class="node">
+      <rect x="321.1" y="-1014.4" width="317.9" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="331.9" y="-996.6" font-size="12.0" fill="#000000">send error -&gt; property marked dirty again</text>
+    </g>
+    <g class="node">
+      <rect x="-660.6" y="-941.6" width="361.2" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="-649.8" y="-923.8" font-size="12.0" fill="#141911">a failed send leaves its data marked for resend</text>
+      <text x="-649.8" y="-909.4" font-size="12.0" fill="#141911">(key states, state sync property, report)</text>
+    </g>
+    <g class="node">
+      <rect x="-56.4" y="-878.7" width="112.7" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-42.3" y="-855.6" font-size="15.6" fill="#000000">Messenger</text>
+    </g>
+    <g class="node">
+      <rect x="-144.5" y="-826.6" width="289.0" height="43.2" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-133.7" y="-808.8" font-size="12.0" fill="#000000">Messenger_Send2: no retry of its own,</text>
+      <text x="-133.7" y="-794.4" font-size="12.0" fill="#000000">returns the link&apos;s error</text>
+    </g>
+    <g class="node">
+      <rect x="304.9" y="-881.6" width="390.1" height="43.2" rx="5" ry="5" fill="#e8e8f4" stroke="#000000" stroke-width="1"/>
+      <text x="315.8" y="-863.8" font-size="12.0" fill="#000000">[test] MessengerFailure: 1 in 4 key state and</text>
+      <text x="315.8" y="-849.4" font-size="12.0" fill="#000000">state sync sends fail; typed keys must still arrive</text>
+    </g>
+    <g class="node">
+      <rect x="-395.7" y="-748.7" width="131.5" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-381.7" y="-725.6" font-size="15.6" fill="#000000">UART bridge</text>
+    </g>
+    <g class="node">
+      <rect x="-387.8" y="-694.4" width="115.6" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-377.0" y="-676.6" font-size="12.0" fill="#000000">cabled halves</text>
+    </g>
+    <g class="node">
+      <rect x="-434.8" y="-644.4" width="209.5" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-423.9" y="-626.6" font-size="12.0" fill="#000000">CRC16 + ack / nack, resend</text>
+    </g>
+    <g class="node">
+      <rect x="-434.8" y="-596.6" width="209.5" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-423.9" y="-578.8" font-size="12.0" fill="#000000">ping timeout -&gt; link down,</text>
+      <text x="-423.9" y="-564.4" font-size="12.0" fill="#000000">key states resent</text>
+    </g>
+    <g class="node">
+      <rect x="301.8" y="-748.7" width="56.4" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="315.9" y="-725.6" font-size="15.6" fill="#000000">NUS</text>
+    </g>
+    <g class="node">
+      <rect x="265.0" y="-694.4" width="130.0" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="275.8" y="-676.6" font-size="12.0" fill="#000000">wireless halves</text>
+    </g>
+    <g class="node">
+      <rect x="228.9" y="-646.6" width="202.3" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="239.7" y="-628.8" font-size="12.0" fill="#000000">send slot within 1 s,</text>
+      <text x="239.7" y="-614.4" font-size="12.0" fill="#000000">else disconnect that link</text>
+    </g>
+    <g class="node">
+      <rect x="192.7" y="-584.4" width="274.5" height="28.8" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="203.6" y="-566.6" font-size="12.0" fill="#000000">[radio] link-layer ack + retransmit</text>
+    </g>
+    <g class="node">
+      <rect x="575.8" y="-646.6" width="368.5" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="586.6" y="-628.8" font-size="12.0" fill="#000000">NUS server slots are shared by all dongle links:</text>
+      <text x="586.6" y="-614.4" font-size="12.0" fill="#000000">with two dongles, the wrong one may be cut</text>
+    </g>
+    <g class="node">
+      <rect x="-101.1" y="-521.6" width="202.3" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-90.3" y="-503.8" font-size="12.0" fill="#000000">receiver: watermark drops</text>
+      <text x="-90.3" y="-489.4" font-size="12.0" fill="#000000">resent duplicates</text>
+    </g>
+    <g class="node">
+      <rect x="-61.0" y="-448.7" width="122.1" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-47.0" y="-425.6" font-size="15.6" fill="#000000">Right half</text>
+    </g>
+    <g class="node">
+      <rect x="-65.0" y="-394.4" width="130.0" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-54.2" y="-376.6" font-size="12.0" fill="#000000">KeyStates[left]</text>
+    </g>
+    <g class="node">
+      <rect x="-56.4" y="-338.7" width="112.7" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-42.3" y="-315.6" font-size="15.6" fill="#000000">Main loop</text>
+    </g>
+    <g class="node">
+      <rect x="-104.8" y="-286.6" width="209.5" height="43.2" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-93.9" y="-268.8" font-size="12.0" fill="#000000">key processing, postponer,</text>
+      <text x="-93.9" y="-254.4" font-size="12.0" fill="#000000">report updater</text>
+    </g>
+    <g class="node">
+      <rect x="-70.4" y="-213.7" width="140.9" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-56.4" y="-190.6" font-size="15.6" fill="#000000">UsbSemaphore</text>
+    </g>
+    <g class="node">
+      <rect x="-155.3" y="-161.6" width="310.7" height="43.2" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-144.5" y="-143.8" font-size="12.0" fill="#000000">one report_send_state_t per report type,</text>
+      <text x="-144.5" y="-129.4" font-size="12.0" fill="#000000">one report in flight per type</text>
+    </g>
+    <g class="node">
+      <rect x="-628.1" y="-461.6" width="296.2" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-617.3" y="-443.8" font-size="12.0" fill="#000000">send: sink, connection and time noted,</text>
+      <text x="-617.3" y="-429.4" font-size="12.0" fill="#000000">then marked in flight</text>
+    </g>
+    <g class="node">
+      <rect x="-624.5" y="-406.6" width="289.0" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-613.7" y="-388.8" font-size="12.0" fill="#000000">in flight blocks sending: up to 32 ms</text>
+      <text x="-613.7" y="-374.4" font-size="12.0" fill="#000000">(USB, dongle), up to 1 s (HOGP)</text>
+    </g>
+    <g class="node">
+      <rect x="-981.1" y="-406.6" width="202.3" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="-970.3" y="-388.8" font-size="12.0" fill="#000000">semaphore not checked</text>
+      <text x="-970.3" y="-374.4" font-size="12.0" fill="#000000">outside awake power modes</text>
+    </g>
+    <g class="node">
+      <rect x="-606.4" y="-351.6" width="252.9" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-595.6" y="-333.8" font-size="12.0" fill="#000000">ok callback -&gt; Release:</text>
+      <text x="-595.6" y="-319.4" font-size="12.0" fill="#000000">baseline advanced, retries reset</text>
+    </g>
+    <g class="node">
+      <rect x="-646.2" y="-296.6" width="332.3" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-635.3" y="-278.8" font-size="12.0" fill="#000000">error -&gt; Fail / ResendOrGiveUp:</text>
+      <text x="-635.3" y="-264.4" font-size="12.0" fill="#000000">baseline kept, resend with backoff 1..32 ms</text>
+    </g>
+    <g class="node">
+      <rect x="-678.7" y="-239.4" width="397.4" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-667.8" y="-221.6" font-size="12.0" fill="#000000">late callback (not in flight, or other sink) ignored</text>
+    </g>
+    <g class="node">
+      <rect x="-1087.8" y="-301.6" width="375.7" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="-1077.0" y="-283.8" font-size="12.0" fill="#141911">the baseline advances only on confirmed delivery;</text>
+      <text x="-1077.0" y="-269.4" font-size="12.0" fill="#141911">late callbacks must not release a newer report</text>
+    </g>
+    <g class="node">
+      <rect x="-613.7" y="-191.6" width="267.3" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-602.8" y="-173.8" font-size="12.0" fill="#000000">connection down -&gt; its unconfirmed</text>
+      <text x="-602.8" y="-159.4" font-size="12.0" fill="#000000">reports cleared, state sent again</text>
+    </g>
+    <g class="node">
+      <rect x="-693.1" y="-131.6" width="426.3" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-682.3" y="-113.8" font-size="12.0" fill="#000000">12 failed tries -&gt; given up: reports go out unconfirmed,</text>
+      <text x="-682.3" y="-99.4" font-size="12.0" fill="#000000">state resent after 1 s; may reconnect the host</text>
+    </g>
+    <g class="node">
+      <rect x="-617.3" y="-71.6" width="274.5" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="-606.4" y="-53.8" font-size="12.0" fill="#000000">given up: a lost report is repaired</text>
+      <text x="-606.4" y="-39.4" font-size="12.0" fill="#000000">only by the 1 s resend</text>
+    </g>
+    <g class="node">
+      <rect x="-660.6" y="-11.6" width="361.2" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="-649.8" y="6.2" font-size="12.0" fill="#000000">host unreachable while given up:</text>
+      <text x="-649.8" y="20.6" font-size="12.0" fill="#000000">reconnect requested ~160 times/s (pre-existing)</text>
+    </g>
+    <g class="node">
+      <rect x="578.4" y="-498.1" width="197.2" height="37.4" rx="5" ry="5" fill="#2f4f6f" stroke="#ffffff" stroke-width="1"/>
+      <text x="592.5" y="-475.0" font-size="15.6" fill="#ffffff">Shared BLE buffers</text>
+    </g>
+    <g class="node">
+      <rect x="514.4" y="-453.8" width="325.1" height="28.8" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="525.3" y="-436.0" font-size="12.0" fill="#000000">[Zephyr] one ATT TX pool for all BLE links</text>
+    </g>
+    <g class="node">
+      <rect x="579.5" y="-418.8" width="195.1" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="590.3" y="-401.0" font-size="12.0" fill="#000000">CONFIG_BT_ATT_TX_COUNT=7</text>
+    </g>
+    <g class="node">
+      <rect x="507.2" y="-381.0" width="339.6" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="518.1" y="-363.2" font-size="12.0" fill="#000000">per-sender caps: HID 3 (one per report type)</text>
+      <text x="518.1" y="-348.8" font-size="12.0" fill="#000000">+ NUS server 2 + NUS client 1 = 6, +1 spare</text>
+    </g>
+    <g class="node">
+      <rect x="969.6" y="-387.1" width="310.7" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="980.4" y="-369.3" font-size="12.0" fill="#141911">each sender caps its in-flight PDUs;</text>
+      <text x="980.4" y="-354.9" font-size="12.0" fill="#141911">the caps together fit in the shared pool</text>
+    </g>
+    <g class="node">
+      <rect x="481.9" y="-326.0" width="390.1" height="43.2" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="492.8" y="-308.2" font-size="12.0" fill="#000000">[Zephyr patch] CONFIG_BT_ATT_TX_ALLOC_TIMEOUT=0:</text>
+      <text x="492.8" y="-293.8" font-size="12.0" fill="#000000">allocation never blocks, senders retry on their own</text>
+    </g>
+    <g class="node">
+      <rect x="510.8" y="-271.0" width="332.3" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="521.7" y="-253.2" font-size="12.0" fill="#000000">-ENOMEM also means pool full: NKRO -&gt; 6KRO</text>
+      <text x="521.7" y="-238.8" font-size="12.0" fill="#000000">fallback only if the report exceeds the MTU</text>
+    </g>
+    <g class="node">
+      <rect x="507.2" y="-216.0" width="339.6" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="518.1" y="-198.2" font-size="12.0" fill="#000000">[radio] HCI send credits (3) are shared too,</text>
+      <text x="518.1" y="-183.8" font-size="12.0" fill="#000000">not capped per sender</text>
+    </g>
+    <g class="node">
+      <rect x="500.0" y="-161.0" width="354.0" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="510.8" y="-143.2" font-size="12.0" fill="#000000">shared HCI send credits: a NUS timeout may cut</text>
+      <text x="510.8" y="-128.8" font-size="12.0" fill="#000000">a healthy link while a HOGP stall clears</text>
+    </g>
+    <g class="node">
+      <rect x="453.0" y="-101.0" width="447.9" height="43.2" rx="5" ry="5" fill="#e8e8f4" stroke="#000000" stroke-width="1"/>
+      <text x="463.9" y="-83.2" font-size="12.0" fill="#000000">why: a stalled link plus 32 ms resends once filled the pool</text>
+      <text x="463.9" y="-68.8" font-size="12.0" fill="#000000">and blocked the sender forever (a 55 s freeze)</text>
+    </g>
+    <g class="node">
+      <rect x="-728.2" y="121.3" width="56.4" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-714.1" y="144.4" font-size="15.6" fill="#000000">USB</text>
+    </g>
+    <g class="node">
+      <rect x="-761.4" y="175.6" width="122.8" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-750.6" y="193.4" font-size="12.0" fill="#000000">c2usb endpoint</text>
+    </g>
+    <g class="node">
+      <rect x="-808.4" y="223.4" width="216.7" height="43.2" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="-797.5" y="241.2" font-size="12.0" fill="#000000">[c2usb] completion callback</text>
+      <text x="-797.5" y="255.6" font-size="12.0" fill="#000000">with a result</text>
+    </g>
+    <g class="node">
+      <rect x="-819.2" y="285.6" width="238.4" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-808.4" y="303.4" font-size="12.0" fill="#000000">ok -&gt; release; error -&gt; resend</text>
+    </g>
+    <g class="node">
+      <rect x="-830.0" y="330.6" width="260.1" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-819.2" y="348.4" font-size="12.0" fill="#000000">unconfirmed after 32 ms -&gt; resend</text>
+    </g>
+    <g class="node">
+      <rect x="-819.2" y="373.4" width="238.4" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-808.4" y="391.2" font-size="12.0" fill="#000000">reconfiguration -&gt; USB reports</text>
+      <text x="-808.4" y="405.6" font-size="12.0" fill="#000000">no longer in flight</text>
+    </g>
+    <g class="node">
+      <rect x="-819.2" y="433.4" width="238.4" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="-808.4" y="451.2" font-size="12.0" fill="#000000">USB host suspended:</text>
+      <text x="-808.4" y="465.6" font-size="12.0" fill="#000000">report dropped while waking it</text>
+    </g>
+    <g class="node">
+      <rect x="-739.7" y="500.6" width="79.5" height="28.8" rx="5" ry="5" fill="#cfcfcf" stroke="#000000" stroke-width="1"/>
+      <text x="-728.9" y="518.4" font-size="12.0" fill="#000000">PC (USB)</text>
+    </g>
+    <g class="node">
+      <rect x="-32.9" y="121.3" width="65.7" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-18.8" y="144.4" font-size="15.6" fill="#000000">HOGP</text>
+    </g>
+    <g class="node">
+      <rect x="-115.6" y="175.6" width="231.2" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="-104.8" y="193.4" font-size="12.0" fill="#000000">BLE: c2usb HOGP -&gt; Zephyr ATT</text>
+    </g>
+    <g class="node">
+      <rect x="-137.3" y="223.4" width="274.5" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-126.4" y="241.2" font-size="12.0" fill="#000000">an accepted report is never resent,</text>
+      <text x="-126.4" y="255.6" font-size="12.0" fill="#000000">wait for the sent callback</text>
+    </g>
+    <g class="node">
+      <rect x="-509.8" y="223.4" width="339.6" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="-498.9" y="241.2" font-size="12.0" fill="#141911">HOGP reports are never resent:</text>
+      <text x="-498.9" y="255.6" font-size="12.0" fill="#141911">BLE delivers in order, or the link goes down</text>
+    </g>
+    <g class="node">
+      <rect x="-166.2" y="283.4" width="332.3" height="43.2" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="-155.3" y="301.2" font-size="12.0" fill="#000000">[Zephyr patch] ATT buffer: no wait;</text>
+      <text x="-155.3" y="315.6" font-size="12.0" fill="#000000">pool full -&gt; -ENOMEM -&gt; resend with backoff</text>
+    </g>
+    <g class="node">
+      <rect x="-137.3" y="343.4" width="274.5" height="43.2" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="-126.4" y="361.2" font-size="12.0" fill="#000000">[c2usb + Zephyr] sent callback</text>
+      <text x="-126.4" y="375.6" font-size="12.0" fill="#000000">(always ok; none if the link drops)</text>
+    </g>
+    <g class="node">
+      <rect x="-137.3" y="405.6" width="274.5" height="28.8" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="-126.4" y="423.4" font-size="12.0" fill="#000000">[radio] link-layer ack + retransmit</text>
+    </g>
+    <g class="node">
+      <rect x="-104.8" y="453.4" width="209.5" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-93.9" y="471.2" font-size="12.0" fill="#000000">unconfirmed for 1 s -&gt;</text>
+      <text x="-93.9" y="485.6" font-size="12.0" fill="#000000">disconnect this connection</text>
+    </g>
+    <g class="node">
+      <rect x="-137.3" y="515.6" width="274.5" height="28.8" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="-126.4" y="533.4" font-size="12.0" fill="#000000">[c2usb] disconnect ends its session</text>
+    </g>
+    <g class="node">
+      <rect x="-158.9" y="563.4" width="317.9" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="-148.1" y="581.2" font-size="12.0" fill="#000000">disconnect -&gt; that connection&apos;s</text>
+      <text x="-148.1" y="595.6" font-size="12.0" fill="#000000">unconfirmed reports cleared, state resent</text>
+    </g>
+    <g class="node">
+      <rect x="-39.7" y="630.6" width="79.5" height="28.8" rx="5" ry="5" fill="#cfcfcf" stroke="#000000" stroke-width="1"/>
+      <text x="-28.9" y="648.4" font-size="12.0" fill="#000000">PC (BLE)</text>
+    </g>
+    <g class="node">
+      <rect x="289.6" y="421.3" width="140.9" height="37.4" rx="5" ry="5" fill="#2f4f6f" stroke="#ffffff" stroke-width="1"/>
+      <text x="303.6" y="444.4" font-size="15.6" fill="#ffffff">Stalled link</text>
+    </g>
+    <g class="node">
+      <rect x="193.8" y="465.6" width="332.3" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="204.7" y="483.4" font-size="12.0" fill="#000000">peer radio up, its BT stack not taking data</text>
+    </g>
+    <g class="node">
+      <rect x="233.6" y="503.4" width="252.9" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="244.4" y="521.2" font-size="12.0" fill="#000000">HOGP report unconfirmed for 1 s,</text>
+      <text x="244.4" y="535.6" font-size="12.0" fill="#000000">or no NUS send slot within 1 s</text>
+    </g>
+    <g class="node">
+      <rect x="226.3" y="555.6" width="267.3" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="237.2" y="573.4" font-size="12.0" fill="#000000">-&gt; disconnect only that connection</text>
+    </g>
+    <g class="node">
+      <rect x="233.6" y="363.4" width="252.9" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
+      <text x="244.4" y="381.2" font-size="12.0" fill="#141911">a link that stops taking data</text>
+      <text x="244.4" y="395.6" font-size="12.0" fill="#141911">is torn down, and only that link</text>
+    </g>
+    <g class="node">
+      <rect x="183.0" y="593.4" width="354.0" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="193.8" y="611.2" font-size="12.0" fill="#000000">link down frees its buffers; the reset resends</text>
+      <text x="193.8" y="625.6" font-size="12.0" fill="#000000">key states and state sync properties</text>
+    </g>
+    <g class="node">
+      <rect x="150.5" y="648.4" width="419.0" height="43.2" rx="5" ry="5" fill="#a8a8a8" stroke="#000000" stroke-width="1"/>
+      <text x="161.3" y="666.2" font-size="12.0" fill="#000000">[Zephyr patch] released ATT channel clears TX metadata:</text>
+      <text x="161.3" y="680.6" font-size="12.0" fill="#000000">no use-after-free when buffers outlive the link</text>
+    </g>
+    <g class="node">
+      <rect x="717.7" y="121.3" width="84.5" height="37.4" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="731.8" y="144.4" font-size="15.6" fill="#000000">Dongle</text>
+    </g>
+    <g class="node">
+      <rect x="673.3" y="173.4" width="173.4" height="43.2" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="684.1" y="191.2" font-size="12.0" fill="#000000">right half -&gt; dongle:</text>
+      <text x="684.1" y="205.6" font-size="12.0" fill="#000000">Messenger over NUS</text>
+    </g>
+    <g class="node">
+      <rect x="680.5" y="233.4" width="158.9" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="691.4" y="251.2" font-size="12.0" fill="#000000">semaphore released</text>
+      <text x="691.4" y="265.6" font-size="12.0" fill="#000000">at the NUS hand-off</text>
+    </g>
+    <g class="node">
+      <rect x="975.2" y="233.4" width="209.5" height="43.2" rx="5" ry="5" fill="#f6d8c4" stroke="#000000" stroke-width="1"/>
+      <text x="986.1" y="251.2" font-size="12.0" fill="#000000">right half -&gt; dongle:</text>
+      <text x="986.1" y="265.6" font-size="12.0" fill="#000000">no end-to-end confirmation</text>
+    </g>
+    <g class="node">
+      <rect x="669.7" y="295.6" width="180.6" height="28.8" rx="5" ry="5" fill="#dde6f0" stroke="#000000" stroke-width="1"/>
+      <text x="680.5" y="313.4" font-size="12.0" fill="#000000">dongle -&gt; PC: USB send</text>
+    </g>
+    <g class="node">
+      <rect x="608.3" y="343.4" width="303.4" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="619.1" y="361.2" font-size="12.0" fill="#000000">same semaphore: waits for the callback;</text>
+      <text x="619.1" y="375.6" font-size="12.0" fill="#000000">resends on error or after 32 ms</text>
+    </g>
+    <g class="node">
+      <rect x="611.9" y="403.4" width="296.2" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="622.7" y="421.2" font-size="12.0" fill="#000000">report sender&apos;s resend events cleared:</text>
+      <text x="622.7" y="435.6" font-size="12.0" fill="#000000">only the messenger loop resends</text>
+    </g>
+    <g class="node">
+      <rect x="666.1" y="465.6" width="187.8" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="676.9" y="483.4" font-size="12.0" fill="#000000">gives up after 12 tries</text>
+    </g>
+    <g class="node">
+      <rect x="695.0" y="515.6" width="130.0" height="28.8" rx="5" ry="5" fill="#cfcfcf" stroke="#000000" stroke-width="1"/>
+      <text x="705.8" y="533.4" font-size="12.0" fill="#000000">PC (via dongle)</text>
+    </g>
+  </g>
+</svg>

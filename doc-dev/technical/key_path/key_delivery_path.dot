@@ -1,0 +1,261 @@
+digraph key_delivery_path {
+// Life of a key on UHK80: from the left half's matrix to the host, with the
+// resend, timeout and teardown mechanisms on every hop. Describes branch hogp_stall_teardown.
+// Open in sane-graph-edit; "link-c" (gc) opens the code. Paths are relative to this file.
+// Short, larger nodes name a module; the nodes after it hold the details.
+// Cross-cutting topics (semaphore, BLE buffers, stalled link) sit next to the hop they belong to.
+
+// ---------- title, legend, global invariant ----------
+kt [ fillcolor="#2f4f6f"; color="#ffffff"; fontsize="26.4"; label="Life of a key"; pos="-1.0,-1301.0!" ];
+kt_d [ fillcolor="#e8e8f4"; fontsize="12.0"; label="matrix scan -> host: resends, timeouts, stalled-link teardown"; pos="0.0,-1215.0!" ];
+inv1 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="nothing waits on a peer forever:\nevery wait on a link ends in a timeout"; pos="560.0,-1240.0!" ];
+
+lg0 [ fillcolor="#2f4f6f"; color="#ffffff"; fontsize="20.3"; label="Legend"; pos="-1100.0,-1260.0!" ];
+lg1 [ fillcolor="#dde6f0"; fontsize="12.0"; label="module / step on the path"; pos="-1100.0,-1220.0!" ];
+lg2 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="mechanism in our firmware"; pos="-1100.0,-1185.0!" ];
+lg3 [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[owner] mechanism in third-party code"; pos="-1100.0,-1150.0!" ];
+lg4 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="invariant: must keep holding"; pos="-1100.0,-1115.0!" ];
+lg5 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="known gap"; pos="-1100.0,-1080.0!" ];
+lg6 [ fillcolor="#e8e8f4"; fontsize="12.0"; label="rationale / history / test"; pos="-1100.0,-1045.0!" ];
+lg7 [ fillcolor="#cfcfcf"; fontsize="12.0"; label="host"; pos="-1100.0,-1010.0!" ];
+lg8 [ fillcolor="#2f4f6f"; color="#ffffff"; fontsize="12.0"; label="topic spanning several hops"; pos="-1100.0,-975.0!" ];
+
+// ---------- sources ----------
+s_mod [ fillcolor="#dde6f0"; fontsize="15.6"; label="Left module"; pos="-480.0,-1100.0!"; "link-c"="../../right/src/slave_drivers/uhk_module_driver.c:/if [(]UhkModuleDriver_ResendKeyStates/,+6" ];
+d_mod [ fillcolor="#dde6f0"; fontsize="12.0"; label="key states + pointer deltas"; pos="-480.0,-1050.0!" ];
+m_mod_err [ fillcolor="#d4ecd4"; fontsize="12.0"; label="send error while the right half is up\n-> resend flag (lost pointer deltas stay lost)"; pos="-480.0,-990.0!" ];
+
+s_scan [ fillcolor="#dde6f0"; fontsize="15.6"; label="Key scanner"; pos="0.0,-1100.0!"; "link-c"="../../device/src/keyboard/key_scanner.c:/^static void scanAllKeys.*[{]$/,/^}/" ];
+d_scan [ fillcolor="#dde6f0"; fontsize="12.0"; label="left half matrix: full bitmap,\nsent only on change"; pos="0.0,-1045.0!" ];
+m_scan_err [ fillcolor="#d4ecd4"; fontsize="12.0"; label="send error while the right half is up\n-> KeyScanner_ResendKeyStates, resent on the next scan"; pos="0.0,-985.0!" ];
+m_scan_reset [ fillcolor="#d4ecd4"; fontsize="12.0"; label="link reset -> full key state resend"; pos="0.0,-930.0!"; "link-c"="../../device/src/state_sync.c:/KeyScanner_ResendKeyStates = true/,+1" ];
+
+s_ss [ fillcolor="#dde6f0"; fontsize="15.6"; label="StateSync"; pos="480.0,-1100.0!"; "link-c"="../../device/src/state_sync.c:/^static void submitPreparedData/,/^}/" ];
+d_ss [ fillcolor="#dde6f0"; fontsize="12.0"; label="synced properties with dirty flags"; pos="480.0,-1050.0!" ];
+m_ss_err [ fillcolor="#d4ecd4"; fontsize="12.0"; label="send error -> property marked dirty again"; pos="480.0,-1000.0!" ];
+
+inv2 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="a failed send leaves its data marked for resend\n(key states, state sync property, report)"; pos="-480.0,-920.0!" ];
+
+// ---------- messenger ----------
+s_msg [ fillcolor="#dde6f0"; fontsize="15.6"; label="Messenger"; pos="0.0,-860.0!"; "link-c"="../../device/src/messenger.c:/^int Messenger_Send2[(]/,/^}/" ];
+d_msg [ fillcolor="#dde6f0"; fontsize="12.0"; label="Messenger_Send2: no retry of its own,\nreturns the link's error"; pos="0.0,-805.0!" ];
+t_msg [ fillcolor="#e8e8f4"; fontsize="12.0"; label="[test] MessengerFailure: 1 in 4 key state and\nstate sync sends fail; typed keys must still arrive"; pos="500.0,-860.0!"; "link-c"="../../right/src/test_suite/tests/test_messenger_failure.c" ];
+
+// ---------- half-to-half links ----------
+s_uart [ fillcolor="#dde6f0"; fontsize="15.6"; label="UART bridge"; pos="-330.0,-730.0!"; "link-c"="../../device/src/keyboard/uart_bridge.c" ];
+d_uart [ fillcolor="#dde6f0"; fontsize="12.0"; label="cabled halves"; pos="-330.0,-680.0!" ];
+m_uart1 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="CRC16 + ack / nack, resend"; pos="-330.0,-630.0!" ];
+m_uart2 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="ping timeout -> link down,\nkey states resent"; pos="-330.0,-575.0!" ];
+
+s_nus [ fillcolor="#dde6f0"; fontsize="15.6"; label="NUS"; pos="330.0,-730.0!"; "link-c"="../../device/src/nus_server.c:/^static bool takeSlot/,/^}/" ];
+d_nus [ fillcolor="#dde6f0"; fontsize="12.0"; label="wireless halves"; pos="330.0,-680.0!" ];
+m_nus_slot [ fillcolor="#d4ecd4"; fontsize="12.0"; label="send slot within 1 s,\nelse disconnect that link"; pos="330.0,-625.0!" ];
+m_nus_ll [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[radio] link-layer ack + retransmit"; pos="330.0,-570.0!" ];
+g2 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="NUS server slots are shared by all dongle links:\nwith two dongles, the wrong one may be cut"; pos="760.0,-625.0!"; "link-c"="../../device/src/nus_server.c:/^static bool takeSlot/,/^}/" ];
+
+m_wm [ fillcolor="#d4ecd4"; fontsize="12.0"; label="receiver: watermark drops\nresent duplicates"; pos="0.0,-500.0!" ];
+
+// ---------- right half ----------
+s_right [ fillcolor="#dde6f0"; fontsize="15.6"; label="Right half"; pos="0.0,-430.0!" ];
+d_right [ fillcolor="#dde6f0"; fontsize="12.0"; label="KeyStates[left]"; pos="0.0,-380.0!" ];
+s_main [ fillcolor="#dde6f0"; fontsize="15.6"; label="Main loop"; pos="0.0,-320.0!" ];
+d_main [ fillcolor="#dde6f0"; fontsize="12.0"; label="key processing, postponer,\nreport updater"; pos="0.0,-265.0!" ];
+s_sem [ fillcolor="#dde6f0"; fontsize="15.6"; label="UsbSemaphore"; pos="0.0,-195.0!"; "link-c"="../../right/src/usb_semaphore.h" ];
+d_sem [ fillcolor="#dde6f0"; fontsize="12.0"; label="one report_send_state_t per report type,\none report in flight per type"; pos="0.0,-140.0!" ];
+
+// ---------- around the semaphore (left of the main flow) ----------
+hs1 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="send: sink, connection and time noted,\nthen marked in flight"; pos="-480.0,-440.0!"; "link-c"="../../right/src/usb_semaphore.c:/^void UsbSemaphore_NoteSendTarget/,/^}/" ];
+hs5 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="in flight blocks sending: up to 32 ms\n(USB, dongle), up to 1 s (HOGP)"; pos="-480.0,-385.0!"; "link-c"="../../right/src/usb_semaphore.c:/^static bool recalculateReport/,/^}/" ];
+g5 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="semaphore not checked\noutside awake power modes"; pos="-880.0,-385.0!" ];
+hs2 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="ok callback -> Release:\nbaseline advanced, retries reset"; pos="-480.0,-330.0!"; "link-c"="../../right/src/usb_semaphore.c:/^void UsbSemaphore_Release/,/^}/" ];
+hs3 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="error -> Fail / ResendOrGiveUp:\nbaseline kept, resend with backoff 1..32 ms"; pos="-480.0,-275.0!"; "link-c"="../../right/src/usb_semaphore.c:/^void UsbSemaphore_Fail/,/^}/" ];
+hs4 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="late callback (not in flight, or other sink) ignored"; pos="-480.0,-225.0!"; "link-c"="../../right/src/hid/transport.cpp:/^static void reportSentCallback.*[)]$/,/^}/" ];
+inv3 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="the baseline advances only on confirmed delivery;\nlate callbacks must not release a newer report"; pos="-900.0,-280.0!" ];
+hs9 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="connection down -> its unconfirmed\nreports cleared, state sent again"; pos="-480.0,-170.0!"; "link-c"="../../right/src/usb_semaphore.c:/^void UsbSemaphore_ClearConnection/,/^}/" ];
+hs8 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="12 failed tries -> given up: reports go out unconfirmed,\nstate resent after 1 s; may reconnect the host"; pos="-480.0,-110.0!"; "link-c"="../../right/src/usb_report_sender.c:/^bool UsbReportSender_ShouldGiveUp/,/^}/" ];
+g6 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="given up: a lost report is repaired\nonly by the 1 s resend"; pos="-480.0,-50.0!" ];
+g7 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="host unreachable while given up:\nreconnect requested ~160 times/s (pre-existing)"; pos="-480.0,10.0!"; "link-c"="../../right/src/usb_report_sender.c:/^static void handleUltimateFail/,/^}/" ];
+
+// ---------- shared BLE buffers (right of the main flow, under NUS) ----------
+h_att [ fillcolor="#2f4f6f"; color="#ffffff"; fontsize="15.6"; label="Shared BLE buffers"; pos="677.0,-479.4!"; "link-c"="../../device/prj.conf.overlays/nrf_shared.conf:/^# ATT TX PDUs in flight/,/^CONFIG_BT_ATT_TX_ALLOC_TIMEOUT/" ];
+ha1 [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[Zephyr] one ATT TX pool for all BLE links"; pos="677.0,-439.4!" ];
+ha2 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="CONFIG_BT_ATT_TX_COUNT=7"; pos="677.0,-404.4!" ];
+ha3 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="per-sender caps: HID 3 (one per report type)\n+ NUS server 2 + NUS client 1 = 6, +1 spare"; pos="677.0,-359.4!" ];
+inv5 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="each sender caps its in-flight PDUs;\nthe caps together fit in the shared pool"; pos="1124.9,-365.5!" ];
+ha4 [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[Zephyr patch] CONFIG_BT_ATT_TX_ALLOC_TIMEOUT=0:\nallocation never blocks, senders retry on their own"; pos="677.0,-304.4!"; "link-c"="../../patches/zephyr/0001-bluetooth-att-make-TX-buffer-wait-configurable.patch" ];
+ha5 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="-ENOMEM also means pool full: NKRO -> 6KRO\nfallback only if the report exceeds the MTU"; pos="677.0,-249.4!"; "link-c"="../../right/src/hid/transport.cpp:/^static bool fitsBleMtu/,/^}/" ];
+ha6 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="[radio] HCI send credits (3) are shared too,\nnot capped per sender"; pos="677.0,-194.4!" ];
+g1 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="shared HCI send credits: a NUS timeout may cut\na healthy link while a HOGP stall clears"; pos="677.0,-139.4!" ];
+ha7 [ fillcolor="#e8e8f4"; fontsize="12.0"; label="why: a stalled link plus 32 ms resends once filled the pool\nand blocked the sender forever (a 55 s freeze)"; pos="677.0,-79.4!" ];
+
+// ---------- sink: USB ----------
+s_usb [ fillcolor="#dde6f0"; fontsize="15.6"; label="USB"; pos="-700.0,140.0!" ];
+d_usb [ fillcolor="#dde6f0"; fontsize="12.0"; label="c2usb endpoint"; pos="-700.0,190.0!" ];
+m_usb_cb [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[c2usb] completion callback\nwith a result"; pos="-700.0,245.0!" ];
+m_usb_res [ fillcolor="#d4ecd4"; fontsize="12.0"; label="ok -> release; error -> resend"; pos="-700.0,300.0!"; "link-c"="../../right/src/hid/transport.cpp:/^static void reportSentCallback.*[)]$/,/^}/" ];
+m_usb_to [ fillcolor="#d4ecd4"; fontsize="12.0"; label="unconfirmed after 32 ms -> resend"; pos="-700.0,345.0!" ];
+m_usb_clr [ fillcolor="#d4ecd4"; fontsize="12.0"; label="reconfiguration -> USB reports\nno longer in flight"; pos="-700.0,395.0!"; "link-c"="../../right/src/hid/transport_usb.cpp:/UsbSemaphore_ClearSink/,+0" ];
+g4 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="USB host suspended:\nreport dropped while waking it"; pos="-700.0,455.0!" ];
+pc1 [ fillcolor="#cfcfcf"; fontsize="12.0"; label="PC (USB)"; pos="-700.0,515.0!" ];
+
+// ---------- sink: BLE (HOGP) ----------
+s_ble [ fillcolor="#dde6f0"; fontsize="15.6"; label="HOGP"; pos="0.0,140.0!"; "link-c"="../../../c2usb/c2usb/bluetooth/hid_over_gatt.cpp" ];
+d_ble [ fillcolor="#dde6f0"; fontsize="12.0"; label="BLE: c2usb HOGP -> Zephyr ATT"; pos="0.0,190.0!" ];
+m_ble_nores [ fillcolor="#d4ecd4"; fontsize="12.0"; label="an accepted report is never resent,\nwait for the sent callback"; pos="0.0,245.0!" ];
+inv4 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="HOGP reports are never resent:\nBLE delivers in order, or the link goes down"; pos="-340.0,245.0!" ];
+m_ble_att [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[Zephyr patch] ATT buffer: no wait;\npool full -> -ENOMEM -> resend with backoff"; pos="0.0,305.0!" ];
+m_ble_cb [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[c2usb + Zephyr] sent callback\n(always ok; none if the link drops)"; pos="0.0,365.0!" ];
+m_ble_ll [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[radio] link-layer ack + retransmit"; pos="0.0,420.0!" ];
+m_ble_td [ fillcolor="#d4ecd4"; fontsize="12.0"; label="unconfirmed for 1 s ->\ndisconnect this connection"; pos="0.0,475.0!"; "link-c"="../../right/src/usb_report_sender.c:/^void UsbReportSender_TearDownStalledLink/,/^}/" ];
+m_ble_dc [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[c2usb] disconnect ends its session"; pos="0.0,530.0!" ];
+m_ble_clr [ fillcolor="#d4ecd4"; fontsize="12.0"; label="disconnect -> that connection's\nunconfirmed reports cleared, state resent"; pos="0.0,585.0!"; "link-c"="../../right/src/connections.c:/UsbSemaphore_ClearConnection/,+0" ];
+pc2 [ fillcolor="#cfcfcf"; fontsize="12.0"; label="PC (BLE)"; pos="0.0,645.0!" ];
+
+// ---------- stalled link (beside the HOGP teardown) ----------
+h_stall [ fillcolor="#2f4f6f"; color="#ffffff"; fontsize="15.6"; label="Stalled link"; pos="360.0,440.0!" ];
+hst0 [ fillcolor="#dde6f0"; fontsize="12.0"; label="peer radio up, its BT stack not taking data"; pos="360.0,480.0!" ];
+hst1 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="HOGP report unconfirmed for 1 s,\nor no NUS send slot within 1 s"; pos="360.0,525.0!" ];
+hst3 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="-> disconnect only that connection"; pos="360.0,570.0!" ];
+inv6 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="a link that stops taking data\nis torn down, and only that link"; pos="360.0,385.0!" ];
+hst4 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="link down frees its buffers; the reset resends\nkey states and state sync properties"; pos="360.0,615.0!" ];
+hst5 [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[Zephyr patch] released ATT channel clears TX metadata:\nno use-after-free when buffers outlive the link"; pos="360.0,670.0!"; "link-c"="../../patches/zephyr/0003-Bluetooth-Host-ATT-clear-TX-metadata-when-releasing-.patch" ];
+
+// ---------- sink: dongle ----------
+s_dng [ fillcolor="#dde6f0"; fontsize="15.6"; label="Dongle"; pos="760.0,140.0!" ];
+d_dng [ fillcolor="#dde6f0"; fontsize="12.0"; label="right half -> dongle:\nMessenger over NUS"; pos="760.0,195.0!" ];
+m_dng_ho [ fillcolor="#d4ecd4"; fontsize="12.0"; label="semaphore released\nat the NUS hand-off"; pos="760.0,255.0!" ];
+g3 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="right half -> dongle:\nno end-to-end confirmation"; pos="1080.0,255.0!" ];
+d_dngusb [ fillcolor="#dde6f0"; fontsize="12.0"; label="dongle -> PC: USB send"; pos="760.0,310.0!" ];
+m_dng_loop [ fillcolor="#d4ecd4"; fontsize="12.0"; label="same semaphore: waits for the callback;\nresends on error or after 32 ms"; pos="760.0,365.0!"; "link-c"="../../device/src/messenger.c:/^static void sendDongleReportUntilDone/,/^}/" ];
+m_dng_ev [ fillcolor="#d4ecd4"; fontsize="12.0"; label="report sender's resend events cleared:\nonly the messenger loop resends"; pos="760.0,425.0!"; "link-c"="../../right/src/user_logic.c:/EventVector_ResendUsbReports/,+0" ];
+m_dng_give [ fillcolor="#d4ecd4"; fontsize="12.0"; label="gives up after 12 tries"; pos="760.0,480.0!" ];
+pc3 [ fillcolor="#cfcfcf"; fontsize="12.0"; label="PC (via dongle)"; pos="760.0,530.0!" ];
+
+// legend
+kt -> kt_d;
+kt -> lg0;
+kt -> inv1;
+lg0 -> lg1;
+lg1 -> lg2;
+lg2 -> lg3;
+lg3 -> lg4;
+lg4 -> lg5;
+lg5 -> lg6;
+lg6 -> lg7;
+lg7 -> lg8;
+
+// path
+kt_d -> s_scan;
+kt_d -> s_mod;
+kt_d -> s_ss;
+s_scan -> d_scan;
+d_scan -> m_scan_err;
+m_scan_err -> m_scan_reset;
+m_scan_reset -> s_msg;
+s_mod -> d_mod;
+d_mod -> m_mod_err;
+m_mod_err -> s_msg;
+s_ss -> d_ss;
+d_ss -> m_ss_err;
+m_ss_err -> s_msg;
+s_msg -> d_msg;
+s_msg -> t_msg;
+d_msg -> s_uart;
+d_msg -> s_nus;
+s_uart -> d_uart;
+d_uart -> m_uart1;
+m_uart1 -> m_uart2;
+m_uart2 -> m_wm;
+s_nus -> d_nus;
+d_nus -> m_nus_slot;
+m_nus_slot -> m_nus_ll;
+m_nus_ll -> m_wm;
+m_nus_slot -> g2;
+m_wm -> s_right;
+s_right -> d_right;
+d_right -> s_main;
+s_main -> d_main;
+d_main -> s_sem;
+s_sem -> d_sem;
+d_sem -> s_usb;
+d_sem -> s_ble;
+d_sem -> s_dng;
+s_usb -> d_usb;
+d_usb -> m_usb_cb;
+m_usb_cb -> m_usb_res;
+m_usb_res -> m_usb_to;
+m_usb_to -> m_usb_clr;
+m_usb_clr -> g4;
+g4 -> pc1;
+s_ble -> d_ble;
+d_ble -> m_ble_nores;
+m_ble_nores -> m_ble_att;
+m_ble_att -> m_ble_cb;
+m_ble_cb -> m_ble_ll;
+m_ble_ll -> m_ble_td;
+m_ble_td -> m_ble_dc;
+m_ble_dc -> m_ble_clr;
+m_ble_clr -> pc2;
+s_dng -> d_dng;
+d_dng -> m_dng_ho;
+m_dng_ho -> g3;
+m_dng_ho -> d_dngusb;
+d_dngusb -> m_dng_loop;
+m_dng_loop -> m_dng_ev;
+m_dng_ev -> m_dng_give;
+m_dng_give -> pc3;
+
+// semaphore
+s_sem -> hs1;
+hs1 -> hs5;
+hs5 -> g5;
+hs5 -> hs2;
+hs2 -> hs3;
+hs3 -> hs4;
+hs4 -> hs9;
+hs9 -> hs8;
+hs8 -> g6;
+g6 -> g7;
+m_usb_res -> hs3;
+m_ble_clr -> hs9;
+m_dng_loop -> s_sem;
+
+// shared BLE buffers
+s_nus -> h_att;
+h_att -> ha1;
+ha1 -> ha2;
+ha2 -> ha3;
+ha3 -> ha4;
+ha4 -> ha5;
+ha5 -> ha6;
+ha6 -> g1;
+g1 -> ha7;
+m_nus_slot -> ha3;
+m_ble_att -> ha4;
+d_ble -> ha5;
+
+// stalled link
+m_ble_td -> h_stall;
+m_nus_slot -> h_stall;
+h_stall -> hst0;
+hst0 -> hst1;
+hst1 -> hst3;
+hst3 -> hst4;
+hst4 -> hst5;
+
+// invariants -> where they are enforced
+inv1 -> m_nus_slot;
+inv1 -> m_ble_att;
+inv1 -> m_dng_loop;
+inv2 -> m_scan_err;
+inv2 -> m_mod_err;
+inv2 -> m_ss_err;
+inv2 -> hs3;
+inv3 -> hs2;
+inv3 -> hs4;
+inv4 -> m_ble_nores;
+inv5 -> ha3;
+inv6 -> m_ble_td;
+inv6 -> m_nus_slot;
+inv6 -> hst3;
+}

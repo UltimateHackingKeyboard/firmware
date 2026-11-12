@@ -25,6 +25,7 @@
 #include "layouts/key_layout_80_to_universal.h"
 #include "test_switches.h"
 #include "power_mode.h"
+#include "device_state.h"
 #include "keyboard/leds.h"
 #include "test_suite/test_hooks.h"
 #include "macros/debug_commands.h"
@@ -70,7 +71,7 @@ volatile bool KeyPressed;
 
 volatile bool KeyScanner_ResendKeyStates = false;
 
-static void scanAllKeys();
+static void scanAllKeys(bool testKeys);
 
 ATTR_UNUSED static void reportChange(uint8_t sourceIndex, bool active) {
     uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
@@ -137,7 +138,7 @@ static sfjl_scan_result_t scanSfjl(bool fullScan) {
 static sfjl_scan_result_t scanKeysOnce(sfjl_scan_result_t defaultResult, bool fullScan) {
     // In the lock mode, do both scans
     if (CurrentPowerMode < PowerMode_DeepSleep) {
-        scanAllKeys();
+        scanAllKeys(false);
     }
 
     if (CurrentPowerMode > PowerMode_LightSleep) {
@@ -226,18 +227,30 @@ static bool quickScan() {
 }
 
 
-static void scanAllKeys() {
+static uint8_t targetKeyIdOf(uint8_t slotId, uint8_t sourceIndex) {
+    return DataModelVersion.major >= 8
+        ? KeyLayout_Uhk80_to_Universal[slotId][sourceIndex]
+        : KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
+}
+
+// A link test presses the left half's keys by writing them into KeyStates.
+static bool testKeyState(uint8_t slotId, uint8_t sourceIndex) {
+    uint8_t targetKeyId = targetKeyIdOf(slotId, sourceIndex);
+    return targetKeyId < MAX_KEY_COUNT_PER_MODULE && KeyStates[CURRENT_SLOT_ID][targetKeyId].hardwareSwitchState;
+}
+
+// testKeys reads the keys a test has pressed instead of the matrix.
+static void scanAllKeys(bool testKeys) {
     bool somethingChanged = false;
     static bool keyStateBuffer[KEY_MATRIX_ROWS*KEY_MATRIX_COLS];
     bool keyPressed = false;
-
+    uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
 
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         gpio_pin_set_dt(&rows[rowId], 1);
         for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
-            bool keyState = gpio_pin_get_dt(&cols[colId]);
-
             uint8_t targetIndex = rowId*KEY_MATRIX_COLS + colId;
+            bool keyState = testKeys ? testKeyState(slotId, targetIndex) : gpio_pin_get_dt(&cols[colId]);
 
             keyPressed |= keyState;
 
@@ -264,17 +277,10 @@ static void scanAllKeys() {
         memset(compressedBuffer, 0, compressedLength);
     }
 
-    uint8_t slotId = DEVICE_IS_UHK80_LEFT ? SlotId_LeftKeyboardHalf : SlotId_RightKeyboardHalf;
     for (uint8_t rowId=0; rowId<KEY_MATRIX_ROWS; rowId++) {
         for (uint8_t colId=0; colId<KEY_MATRIX_COLS; colId++) {
             uint8_t sourceIndex = rowId*KEY_MATRIX_COLS + colId;
-            uint8_t targetKeyId;
-
-            if (DataModelVersion.major >= 8) {
-                targetKeyId = KeyLayout_Uhk80_to_Universal[slotId][sourceIndex];
-            } else {
-                targetKeyId = KeyLayout_Uhk80_to_Uhk60[slotId][sourceIndex];
-            }
+            uint8_t targetKeyId = targetKeyIdOf(slotId, sourceIndex);
 
             if (targetKeyId < MAX_KEY_COUNT_PER_MODULE) {
                 if (TestSwitches) {
@@ -308,7 +314,10 @@ static void scanAllKeys() {
     if (DEVICE_IS_UHK80_LEFT) {
         // If ack gets lost, second key state change will block (because uart is busy with control of the first one). That blocks us. Third keystate change may be lost.
         // TODO: consider passing this via postponer queue.
-        Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+        int err = Messenger_Send2(DeviceId_Uhk80_Right, MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, compressedBuffer, compressedLength);
+        if (err != 0 && DeviceState_IsDeviceConnected(DeviceId_Uhk80_Right)) {
+            KeyScanner_ResendKeyStates = true;
+        }
     }
 }
 
@@ -329,8 +338,13 @@ static void scanKeys() {
     } else if (!USE_QUICK_SCAN || KeyPressed || quickScan() || TestHooks_Active) {
         if (TestHooks_Active) {
             TestHooks_Tick();
-        } else {
-            scanAllKeys();
+        }
+        bool testDrivesKeys = TestHooks_Active && !TestHooks_AwaitingRelease;
+        if (!testDrivesKeys) {
+            scanAllKeys(false);
+        } else if (DEVICE_IS_UHK80_LEFT) {
+            // The right half takes the test's keys from KeyStates directly.
+            scanAllKeys(true);
         }
     }
 }

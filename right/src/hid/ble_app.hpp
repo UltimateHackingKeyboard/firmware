@@ -32,7 +32,7 @@ class ble_session : public keyboard_base_session {
     command_session::report_out out_buffer_{};
     leds_boot_report leds_buffer_{};
 
-    void report_sent(const std::span<const uint8_t> &data) override;
+    void send_report_callback(hid::report::selector select, c2usb::result result) override;
 
     std::span<const uint8_t> get_report(
         hid::report::selector select, const std::span<uint8_t> &buffer) override;
