@@ -36,9 +36,12 @@
 
 
 #define INTER_TEST_DELAY___MS 100
+#define RELEASE_TIMEOUT_MS 5000
 
 // Test hooks state
 bool TestHooks_Active = false;
+bool TestHooks_AwaitingRelease = false;
+static uint32_t awaitingReleaseStart = 0;
 bool TestHooks_FailMessengerSends = false;
 bool TestSuite_Verbose = false;
 
@@ -122,6 +125,16 @@ static bool advanceToNextTest(void) {
 
 extern hid_keyboard_report_t *ActiveKeyboardReport;
 
+// The inactive buffer: reports are captured on confirmation, so it is the state the host last
+// saw. The active one may already hold the report before it, or be mid-rebuild.
+static const hid_keyboard_report_t *lastConfirmedReport(void) {
+    return ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0];
+}
+
+static bool reportIsEmpty(const hid_keyboard_report_t *report) {
+    return report->modifiers == 0 && UsbBasicKeyboard_ScancodeCount(report) == 0;
+}
+
 // Repeats are re-runs of the whole test, not a wrap of the action index, so that each pass
 // re-sends StartTest to the left half. Both halves therefore restart their timelines together
 // every pass; wrapping the index instead let their independent delay timers drift apart over
@@ -161,21 +174,48 @@ static void startTest(const test_t *test, const test_module_t *module) {
     }
 #endif
 
-    // Seeded with the last confirmed report, the inactive buffer: reports are captured on
-    // confirmation, so it is the state the previous test last saw. The active one may already
-    // hold the report before it, or be mid-rebuild.
-    const hid_keyboard_report_t *lastConfirmedReport =
-        ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0];
     InputMachine_Start(test);
     OutputMachine_Start(test);
-    OutputMachine_OnReportChange(lastConfirmedReport);
+    OutputMachine_OnReportChange(lastConfirmedReport());
 }
 
 void TestHooks_CaptureReport(const hid_keyboard_report_t *report) {
-    if (!TestHooks_Active) {
+    if (!TestHooks_Active || TestHooks_AwaitingRelease) {
         return;
     }
     OutputMachine_OnReportChange(report);
+}
+
+static bool anyKeyHeld(void) {
+    bool held = false;
+    for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            held |= KeyStates[slotId][keyId].hardwareSwitchState;
+        }
+    }
+    return held;
+}
+
+// The suite is typically started by a key - e.g., Enter of a shell command - which is still
+// held at that point. Tests take over KeyStates, so it would stay pressed through all of them.
+static void beginSuite(void) {
+    TestHooks_AwaitingRelease = true;
+    awaitingReleaseStart = Timer_GetCurrentTime();
+    TestHooks_Active = true;
+}
+
+static void waitForRelease(void) {
+    bool released = !anyKeyHeld() && reportIsEmpty(lastConfirmedReport());
+    bool timedOut = Timer_GetElapsedTime(&awaitingReleaseStart) >= RELEASE_TIMEOUT_MS;
+
+    if (released) {
+        TestHooks_AwaitingRelease = false;
+        startTest(getCurrentTest(), AllTestModules[currentModuleIndex]);
+    } else if (timedOut) {
+        LogU("[TEST] Aborted: keys still held or report not empty after %d ms\n", RELEASE_TIMEOUT_MS);
+        TestHooks_AwaitingRelease = false;
+        TestHooks_Active = false;
+    }
 }
 
 // True once the inter-test pause has elapsed and the next test has been started.
@@ -397,7 +437,9 @@ static void concludeTest(const test_t *test, const test_module_t *module, test_o
 // One tick of the suite: waits out the gap between tests, or drives the current test and,
 // once it has ended, concludes it.
 static void stepSuite(void) {
-    if (inInterTestDelay) {
+    if (TestHooks_AwaitingRelease) {
+        waitForRelease();
+    } else if (inInterTestDelay) {
         waitOutInterTestDelay();
     } else {
         InputMachine_Tick();
@@ -488,12 +530,8 @@ uint8_t TestSuite_RunAll(void) {
         return 0;
     }
 
-    // Start first test
     seekRunnableTest();
-    const test_t *firstTest = getCurrentTest();
-    const test_module_t *module = AllTestModules[currentModuleIndex];
-    startTest(firstTest, module);
-    TestHooks_Active = true;
+    beginSuite();
 
     return totalTestCount;
 }
@@ -535,8 +573,7 @@ uint8_t TestSuite_RunSingle(const char *moduleStart, const char *moduleEnd, cons
             TestSuite_Verbose = test->repeatCount <= 1;
 
             LogU("[TEST] Running single test: %s/%s\n", module->name, test->name);
-            startTest(test, module);
-            TestHooks_Active = true;
+            beginSuite();
 
             return 0;
         }
@@ -576,9 +613,7 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
         }
 
         seekRunnableTest();
-        const test_t *firstTest = getCurrentTest();
-        startTest(firstTest, module);
-        TestHooks_Active = true;
+        beginSuite();
 
         return 0;
     }

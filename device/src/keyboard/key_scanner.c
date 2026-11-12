@@ -338,12 +338,13 @@ static void scanKeys() {
     } else if (!USE_QUICK_SCAN || KeyPressed || quickScan() || TestHooks_Active) {
         if (TestHooks_Active) {
             TestHooks_Tick();
-            if (DEVICE_IS_UHK80_LEFT) {
-                // The right half takes the test's keys from KeyStates directly.
-                scanAllKeys(true);
-            }
-        } else {
+        }
+        bool testDrivesKeys = TestHooks_Active && !TestHooks_AwaitingRelease;
+        if (!testDrivesKeys) {
             scanAllKeys(false);
+        } else if (DEVICE_IS_UHK80_LEFT) {
+            // The right half takes the test's keys from KeyStates directly.
+            scanAllKeys(true);
         }
     }
 }
