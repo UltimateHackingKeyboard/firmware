@@ -110,7 +110,7 @@ extern "C" void HidTransport_NoteNusReportSent(void)
 // TODO: maybe not only return the sink type, but also the session / conn pointer
 static report_sink_t determineSink()
 {
-    if (TestHooks_Active) {
+    if (TestHooks_Active && !TestHooks_AwaitingRelease) {
         return ReportSink_TestSuite;
     }
 
