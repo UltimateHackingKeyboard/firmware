@@ -8,6 +8,11 @@
 // - USB send: call TestHooks_CaptureReport() before sending
 extern bool TestHooks_Active;
 
+// While set, the messenger fails one in this many sends of the messages that are retried on a
+// failed send (key states and state sync), without sending them.
+#define TEST_HOOKS_MESSENGER_FAIL_RECIPROCAL 4
+extern bool TestHooks_FailMessengerSends;
+
 // Called by USB code to capture reports for validation
 void TestHooks_CaptureReport(const hid_keyboard_report_t *report);
 
