@@ -26,9 +26,6 @@
 #endif
 
 #if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
-#include "link_protocol.h"
-#include "connections.h"
-#include "bool_array_converter.h"
 #include <zephyr/sys/atomic.h>
 #endif
 
@@ -42,6 +39,7 @@
 
 // Test hooks state
 bool TestHooks_Active = false;
+bool TestHooks_FailMessengerSends = false;
 bool TestSuite_Verbose = false;
 
 // Test tracking
@@ -194,37 +192,6 @@ static bool waitOutInterTestDelay(void) {
 }
 
 #if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
-// The left half's whole contribution to a link test: hand the keys the shared interpreter has
-// just pressed to the right half, in place of what scanAllKeys would have sent.
-//
-// On change only, exactly as scanAllKeys does. Sending every tick would make the sender block
-// on txBufferBusy continuously, which both floods the link and hides the thing under test -
-// the stall only matters when it delays the *next* state change.
-//
-// Pinned to the UART connection rather than left to determineChannel: with BLE to the right
-// also up the default route can carry this over NUS instead, and the test would then be
-// exercising the wrong link.
-static void publishOwnKeyStates(void) {
-    static uint8_t previous[MAX_KEY_COUNT_PER_MODULE/8+1];
-    uint8_t length = MAX_KEY_COUNT_PER_MODULE/8+1;
-    uint8_t bitmap[length];
-    memset(bitmap, 0, length);
-
-    for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
-        if (KeyStates[CURRENT_SLOT_ID][keyId].hardwareSwitchState) {
-            BoolBitToBytes(true, keyId, bitmap);
-        }
-    }
-
-    bool changed = memcmp(bitmap, previous, length) != 0;
-
-    if (changed) {
-        memcpy(previous, bitmap, length);
-        Messenger_Send2Via(DeviceId_Uhk80_Right, ConnectionId_UartRight,
-                MessageId_SyncableProperty, SyncablePropertyId_LeftHalfKeyStates, bitmap, length);
-    }
-}
-
 // Set while the left half plays its part in a link test the right half is running. Otherwise
 // the left half runs whatever suite it was asked to, like any other device.
 static bool isLinkTestPeer = false;
@@ -250,13 +217,13 @@ static void startPendingLinkTest(void) {
     }
 }
 
-// The left half has no USB reports to validate, so it runs the input machine only.
+// The left half has no USB reports to validate, so it runs the input machine only. The key
+// scanner then sends the keys it pressed, the way it sends scanned ones.
 static void tickLinkTestPeer(void) {
     startPendingLinkTest();
 
     if (isLinkTestPeer) {
         InputMachine_Tick();
-        publishOwnKeyStates();
 
         if (InputMachine_IsDone()) {
             isLinkTestPeer = false;

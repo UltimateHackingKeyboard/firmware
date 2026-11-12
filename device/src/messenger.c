@@ -20,6 +20,7 @@
 #include "key_states.h"
 #include "shared/attributes.h"
 #include "str_utils.h"
+#include "utils.h"
 #include "event_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/status_buffer.h"
@@ -487,9 +488,18 @@ void Messenger_UpdateWatermarks(message_t* msg) {
     msg->wm = Connections[msg->connectionId].watermarks.txIdx++;
 }
 
+static bool failedByTest(const message_t* message) {
+    bool retriedOnFailure = message->messageId[0] == MessageId_SyncableProperty || message->messageId[0] == MessageId_StateSync;
+    return TestHooks_FailMessengerSends && retriedOnFailure && Utils_Random() % TEST_HOOKS_MESSENGER_FAIL_RECIPROCAL == 0;
+}
+
 int Messenger_SendMessage(message_t* message) {
     connection_id_t connectionId = message->connectionId;
     device_id_t dst = message->dst;
+
+    if (failedByTest(message)) {
+        return -EAGAIN;
+    }
 
     uint16_t totalLen = 3 + message->idsUsed + message->len;
     if (totalLen > MAX_LINK_PACKET_LENGTH) {

@@ -38,12 +38,14 @@ extern const test_module_t TestModule_Transport;
 extern const test_module_t TestModule_TapKeySeq;
 extern const test_module_t TestModule_Fail;
 extern const test_module_t TestModule_Link;
+extern const test_module_t TestModule_MessengerFailure;
 
 // Link test ids are the wire contract between the halves: the right half sends one in
 // MessengerCommand_StartTest and the left looks the test up by it. Keep them stable.
 typedef enum {
     LinkTestId_None = 0,
     LinkTestId_Probe = 3,
+    LinkTestId_MessengerFailure = 4,
 } link_test_id_t;
 
 // The test carrying this link test id, in any module, or NULL for LinkTestId_None or an

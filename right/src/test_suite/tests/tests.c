@@ -23,6 +23,7 @@ const test_module_t * const AllTestModules[] = {
     // Statistical tests - have a known chance of false positives
     &TestModule_Transport,
     &TestModule_Link,
+    &TestModule_MessengerFailure,
     // Always fails; uncomment to check that the framework reports failures.
     // &TestModule_Fail,
 };
