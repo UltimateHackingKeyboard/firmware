@@ -49,7 +49,7 @@
       "name": "uhk-80-left",
       "source": "device/build/uhk-80-left/device/zephyr/zephyr.signed.bin",
       "mmap": "device/build/uhk-80-left/device/zephyr/zephyr.map",
-      "merged": "device/build/uhk-80-left/merged.hex",
+      "merged": "device/build/uhk-80-left/merged_uhk-80-left_nrf52840.hex",
       "platform": "nordic",
       "userConfigType": "uhk80"
     },
@@ -58,7 +58,7 @@
       "name": "uhk-80-right",
       "source": "device/build/uhk-80-right/device/zephyr/zephyr.signed.bin",
       "mmap": "device/build/uhk-80-right/device/zephyr/zephyr.map",
-      "merged": "device/build/uhk-80-right/merged.hex",
+      "merged": "device/build/uhk-80-right/merged_uhk-80-right_nrf52840.hex",
       "platform": "nordic",
       "userConfigType": "uhk80"
     },
@@ -67,7 +67,7 @@
       "name": "uhk-dongle",
       "source": "device/build/uhk-dongle/device/zephyr/zephyr.signed.bin",
       "mmap": "device/build/uhk-dongle/device/zephyr/zephyr.map",
-      "merged": "device/build/uhk-dongle/merged.hex",
+      "merged": "device/build/uhk-dongle/merged_uhk-dongle_nrf52840.hex",
       "platform": "nordic"
     }
   ],
