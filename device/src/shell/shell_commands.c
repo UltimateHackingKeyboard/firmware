@@ -33,6 +33,7 @@
 #include "postponer.h"
 #include "jitter_test.h"
 #include "event_scheduler.h"
+#include "macros/debug_commands.h"
 #include <zephyr/irq.h>
 #include <zephyr/arch/cpu.h>
 #include <string.h>
@@ -518,6 +519,12 @@ static int cmd_uhk_usbDiag(const struct shell *shell, size_t argc, char *argv[])
     return 0;
 }
 
+static int cmd_uhk_diagnose(const struct shell *shell, size_t argc, char *argv[])
+{
+    Macros_DumpDiagnostics();
+    return 0;
+}
+
 static int cmd_uhk_jitterTest(const struct shell *shell, size_t argc, char *argv[])
 {
     if (argc == 1) {
@@ -593,6 +600,7 @@ void InitShellCommands(void)
         SHELL_CMD_ARG(jitterTest, NULL, "get/set mouse jitter test mode", cmd_uhk_jitterTest, 1, 1),
         SHELL_CMD_ARG(listActiveKeys, NULL, "list currently pressed keys", cmd_uhk_listActiveKeys, 1, 0),
         SHELL_CMD_ARG(usbDiag, NULL, "dump c2usb state and anomaly log", cmd_uhk_usbDiag, 1, 0),
+        SHELL_CMD_ARG(diagnose, NULL, "dump diagnostics without rebooting", cmd_uhk_diagnose, 1, 0),
         SHELL_CMD_ARG(reportEventVector, NULL, "decode an EventVector mask value", cmd_uhk_reportEventVector, 2, 0),
         SHELL_SUBCMD_SET_END);
 

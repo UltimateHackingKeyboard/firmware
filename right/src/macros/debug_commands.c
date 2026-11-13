@@ -16,6 +16,7 @@
 
 #ifdef __ZEPHYR__
 #include "device.h"
+#include <nrfx.h>
 #endif
 
 #if DEVICE_IS_KEYBOARD && defined(__ZEPHYR__)
@@ -148,11 +149,31 @@ macro_result_t Macros_ProcessStatsActiveMacrosCommand()
 // provided by the patched c2usb (usb/df/mac_diag.hpp)
 extern void c2usb_diag_dump(void);
 
+#ifdef __ZEPHYR__
+// Raw USBD/POWER state. The nRF52840 can't read the D+/D- levels; framecntr advances only
+// while the host sends SOFs.
+static void dumpUsbdRegisters(void) {
+    uint32_t regStatus = NRF_POWER->USBREGSTATUS;
+
+    LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "usbd regs: enable=%d pullup=%d lowpower=%d addr=%d eventcause=%x framecntr=%d\n",
+            NRF_USBD->ENABLE, NRF_USBD->USBPULLUP, NRF_USBD->LOWPOWER, NRF_USBD->USBADDR, NRF_USBD->EVENTCAUSE, NRF_USBD->FRAMECNTR);
+    LogTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, "  vbusdetect=%d outputrdy=%d\n", regStatus & 1, (regStatus >> 1) & 1);
+}
+#endif
+
+void Macros_DumpDiagnostics(void)
+{
+#ifdef __ZEPHYR__
+    dumpUsbdRegisters();
+#endif
+    c2usb_diag_dump();
+    Hid_DumpTransportState();
+}
+
 void Macros_RecoverDiagnostics(void)
 {
     Macros_ProcessClearStatusCommand(true);
-    c2usb_diag_dump();
-    Hid_DumpTransportState();
+    Macros_DumpDiagnostics();
     Trace_Print(LogTarget_Uart | LogTarget_ErrorBuffer, "Diagnostics reboot.");
     StateWormhole.persistStatusBuffer = true;
     Reboot(false);
