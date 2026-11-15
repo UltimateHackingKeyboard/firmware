@@ -35,12 +35,15 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
     uint8_t textLen = 0;
 
     if (Macros_IsNUM(ctx)) {
-#ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
+        if (Macros_DryRun) {
+            return 0;
+        }
+#ifndef __ZEPHYR__
         SegmentDisplay_SerializeVar(str, value);
         textLen = 3;
 #else
-        Macros_SerializeVar(str, len, Macros_ConsumeAnyValue(ctx));
+        Macros_SerializeVar(str, len, value);
 #endif
         return textLen;
     } else if (ctx->at != ctx->end) {
@@ -50,14 +53,16 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
             if (c == '\0') {
                 break;
             }
-            if (i + 1 < len) {
+            if (!Macros_DryRun && i + 1 < len) {
                 str[i] = c;
                 textLen++;
             }
         }
         ConsumeWhite(ctx);
 
-        str[textLen] = '\0';
+        if (!Macros_DryRun) {
+            str[textLen] = '\0';
+        }
 
         return textLen;
     } else {
