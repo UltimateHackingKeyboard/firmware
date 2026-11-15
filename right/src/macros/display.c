@@ -50,7 +50,7 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
             if (c == '\0') {
                 break;
             }
-            if (i < len) {
+            if (i + 1 < len) {
                 str[i] = c;
                 textLen++;
             }
