@@ -5,15 +5,13 @@ Subject: [PATCH] Add diagnostics logs.
 
 ---
  c2usb/usb/df/mac.cpp                      |  16 +-
- c2usb/usb/df/mac_diag.cpp                 | 454 ++++++++++++++++++++++
- c2usb/usb/df/mac_diag.hpp                 |  84 ++++
+ c2usb/usb/df/mac_diag.cpp                 | 456 ++++++++++++++++++++++++++++++
+ c2usb/usb/df/mac_diag.hpp                 |  86 ++++++
  c2usb/usb/df/vendor/nxp/CMakeLists.txt    |   1 +
- c2usb/usb/df/vendor/nxp/mcux_mac.cpp      |  43 +-
+ c2usb/usb/df/vendor/nxp/mcux_mac.cpp      |  43 ++-
  c2usb/usb/df/vendor/zephyr/CMakeLists.txt |   1 +
- c2usb/usb/df/vendor/zephyr/udc_mac.cpp    |  62 +++
- 7 files changed, 655 insertions(+), 6 deletions(-)
- create mode 100644 c2usb/usb/df/mac_diag.cpp
- create mode 100644 c2usb/usb/df/mac_diag.hpp
+ c2usb/usb/df/vendor/zephyr/udc_mac.cpp    |  62 ++++
+ 7 files changed, 659 insertions(+), 6 deletions(-)
 
 diff --git a/c2usb/usb/df/mac.cpp b/c2usb/usb/df/mac.cpp
 index 68c9090..470257b 100644
@@ -64,10 +62,10 @@ index 68c9090..470257b 100644
      assert(!ctrl_msg_.pending_);
 diff --git a/c2usb/usb/df/mac_diag.cpp b/c2usb/usb/df/mac_diag.cpp
 new file mode 100644
-index 0000000..7ac5d9b
+index 0000000..490fee0
 --- /dev/null
 +++ b/c2usb/usb/df/mac_diag.cpp
-@@ -0,0 +1,454 @@
+@@ -0,0 +1,456 @@
 +/// @file
 +///
 +/// UHK patch: port-agnostic MAC anomaly diagnostics, see mac_diag.hpp.
@@ -121,16 +119,9 @@ index 0000000..7ac5d9b
 +    uint8_t last_ep;
 +};
 +
-+struct diag_bus_entry
-+{
-+    uint32_t time;
-+    uint32_t count; // consecutive events of the same type are collapsed
-+    diag::bus_event type;
-+};
-+
-+constexpr size_t BUS_RING_SIZE = 16;
 +constexpr size_t EVENT_RING_SIZE = 64;
 +constexpr size_t EVENT_DUMP_SIZE = 16;
++constexpr size_t ONSET_SIZE = 16;
 +constexpr size_t DATA_EP_COUNT = 30;
 +
 +struct diag_event
@@ -153,12 +144,13 @@ index 0000000..7ac5d9b
 +struct diag_state
 +{
 +    diag_stat stats[diag::CATEGORY_COUNT];
-+    diag_bus_entry bus_ring[BUS_RING_SIZE];
 +    diag_event event_ring[EVENT_RING_SIZE];
++    // first events after the last successful transfer, kept until the next one
++    diag_event onset[ONSET_SIZE];
 +    diag_ep_success ep_success[DATA_EP_COUNT];
-+    uint8_t bus_ring_next;
 +    uint8_t event_ring_next;
 +    uint8_t event_count;
++    uint8_t onset_count;
 +    uint32_t event_sequence;
 +    uint32_t event_overwritten;
 +    bool event_activity_since_success;
@@ -217,8 +209,13 @@ index 0000000..7ac5d9b
 +void append_event(event_type type, uint8_t ep, uint8_t detail0, uint8_t detail1, int32_t value,
 +                  uint32_t time)
 +{
-+    state.event_ring[state.event_ring_next] = {
++    const diag_event event = {
 +        time, ++state.event_sequence, value, static_cast<uint8_t>(type), ep, detail0, detail1};
++    state.event_ring[state.event_ring_next] = event;
++    if (state.onset_count < ONSET_SIZE)
++    {
++        state.onset[state.onset_count++] = event;
++    }
 +    state.event_ring_next = (state.event_ring_next + 1) % EVENT_RING_SIZE;
 +    if (state.event_count < EVENT_RING_SIZE)
 +    {
@@ -334,6 +331,38 @@ index 0000000..7ac5d9b
 +        return "?";
 +    }
 +}
++
++void print_event(const diag_event& event, uint32_t now)
++{
++    const auto type = static_cast<event_type>(event.type);
++    const auto age = (unsigned)(now - event.time);
++    if (type == event_type::BUS)
++    {
++        c2usb_log("    #%u +%u ms bus %s\n", (unsigned)event.sequence, age,
++                  bus_name(static_cast<diag::bus_event>(event.detail0)));
++    }
++    else if (type == event_type::CONTROL_SETUP)
++    {
++        c2usb_log("    #%u +%u ms setup bm=%02x req=%02x wValue=%04x\n", (unsigned)event.sequence,
++                  age, event.detail0, event.detail1, (unsigned)event.value);
++    }
++    else
++    {
++        c2usb_log("    #%u +%u ms %s", (unsigned)event.sequence, age, event_name(type));
++        if (type == event_type::EP_SUCCESS)
++        {
++            c2usb_log(" ep=%02x\n", event.ep);
++        }
++        else if (type == event_type::REMOTE_WAKEUP_RESULT)
++        {
++            c2usb_log(" err=%d\n", event.value);
++        }
++        else
++        {
++            c2usb_log(" ep=%02x value=%d\n", event.ep, event.value);
++        }
++    }
++}
 +} // namespace
 +
 +namespace usb::df::diag
@@ -369,6 +398,7 @@ index 0000000..7ac5d9b
 +    {
 +        append_event(event_type::EP_SUCCESS, ep, 0, 0, 0, now);
 +    }
++    state.onset_count = 0;
 +    state.event_activity_since_success = false;
 +    for (auto& s : state.stats)
 +    {
@@ -379,19 +409,7 @@ index 0000000..7ac5d9b
 +void bus(bus_event event)
 +{
 +    state_guard guard;
-+    const uint32_t now = c2usb_diag_time_ms();
-+    auto& last = state.bus_ring[(state.bus_ring_next + BUS_RING_SIZE - 1) % BUS_RING_SIZE];
-+    if (last.count and (last.type == event))
-+    {
-+        last.count++;
-+        last.time = now;
-+    }
-+    else
-+    {
-+        state.bus_ring[state.bus_ring_next] = {now, 1, event};
-+        state.bus_ring_next = (state.bus_ring_next + 1) % BUS_RING_SIZE;
-+    }
-+    append_event(event_type::BUS, 0, static_cast<uint8_t>(event), 0, 0, now);
++    append_event(event_type::BUS, 0, static_cast<uint8_t>(event), 0, 0, c2usb_diag_time_ms());
 +    state.event_activity_since_success = true;
 +}
 +
@@ -474,60 +492,42 @@ index 0000000..7ac5d9b
 +                      (unsigned)endpoint.count, (unsigned)(now - endpoint.last_time));
 +        }
 +    }
-+    for (size_t i = 0; i < BUS_RING_SIZE; i++)
-+    {
-+        const auto& e = snapshot.bus_ring[(snapshot.bus_ring_next + i) % BUS_RING_SIZE];
-+        if (e.count)
-+        {
-+            c2usb_log("  bus event: %s x%u, last %u ms ago\n", bus_name(e.type), (unsigned)e.count,
-+                      (unsigned)(now - e.time));
-+        }
-+    }
 +    const size_t event_dump_count = std::min<size_t>(snapshot.event_count, EVENT_DUMP_SIZE);
-+    c2usb_log("  event journal: %u retained, showing %u, %u overwritten\n", snapshot.event_count,
-+              (unsigned)event_dump_count, (unsigned)snapshot.event_overwritten);
 +    const size_t first =
 +        (snapshot.event_ring_next + EVENT_RING_SIZE - event_dump_count) % EVENT_RING_SIZE;
++    const uint32_t first_shown_sequence =
++        event_dump_count ? snapshot.event_ring[first].sequence : snapshot.event_sequence + 1;
++
++    // the onset entries already shown by the journal below are skipped
++    size_t onset_dump_count = 0;
++    while (onset_dump_count < snapshot.onset_count and
++           snapshot.onset[onset_dump_count].sequence < first_shown_sequence)
++    {
++        onset_dump_count++;
++    }
++    if (onset_dump_count)
++    {
++        c2usb_log("  onset (first events after the last ok transfer): %u\n",
++                  (unsigned)onset_dump_count);
++        for (size_t i = 0; i < onset_dump_count; ++i)
++        {
++            print_event(snapshot.onset[i], now);
++        }
++    }
++
++    c2usb_log("  event journal: %u retained, showing %u, %u overwritten\n", snapshot.event_count,
++              (unsigned)event_dump_count, (unsigned)snapshot.event_overwritten);
 +    for (size_t i = 0; i < event_dump_count; ++i)
 +    {
-+        const auto& event = snapshot.event_ring[(first + i) % EVENT_RING_SIZE];
-+        const auto type = static_cast<event_type>(event.type);
-+        const auto age = (unsigned)(now - event.time);
-+        if (type == event_type::BUS)
-+        {
-+            c2usb_log("    #%u +%u ms bus %s\n", (unsigned)event.sequence, age,
-+                      bus_name(static_cast<diag::bus_event>(event.detail0)));
-+        }
-+        else if (type == event_type::CONTROL_SETUP)
-+        {
-+            c2usb_log("    #%u +%u ms setup bm=%02x req=%02x wValue=%04x\n",
-+                      (unsigned)event.sequence, age, event.detail0, event.detail1,
-+                      (unsigned)event.value);
-+        }
-+        else
-+        {
-+            c2usb_log("    #%u +%u ms %s", (unsigned)event.sequence, age, event_name(type));
-+            if (type == event_type::EP_SUCCESS)
-+            {
-+                c2usb_log(" ep=%02x\n", event.ep);
-+            }
-+            else if (type == event_type::REMOTE_WAKEUP_RESULT)
-+            {
-+                c2usb_log(" err=%d\n", event.value);
-+            }
-+            else
-+            {
-+                c2usb_log(" ep=%02x value=%d\n", event.ep, event.value);
-+            }
-+        }
++        print_event(snapshot.event_ring[(first + i) % EVENT_RING_SIZE], now);
 +    }
 +}
 diff --git a/c2usb/usb/df/mac_diag.hpp b/c2usb/usb/df/mac_diag.hpp
 new file mode 100644
-index 0000000..20b57ee
+index 0000000..d4d2cc1
 --- /dev/null
 +++ b/c2usb/usb/df/mac_diag.hpp
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,86 @@
 +/// @file
 +///
 +/// UHK patch: injectable logging + port-agnostic anomaly diagnostics for MACs.
@@ -536,7 +536,9 @@ index 0000000..20b57ee
 +/// stalls, dropped events, rejected transfers) together with bus-level events
 +/// (reset/suspend/resume/Vbus). Counters distinguish totals since boot from
 +/// occurrences since the last successful data-endpoint transfer, so a dump
-+/// answers "what went wrong since USB last worked".
++/// answers "what went wrong since USB last worked". The first events after the
++/// last successful transfer are kept aside, so the onset survives a long
++/// stuck period that overwrites the journal.
 +///
 +/// The host application may provide a printf-like `c2usb_log()` and a
 +/// millisecond time source `c2usb_diag_time_ms()`; weak defaults keep c2usb
