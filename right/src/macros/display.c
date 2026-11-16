@@ -268,14 +268,22 @@ void UnNotify()
 
 macro_result_t Macros_ProcessNotifyCommand(parser_context_t* ctx)
 {
-    char* buf;
-    uint8_t bufLen;
+    char dummy[1];
+    char* bufPtr = NULL;
+    uint8_t bufLen = 0;
 
-    getDisplayStringBuffer(DisplayStringSlot_Notify, &buf, &bufLen);
-    consumeDisplayString(ctx, buf, bufLen);
-    if (!Macros_DryRun) {
+    if (Macros_DryRun) {
+        bufPtr = dummy;
+        bufLen = sizeof(dummy);
+    } else {
+        getDisplayStringBuffer(DisplayStringSlot_Notify, &bufPtr, &bufLen);
+    }
+
+    consumeDisplayString(ctx, bufPtr, bufLen);
+
+    if (!Macros_DryRun && !Macros_ParserError) {
 #if DEVICE_HAS_OLED
-        NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT, false);
+        NotificationScreen_NotifyFor(bufPtr, SCREEN_NOTIFICATION_TIMEOUT, false);
 #endif
     }
 
