@@ -148,6 +148,9 @@ void LedDisplay_SetText(uint8_t length, const char* text)
 {
     for (uint8_t charId=0; charId<LED_DISPLAY_KEYMAP_NAME_LENGTH; charId++) {
         char keymapChar = charId < length ? text[charId] : ' ';
+        if (keymapChar < ' ' || keymapChar > '~') {
+            keymapChar = ' ';
+        }
         uint16_t charBits = letterToSegmentMap[keymapChar - ' '];
         for (uint8_t ledId=0; ledId<ledCountPerChar; ledId++) {
             uint8_t ledIdx = segmentLedIds[charId][ledId];
