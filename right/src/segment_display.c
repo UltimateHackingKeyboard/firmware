@@ -37,6 +37,8 @@ static void writeLedDisplay()
 #define RETURN_IF_SEGMENT_NOT_PRESENT return
 #endif
 
+#define RETURN_IF_TOO_SHORT(LEN) if (LEN < SEGMENT_DISPLAY_TEXT_LENGTH) { return; }
+
 static bool handleOverrides()
 {
     if (slots[SegmentDisplaySlot_Debug].active) {
@@ -69,7 +71,7 @@ void SegmentDisplay_SetText(uint8_t len, const char* text, segment_display_slot_
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
     activeSlotCount += slots[slot].active ? 0 : 1;
-    memcpy(&slots[slot].text, text, len);
+    memcpy(&slots[slot].text, text, MIN(SEGMENT_DISPLAY_TEXT_LENGTH, len));
     slots[slot].len = len;
     slots[slot].active = true;
     lastChange = Timer_GetCurrentTime();
@@ -111,18 +113,18 @@ void SegmentDisplay_UpdateKeymapText()
     SegmentDisplay_SetText(currentKeymap->abbreviationLen, currentKeymap->abbreviation, SegmentDisplaySlot_Keymap);
 }
 
-void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var)
+void SegmentDisplay_SerializeVar(char* buffer, uint8_t bufLen, macro_variable_t var)
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
     switch (var.type) {
         case MacroVariableType_Float:
-            SegmentDisplay_SerializeFloat(buffer, var.asFloat);
+            SegmentDisplay_SerializeFloat(buffer, bufLen, var.asFloat);
             break;
         case MacroVariableType_Int:
-            SegmentDisplay_SerializeInt(buffer, var.asInt);
+            SegmentDisplay_SerializeInt(buffer, bufLen, var.asInt);
             break;
         case MacroVariableType_Bool:
-            SegmentDisplay_SerializeInt(buffer, var.asBool);
+            SegmentDisplay_SerializeInt(buffer, bufLen, var.asBool);
             break;
         default:
             Macros_ReportErrorNum("Unexpected variable type:", var.type, NULL);
@@ -130,11 +132,13 @@ void SegmentDisplay_SerializeVar(char* buffer, macro_variable_t var)
     }
 }
 
-void SegmentDisplay_SerializeFloat(char* buffer, float num)
+void SegmentDisplay_SerializeFloat(char* buffer, uint8_t bufLen, float num)
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
+    RETURN_IF_TOO_SHORT(bufLen);
+
     if (num <= -10.0f || 10.0f <= num ) {
-        SegmentDisplay_SerializeInt(buffer, num);
+        SegmentDisplay_SerializeInt(buffer, bufLen, num);
         return;
     }
 
@@ -159,9 +163,11 @@ void SegmentDisplay_SerializeFloat(char* buffer, float num)
     buffer[2] = '0' + (uint8_t)(num) % 10;
 }
 
-void SegmentDisplay_SerializeInt(char* buffer, int32_t a)
+void SegmentDisplay_SerializeInt(char* buffer, uint8_t bufLen, int32_t a)
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
+    RETURN_IF_TOO_SHORT(bufLen);
+
     int mag = 0;
     int num = a;
     bool negative = false;
@@ -194,17 +200,17 @@ void SegmentDisplay_SerializeInt(char* buffer, int32_t a)
 void SegmentDisplay_SetInt(int32_t a, segment_display_slot_t slot)
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
-    char b[3];
-    SegmentDisplay_SerializeInt(b, a);
-    SegmentDisplay_SetText(3, b, slot);
+    char b[SEGMENT_DISPLAY_TEXT_LENGTH];
+    SegmentDisplay_SerializeInt(b, sizeof(b), a);
+    SegmentDisplay_SetText(sizeof(b), b, slot);
 }
 
 void SegmentDisplay_SetFloat(float a, segment_display_slot_t slot)
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
-    char b[3];
-    SegmentDisplay_SerializeFloat(b, a);
-    SegmentDisplay_SetText(3, b, slot);
+    char b[SEGMENT_DISPLAY_TEXT_LENGTH];
+    SegmentDisplay_SerializeFloat(b, sizeof(b), a);
+    SegmentDisplay_SetText(sizeof(b), b, slot);
 }
 
 bool SegmentDisplay_SlotIsActive(segment_display_slot_t slot)

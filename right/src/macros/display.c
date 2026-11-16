@@ -37,7 +37,7 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
     if (Macros_IsNUM(ctx)) {
 #ifndef __ZEPHYR__
         macro_variable_t value = Macros_ConsumeAnyValue(ctx);
-        SegmentDisplay_SerializeVar(str, value);
+        SegmentDisplay_SerializeVar(str, len, value);
         textLen = 3;
 #else
         Macros_SerializeVar(str, len, Macros_ConsumeAnyValue(ctx));
@@ -197,14 +197,14 @@ void processList(parser_context_t* ctx, bool show, uint16_t time) {
             getDisplayStringBuffer(slotId, &bufPtr, &bufLen);
         }
 
-        consumeDisplayString(ctx, bufPtr, bufLen);
+        uint8_t textLen = consumeDisplayString(ctx, bufPtr, bufLen);
 
         if (!show) {
             bufPtr[0] = 0;
         }
 
         if (!Macros_DryRun && !Macros_ParserError) {
-            showStringInSlot(show, slotId, bufPtr, bufLen, time);
+            showStringInSlot(show, slotId, bufPtr, textLen, time);
         }
     }
 }
