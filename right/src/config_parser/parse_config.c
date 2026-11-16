@@ -35,9 +35,7 @@
 
 
 #ifdef __ZEPHYR__
-#include "usb_commands/usb_command_get_new_pairings.h"
-#include "bt_manager.h"
-#include "bt_pair.h"
+#include "host_connection.h"
 #include "state_sync.h"
 #else
 #include "segment_display.h"
@@ -455,10 +453,7 @@ parser_error_t parseConfig(config_buffer_t *buffer)
 
 #ifdef __ZEPHYR__
         StateSync_UpdateProperty(StateSyncPropertyId_BatteryStationaryMode, &Cfg.BatteryStationaryMode);
-        BtPair_AllocateUnregisteredBonds();
-        BtConn_UpdateHostConnectionPeerAllocations();
-        UsbCommand_UpdateNewPairingsFlag();
-        BtManager_StartScanningAndAdvertisingAsync(false, "parse_config - bluetooth settings applied");
+        HostConnections_ApplyBonds("parse_config - bluetooth settings applied");
 #endif
         WormCfg->devMode = Cfg.DevMode;
         LedManager_FullUpdate();
