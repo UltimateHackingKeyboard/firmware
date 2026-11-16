@@ -44,7 +44,18 @@
       "runToEntryPoint": "main",
       "armToolchainPath": "${env:ARM_GCC_DIR}/bin",
       "svdFile": "${workspaceFolder}/../svd/MK22F51212.xml",
-      "preLaunchTask": "Build + Merge UHK 60 right (v2-release)"
+      "preLaunchTask": "Build + Merge UHK 60 right (v2-release)",
+      "rttConfig": {
+        "enabled": true,
+        "address": "auto",
+        "decoders": [
+          {
+            "label": "RTT",
+            "port": 0,
+            "type": "console"
+          }
+        ]
+      }
     }
   ],
   "inputs": [
