@@ -79,8 +79,8 @@ g7 [ fillcolor="#f6d8c4"; fontsize="12.0"; label="host unreachable while given u
 // ---------- shared BLE buffers (right of the main flow, under NUS) ----------
 h_att [ fillcolor="#2f4f6f"; color="#ffffff"; fontsize="15.6"; label="Shared BLE buffers"; pos="677.0,-479.4!"; "link-c"="../../device/prj.conf.overlays/nrf_shared.conf:/^# ATT TX PDUs in flight/,/^CONFIG_BT_ATT_TX_ALLOC_TIMEOUT/" ];
 ha1 [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[Zephyr] one ATT TX pool for all BLE links"; pos="677.0,-439.4!" ];
-ha2 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="CONFIG_BT_ATT_TX_COUNT=7"; pos="677.0,-404.4!" ];
-ha3 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="per-sender caps: HID 3 (one per report type)\n+ NUS server 2 + NUS client 1 = 6, +1 spare"; pos="677.0,-359.4!" ];
+ha2 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="CONFIG_BT_ATT_TX_COUNT=8"; pos="677.0,-404.4!" ];
+ha3 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="per-sender caps: HID 3 (one per report type) + NUS server 2\n+ NUS client 1 + battery service 1 = 7, +1 spare"; pos="677.0,-359.4!" ];
 inv5 [ fillcolor="#a3cc8e"; color="#141911"; fontsize="12.0"; label="each sender caps its in-flight PDUs;\nthe caps together fit in the shared pool"; pos="1124.9,-365.5!" ];
 ha4 [ fillcolor="#a8a8a8"; fontsize="12.0"; label="[Zephyr patch] CONFIG_BT_ATT_TX_ALLOC_TIMEOUT=0:\nallocation never blocks, senders retry on their own"; pos="677.0,-304.4!"; "link-c"="../../patches/zephyr/0001-bluetooth-att-make-TX-buffer-wait-configurable.patch" ];
 ha5 [ fillcolor="#d4ecd4"; fontsize="12.0"; label="-ENOMEM also means pool full: NKRO -> 6KRO\nfallback only if the report exceeds the MTU"; pos="677.0,-249.4!"; "link-c"="../../right/src/hid/transport.cpp:/^static bool fitsBleMtu/,/^}/" ];

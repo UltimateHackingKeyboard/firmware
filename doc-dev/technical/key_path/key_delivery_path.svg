@@ -482,12 +482,12 @@
     </g>
     <g class="node">
       <rect x="579.5" y="-418.8" width="195.1" height="28.8" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
-      <text x="590.3" y="-401.0" font-size="12.0" fill="#000000">CONFIG_BT_ATT_TX_COUNT=7</text>
+      <text x="590.3" y="-401.0" font-size="12.0" fill="#000000">CONFIG_BT_ATT_TX_COUNT=8</text>
     </g>
     <g class="node">
-      <rect x="507.2" y="-381.0" width="339.6" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
-      <text x="518.1" y="-363.2" font-size="12.0" fill="#000000">per-sender caps: HID 3 (one per report type)</text>
-      <text x="518.1" y="-348.8" font-size="12.0" fill="#000000">+ NUS server 2 + NUS client 1 = 6, +1 spare</text>
+      <rect x="472.0" y="-381.0" width="410.0" height="43.2" rx="5" ry="5" fill="#d4ecd4" stroke="#000000" stroke-width="1"/>
+      <text x="482.9" y="-363.2" font-size="12.0" fill="#000000">per-sender caps: HID 3 (one per report type) + NUS server 2</text>
+      <text x="482.9" y="-348.8" font-size="12.0" fill="#000000">+ NUS client 1 + battery service 1 = 7, +1 spare</text>
     </g>
     <g class="node">
       <rect x="969.6" y="-387.1" width="310.7" height="43.2" rx="5" ry="5" fill="#a3cc8e" stroke="#141911" stroke-width="1"/>
