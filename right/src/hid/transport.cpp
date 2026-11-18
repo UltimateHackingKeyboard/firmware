@@ -160,6 +160,18 @@ static void wakeUsbHostIfNeeded()
     }
 }
 
+// -ENETDOWN: the bus is suspended, or our wakeup is still in progress. Drop the report instead of
+// retrying it into a later resume; the current state is sent once the bus is awake, see
+// UsbReportSender_RequestStateResend. The dongle only relays reports it can't rebuild, so it retries.
+static errno_t dropIfBusDown(errno_t err, report_send_state_t *st)
+{
+    if (DEVICE_IS_MASTER && err == -ENETDOWN) {
+        UsbSemaphore_Release(st);
+        return 0;
+    }
+    return err;
+}
+
 #if DEVICE_IS_UHK80_RIGHT
 static ble_session *currentHostBleSession()
 {
@@ -219,7 +231,7 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     case ReportSink_Usb:
         if (auto session = keyboard_app::usb_handle().session(); session) {
             wakeUsbHostIfNeeded();
-            err = session->send_report(payload).to_int();
+            err = dropIfBusDown(session->send_report(payload).to_int(), &UsbSemaphore.keyboard);
         }
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -307,7 +319,7 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
             if (report->buttons != 0) {
                 wakeUsbHostIfNeeded();
             }
-            err = session->send_report(payload).to_int();
+            err = dropIfBusDown(session->send_report(payload).to_int(), &UsbSemaphore.mouse);
         }
         break;
 #if DEVICE_IS_UHK80_RIGHT
@@ -376,7 +388,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     case ReportSink_Usb:
         if (auto session = controls_app::usb_handle().session(); session) {
             wakeUsbHostIfNeeded();
-            err = session->send_report(payload).to_int();
+            err = dropIfBusDown(session->send_report(payload).to_int(), &UsbSemaphore.controls);
         }
         break;
 #if DEVICE_IS_UHK80_RIGHT
