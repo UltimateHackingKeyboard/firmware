@@ -1,0 +1,36 @@
+From 1bf2a0ccbd479ec50fdb25217eb446fd23e51c71 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 20 Oct 2026 22:58:42 +0200
+Subject: [PATCH] drivers: udc: nrf: ensure that no events are lost in race
+ condition
+
+Events that are set from an interrupt context in between k_event_wait
+and k_event_clear are lost and remain unprocessed. Using k_event_wait_safe
+solves this problem by atomically clearing the received flags.
+
+Signed-off-by: Benedek Kupper <kupper.benedek@gmail.com>
+---
+ drivers/usb/udc/udc_nrf.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
+
+diff --git a/drivers/usb/udc/udc_nrf.c b/drivers/usb/udc/udc_nrf.c
+index da0e5271b9e..62e964437d0 100644
+--- a/drivers/usb/udc/udc_nrf.c
++++ b/drivers/usb/udc/udc_nrf.c
+@@ -1425,11 +1425,8 @@ static void udc_nrf_thread_handler(const struct device *dev)
+ {
+ 	uint32_t evt;
+ 
+-	/* Wait for at least one event */
+-	k_event_wait(&drv_evt, UINT32_MAX, false, K_FOREVER);
+-
+-	/* Process all events that are set */
+-	evt = k_event_clear(&drv_evt, UINT32_MAX);
++	/* Wait for and atomically clear all events that are set */
++	evt = k_event_wait_safe(&drv_evt, UINT32_MAX, false, K_FOREVER);
+ 
+ 	if (evt & BIT(UDC_NRF_EVT_SUSPEND)) {
+ 		LOG_INF("SUSPEND state detected");
+-- 
+2.43.0
+

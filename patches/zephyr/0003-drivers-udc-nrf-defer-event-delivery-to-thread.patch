@@ -1,0 +1,195 @@
+From 3dde79339ec9c21d12535dca028baec4f5886fe6 Mon Sep 17 00:00:00 2001
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Tue, 20 Oct 2026 23:30:20 +0200
+Subject: [PATCH] drivers: udc: nrf: defer event delivery to thread
+
+Route bus and SOF notifications through drv_evt so higher-level
+callbacks run in thread context. Coalesce superseded bus states
+before dispatch.
+
+Signed-off-by: Benedek Kupper <kupper.benedek@gmail.com>
+---
+ drivers/usb/udc/udc_nrf.c | 98 ++++++++++++++++++++++++++++++---------
+ 1 file changed, 77 insertions(+), 21 deletions(-)
+
+diff --git a/drivers/usb/udc/udc_nrf.c b/drivers/usb/udc/udc_nrf.c
+index 62e964437d0..5a2853b5a2b 100644
+--- a/drivers/usb/udc/udc_nrf.c
++++ b/drivers/usb/udc/udc_nrf.c
+@@ -37,18 +37,58 @@ enum udc_nrf_event_type {
+ 	UDC_NRF_EVT_EP_FINISHED,
+ 	/* SETUP data received */
+ 	UDC_NRF_EVT_SETUP,
++	/* Start-of-frame notification */
++	UDC_NRF_EVT_SOF,
++	/* USB bus reset */
++	UDC_NRF_EVT_RESET,
+ 	/* USB bus suspended */
+ 	UDC_NRF_EVT_SUSPEND,
+ 	/* USB bus resumed */
+ 	UDC_NRF_EVT_RESUME,
+ 	/* Remote Wakeup initiated */
+ 	UDC_NRF_EVT_WUREQ,
++	/* VBUS detected */
++	UDC_NRF_EVT_VBUS_READY,
++	/* VBUS removed */
++	UDC_NRF_EVT_VBUS_REMOVED,
+ 	/* Endpoint dequeue requested */
+ 	UDC_NRF_EVT_DEQUEUE,
+ };
+ 
+ /* Main events the driver thread waits for */
+ static K_EVENT_DEFINE(drv_evt);
++
++static void udc_nrf_event_post(enum udc_nrf_event_type event)
++{
++	uint32_t clear_mask = 0;
++
++	switch (event) {
++	case UDC_NRF_EVT_RESET:
++		clear_mask = BIT(UDC_NRF_EVT_SUSPEND) | BIT(UDC_NRF_EVT_RESUME) |
++			     BIT(UDC_NRF_EVT_WUREQ);
++		break;
++	case UDC_NRF_EVT_SUSPEND:
++		clear_mask = BIT(UDC_NRF_EVT_RESUME) | BIT(UDC_NRF_EVT_WUREQ);
++		break;
++	case UDC_NRF_EVT_RESUME:
++	case UDC_NRF_EVT_WUREQ:
++		clear_mask = BIT(UDC_NRF_EVT_SUSPEND) | BIT(UDC_NRF_EVT_RESUME) |
++			     BIT(UDC_NRF_EVT_WUREQ);
++		break;
++	case UDC_NRF_EVT_VBUS_READY:
++	case UDC_NRF_EVT_VBUS_REMOVED:
++		clear_mask = BIT(UDC_NRF_EVT_VBUS_READY) |
++			     BIT(UDC_NRF_EVT_VBUS_REMOVED) |
++			     BIT(UDC_NRF_EVT_RESET) | BIT(UDC_NRF_EVT_SUSPEND) |
++			     BIT(UDC_NRF_EVT_RESUME) | BIT(UDC_NRF_EVT_WUREQ);
++		break;
++	default:
++		return;
++	}
++
++	k_event_set_masked(&drv_evt, BIT(event), clear_mask | BIT(event));
++}
++
+ /* Transfer triggers */
+ static atomic_t xfer_new;
+ /* Finished transactions */
+@@ -399,7 +439,7 @@ static void ev_usbreset_handler(void)
+ 	m_bus_suspend = false;
+ 
+ 	LOG_INF("Reset");
+-	udc_submit_event(udc_nrf_dev, UDC_EVT_RESET, 0);
++	udc_nrf_event_post(UDC_NRF_EVT_RESET);
+ }
+ 
+ static void nrf_usbd_dma_finished(nrf_usbd_common_ep_t ep)
+@@ -460,7 +500,7 @@ static void ev_sof_handler(void)
+ 
+ 	m_ep_armed &= ~USBD_EPISO_BIT_MASK;
+ 
+-	udc_submit_sof_event(udc_nrf_dev);
++	k_event_post(&drv_evt, BIT(UDC_NRF_EVT_SOF));
+ }
+ 
+ static void usbd_in_packet_sent(uint8_t ep)
+@@ -517,13 +557,13 @@ static void ev_usbevent_handler(void)
+ 		LOG_DBG("USBD event: SUSPEND");
+ 		m_bus_suspend = true;
+ 
+-		k_event_post(&drv_evt, BIT(UDC_NRF_EVT_SUSPEND));
++		udc_nrf_event_post(UDC_NRF_EVT_SUSPEND);
+ 	}
+ 	if (event & USBD_EVENTCAUSE_RESUME_Msk) {
+ 		LOG_DBG("USBD event: RESUME");
+ 		m_bus_suspend = false;
+ 
+-		k_event_post(&drv_evt, BIT(UDC_NRF_EVT_RESUME));
++		udc_nrf_event_post(UDC_NRF_EVT_RESUME);
+ 	}
+ 	if (event & USBD_EVENTCAUSE_USBWUALLOWED_Msk) {
+ 		LOG_DBG("USBD event: WUREQ (%s)", m_bus_suspend ? "In Suspend" : "Active");
+@@ -535,7 +575,7 @@ static void ev_usbevent_handler(void)
+ 				<< USBD_DPDMVALUE_STATE_Pos;
+ 			NRF_USBD->TASKS_DPDMDRIVE = 1;
+ 
+-			k_event_post(&drv_evt, BIT(UDC_NRF_EVT_WUREQ));
++			udc_nrf_event_post(UDC_NRF_EVT_WUREQ);
+ 		}
+ 	}
+ }
+@@ -1428,23 +1468,39 @@ static void udc_nrf_thread_handler(const struct device *dev)
+ 	/* Wait for and atomically clear all events that are set */
+ 	evt = k_event_wait_safe(&drv_evt, UINT32_MAX, false, K_FOREVER);
+ 
+-	if (evt & BIT(UDC_NRF_EVT_SUSPEND)) {
+-		LOG_INF("SUSPEND state detected");
+-		nrf_usbd_legacy_suspend();
+-		udc_set_suspended(dev, true);
+-		udc_submit_event(dev, UDC_EVT_SUSPEND, 0);
+-	}
++	if (evt & BIT(UDC_NRF_EVT_VBUS_REMOVED)) {
++		udc_submit_event(dev, UDC_EVT_VBUS_REMOVED, 0);
++	} else {
++		if (evt & BIT(UDC_NRF_EVT_VBUS_READY)) {
++			udc_submit_event(dev, UDC_EVT_VBUS_READY, 0);
++		}
++
++		if (evt & BIT(UDC_NRF_EVT_RESET)) {
++			udc_submit_event(dev, UDC_EVT_RESET, 0);
++		}
+ 
+-	if (evt & BIT(UDC_NRF_EVT_RESUME)) {
+-		LOG_INF("RESUMING from suspend");
+-		udc_set_suspended(dev, false);
+-		udc_submit_event(dev, UDC_EVT_RESUME, 0);
++		if (evt & BIT(UDC_NRF_EVT_SUSPEND)) {
++			LOG_INF("SUSPEND state detected");
++			nrf_usbd_legacy_suspend();
++			udc_set_suspended(dev, true);
++			udc_submit_event(dev, UDC_EVT_SUSPEND, 0);
++		}
++
++		if (evt & BIT(UDC_NRF_EVT_RESUME)) {
++			LOG_INF("RESUMING from suspend");
++			udc_set_suspended(dev, false);
++			udc_submit_event(dev, UDC_EVT_RESUME, 0);
++		}
++
++		if (evt & BIT(UDC_NRF_EVT_WUREQ)) {
++			LOG_INF("Remote wakeup initiated");
++			udc_set_suspended(dev, false);
++			udc_submit_event(dev, UDC_EVT_RESUME, 0);
++		}
+ 	}
+ 
+-	if (evt & BIT(UDC_NRF_EVT_WUREQ)) {
+-		LOG_INF("Remote wakeup initiated");
+-		udc_set_suspended(dev, false);
+-		udc_submit_event(dev, UDC_EVT_RESUME, 0);
++	if (evt & BIT(UDC_NRF_EVT_SOF)) {
++		udc_submit_sof_event(dev);
+ 	}
+ 
+ 	if (evt & BIT(UDC_NRF_EVT_EP_FINISHED)) {
+@@ -1529,7 +1585,7 @@ static void udc_nrf_power_handler(nrfx_power_usb_evt_t pwr_evt)
+ 	switch (pwr_evt) {
+ 	case NRFX_POWER_USB_EVT_DETECTED:
+ 		LOG_DBG("POWER event detected");
+-		udc_submit_event(udc_nrf_dev, UDC_EVT_VBUS_READY, 0);
++		udc_nrf_event_post(UDC_NRF_EVT_VBUS_READY);
+ 		break;
+ 	case NRFX_POWER_USB_EVT_READY:
+ 		LOG_DBG("POWER event ready");
+@@ -1537,7 +1593,7 @@ static void udc_nrf_power_handler(nrfx_power_usb_evt_t pwr_evt)
+ 		break;
+ 	case NRFX_POWER_USB_EVT_REMOVED:
+ 		LOG_DBG("POWER event removed");
+-		udc_submit_event(udc_nrf_dev, UDC_EVT_VBUS_REMOVED, 0);
++		udc_nrf_event_post(UDC_NRF_EVT_VBUS_REMOVED);
+ 		break;
+ 	default:
+ 		LOG_ERR("Unknown power event %d", pwr_evt);
+-- 
+2.43.0
+
