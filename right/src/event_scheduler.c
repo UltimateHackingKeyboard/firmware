@@ -12,6 +12,7 @@
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
 #include "usb_report_updater.h"
+#include "usb_report_sender.h"
 #include "oneshot.h"
 #include "trace.h"
 
@@ -261,6 +262,9 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_SendUsbReports:
             EventVector_Set(EventVector_SendUsbReports);
+            break;
+        case EventSchedulerEvent_ResendUsbState:
+            UsbReportSender_RequestStateResend();
             break;
         case EventSchedulerEvent_CheckBleVsUart:
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT
