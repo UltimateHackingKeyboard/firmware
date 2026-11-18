@@ -49,6 +49,7 @@
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
+        EventSchedulerEvent_ResendUsbState,
         EventSchedulerEvent_CheckBleVsUart,
         EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_RollTargetEllipsis,

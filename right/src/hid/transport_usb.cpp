@@ -5,6 +5,7 @@ extern "C" {
 #include "logger.h"
 #include "power_mode.h"
 #include "timer.h"
+#include "event_scheduler.h"
 #include "usb_report_updater.h"
 #include "usb_semaphore.h"
 #include "usb_state.h"
@@ -108,6 +109,9 @@ struct usb_manager {
                     break;
                 case usb::power::state::L0_ON:
                     UsbState_SetHostSuspended(false);
+                    if (dev.configured()) {
+                        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "usb awake");
+                    }
                     break;
                 case usb::power::state::L3_OFF:
                     // Detached - there is no host to be suspended. Leaving the flag set

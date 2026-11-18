@@ -43,6 +43,23 @@ static uint32_t retryThrottleTime = 0;
 
 bool UsbReportSender_GivenUp = false;
 
+// Reports sent while the bus is suspended are dropped, see dropIfBusDown in transport.cpp. Once the
+// bus is awake, send the current state instead. Main thread only; other threads schedule
+// EventSchedulerEvent_ResendUsbState.
+void UsbReportSender_RequestStateResend(void) {
+    if (DEVICE_IS_MASTER) {
+        uint8_t* keyboard = (uint8_t*)(ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0]);
+        uint8_t* controls = (uint8_t*)(ActiveControlsReport == &controlsReports[0] ? &controlsReports[1] : &controlsReports[0]);
+        uint8_t* mouse = (uint8_t*)(ActiveMouseReport == &mouseReports[0] ? &mouseReports[1] : &mouseReports[0]);
+
+        keyboard[0] = ~((uint8_t*)ActiveKeyboardReport)[0];
+        controls[0] = ~((uint8_t*)ActiveControlsReport)[0];
+        mouse[0] = ~((uint8_t*)ActiveMouseReport)[0];
+
+        EventVector_Set(EventVector_SendUsbReports);
+    }
+}
+
 // Should we resend, or give up?
 bool UsbReportSender_ShouldGiveUp(int err, uint8_t* counter) {
     bool statusOk = err == 0;
