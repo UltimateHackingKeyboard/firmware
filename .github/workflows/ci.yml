@@ -26,9 +26,28 @@ jobs:
           submodules: recursive
           ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
-      - name: Install build dependencies
+      - name: Get month
+        id: month
+        run: echo "month=$(date +%Y-%m)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache apt archives
+        uses: actions/cache@v6
+        with:
+          path: ~/apt-archives
+          key: apt-archives-${{ runner.os }}-${{ steps.month.outputs.month }}
+          restore-keys: apt-archives-${{ runner.os }}-
+
+      - name: Point all apt calls to the cached archives
         run: |
-          sudo apt-get install -y gcc-arm-none-eabi
+          mkdir -p ~/apt-archives/partial
+          printf '%s\n' \
+            "Dir::Cache::Archives \"$HOME/apt-archives/\";" \
+            'APT::Keep-Downloaded-Packages "true";' \
+            | sudo tee /etc/apt/apt.conf.d/99ci-archive-cache
+
+      - name: Install build dependencies
+        timeout-minutes: 5
+        run: sudo apt-get install -y gcc-arm-none-eabi
 
       - name: Install west
         run: pip3 install --user -U west
@@ -45,6 +64,9 @@ jobs:
           manifest-file-name: west_nrfsdk.yml
           toolchains: arm-zephyr-eabi
           sdk-version: 1.0.1
+
+      - name: Make apt archives readable for the cache upload
+        run: sudo chown -R "$USER" ~/apt-archives
 
       - name: Git user setup
         run: |
