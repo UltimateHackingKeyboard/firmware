@@ -20,6 +20,7 @@
 #include "key_states.h"
 #include "shared/attributes.h"
 #include "str_utils.h"
+#include "utils.h"
 #include "event_scheduler.h"
 #include "slave_drivers/uhk_module_driver.h"
 #include "macros/status_buffer.h"
@@ -213,6 +214,46 @@ static errno_t sendDongleReport(uint8_t propertyId, const uint8_t* message) {
     }
 }
 
+#if DEVICE_IS_UHK_DONGLE
+static report_send_state_t* sendStateFor(uint8_t propertyId) {
+    switch (propertyId) {
+        case SyncablePropertyId_KeyboardReport:
+            return &UsbSemaphore.keyboard;
+        case SyncablePropertyId_MouseReport:
+            return &UsbSemaphore.mouse;
+        default:
+            return &UsbSemaphore.controls;
+    }
+}
+
+// Send the report until the host confirms it or the retries run out. The semaphore's callbacks and
+// timeout decide whether to resend; dongleUsbSem only wakes the wait up when a callback arrives.
+static void sendDongleReportUntilDone(uint8_t propertyId, const uint8_t* message) {
+    report_send_state_t* st = sendStateFor(propertyId);
+    bool done = false;
+    st->needsResending = true;
+    while (!done) {
+        if (st->needsResending && !st->inFlight) {
+            st->needsResending = false;
+            k_sem_reset(&dongleUsbSem);
+            errno_t ret = sendDongleReport(propertyId, message);
+            if (ret != 0) {
+                st->inFlight = false;
+                UsbReportSender_ResendOrGiveUp(st, ret, true);
+            }
+        }
+        bool ready = UsbSemaphore_RecalculateIsReady();
+        done = ready && !st->needsResending;
+        if (!done) {
+            // Either back off before a resend, or wait for the callback / the semaphore timeout.
+            bool resendDue = st->needsResending && !st->inFlight;
+            uint16_t waitMs = resendDue ? UsbReportSender_ComputeResendDelay(st->retries) : USB_SEMAPHORE_TIMEOUT;
+            k_sem_take(&dongleUsbSem, K_MSEC(waitMs));
+        }
+    }
+}
+#endif
+
 static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, uint16_t len) {
     uint8_t ATTR_UNUSED messageId = *(data++);
     uint8_t propertyId = *(data++);
@@ -228,16 +269,10 @@ static void processSyncablePropertyDongle(device_id_t src, const uint8_t* data, 
             return;
     }
 
-    errno_t ATTR_UNUSED ret = sendDongleReport(propertyId, message);
-
 #if DEVICE_IS_UHK_DONGLE
-    uint8_t retryCounter = 0;
-    while (!UsbReportSender_ShouldGiveUp(ret, &retryCounter)) {
-        uint16_t delay = UsbReportSender_ComputeResendDelay(retryCounter);
-        k_sleep(K_MSEC(delay));
-        k_sem_take(&dongleUsbSem, K_MSEC(128));
-        ret = sendDongleReport(propertyId, message);
-    }
+    sendDongleReportUntilDone(propertyId, message);
+#else
+    sendDongleReport(propertyId, message);
 #endif
 }
 
@@ -453,9 +488,18 @@ void Messenger_UpdateWatermarks(message_t* msg) {
     msg->wm = Connections[msg->connectionId].watermarks.txIdx++;
 }
 
+static bool failedByTest(const message_t* message) {
+    bool retriedOnFailure = message->messageId[0] == MessageId_SyncableProperty || message->messageId[0] == MessageId_StateSync;
+    return TestHooks_FailMessengerSends && retriedOnFailure && Utils_Random() % TEST_HOOKS_MESSENGER_FAIL_RECIPROCAL == 0;
+}
+
 int Messenger_SendMessage(message_t* message) {
     connection_id_t connectionId = message->connectionId;
     device_id_t dst = message->dst;
+
+    if (failedByTest(message)) {
+        return -EAGAIN;
+    }
 
     uint16_t totalLen = 3 + message->idsUsed + message->len;
     if (totalLen > MAX_LINK_PACKET_LENGTH) {

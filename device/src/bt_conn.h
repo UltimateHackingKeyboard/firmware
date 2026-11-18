@@ -75,6 +75,7 @@ typedef enum {
     void BtConn_Init(void);
     void BtConn_DisconnectAll();
     void BtConn_DisconnectOne(connection_id_t connectionId);
+    void BtConn_DisconnectOneByConn(struct bt_conn *conn);
 
     void BtConn_UpdateConnectionLatencies(void);
 

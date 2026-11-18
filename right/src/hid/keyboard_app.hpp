@@ -22,7 +22,7 @@ class keyboard_session : public keyboard_base_session {
     C2USB_USB_TRANSFER_ALIGN(leds_report, leds_buffer_) {};
 
   protected:
-    void report_sent(const std::span<const uint8_t> &data) override;
+    void send_report_callback(hid::report::selector select, c2usb::result result) override;
     std::span<const uint8_t> get_report(
         hid::report::selector select, const std::span<uint8_t> &buffer) override;
     void set_report(hid::report::type type, const std::span<const uint8_t> &data) override;
@@ -208,5 +208,5 @@ struct key_report_buffer : double_buffer<keys_report_variants> {
     std::span<const uint8_t> insert(const hid_keyboard_report_t &report);
 };
 
-void keyboard_report_sent_callback(hid::session &session);
+void keyboard_report_sent_callback(hid::session &session, int result);
 void keyboard_leds_changed_callback(keyboard_base_session &session);
