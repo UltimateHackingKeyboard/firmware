@@ -18,6 +18,7 @@
 #ifdef __ZEPHYR__
 #include "state_sync.h"
 #include "event_scheduler.h"
+#include "host_connection.h"
 #endif
 
 char oldKeymapAbbreviation[KEYMAP_ABBREVIATION_LENGTH];
@@ -96,6 +97,9 @@ void UsbCommand_ApplyFactory(const uint8_t *GenericHidOutBuffer, uint8_t *Generi
 #ifdef __ZEPHYR__
     StateSync_ResetConfig();
     StateSync_ResetRightLeftLink(true);
+    if (DEVICE_IS_UHK80_RIGHT) {
+        HostConnections_ApplyBonds("factory config applied");
+    }
 #endif
 
     LedManager_FullUpdate();

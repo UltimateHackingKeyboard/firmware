@@ -90,4 +90,6 @@
 
     uint8_t HostConnections_AllocateConnectionIdForUnregisteredHid(const bt_addr_le_t *addr);
 
+    void HostConnections_ApplyBonds(const char* reason);
+
 #endif
