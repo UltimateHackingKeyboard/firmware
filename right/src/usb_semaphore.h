@@ -91,6 +91,9 @@
     // transport. Before, not after: a bus reset clearing the semaphore in between would deadlock it.
     void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId);
 
+    // Gave up on the report: treat it as delivered. The current state is sent once a host is up.
+    void UsbSemaphore_Drop(report_send_state_t* st);
+
     // The connection went down: its unconfirmed reports will never be confirmed.
     void UsbSemaphore_ClearConnection(uint8_t connectionId);
 

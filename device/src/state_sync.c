@@ -530,6 +530,11 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
             // (non-standby) dongle's USB host. Refresh the target widget so the
             // asleep indicator updates.
             WIDGET_REFRESH(&TargetWidget);
+            static bool dongleHostWasAwake = true;
+            if (DongleHostAwake && !dongleHostWasAwake) {
+                EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "dongle host awake");
+            }
+            dongleHostWasAwake = DongleHostAwake;
         }
         break;
     case StateSyncPropertyId_DongleProtocolVersion:
