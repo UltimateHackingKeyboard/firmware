@@ -100,12 +100,9 @@ uint16_t UsbReportSender_ComputeResendDelay(uint8_t counter) {
     return (uint16_t)1 << shift;
 }
 
-static void handleUltimateFail(errno_t errorCode) {
-    // In any case, make the keyboard wake up, compare the usb reports, and possibly send them (those that are up-to-date at that time)
-    // This way, we loose some reports along the way, but at least don't produce stuck keys
-    //
-    // TODO: do this from device_state? (send all reports after any switch.
-    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
+static void handleUltimateFail(report_send_state_t* st, errno_t errorCode) {
+    // The report is dropped. The current state is sent once a host is up, see UsbReportSender_RequestStateResend.
+    UsbSemaphore_Drop(st);
 
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
@@ -150,7 +147,7 @@ bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool w
         return true;
     } else {
         if (ret != 0) {
-            handleUltimateFail(ret);
+            handleUltimateFail(st, ret);
         }
         st->needsResending = false;
         return false;
@@ -182,6 +179,7 @@ static void sendActiveReports(bool resending) {
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     if (KeyboardReport_HasChange(keyboardReports) && (!resending || UsbSemaphore.keyboard.needsResending)) {
+        ret = 0;
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
             UsbReportUpdater_SwitchActiveKeyboardReport();
@@ -213,7 +211,9 @@ static void sendActiveReports(bool resending) {
             usbReportsChangedByAction = true;
             usbReportsChangedByAnything = true;
             lastBasicReportTime = Timer_GetCurrentTime();
-            UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+            if (!resending && ret == 0) {
+                UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            }
         }
     }
 
@@ -223,7 +223,9 @@ static void sendActiveReports(bool resending) {
             UsbSemaphore.controls.inFlight = false;
             UsbReportSender_ResendOrGiveUp(&UsbSemaphore.controls, ret, true);
         }
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+        if (!resending && ret == 0) {
+            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        }
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
@@ -241,8 +243,10 @@ static void sendActiveReports(bool resending) {
 
         Debug_RecordBleSendResult(ret);
 
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
-        UsbReportUpdater_LastMouseActivityTime = resending ? UsbReportUpdater_LastMouseActivityTime : Timer_GetCurrentTime();
+        if (!resending && ret == 0) {
+            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            UsbReportUpdater_LastMouseActivityTime = Timer_GetCurrentTime();
+        }
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
     }

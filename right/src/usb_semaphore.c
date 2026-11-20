@@ -113,6 +113,14 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     }
 }
 
+// Unlike UsbSemaphore_Release, keeps UsbReportSender_GivenUp (later sends to a missing host
+// don't retry) and doesn't mark the report as delivered in the diagnostics.
+void UsbSemaphore_Drop(report_send_state_t* st) {
+    st->switchActiveReport();
+    st->retries = 0;
+    st->inFlight = false;
+}
+
 void UsbSemaphore_Fail(report_send_state_t* st, errno_t result) {
     // Not released: the baseline stays, so the same report goes out again.
     st->inFlight = false;
