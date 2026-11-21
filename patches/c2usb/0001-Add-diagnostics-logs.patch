@@ -4,17 +4,9 @@ Date: Sat, 11 Jul 2026 13:05:57 +0200
 Subject: [PATCH] Add diagnostics logs.
 
 ---
- c2usb/usb/df/mac.cpp                      |  16 +-
- c2usb/usb/df/mac_diag.cpp                 | 473 ++++++++++++++++++++++++++++++
- c2usb/usb/df/mac_diag.hpp                 |  86 ++++++
- c2usb/usb/df/vendor/nxp/CMakeLists.txt    |   1 +
- c2usb/usb/df/vendor/nxp/mcux_mac.cpp      |  43 ++-
- c2usb/usb/df/vendor/zephyr/CMakeLists.txt |   1 +
- c2usb/usb/df/vendor/zephyr/udc_mac.cpp    |  62 ++++
- 7 files changed, 676 insertions(+), 6 deletions(-)
 
 diff --git a/c2usb/usb/df/mac.cpp b/c2usb/usb/df/mac.cpp
-index 68c9090..470257b 100644
+index 8b94ed7..6943511 100644
 --- a/c2usb/usb/df/mac.cpp
 +++ b/c2usb/usb/df/mac.cpp
 @@ -2,6 +2,7 @@
@@ -25,7 +17,7 @@ index 68c9090..470257b 100644
  #include "usb/standard/requests.hpp"
  
  namespace usb::df
-@@ -89,23 +90,30 @@ void mac::set_config(config::view config)
+@@ -96,23 +97,30 @@ void mac::set_config(config::view config)
  
  usb::result mac::remote_wakeup()
  {
@@ -62,15 +54,16 @@ index 68c9090..470257b 100644
      assert(!ctrl_msg_.pending_);
 diff --git a/c2usb/usb/df/mac_diag.cpp b/c2usb/usb/df/mac_diag.cpp
 new file mode 100644
-index 0000000..61882fa
+index 0000000..c0d3f4c
 --- /dev/null
 +++ b/c2usb/usb/df/mac_diag.cpp
-@@ -0,0 +1,473 @@
+@@ -0,0 +1,461 @@
 +/// @file
 +///
 +/// UHK patch: port-agnostic MAC anomaly diagnostics, see mac_diag.hpp.
 +///
 +#include "usb/df/mac_diag.hpp"
++#include <algorithm>
 +#include <cstddef>
 +#include "usb/df/mac.hpp"
 +#ifdef __ZEPHYR__
@@ -80,10 +73,7 @@ index 0000000..61882fa
 +#endif
 +
 +extern "C" __attribute__((weak)) void c2usb_log(const char*, ...) {}
-+extern "C" __attribute__((weak)) uint32_t c2usb_diag_time_ms(void)
-+{
-+    return 0;
-+}
++extern "C" __attribute__((weak)) uint32_t c2usb_diag_time_ms(void) { return 0; }
 +extern "C" __attribute__((weak)) void c2usb_diag_dump_port(void) {}
 +
 +using namespace usb::df;
@@ -91,8 +81,8 @@ index 0000000..61882fa
 +namespace
 +{
 +const char* const category_names[diag::CATEGORY_COUNT] = {
-+    "enqueue fail", "EP error",       "ctrl error",      "ctrl stall",
-+    "evt dropped",  "EP busy reject", "no-power reject",
++    "enqueue fail", "EP error", "ctrl error", "ctrl stall", "evt dropped",
++    "EP busy reject", "no-power reject",
 +};
 +
 +enum class event_type : uint8_t
@@ -168,14 +158,10 @@ index 0000000..61882fa
 +class state_guard
 +{
 +  public:
-+    state_guard()
-+        : key_(k_spin_lock(&state_lock))
-+    {}
++    state_guard() : key_(k_spin_lock(&state_lock)) {}
 +    ~state_guard() { k_spin_unlock(&state_lock, key_); }
 +    state_guard(const state_guard&) = delete;
 +    state_guard& operator=(const state_guard&) = delete;
-+    state_guard(state_guard&&) = delete;
-+    state_guard& operator=(state_guard&&) = delete;
 +
 +  private:
 +    k_spinlock_key_t key_;
@@ -184,11 +170,7 @@ index 0000000..61882fa
 +class state_guard
 +{
 +  public:
-+    state_guard()
-+        : primask_(__get_PRIMASK())
-+    {
-+        __disable_irq();
-+    }
++    state_guard() : primask_(__get_PRIMASK()) { __disable_irq(); }
 +    ~state_guard()
 +    {
 +        if (primask_ == 0)
@@ -198,8 +180,6 @@ index 0000000..61882fa
 +    }
 +    state_guard(const state_guard&) = delete;
 +    state_guard& operator=(const state_guard&) = delete;
-+    state_guard(state_guard&&) = delete;
-+    state_guard& operator=(state_guard&&) = delete;
 +
 +  private:
 +    uint32_t primask_;
@@ -644,7 +624,7 @@ index 4b5cbc7..c92a599 100644
      if(NOT DEFINED CONFIG_C2USB_MCUX_USB_COEXISTENCE)
          # since MCUX_COMPONENT_middleware.usb.device.controller.driver cannot be disabled
 diff --git a/c2usb/usb/df/vendor/nxp/mcux_mac.cpp b/c2usb/usb/df/vendor/nxp/mcux_mac.cpp
-index b5a0fdf..bafd44a 100644
+index b5a0fdf..54829b2 100644
 --- a/c2usb/usb/df/vendor/nxp/mcux_mac.cpp
 +++ b/c2usb/usb/df/vendor/nxp/mcux_mac.cpp
 @@ -18,6 +18,9 @@
@@ -657,16 +637,15 @@ index b5a0fdf..bafd44a 100644
  namespace usb::df::nxp
  {
  struct controller_interface : public ::_usb_device_controller_interface_struct
-@@ -128,6 +131,8 @@ void mcux_mac::init(const speeds& speeds)
+@@ -128,6 +131,7 @@ void mcux_mac::init(const speeds& speeds)
      [[maybe_unused]] auto status = driver_.deviceInit(index_, this, &handle_);
      assert(status == kStatus_USB_Success);
  
 +    diag::set_mac(this);
-+
      EnableIRQ(usb_irqn(index_));
  }
  
-@@ -193,6 +198,7 @@ void mcux_mac::control_ep_open()
+@@ -193,6 +197,7 @@ void mcux_mac::control_ep_open()
  
  void mcux_mac::control_ep_stall()
  {
@@ -674,7 +653,7 @@ index b5a0fdf..bafd44a 100644
      auto addr = endpoint::address::control_out();
      [[maybe_unused]] auto status =
          driver_.device_control(handle(), kUSB_DeviceControlEndpointStall, &addr);
-@@ -223,13 +229,21 @@ usb::result mcux_mac::ep_send(const transfer& xfer)
+@@ -223,13 +228,20 @@ usb::result mcux_mac::ep_send(const transfer& xfer)
      auto addr = ep_handle_to_address(xfer.endpoint());
      if (power_state() != power::state::L0_ON)
      {
@@ -687,8 +666,7 @@ index b5a0fdf..bafd44a 100644
          return usb::result::device_or_resource_busy;
      }
 -    return to_result(driver_.deviceSend(handle(), addr, xfer.data(), xfer.size()));
-+    auto status =
-+        driver_.deviceSend(handle(), addr, const_cast<uint8_t*>(xfer.data()), xfer.size());
++    auto status = driver_.deviceSend(handle(), addr, const_cast<uint8_t*>(xfer.data()), xfer.size());
 +    if (status != kStatus_USB_Success)
 +    {
 +        diag::record(diag::ENQUEUE_FAIL, addr, status);
@@ -697,7 +675,7 @@ index b5a0fdf..bafd44a 100644
  }
  
  usb::result mcux_mac::ep_receive(const transfer& xfer)
-@@ -237,9 +251,15 @@ usb::result mcux_mac::ep_receive(const transfer& xfer)
+@@ -237,9 +249,15 @@ usb::result mcux_mac::ep_receive(const transfer& xfer)
      auto addr = ep_handle_to_address(xfer.endpoint());
      if (busy_flags_.test_and_set(addr))
      {
@@ -714,7 +692,7 @@ index b5a0fdf..bafd44a 100644
  }
  
  usb::result mcux_mac::ep_cancel(ep_handle eph)
-@@ -298,6 +318,7 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+@@ -298,6 +316,7 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
          {
              // control transfer is cancelled at bus reset
              // react to the reset signal only, ignore this event
@@ -722,7 +700,7 @@ index b5a0fdf..bafd44a 100644
              return;
          }
          if (message.isSetup)
-@@ -360,6 +381,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
+@@ -360,6 +379,17 @@ void mcux_mac::process_ep_notification(const _usb_device_callback_message_struct
      {
          busy_flags_.clear(addr);
  
@@ -740,7 +718,7 @@ index b5a0fdf..bafd44a 100644
          ep_transfer_complete(addr, transfer(message.buffer, cancelled ? 0 : message.length,
                                              not cancelled, ep_address_to_handle(addr)));
      }
-@@ -377,6 +409,7 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+@@ -377,6 +407,7 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
      switch (message.code)
      {
      case kUSB_DeviceNotifyBusReset:
@@ -748,7 +726,7 @@ index b5a0fdf..bafd44a 100644
          driver_.device_control(handle(), kUSB_DeviceControlSetDefaultStatus);
          bus_reset();
          control_ep_open();
-@@ -384,13 +417,16 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+@@ -384,13 +415,16 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
  
  #if (defined(USB_DEVICE_CONFIG_LOW_POWER_MODE) && (USB_DEVICE_CONFIG_LOW_POWER_MODE > 0U))
      case kUSB_DeviceNotifySuspend:
@@ -765,7 +743,7 @@ index b5a0fdf..bafd44a 100644
          set_power_state(power::state::L1_SLEEP);
          break;
  #endif
-@@ -404,9 +440,11 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+@@ -404,9 +438,11 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
  
  #if USB_DEVICE_CONFIG_DETACH_ENABLE
      case kUSB_DeviceNotifyDetach:
@@ -777,7 +755,7 @@ index b5a0fdf..bafd44a 100644
          set_power_state(power::state::L2_SUSPEND);
          break;
  #endif
-@@ -416,6 +454,7 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
+@@ -416,6 +452,7 @@ void mcux_mac::process_notification(const _usb_device_callback_message_struct& m
  #endif
  #if (defined(USB_DEVICE_CONFIG_ERROR_HANDLING) && (USB_DEVICE_CONFIG_ERROR_HANDLING > 0U))
      case kUSB_DeviceNotifyError:
@@ -798,18 +776,18 @@ index 50b20d8..1d33864 100644
  target_sources_ifdef(CONFIG_C2USB_SHELL_BACKEND c2usb
      PRIVATE
 diff --git a/c2usb/usb/df/vendor/zephyr/udc_mac.cpp b/c2usb/usb/df/vendor/zephyr/udc_mac.cpp
-index 5fa4fc9..eb2dc2c 100644
+index 2560522..5d17368 100644
 --- a/c2usb/usb/df/vendor/zephyr/udc_mac.cpp
 +++ b/c2usb/usb/df/vendor/zephyr/udc_mac.cpp
-@@ -2,6 +2,7 @@
- #include "usb/df/vendor/zephyr/udc_mac.hpp"
+@@ -3,6 +3,7 @@
  #include <atomic>
  #include "compatibility_helper.hpp"
+ #include <magic_enum.hpp>
 +#include <zephyr/kernel.h>
  #include <zephyr/logging/log.h>
  #include <zephyr/message_queue.hpp>
  extern "C"
-@@ -9,6 +10,19 @@ extern "C"
+@@ -10,6 +11,19 @@ extern "C"
  #include <zephyr/drivers/usb/udc.h>
  }
  
@@ -829,7 +807,7 @@ index 5fa4fc9..eb2dc2c 100644
  LOG_MODULE_REGISTER(c2usb, CONFIG_C2USB_UDC_MAC_LOG_LEVEL);
  
  static constexpr ::udc_event_type UDC_MAC_TASK = (udc_event_type)-1;
-@@ -97,6 +111,7 @@ static int udc_buf_enqueue(const ::device* dev, ::net_buf* buf)
+@@ -98,6 +112,7 @@ static int udc_buf_enqueue(const ::device* dev, ::net_buf* buf)
      if (ret != 0)
      {
          LOG_ERR("Failed to enqueue ep 0x%02x: %d", udc_get_buf_info(buf)->ep, ret);
@@ -837,7 +815,7 @@ index 5fa4fc9..eb2dc2c 100644
      }
      return ret;
  }
-@@ -138,6 +153,7 @@ udc_mac::udc_mac(const ::device* dev, size_t ctrl_ep_buf_size, usb::power::state
+@@ -142,6 +157,7 @@ udc_mac::udc_mac(const ::device* dev, size_t ctrl_ep_buf_size, usb::power::state
      }
      set_control_buffer(std::span<uint8_t>(ctrl_buf_->data, ctrl_buf_->size));
  
@@ -845,7 +823,7 @@ index 5fa4fc9..eb2dc2c 100644
      set_driver_ctx();
  }
  
-@@ -217,9 +233,14 @@ static int udc_mac_event_dispatch(const ::device*, const udc_event* event)
+@@ -221,9 +237,14 @@ static int udc_mac_event_dispatch(const ::device*, const udc_event* event)
      last_full = !message_queue().try_post(*event);
      if (last_full)
      {
@@ -860,7 +838,7 @@ index 5fa4fc9..eb2dc2c 100644
  #if CONFIG_C2USB_UDC_MAC_LOG_LEVEL >= LOG_LEVEL_DBG
      static auto min_free_msgq_space = message_queue().free_space();
      if (auto free_space = message_queue().free_space(); free_space < min_free_msgq_space)
-@@ -339,6 +360,7 @@ uint16_t udc_mac::control_ep_max_packet_size(usb::speed speed) const
+@@ -366,6 +387,7 @@ uint16_t udc_mac::control_ep_max_packet_size(usb::speed speed) const
  void udc_mac::ctrl_stall(net_buf* buf, direction dir)
  {
      auto addr = endpoint::address::control(dir);
@@ -868,7 +846,7 @@ index 5fa4fc9..eb2dc2c 100644
      [[maybe_unused]] auto ret = ep_set_stall(addr);
  
      if constexpr (udc_managed_ctrl)
-@@ -506,6 +528,7 @@ void udc_mac::process_ctrl_ep_event(net_buf* buf, const udc_buf_info& info)
+@@ -533,6 +555,7 @@ void udc_mac::process_ctrl_ep_event(net_buf* buf, const udc_buf_info& info)
          net_buf_unref(buf);
          LOG_WRN("CTRL EP %x (stage %d) error: %d", info.ep,
                  info.setup * 0 + info.data * 1 + info.status * 2, info.err);
@@ -876,9 +854,9 @@ index 5fa4fc9..eb2dc2c 100644
      }
  }
  
-@@ -533,6 +556,29 @@ int udc_mac::event_callback(const udc_event& event)
+@@ -563,6 +586,29 @@ void udc_mac::event_callback(const udc_event& event)
  
- int udc_mac::process_event(const udc_event& event)
+ void udc_mac::process_event(const udc_event& event)
  {
 +    switch (event.type)
 +    {
@@ -903,10 +881,10 @@ index 5fa4fc9..eb2dc2c 100644
 +    default:
 +        break;
 +    }
-     if ((power_state() == power::state::L3_OFF) and (event.type != UDC_EVT_VBUS_READY)) [[unlikely]]
+     if (power_state() == power::state::L3_OFF) [[unlikely]]
      {
-         // flush late events after Vbus removal
-@@ -613,6 +659,7 @@ void udc_mac::process_ctrl_ep(net_buf* buf, const udc_buf_info& info)
+         // this event is also handled in the other states below
+@@ -664,6 +710,7 @@ void udc_mac::process_ctrl_ep(net_buf* buf, const udc_buf_info& info)
      {
          LOG_WRN("CTRL EP %x (stage %d) error: %d", info.ep,
                  info.setup * 0 + info.data * 1 + info.status * 2, info.err);
@@ -914,7 +892,7 @@ index 5fa4fc9..eb2dc2c 100644
  
          if (info.setup or (info.data and (dir == direction::OUT)))
          {
-@@ -745,6 +792,12 @@ void udc_mac::process_ep_event(net_buf* buf)
+@@ -794,6 +841,12 @@ void udc_mac::process_ep_event(net_buf* buf)
          if (info.err != 0)
          {
              LOG_ERR("EP %x error:%d", info.ep, info.err);
@@ -927,7 +905,7 @@ index 5fa4fc9..eb2dc2c 100644
          }
          for (uint8_t i = 0; i < ep_bufs_.size(); ++i)
          {
-@@ -870,10 +923,12 @@ usb::result udc_mac::ep_transfer(const transfer& xfer, usb::direction dir)
+@@ -919,10 +972,12 @@ usb::result udc_mac::ep_transfer(const transfer& xfer, usb::direction dir)
  
      if ((dir == direction::IN) and (power_state() != power::state::L0_ON))
      {
@@ -940,7 +918,7 @@ index 5fa4fc9..eb2dc2c 100644
          return result::device_or_resource_busy;
      }
  
-@@ -884,6 +939,7 @@ usb::result udc_mac::ep_transfer(const transfer& xfer, usb::direction dir)
+@@ -933,6 +988,7 @@ usb::result udc_mac::ep_transfer(const transfer& xfer, usb::direction dir)
      auto ret = udc_ep_enqueue(dev_, buf);
      if (ret != 0)
      {
@@ -948,7 +926,7 @@ index 5fa4fc9..eb2dc2c 100644
          busy_flags_.clear(addr);
      }
      return usb::result(ret);
-@@ -972,4 +1028,10 @@ bool udc_mac::setup_test_mode(uint8_t mode_selector)
+@@ -1021,4 +1077,10 @@ bool udc_mac::setup_test_mode(uint8_t mode_selector)
      return ret == 0;
  }
  
@@ -959,6 +937,3 @@ index 5fa4fc9..eb2dc2c 100644
 +}
 +
  } // namespace usb::df::zephyr
--- 
-2.43.0
-
