@@ -1,0 +1,30 @@
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Sat, 21 Nov 2026 21:15:00 +0100
+Subject: [PATCH] drivers: udc: nrf: leave low power when enabled
+
+The USBD keeps LOWPOWER while it is disabled, unless it stays disabled
+long enough. When the stack disables the controller while the bus is
+suspended (the peripheral is in low power), and enables it again right
+away, the peripheral starts in low power. As it did not suspend since it
+was enabled, bus activity does not wake it: the host's reset is still
+reported, but the device does not answer any transaction, until a host
+resume, which a host does not send to a device it just reset.
+
+Write ForceNormal when enabling the peripheral: it is not suspended yet.
+
+Seen on nRF52840 with a soft detach and attach back to back while the
+bus was suspended (4 of 5 attempts); with a 1 ms gap, or on an active
+bus, the device recovered.
+---
+diff --git a/drivers/usb/udc/udc_nrf.c b/drivers/usb/udc/udc_nrf.c
+index bb7d4d2f968..50417eaab7d 100644
+--- a/drivers/usb/udc/udc_nrf.c
++++ b/drivers/usb/udc/udc_nrf.c
+@@ -838,6 +838,7 @@ static void nrf_usbd_legacy_enable(void)
+ 	NRF_USBD->EVENTCAUSE = USBD_EVENTCAUSE_READY_Msk;
+ 
+ 	nrf_usbd_peripheral_enable();
++	NRF_USBD->LOWPOWER = USBD_LOWPOWER_LOWPOWER_ForceNormal << USBD_LOWPOWER_LOWPOWER_Pos;
+ 
+ 	if (nrf_usbd_common_errata_223() && m_first_enable) {
+ 		NRF_USBD->ENABLE = 0;
