@@ -182,6 +182,9 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
 
         if (connectionId == CurrentHostConnectionId) {
             WIDGET_REFRESH(&TargetWidget);
+            if (state == ConnectionState_Ready) {
+                EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "current host ready");
+            }
         }
     }
 }
@@ -516,6 +519,7 @@ static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
 
     Hid_UpdateKeyboardProtocol();
     Hid_UpdateKeyboardLedsState();
+    EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "host switch");
 
     WIDGET_REFRESH(&TargetWidget);
     // The advertising icon depends on the current connection's type.
