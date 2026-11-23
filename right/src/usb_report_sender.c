@@ -182,6 +182,7 @@ static void sendActiveReports(bool resending) {
     EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     if (KeyboardReport_HasChange(keyboardReports) && (!resending || UsbSemaphore.keyboard.needsResending)) {
+        ret = 0;
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
             UsbReportUpdater_SwitchActiveKeyboardReport();
@@ -213,7 +214,9 @@ static void sendActiveReports(bool resending) {
             usbReportsChangedByAction = true;
             usbReportsChangedByAnything = true;
             lastBasicReportTime = Timer_GetCurrentTime();
-            UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+            if (!resending && ret == 0) {
+                UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            }
         }
     }
 
@@ -223,7 +226,9 @@ static void sendActiveReports(bool resending) {
             UsbSemaphore.controls.inFlight = false;
             UsbReportSender_ResendOrGiveUp(&UsbSemaphore.controls, ret, true);
         }
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+        if (!resending && ret == 0) {
+            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        }
         usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
@@ -241,8 +246,10 @@ static void sendActiveReports(bool resending) {
 
         Debug_RecordBleSendResult(ret);
 
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
-        UsbReportUpdater_LastMouseActivityTime = resending ? UsbReportUpdater_LastMouseActivityTime : Timer_GetCurrentTime();
+        if (!resending && ret == 0) {
+            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            UsbReportUpdater_LastMouseActivityTime = Timer_GetCurrentTime();
+        }
         usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
     }
