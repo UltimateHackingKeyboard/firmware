@@ -39,13 +39,15 @@ bool Resending = false;
 static uint32_t lastBasicReportTime = 0;
 static uint32_t retryThrottleTime = 0;
 
-bool UsbReportSender_GivenUp = false;
-
 // Reports sent while the bus is suspended are dropped, see dropIfBusDown in transport.cpp. Once the
 // bus is awake, send the current state instead. Main thread only; other threads schedule
 // EventSchedulerEvent_ResendUsbState.
 void UsbReportSender_RequestStateResend(void) {
     if (DEVICE_IS_MASTER) {
+        UsbSemaphore.keyboard.retries = 0;
+        UsbSemaphore.controls.retries = 0;
+        UsbSemaphore.mouse.retries = 0;
+
         uint8_t* keyboard = (uint8_t*)(ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0]);
         uint8_t* controls = (uint8_t*)(ActiveControlsReport == &controlsReports[0] ? &controlsReports[1] : &controlsReports[0]);
         uint8_t* mouse = (uint8_t*)(ActiveMouseReport == &mouseReports[0] ? &mouseReports[1] : &mouseReports[0]);
@@ -58,24 +60,26 @@ void UsbReportSender_RequestStateResend(void) {
     }
 }
 
+// No host takes the report and retrying won't change it; the current state is sent once a host is
+// up, see UsbReportSender_RequestStateResend.
+static bool isHostGone(int err) {
+    return err == -ENETDOWN || err == -ECONNRESET || err == -ENOTCONN || err == -EPIPE || err == -EHOSTUNREACH;
+}
+
 // Should we resend, or give up?
 bool UsbReportSender_ShouldGiveUp(int err, uint8_t* counter) {
     bool statusOk = err == 0;
 
     if (statusOk) {
         *counter = 0;
-        UsbReportSender_GivenUp = false;
-        return true;
-    }
-
-    if (UsbReportSender_GivenUp) {
         return true;
     }
 
     (*counter)++;
-    if (*counter > THROTTLE_MAX_RETRIES) {
-        *counter = 0;
-        UsbReportSender_GivenUp = true;
+    if (*counter > THROTTLE_MAX_RETRIES || isHostGone(err)) {
+        // Stays exhausted until a send succeeds or a host is up, so that the following reports of
+        // this kind get a single attempt each.
+        *counter = THROTTLE_MAX_RETRIES;
         return true;
     }
 
@@ -101,11 +105,17 @@ uint16_t UsbReportSender_ComputeResendDelay(uint8_t counter) {
 }
 
 static void handleUltimateFail(errno_t errorCode) {
-    // In any case, make the keyboard wake up, compare the usb reports, and possibly send them (those that are up-to-date at that time)
-    // This way, we loose some reports along the way, but at least don't produce stuck keys
-    //
-    // TODO: do this from device_state? (send all reports after any switch.
-    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
+    // The report is kept: the baseline isn't advanced, so a later pass sends the then current state.
+    // While its kind is exhausted (see UsbReportSender_ShouldGiveUp), each pass makes a single
+    // attempt and sendActiveReports doesn't trigger its trailing pass, so the kept report doesn't
+    // loop. It goes out with the next input, or:
+    // - host gone: once a host is up, see UsbReportSender_RequestStateResend.
+    // - otherwise: the link is up but doesn't take reports (e.g. USB stops polling the endpoint
+    //   without suspending). Nothing would resend the state, so if the report released a key, the
+    //   host would keep it pressed. Try again in a while.
+    if (!isHostGone(errorCode)) {
+        EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-giveup-resend");
+    }
 
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
@@ -167,6 +177,12 @@ static void clearMouseMovement(void) {
         moduleState->pointerDelta.x = 0;
         moduleState->pointerDelta.y = 0;
     }
+}
+
+static bool anyExhausted(void) {
+    return UsbSemaphore.keyboard.retries >= THROTTLE_MAX_RETRIES
+        || UsbSemaphore.controls.retries >= THROTTLE_MAX_RETRIES
+        || UsbSemaphore.mouse.retries >= THROTTLE_MAX_RETRIES;
 }
 
 static bool mouseButtonsChanged(void) {
@@ -254,18 +270,14 @@ static void sendActiveReports(bool resending) {
         usbReportsChangedByAnything = true;
     }
 
-    // If anything changed, trigger one more update to send zero reports
-    if (usbReportsChangedByAnything && !UsbReportSender_GivenUp) {
+    // If anything changed, trigger one more update to send zero reports. Not while a kind is
+    // exhausted: the pass would resend its kept report right away, see handleUltimateFail.
+    if (usbReportsChangedByAnything && !anyExhausted()) {
         EventVector_Set(EventVector_SendUsbReports);
     }
 
     if (UsbSemaphore_AnyInFlight()) {
-        // Schedule semaphore timeout. Don't spam if we given up though - consider report as delivered.
-        if (UsbReportSender_GivenUp) {
-            UsbSemaphore_ClearResendable();
-        } else {
-            EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
-        }
+        EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
     }
 }
 

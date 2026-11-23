@@ -14,10 +14,6 @@
     // GetResendThrottleDelay() is ~255 ms (1+2+4+8+16+32 + 6*32 = 1023).
     #define THROTTLE_MAX_RETRIES 12
 
-// Variables:
-
-    extern bool UsbReportSender_GivenUp;
-
 // Functions:
 
     void UsbReportSender_UpdateAndSendUsbReports(void);

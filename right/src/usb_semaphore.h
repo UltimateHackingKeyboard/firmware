@@ -76,16 +76,13 @@
     bool UsbSemaphore_RecalculateIsReady(void);
     bool UsbSemaphore_AnyInFlight(void);
 
-    // Legacy uint8 bitfield view of the per-report in-flight flags (bits = UsbReportUpdateFlags_t).
+    // Legacy uint8 bitfield - for uhk60 and for usb commands
     uint8_t UsbSemaphore_Get(void);
     void UsbSemaphore_Set(uint8_t bits);
     void UsbSemaphore_Clear(void);
 
     // Consider the reports sent to this sink delivered.
     void UsbSemaphore_ClearSink(report_sink_t sink);
-
-    // Consider all reports delivered, except HOGP ones, which stay for the stall teardown.
-    void UsbSemaphore_ClearResendable(void);
 
     // Note where a report is being sent and mark it in flight, right before handing it to the
     // transport. Before, not after: a bus reset clearing the semaphore in between would deadlock it.

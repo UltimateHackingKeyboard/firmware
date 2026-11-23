@@ -66,12 +66,6 @@ void UsbSemaphore_ClearSink(report_sink_t sink) {
     clearIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.sink == sink);
 }
 
-void UsbSemaphore_ClearResendable(void) {
-    clearIf(&UsbSemaphore.keyboard, resendsOnTimeout(&UsbSemaphore.keyboard));
-    clearIf(&UsbSemaphore.controls, resendsOnTimeout(&UsbSemaphore.controls));
-    clearIf(&UsbSemaphore.mouse, resendsOnTimeout(&UsbSemaphore.mouse));
-}
-
 void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId) {
     st->sink = sink;
     st->connectionId = connectionId;
@@ -100,7 +94,6 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     st->switchActiveReport();
     st->retries = 0;
     st->inFlight = false;
-    UsbReportSender_GivenUp = false;
     if (DEVICE_IS_MASTER) {
         EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
     }

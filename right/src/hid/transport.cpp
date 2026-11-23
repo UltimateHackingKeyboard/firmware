@@ -78,11 +78,10 @@ extern "C" void Hid_DumpTransportState(void)
         now - KeyLifeTimes.forceQueued, now - KeyLifeTimes.applied, now - KeyLifeTimes.action,
         now - KeyLifeTimes.delivered);
     c2usb_log("  inactive kb report: %s\n", Utils_GetUsbReportString(GetInactiveKeyboardReport()));
-    c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d givenUp=%d\n",
+    c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d\n",
         (int)UsbSemaphore.keyboard.inFlight, (int)UsbSemaphore.keyboard.retries, (int)UsbSemaphore.keyboard.needsResending,
         (int)UsbSemaphore.controls.inFlight, (int)UsbSemaphore.controls.retries, (int)UsbSemaphore.controls.needsResending,
-        (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending,
-        (int)UsbReportSender_GivenUp);
+        (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending);
     c2usb_log("  throttle: %u ms ago blocked=%d reasons=0x%x until=in %d ms postponed=0x%x\n",
         now - MainLifeTimes.throttleTime,
         (int)MainLifeTimes.throttleBlocked, MainLifeTimes.throttleBlockReasons,
@@ -162,7 +161,7 @@ static bool wakeUsbHostIfNeeded()
 
 // -ENETDOWN: the bus is suspended, or our wakeup is still in progress. Drop the report instead of
 // retrying it into a later resume; the current state is sent once the bus is awake, see
-// UsbReportSender_RequestStateResend. The dongle only relays reports it can't rebuild, so it retries.
+// UsbReportSender_RequestStateResend. On the dongle, UsbReportSender_ShouldGiveUp gives up on it at once.
 static errno_t dropIfBusDown(errno_t err, report_send_state_t *st)
 {
     if (DEVICE_IS_MASTER && err == -ENETDOWN) {
@@ -326,10 +325,14 @@ static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int 
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
     }
+    // Any confirmation, even a stale one, shows that the host takes reports of this kind again.
+    if (result == 0) {
+        st->retries = 0;
+    }
     // A late callback of a report the semaphore no longer waits for (cleared, timed out, or sent
     // over the other transport since) would release the wrong report.
     if (!st->inFlight || st->sink != sink) {
-        LOG_WRN("Ignoring a stale report sent callback, result %d.", result);
+        LOG_WRN("Ignoring a stale sent_cb(%d)", result);
         return;
     }
     if (result == 0) {
