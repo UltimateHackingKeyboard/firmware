@@ -333,6 +333,11 @@ static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int 
     // over the other transport since) would release the wrong report.
     if (!st->inFlight || st->sink != sink) {
         LOG_WRN("Ignoring a stale sent_cb(%d)", result);
+        // The host took a report that was given up on, so the baseline no longer matches what the
+        // host has. Send the current state.
+        if (result == 0) {
+            EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "late confirmation");
+        }
         return;
     }
     if (result == 0) {
