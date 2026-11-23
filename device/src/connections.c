@@ -170,7 +170,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
         Connections_ResetWatermarks(connectionId);
 
         if (state == ConnectionState_Disconnected) {
-            UsbSemaphore_ClearConnection(connectionId);
+            UsbSemaphore_ReleaseConnection(connectionId);
         }
 
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {

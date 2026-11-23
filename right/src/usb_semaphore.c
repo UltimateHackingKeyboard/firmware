@@ -80,23 +80,16 @@ void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, ui
     st->inFlight = true;
 }
 
-static bool clearIfSentTo(report_send_state_t* st, uint8_t connectionId) {
-    bool clear = st->inFlight && !resendsOnTimeout(st) && st->connectionId == connectionId;
-    if (clear) {
-        st->inFlight = false;
+static void releaseIfSentTo(report_send_state_t* st, uint8_t connectionId) {
+    if (st->inFlight && st->connectionId == connectionId) {
+        UsbSemaphore_Release(st);
     }
-    return clear;
 }
 
-void UsbSemaphore_ClearConnection(uint8_t connectionId) {
-    bool cleared = clearIfSentTo(&UsbSemaphore.keyboard, connectionId);
-    cleared |= clearIfSentTo(&UsbSemaphore.controls, connectionId);
-    cleared |= clearIfSentTo(&UsbSemaphore.mouse, connectionId);
-    if (cleared) {
-        // The unconfirmed reports were not released, so the current state goes out again.
-        EventVector_Set(EventVector_SendUsbReports);
-        EventVector_WakeMain();
-    }
+void UsbSemaphore_ReleaseConnection(uint8_t connectionId) {
+    releaseIfSentTo(&UsbSemaphore.keyboard, connectionId);
+    releaseIfSentTo(&UsbSemaphore.controls, connectionId);
+    releaseIfSentTo(&UsbSemaphore.mouse, connectionId);
 }
 
 void UsbSemaphore_Release(report_send_state_t* st) {
