@@ -68,7 +68,8 @@
     void UsbSemaphore_Release(report_send_state_t* st);
 
     // The report wasn't sent or delivered: resend it, or give up. Returns false if it was given up.
-    // withDelay: back off before the resend.
+    // withDelay: back off before the resend. Does nothing to a report that a confirmation
+    // released in the meantime, except for requesting a state resend.
     bool UsbSemaphore_Fail(report_send_state_t* st, errno_t result, bool withDelay);
 
     // Recompute the in-flight gate: returns false while a report is in flight within its

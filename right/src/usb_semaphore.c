@@ -4,6 +4,7 @@
 #include "usb_semaphore.h"
 #include "usb_report_sender.h"
 #include "usb_report_updater.h"
+#include "atomicity.h"
 #include "timer.h"
 #include "power_mode.h"
 #include "event_scheduler.h"
@@ -70,6 +71,11 @@ void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, ui
     st->sink = sink;
     st->connectionId = connectionId;
     st->sentTime = Timer_GetCurrentTime();
+
+    // The resend is happening. Left set, a resend pass of another kind would send this kind's
+    // active report again, which after a release is the previous state.
+    st->needsResending = false;
+
     // Last, so that a late callback of the previous send can't match the new target.
     st->inFlight = true;
 }
@@ -99,10 +105,32 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     }
 }
 
-bool UsbSemaphore_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
-    // Not released: the baseline stays, so the same report goes out again.
+// A callback can release the report at any moment, so whoever fails it has to take the flag first.
+static bool takeInFlight(report_send_state_t* st) {
+    DISABLE_IRQ();
+    bool wasInFlight = st->inFlight;
     st->inFlight = false;
-    return UsbReportSender_ResendOrGiveUp(st, result, withDelay);
+    ENABLE_IRQ();
+    return wasInFlight;
+}
+
+bool UsbSemaphore_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
+    bool pending = true;
+    if (takeInFlight(st)) {
+        // Not released: the baseline stays, so the same report goes out again.
+        pending = UsbReportSender_ResendOrGiveUp(st, result, withDelay);
+    } else if (DEVICE_IS_MASTER) {
+        // Something released or cleared the report first (a confirmation, a bus reset), so the
+        // active report is no longer the one that failed. A confirmation may have been that of
+        // an older report though, so send the current state.
+        LOG_WRN("Report resolved during a failure (%d)", result);
+        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "confirmation raced a failure");
+    } else {
+        // The dongle relays one message at a time and has no state to send: send it again.
+        LOG_WRN("Report resolved during a failure (%d)", result);
+        st->needsResending = true;
+    }
+    return pending;
 }
 
 // NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
@@ -115,8 +143,9 @@ static bool recalculateReport(report_send_state_t* st) {
         } else if (resendsOnTimeout(st)) {
             UsbSemaphore_Fail(st, -ETIMEDOUT, false);
         } else if (Timer_GetElapsedTime(&st->sentTime) >= USB_SEMAPHORE_STALL_TIMEOUT) {
-            st->inFlight = false;
-            UsbReportSender_TearDownStalledLink(st);
+            if (takeInFlight(st)) {
+                UsbReportSender_TearDownStalledLink(st);
+            }
         } else {
             blocks = true;
         }
