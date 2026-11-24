@@ -185,12 +185,7 @@ static bool anyExhausted(void) {
         || UsbSemaphore.mouse.retries >= THROTTLE_MAX_RETRIES;
 }
 
-static bool mouseButtonsChanged(void) {
-    return mouseReports[0].buttons != mouseReports[1].buttons;
-}
-
 static void sendActiveReports(bool resending) {
-    bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
     errno_t ret;
 
@@ -223,11 +218,9 @@ static void sendActiveReports(bool resending) {
                 // was not advanced, so HasChange stays true and we re-send the current state instead
                 // of losing it (the stuck-key bug).
                 if (ret != 0) {
-                    UsbSemaphore.keyboard.inFlight = false;
-                    UsbReportSender_ResendOrGiveUp(&UsbSemaphore.keyboard, ret, true);
+                    UsbSemaphore_Fail(&UsbSemaphore.keyboard, ret, true);
                 }
             }
-            usbReportsChangedByAction = true;
             usbReportsChangedByAnything = true;
             lastBasicReportTime = Timer_GetCurrentTime();
             if (!resending && ret == 0) {
@@ -239,23 +232,18 @@ static void sendActiveReports(bool resending) {
     if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending)) {
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
-            UsbSemaphore.controls.inFlight = false;
-            UsbReportSender_ResendOrGiveUp(&UsbSemaphore.controls, ret, true);
+            UsbSemaphore_Fail(&UsbSemaphore.controls, ret, true);
         }
         if (!resending && ret == 0) {
             UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
         }
-        usbReportsChangedByAction = true;
         usbReportsChangedByAnything = true;
     }
 
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
-        bool usbMouseButtonsChanged = mouseButtonsChanged();
-
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
-            UsbSemaphore.mouse.inFlight = false;
-            if(!UsbReportSender_ResendOrGiveUp(&UsbSemaphore.mouse, ret, true)) {
+            if (!UsbSemaphore_Fail(&UsbSemaphore.mouse, ret, true)) {
                 clearMouseMovement(); // Don't make cursor jump if we have connection issues.
             }
         }
@@ -266,7 +254,6 @@ static void sendActiveReports(bool resending) {
             UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
             UsbReportUpdater_LastMouseActivityTime = Timer_GetCurrentTime();
         }
-        usbReportsChangedByAction |= usbMouseButtonsChanged;
         usbReportsChangedByAnything = true;
     }
 

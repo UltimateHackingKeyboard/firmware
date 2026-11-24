@@ -99,10 +99,10 @@ void UsbSemaphore_Release(report_send_state_t* st) {
     }
 }
 
-void UsbSemaphore_Fail(report_send_state_t* st, errno_t result) {
+bool UsbSemaphore_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
     // Not released: the baseline stays, so the same report goes out again.
     st->inFlight = false;
-    UsbReportSender_ResendOrGiveUp(st, result, true);
+    return UsbReportSender_ResendOrGiveUp(st, result, withDelay);
 }
 
 // NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
@@ -113,8 +113,7 @@ static bool recalculateReport(report_send_state_t* st) {
         if (Timer_GetElapsedTime(&st->sentTime) < USB_SEMAPHORE_TIMEOUT) {
             blocks = true;
         } else if (resendsOnTimeout(st)) {
-            st->inFlight = false;
-            UsbReportSender_ResendOrGiveUp(st, -ETIMEDOUT, false);
+            UsbSemaphore_Fail(st, -ETIMEDOUT, false);
         } else if (Timer_GetElapsedTime(&st->sentTime) >= USB_SEMAPHORE_STALL_TIMEOUT) {
             st->inFlight = false;
             UsbReportSender_TearDownStalledLink(st);

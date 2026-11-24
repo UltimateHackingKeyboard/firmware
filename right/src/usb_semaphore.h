@@ -55,8 +55,8 @@
 
 // Variables:
 
-    // Exposed so the every-cycle report-construction gate can read needsResending / write
-    // inFlight as direct field accesses, without a function call on the idle path.
+    // Exposed so the every-cycle report-construction gate can read needsResending as a direct
+    // field access, without a function call on the idle path.
     extern report_send_states_t UsbSemaphore;
 
 // Functions:
@@ -67,8 +67,9 @@
     // for USB/BLE the actual delivery confirmation is a separate, later event.
     void UsbSemaphore_Release(report_send_state_t* st);
 
-    // The transport reports that the report wasn't delivered: resend it, or give up.
-    void UsbSemaphore_Fail(report_send_state_t* st, errno_t result);
+    // The report wasn't sent or delivered: resend it, or give up. Returns false if it was given up.
+    // withDelay: back off before the resend.
+    bool UsbSemaphore_Fail(report_send_state_t* st, errno_t result, bool withDelay);
 
     // Recompute the in-flight gate: returns false while a report is in flight within its
     // confirmation grace window (caller should not send), and re-arms resends for any report

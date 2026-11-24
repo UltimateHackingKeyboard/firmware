@@ -15,6 +15,5 @@
 
     void UsbState_SetUsbTransportUp(bool up);
     void UsbState_SetHostSuspended(bool suspended);
-    void UsbState_Delivered(void);
 
 #endif
