@@ -55,82 +55,53 @@ static bool resendsOnTimeout(const report_send_state_t* st) {
     return st->sink != ReportSink_BleHid;
 }
 
-static void clearIf(report_send_state_t* st, bool clear) {
-    if (clear) {
-        st->inFlight = false;
-    }
-}
-
-void UsbSemaphore_ClearSink(report_sink_t sink) {
-    clearIf(&UsbSemaphore.keyboard, UsbSemaphore.keyboard.sink == sink);
-    clearIf(&UsbSemaphore.controls, UsbSemaphore.controls.sink == sink);
-    clearIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.sink == sink);
-}
-
-void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId) {
+void UsbSemaphore_Take(report_send_state_t* st, report_sink_t sink, uint8_t connectionId) {
     st->sink = sink;
     st->connectionId = connectionId;
     st->sentTime = Timer_GetCurrentTime();
-
-    // The resend is happening. Left set, a resend pass of another kind would send this kind's
-    // active report again, which after a release is the previous state.
-    st->needsResending = false;
-
     // Last, so that a late callback of the previous send can't match the new target.
     st->inFlight = true;
 }
 
-static void releaseIfSentTo(report_send_state_t* st, uint8_t connectionId) {
-    if (st->inFlight && st->connectionId == connectionId) {
-        UsbSemaphore_Release(st);
-    }
-}
-
-void UsbSemaphore_ReleaseConnection(uint8_t connectionId) {
-    releaseIfSentTo(&UsbSemaphore.keyboard, connectionId);
-    releaseIfSentTo(&UsbSemaphore.controls, connectionId);
-    releaseIfSentTo(&UsbSemaphore.mouse, connectionId);
-}
-
-void UsbSemaphore_Release(report_send_state_t* st) {
-    if (st == &UsbSemaphore.keyboard) {
-        DEBUG_KEY_LIFE(delivered);
-    }
-
-    st->switchActiveReport();
-    st->retries = 0;
-    st->inFlight = false;
-    if (DEVICE_IS_MASTER) {
-        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
-    }
-}
-
-// A callback can release the report at any moment, so whoever fails it has to take the flag first.
-static bool takeInFlight(report_send_state_t* st) {
+bool UsbSemaphore_Release(report_send_state_t* st, semaphore_release_t how) {
+    // In one step, so that a report is released only once, whoever gets here first.
     DISABLE_IRQ();
     bool wasInFlight = st->inFlight;
+    bool delivered = wasInFlight && how == SemaphoreRelease_Delivered;
     st->inFlight = false;
+    if (delivered) {
+        st->switchActiveReport();
+        st->retries = 0;
+    }
     ENABLE_IRQ();
+
+    if (delivered) {
+        if (st == &UsbSemaphore.keyboard) {
+            DEBUG_KEY_LIFE(delivered);
+        }
+        if (DEVICE_IS_MASTER) {
+            EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
+        }
+    }
     return wasInFlight;
 }
 
-bool UsbSemaphore_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
-    bool pending = true;
-    if (takeInFlight(st)) {
-        // Not released: the baseline stays, so the same report goes out again.
-        pending = UsbReportSender_ResendOrGiveUp(st, result, withDelay);
-    } else if (DEVICE_IS_MASTER) {
-        // Something released or cleared the report first (a confirmation, a bus reset), so the
-        // active report is no longer the one that failed. A confirmation may have been that of
-        // an older report though, so send the current state.
-        LOG_WRN("Report resolved during a failure (%d)", result);
-        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "confirmation raced a failure");
-    } else {
-        // The dongle relays one message at a time and has no state to send: send it again.
-        LOG_WRN("Report resolved during a failure (%d)", result);
-        st->needsResending = true;
+static void releaseIf(report_send_state_t* st, bool condition, semaphore_release_t how) {
+    if (condition) {
+        UsbSemaphore_Release(st, how);
     }
-    return pending;
+}
+
+void UsbSemaphore_ClearSink(report_sink_t sink) {
+    releaseIf(&UsbSemaphore.keyboard, UsbSemaphore.keyboard.sink == sink, SemaphoreRelease_Undelivered);
+    releaseIf(&UsbSemaphore.controls, UsbSemaphore.controls.sink == sink, SemaphoreRelease_Undelivered);
+    releaseIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.sink == sink, SemaphoreRelease_Undelivered);
+}
+
+void UsbSemaphore_ReleaseConnection(uint8_t connectionId) {
+    releaseIf(&UsbSemaphore.keyboard, UsbSemaphore.keyboard.connectionId == connectionId, SemaphoreRelease_Delivered);
+    releaseIf(&UsbSemaphore.controls, UsbSemaphore.controls.connectionId == connectionId, SemaphoreRelease_Delivered);
+    releaseIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.connectionId == connectionId, SemaphoreRelease_Delivered);
 }
 
 // NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
@@ -141,9 +112,9 @@ static bool recalculateReport(report_send_state_t* st) {
         if (Timer_GetElapsedTime(&st->sentTime) < USB_SEMAPHORE_TIMEOUT) {
             blocks = true;
         } else if (resendsOnTimeout(st)) {
-            UsbSemaphore_Fail(st, -ETIMEDOUT, false);
+            UsbReportSender_Fail(st, -ETIMEDOUT, false);
         } else if (Timer_GetElapsedTime(&st->sentTime) >= USB_SEMAPHORE_STALL_TIMEOUT) {
-            if (takeInFlight(st)) {
+            if (UsbSemaphore_Release(st, SemaphoreRelease_Undelivered)) {
                 UsbReportSender_TearDownStalledLink(st);
             }
         } else {

@@ -151,7 +151,7 @@ void UsbReportSender_TearDownStalledLink(report_send_state_t* st) {
     EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "stalled-link");
 }
 
-bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay) {
+static bool resendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay) {
     if (!UsbReportSender_ShouldGiveUp(ret, &st->retries)) {
         st->needsResending = true;
         // The semaphore timeout path already waited out its own delay, so resend now.
@@ -165,6 +165,27 @@ bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool w
         st->needsResending = false;
         return false;
     }
+}
+
+// The report wasn't sent or delivered: resend it, or give up. Returns false if it was given up.
+// withDelay: back off before the resend.
+bool UsbReportSender_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
+    bool pending = true;
+    if (UsbSemaphore_Release(st, SemaphoreRelease_Undelivered)) {
+        // Not released: the baseline stays, so the same report goes out again.
+        pending = resendOrGiveUp(st, result, withDelay);
+    } else if (DEVICE_IS_MASTER) {
+        // Something released or cleared the report first (a confirmation, a bus reset), so the
+        // active report is no longer the one that failed. A confirmation may have been that of
+        // an older report though, so send the current state.
+        LOG_WRN("Report resolved during a failure (%d)", result);
+        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "confirmation raced a failure");
+    } else {
+        // The dongle relays one message at a time and has no state to send: send it again.
+        LOG_WRN("Report resolved during a failure (%d)", result);
+        st->needsResending = true;
+    }
+    return pending;
 }
 
 static void clearMouseMovement(void) {
@@ -208,7 +229,11 @@ static void sendActiveReports(bool resending) {
                 //just switch reports without sending the report
                 UsbReportUpdater_SwitchActiveKeyboardReport();
             } else {
-                // Hid_SendKeyboardReport marks the report in flight (UsbSemaphore_NoteSendTarget).
+                // The resend is happening. Left set, a resend pass of another kind would send
+                // this kind's active report again, which after a release is the previous state.
+                UsbSemaphore.keyboard.needsResending = false;
+
+                // Hid_SendKeyboardReport marks the report in flight (UsbSemaphore_Take).
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
                 // On success the report is accepted by the transport, but NOT yet confirmed
                 // delivered. We advance the baseline (switchActiveKeyboardReport) only once
@@ -218,7 +243,7 @@ static void sendActiveReports(bool resending) {
                 // was not advanced, so HasChange stays true and we re-send the current state instead
                 // of losing it (the stuck-key bug).
                 if (ret != 0) {
-                    UsbSemaphore_Fail(&UsbSemaphore.keyboard, ret, true);
+                    UsbReportSender_Fail(&UsbSemaphore.keyboard, ret, true);
                 }
             }
             usbReportsChangedByAnything = true;
@@ -230,9 +255,10 @@ static void sendActiveReports(bool resending) {
     }
 
     if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending)) {
+        UsbSemaphore.controls.needsResending = false;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
-            UsbSemaphore_Fail(&UsbSemaphore.controls, ret, true);
+            UsbReportSender_Fail(&UsbSemaphore.controls, ret, true);
         }
         if (!resending && ret == 0) {
             UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
@@ -241,9 +267,10 @@ static void sendActiveReports(bool resending) {
     }
 
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
+        UsbSemaphore.mouse.needsResending = false;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
-            if (!UsbSemaphore_Fail(&UsbSemaphore.mouse, ret, true)) {
+            if (!UsbReportSender_Fail(&UsbSemaphore.mouse, ret, true)) {
                 clearMouseMovement(); // Don't make cursor jump if we have connection issues.
             }
         }

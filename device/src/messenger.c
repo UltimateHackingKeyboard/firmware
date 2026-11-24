@@ -238,7 +238,7 @@ static void sendDongleReportUntilDone(uint8_t propertyId, const uint8_t* message
             k_sem_reset(&dongleUsbSem);
             errno_t ret = sendDongleReport(propertyId, message);
             if (ret != 0) {
-                UsbSemaphore_Fail(st, ret, true);
+                UsbReportSender_Fail(st, ret, true);
             }
         }
         bool ready = UsbSemaphore_RecalculateIsReady();

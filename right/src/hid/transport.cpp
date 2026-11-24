@@ -165,7 +165,7 @@ static bool wakeUsbHostIfNeeded()
 static errno_t dropIfBusDown(errno_t err, report_send_state_t *st)
 {
     if (DEVICE_IS_MASTER && err == -ENETDOWN) {
-        UsbSemaphore_Release(st);
+        UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
         return 0;
     }
     return err;
@@ -177,7 +177,7 @@ static errno_t sendUsb(hid::session *session, std::span<const uint8_t> payload, 
     if (session) {
         if (mayWakeHost && wakeUsbHostIfNeeded()) {
             LOG_INF("USB host is suspended; waking it, dropping report.");
-            UsbSemaphore_Release(st);
+            UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
             err = 0;
         } else {
             err = dropIfBusDown(session->send_report(payload).to_int(), st);
@@ -252,7 +252,7 @@ static void noteSendTarget(report_send_state_t *st, report_sink_t sink)
 #else
     uint8_t connectionId = 0;
 #endif
-    UsbSemaphore_NoteSendTarget(st, sink, connectionId);
+    UsbSemaphore_Take(st, sink, connectionId);
 }
 
 #if DEVICE_IS_UHK80_RIGHT
@@ -271,7 +271,7 @@ static errno_t sendToDongle(report_send_state_t *st, std::span<const uint8_t> ra
     if (err != 0) {
         LOG_WRN("Failed to send %s report to dongle: %d", isKeyboard ? "keyboard" : isMouse ? "mouse" : "controls", err);
     } else {
-        UsbSemaphore_Release(st);
+        UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
     }
     return err;
 }
@@ -384,10 +384,10 @@ static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int 
         if (sink == ReportSink_TestSuite && st == &UsbSemaphore.keyboard) {
             TestHooks_CaptureReport(ActiveKeyboardReport);
         }
-        UsbSemaphore_Release(st);
+        UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
         UsbScheduler_ReportDelivered(sink);
     } else {
-        UsbSemaphore_Fail(st, result, true);
+        UsbReportSender_Fail(st, result, true);
     }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
