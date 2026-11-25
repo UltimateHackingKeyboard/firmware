@@ -292,7 +292,7 @@ static macro_variable_t module(parser_context_t* ctx, set_command_action_t actio
         ASSIGN_CUSTOM(int32_t, intVar, Cfg.TouchpadDragStyle, ConsumeTouchpadDragStyle(ctx));
     }
     else if (ConsumeToken(ctx, "doubleTapAndHold") && moduleId == ModuleId_TouchpadRight) {
-        ConsumeUntilDot(ctx);
+        ConsumeOneDot(ctx);
         if (ConsumeToken(ctx, "timeout")) {
             DEFINE_INT_LIMITS(0, 65535);
             ASSIGN_INT(Cfg.TouchpadDoubleTapAndHoldTimeout);
