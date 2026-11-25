@@ -4,7 +4,34 @@
 // Includes:
 
     #include "device.h"
+    #include "stdbool.h"
     #include "stdint.h"
+    #include "timer.h"
+
+// Macros:
+
+    #define WATCH_LOG_INTERVAL_MS 1000
+
+    // Limits a log statement to one per WATCH_LOG_INTERVAL_MS, per call site.
+    #define WATCH(...) \
+        do { \
+            static bool watchStarted = false; \
+            static uint32_t watchLastTime = 0; \
+            static uint32_t watchSuppressed = 0; \
+            uint32_t watchNow = Timer_GetCurrentTime(); \
+            if (!watchStarted || watchNow - watchLastTime >= WATCH_LOG_INTERVAL_MS) { \
+                bool watchIsRecent = watchNow - watchLastTime < 2 * WATCH_LOG_INTERVAL_MS; \
+                watchStarted = true; \
+                watchLastTime = watchNow; \
+                __VA_ARGS__; \
+                if (watchSuppressed > 0 && watchIsRecent) { \
+                    LogU("(%u similar messages suppressed)\n", (unsigned int)watchSuppressed); \
+                } \
+                watchSuppressed = 0; \
+            } else { \
+                watchSuppressed++; \
+            } \
+        } while (0)
 
 // Variables:
 

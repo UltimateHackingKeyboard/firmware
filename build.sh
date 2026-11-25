@@ -173,6 +173,8 @@ function dealiasDeviceMcux() {
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
             DEVICE_ELF="uhk-60-right.elf"
+            DEVICE_CHIP="MK22FN512xxx12"
+            FLASH_IMAGE="$BUILD_DIR/uhk-60-right.hex"
             USBDEVICEARG="--vid=0x37a8 --pid=1"
             ;;
         uhk-60v2-right|rightv2|right)
@@ -181,6 +183,8 @@ function dealiasDeviceMcux() {
             BUILD_DIR="right/build/$VARIANT"
             DEVICE_DIR="right"
             DEVICE_ELF="uhk-60-right.elf"
+            DEVICE_CHIP="MK22FN512xxx12"
+            FLASH_IMAGE="$BUILD_DIR/uhk-60-right.hex"
             USBDEVICEARG="--vid=0x37a8 --pid=3"
             ;;
         trackpoint|trackball|keycluster|left)
@@ -188,7 +192,15 @@ function dealiasDeviceMcux() {
             VARIANT="release"
             BUILD_DIR="$DEVICE/build/$VARIANT"
             DEVICE_DIR="$DEVICE"
-            DEVICE_ELF="uhk-$DEVICE.elf"
+            if [ "$DEVICE" == "left" ]; then
+                IMAGE_NAME="uhk-60-left"
+            else
+                IMAGE_NAME="uhk-$DEVICE"
+            fi
+            DEVICE_ELF="$IMAGE_NAME.elf"
+            DEVICE_CHIP="MKL03Z32xxx4"
+            FLASH_IMAGE="$BUILD_DIR/$IMAGE_NAME.bin"
+            FLASH_ADDRESS="0x0"
             DEVICEARG="-SelectEmuBySN $DEVICEID_UHK_MODULE"
             ;;
         *)
@@ -273,6 +285,29 @@ function setFallbackArmGccEnv() {
     fi
 }
 
+function flashMcux() {
+    if [ ! -f "$FLASH_IMAGE" ]; then
+        echo "$FLASH_IMAGE not found, build it first!"
+        exit 1
+    fi
+
+    local script=`mktemp`
+    cat > "$script" << EOF
+connect
+loadfile $FLASH_IMAGE $FLASH_ADDRESS
+RSetType 2
+r
+qc
+EOF
+
+    mutex lock
+    JLinkExe -ExitOnError 1 -if SWD -speed 4000 -device $DEVICE_CHIP -autoconnect 1 $DEVICEARG -CommanderScript "$script"
+    local flashStatus=$?
+    mutex unlock
+    rm -f "$script"
+    exitOnFail $flashStatus
+}
+
 function performMcuxAction() {
     DEVICE=$1
     ACTION=$2
@@ -294,10 +329,7 @@ function performMcuxAction() {
             ;;
 
         flash)
-            mutex lock
-            JLinkExe -if SWD -speed 4000 -device MKL03Z32xxx4 -autoconnect 1 $DEVICEARG -CommanderScript "scripts/flash-$DEVICE.jlink"
-            mutex unlock
-            exitOnFail $?
+            flashMcux
             ;;
         flashUsb)
             mutex lock

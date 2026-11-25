@@ -13,9 +13,10 @@ void controls_app::stop(hid::session &sess)
     return session_.reset();
 }
 
-void controls_session::report_sent(const std::span<const uint8_t> &data)
+void controls_session::send_report_callback(
+    [[maybe_unused]] hid::report::selector select, c2usb::result result)
 {
-    controls_report_sent_callback(*this);
+    controls_report_sent_callback(*this, result.to_int());
 }
 
 std::span<const uint8_t> controls_session::get_report(

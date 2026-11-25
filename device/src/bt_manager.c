@@ -27,7 +27,7 @@ LOG_MODULE_DECLARE(Bt);
 
 #define BT_SHORT_RETRY_DELAY 1000
 
-bool BtManager_Restarting = false;
+bool BtManager_Stopped = false;
 
 static void bt_ready(int err)
 {
@@ -61,6 +61,8 @@ void BtManager_StartBt() {
     BT_TRACE_AND_ASSERT("bm2");
     LOG_INF("Starting bluetooth services.");
 
+    BtManager_Stopped = false;
+
     if (!Cfg.Bt_Enabled) {
         return;
     }
@@ -74,6 +76,8 @@ void BtManager_StopBt() {
     k_sleep(K_MSEC(10));
 
     LOG_INF("OOB: Stopping bluetooth services.");
+
+    BtManager_Stopped = true;
 
     EventScheduler_Unschedule(EventSchedulerEvent_BtStartScanningAndAdvertising);
 
@@ -236,7 +240,6 @@ void BtManager_RestartBt() {
     BT_TRACE_AND_ASSERT("bm6");
     LOG_INF("Going to reset bluetooth stack");
 
-    BtManager_Restarting = true;
     int err;
 
     BtManager_StopBt();
@@ -268,8 +271,6 @@ void BtManager_RestartBt() {
     Settings_Reload();
 
     BtManager_StartBt();
-
-    BtManager_Restarting = false;
 
     LOG_INF("Bluetooth subsystem restart finished");
 }

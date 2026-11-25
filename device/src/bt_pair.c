@@ -134,6 +134,7 @@ static void deleteBond(const struct bt_bond_info *info) {
     if (BtAddrEq(&Peers[PeerIdRight].addr, &info->addr)) {
         settings_delete("uhk/addr/right");
     }
+    BtConn_SetBondBroken(&info->addr, false);
 
     // Get the connection object if the device is currently connected
     conn = bt_conn_lookup_addr_le(BT_ID_DEFAULT, &info->addr);

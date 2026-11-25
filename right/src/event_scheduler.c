@@ -12,6 +12,7 @@
 #include "peripherals/merge_sensor.h"
 #include "power_mode.h"
 #include "usb_report_updater.h"
+#include "usb_report_sender.h"
 #include "oneshot.h"
 #include "trace.h"
 
@@ -193,10 +194,6 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_MouseController:
             EventVector_Set(EventVector_MouseController);
             break;
-        case EventSchedulerEvent_ReenableUart:
-            UartBridge_Enable();
-            UartModules_Enable();
-            break;
         case EventSchedulerEvent_ModuleConnectionStatusUpdate:
             UhkModuleSlaveDriver_UpdateConnectionStatus();
             break;
@@ -249,6 +246,12 @@ static void processEvt(event_scheduler_event_t evt)
         case EventSchedulerEvent_RollTargetEllipsis:
             WIDGET_REFRESH(&TargetWidget);
             break;
+        case EventSchedulerEvent_LockHintsLeftHalf:
+            LockHints_UpdateLeftHalfHint();
+            break;
+        case EventSchedulerEvent_NotificationForceAwakeEnd:
+            NotificationScreen_EndForceAwake();
+            break;
         case EventSchedulerEvent_OneShotTimeout:
             OneShot_OnTimeout();
             break;
@@ -259,6 +262,9 @@ static void processEvt(event_scheduler_event_t evt)
             break;
         case EventSchedulerEvent_SendUsbReports:
             EventVector_Set(EventVector_SendUsbReports);
+            break;
+        case EventSchedulerEvent_ResendUsbState:
+            UsbReportSender_RequestStateResend();
             break;
         case EventSchedulerEvent_CheckBleVsUart:
 #if DEVICE_IS_UHK80_RIGHT || DEVICE_IS_UHK80_LEFT

@@ -27,7 +27,12 @@ void Reboot(bool rebootPeripherals) {
     Trace_Printc("Rebooting...");
 #ifdef __ZEPHYR__
     printk("Rebooting...");
-    k_sleep (K_MSEC(100)); //let it flush logs
+    // A reboot command from the other half over the uart bridge is handled in the bridge's rx
+    // interrupt, where sleeping asserts.
+    bool canSleep = !k_is_in_isr();
+    if (canSleep) {
+        k_sleep (K_MSEC(100)); //let it flush logs
+    }
     if (rebootPeripherals) {
         if (DEVICE_IS_UHK80_RIGHT) {
             Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_Reboot, NULL, 0);
@@ -45,7 +50,9 @@ void Reboot(bool rebootPeripherals) {
             Messenger_Send2(DeviceId_Uhk80_Right, MessageId_Command, MessengerCommand_Reboot, NULL, 0);
         }
 
-        k_sleep(K_SECONDS(1));
+        if (canSleep) {
+            k_sleep(K_SECONDS(1));
+        }
     }
 
     sys_reboot(SYS_REBOOT_COLD);

@@ -31,7 +31,6 @@
         EventSchedulerEvent_AgentLed,
         EventSchedulerEvent_UpdateLedSleepModes,
         EventSchedulerEvent_MouseController,
-        EventSchedulerEvent_ReenableUart,
         EventSchedulerEvent_UpdateMergeSensor,
         EventSchedulerEvent_PowerModeUpdate,
         EventSchedulerEvent_EnterDeepSleep,
@@ -49,10 +48,13 @@
         EventSchedulerEvent_OneShotTimeout,
         EventSchedulerEvent_KickHid,
         EventSchedulerEvent_SendUsbReports,
+        EventSchedulerEvent_ResendUsbState,
         EventSchedulerEvent_CheckBleVsUart,
         EventSchedulerEvent_ConnectionsUpdateState,
         EventSchedulerEvent_RollTargetEllipsis,
         EventSchedulerEvent_CheckConnectionSecurity,
+        EventSchedulerEvent_LockHintsLeftHalf,
+        EventSchedulerEvent_NotificationForceAwakeEnd,
         EventSchedulerEvent_Count
     } event_scheduler_event_t;
 

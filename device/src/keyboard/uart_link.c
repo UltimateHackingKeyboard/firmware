@@ -6,14 +6,6 @@
 #include "config_manager.h"
 #include "shared/uart_parser.h"
 
-#define UART_RESET_DELAY 10
-
-void UartLink_Reset(uart_link_t *uartState) {
-    // This will probably not reset uart, but at least will give main thread some time to run
-    uart_rx_disable(uartState->device);
-    EventScheduler_Schedule(k_uptime_get() + UART_RESET_DELAY, EventSchedulerEvent_ReenableUart, "reenable uart");
-}
-
 static void uart_callback(const struct device *dev, struct uart_event *evt, void *user_data) {
     uart_link_t *uartState = (uart_link_t *)user_data;
     int err;
@@ -26,6 +18,7 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
     case UART_TX_ABORTED:
         // TODO: is this needed?
         // uart_tx(uartState->device, uartState->txBuffer, uartState->txPosition, UART_TIMEOUT);
+        uartState->txAbortedCount++;
         LogU("Tx aborted. Please report this!\n");
         break;
 
@@ -35,13 +28,27 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_BUF_REQUEST:
     {
-        uartState->rxbuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
+        // No buffer while RX is stopping: when an error and a buffer switch reach the driver in one
+        // interrupt, it asks for the next buffer after it has started the stop, and handing one over
+        // re-enables the ENDRX->STARTRX short. The stop then becomes a buffer switch - no RXTO, no
+        // UART_RX_DISABLED, and uart_rx_enable keeps returning -EBUSY. Without a buffer it completes.
+        bool stopping = uartState->rxStopPending || uartState->rxHeld;
+        if (!stopping) {
+            uint8_t *nextBuf = (uartState->rxbuf == uartState->rxbuf1) ? uartState->rxbuf2 : uartState->rxbuf1;
 
-        err = uart_rx_buf_rsp(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH);
-        if (err != 0) {
-            LogU("Could not provide new buffer because %i\n", err);
+            err = uart_rx_buf_rsp(uartState->device, nextBuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH);
+
+            if (err == 0) {
+                uartState->rxbuf = nextBuf;
+            } else if (err == -EACCES) {
+                // Not fatal. It went down in the meantime and so the buffer is no longer wanted.
+                BridgeDbg("BRIDGE buf_rsp declined, rx down\n");
+            } else {
+                LogU("Uart: buffer request rejected because %i\n", err);
+                __ASSERT(false, "Uart: buffer request rejected because %i\n", err);
+            }
         }
-        __ASSERT(err == 0, "Failed to provide new buffer");
+
         break;
     }
 
@@ -50,6 +57,8 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
 
     case UART_RX_DISABLED:
         uartState->enabled = false;
+        uartState->rxDisabledCount++;
+        uartState->rxStopPending = false;
         // Every RX teardown lands here, including driver-initiated ones (framing/break
         // errors are routine when RX is enabled mid-byte after a GPIO wake). Let the owner
         // re-arm RX if it wants it up - otherwise the link stays deaf.
@@ -62,6 +71,25 @@ static void uart_callback(const struct device *dev, struct uart_event *evt, void
         // reason: 1=overrun 2=parity 4=framing 8=break (uart.h uart_rx_stop_reason)
         BridgeDbg("BRIDGE RX_STOPPED reason %d\n", evt->data.rx_stop.reason);
         uartState->enabled = false;
+        uartState->rxStopPending = true;
+        // After an error the driver (NCS 3.3.0) stops RX on its own, but neither flushes the
+        // FIFO nor refuses uart_rx_enable until that stop completes. Re-armed in between, it
+        // books the stopped buffer against the new one, and its TIMER byte counting stays off
+        // until the UARTE is power cycled. Stopping through the API restores both: the FIFO is
+        // flushed and counted, and uart_rx_enable returns -EBUSY until UART_RX_DISABLED.
+        uart_rx_disable(dev);
+        {
+            uint8_t reason = evt->data.rx_stop.reason;
+            if (reason & UART_ERROR_OVERRUN) {
+                uartState->rxStoppedOverrun++;
+            } else if (reason & UART_ERROR_FRAMING) {
+                uartState->rxStoppedFraming++;
+            } else if (reason & UART_BREAK) {
+                uartState->rxStoppedBreak++;
+            } else {
+                uartState->rxStoppedOther++;
+            }
+        }
         break;
     }
 }
@@ -72,6 +100,7 @@ void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*rece
     uartState->userArg = userArg;
 
     k_sem_init(&uartState->txControlBusy, UART_LINK_SLOTS, UART_LINK_SLOTS);
+    k_mutex_init(&uartState->armLock);
 
     uartState->device = dev;
 
@@ -79,33 +108,74 @@ void UartLink_Init(uart_link_t *uartState, const struct device* dev, void (*rece
 }
 
 
+// The flag goes up before the call: the driver can stop and finalize RX inside uart_rx_enable
+// already (an rx error pending when it enables its interrupts), and the UART_RX_STOPPED and
+// UART_RX_DISABLED callbacks that lower the flag must not be overwritten afterwards. A flag left
+// up while the driver is down skips every re-arm, and RX stays deaf for good.
+static void armRx(uart_link_t *uartState) {
+    bool stopWasPending = uartState->rxStopPending;
+    uartState->enabled = true;
+    int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_TRANSPORT_TIMEOUT_US);
+    if (err == 0) {
+        if (stopWasPending) {
+            uartState->rxArmedMidStop++;
+            uartState->rxStopPending = false;
+        }
+    } else {
+        uartState->enabled = false;
+        if (err == -EBUSY) {
+            // The previous uart_rx_disable is still draining, or RX is already up. Harmless
+            // either way - the pending UART_RX_DISABLED event re-arms via the onRxDisabled hook.
+            BridgeDbg("UART RX enable deferred (-EBUSY)\n");
+        } else {
+            LogU("Failed to enable UART RX because %d\n", err);
+        }
+    }
+}
+
 void UartLink_Enable(uart_link_t *uartState) {
     if (uartState == NULL || uartState->enabled || uartState->device == NULL) {
         return;
     }
 #if UART_LOWPOWER
-    // While RX is intentionally slept, suppress re-enables (including the ReenableUart
-    // event our own uart_rx_disable schedules). UartLink_WakeRx re-enables explicitly.
+    // While RX is intentionally slept, suppress re-enables (including the onRxDisabled
+    // re-arm our own uart_rx_disable triggers). UartLink_WakeRx re-enables explicitly.
     if (uartState->rxWakePin.port != NULL && uartState->lpState != UartLp_Active) {
         return;
     }
 #endif
-    int err = uart_rx_enable(uartState->device, uartState->rxbuf, UART_MAX_SERIALIZED_MESSAGE_LENGTH, UART_BRIDGE_TIMEOUT);
-    if (err == 0) {
-        uartState->enabled = true;
-    } else if (err == -EBUSY) {
-        // The previous uart_rx_disable is still draining, or RX is already up. Harmless
-        // either way - the pending UART_RX_DISABLED event re-arms via the onRxDisabled hook.
-        BridgeDbg("UART RX enable deferred (-EBUSY)\n");
+    // The flag is checked again under the lock: a caller that queued behind another one's arm
+    // would get -EBUSY and lower the flag of a running RX.
+    bool locked = k_mutex_lock(&uartState->armLock, K_MSEC(UART_FOREVER_TIMEOUT)) == 0;
+    if (!uartState->rxHeld && !uartState->enabled) {
+        armRx(uartState);
+    }
+    if (locked) {
+        k_mutex_unlock(&uartState->armLock);
+    }
+}
+
+// Keeps RX down while the owner power cycles the UARTE: suspending it with RX armed asserts in
+// the driver, and senders on other threads arm RX before they wait for the TX slot. armLock
+// makes UartLink_Enable's rxHeld check and arm one step; should it ever get stuck, both go on
+// without it after UART_FOREVER_TIMEOUT rather than freeze the keyboard.
+void UartLink_HoldRx(uart_link_t *uartState, bool hold) {
+    bool locked = k_mutex_lock(&uartState->armLock, K_MSEC(UART_FOREVER_TIMEOUT)) == 0;
+    uartState->rxHeld = hold;
+    if (hold) {
+        uart_rx_disable(uartState->device);
     } else {
-        LogU("Failed to enable UART RX because %d\n", err);
+        // RX stayed down through the hold whatever the flag says: no UART_RX_DISABLED comes when the
+        // driver had no buffer left to stop (uart_rx_disable returns -EFAULT), and a flag left up
+        // would skip the re-arm that follows.
+        uartState->enabled = false;
+    }
+    if (locked) {
+        k_mutex_unlock(&uartState->armLock);
     }
 }
 
 #if UART_LOWPOWER
-
-// One byte-time on the wire at 115200-8N1 (~87us), rounded up.
-#define UART_BYTE_TIME_US 90
 
 // Edge-sense ISR: an incoming start bit on the slept RXD pin. Deliberately minimal - it
 // only kicks the owning thread and touches no lpState/gpio, so it cannot race
@@ -245,9 +315,10 @@ void UartLink_SendWakeByte(uart_link_t *uartState) {
         return;
     }
 
-    uint8_t wake = UartControlByte_Wake;
+    // uart_tx reads its buffer by DMA after returning; a stack byte doesn't outlive the call.
+    static uint8_t wake = UartControlByte_Wake;
     UartLink_LockBusy(uartState);
-    int err = uart_tx(uartState->device, &wake, 1, UART_BRIDGE_TIMEOUT);
+    int err = uart_tx(uartState->device, &wake, 1, UART_TRANSPORT_TIMEOUT_US);
     if (err != 0) {
         k_sem_give(&uartState->txControlBusy);
     }
@@ -282,7 +353,7 @@ void UartLink_LockBusy(uart_link_t *uartState) {
 
 
 int UartLink_Send(uart_link_t *uartState, uint8_t* data, uint16_t len) {
-    return uart_tx(uartState->device, data, len, UART_BRIDGE_TIMEOUT);
+    return uart_tx(uartState->device, data, len, UART_TRANSPORT_TIMEOUT_US);
 }
 
 

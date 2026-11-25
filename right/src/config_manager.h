@@ -28,6 +28,8 @@
         caret_configuration_t NavigationModes[NavigationMode_RemappableCount];
         navigation_mode_t TouchpadPinchZoomMode;
         uint16_t HoldContinuationTimeout;
+        touchpad_drag_style_t TouchpadDragStyle;
+        uint16_t TouchpadDoubleTapAndHoldTimeout;
 
         // secondary roles
         secondary_role_strategy_t SecondaryRoles_Strategy;
@@ -118,7 +120,7 @@
 
 // Functions:
 
-    void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks);
+    void ConfigManager_ResetConfiguration(bool updateLeds, bool updateHooks, bool updateStateSync);
     void ConfigManager_ResetWormConfiguration(void);
 
 #endif

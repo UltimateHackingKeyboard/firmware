@@ -37,5 +37,10 @@
     ATTRS void Trace_Printc(const char* s) {};
     ATTRS void Trace_Printf(const char *fmt, ...) {};
     ATTRS void PowerMode_PutBackToSleepMaybe(void) {};
+    ATTRS void LockHints_ShowWakeHint(void) {};
+    ATTRS void LockHints_RestartLeftHalfGracePeriod(void) {};
+    ATTRS void LockHints_UpdateLeftHalfHint(void) {};
+    ATTRS void LockHints_OnPowerModeChanged(void) {};
     ATTRS void BtAdvertise_DisableAdvertisingIcon(void) {};
-    ATTRS void NotificationScreen_NotifyFor(const char* message, uint16_t duration) {};
+    ATTRS uint8_t NotificationScreen_NotifyFor(const char* message, uint16_t duration, bool forceAwake) { return 0; };
+    ATTRS void NotificationScreen_EndForceAwake(void) {};

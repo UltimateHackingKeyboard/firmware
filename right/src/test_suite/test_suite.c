@@ -1,7 +1,9 @@
 #include "test_suite.h"
+#include "device.h"
 #include "test_hooks.h"
 #include "test_actions.h"
 #include "test_input_machine.h"
+#include "test_statistics.h"
 #include "test_output_machine.h"
 #include "tests/tests.h"
 #include "logger.h"
@@ -13,6 +15,19 @@
 #include "mouse_controller.h"
 #include "layer_stack.h"
 #include "postponer.h"
+#include "slot.h"
+#include "key_states.h"
+#include "module.h"
+#include <string.h>
+#include <stdio.h>
+
+#ifdef __ZEPHYR__
+#include "messenger.h"
+#endif
+
+#if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
+#include <zephyr/sys/atomic.h>
+#endif
 
 #if defined(__ZEPHYR__) && DEVICE_IS_KEYBOARD
 #include "keyboard/battery_unloaded_calculator.h"
@@ -21,9 +36,13 @@
 
 
 #define INTER_TEST_DELAY___MS 100
+#define RELEASE_TIMEOUT_MS 5000
 
 // Test hooks state
 bool TestHooks_Active = false;
+bool TestHooks_AwaitingRelease = false;
+static uint32_t awaitingReleaseStart = 0;
+bool TestHooks_FailMessengerSends = false;
 bool TestSuite_Verbose = false;
 
 // Test tracking
@@ -31,6 +50,7 @@ static uint16_t currentModuleIndex = 0;
 static uint16_t currentTestIndex = 0;
 static uint16_t totalTestCount = 0;
 static uint16_t passedCount = 0;
+static uint16_t partialCount = 0;
 static uint16_t failedCount = 0;
 
 // Module-scoped run limit
@@ -41,18 +61,47 @@ static bool singleTestMode = false;
 
 // Rerun state for failed tests
 static bool isRerunning = false;
-static uint16_t rerunModuleIndex = 0;
-static uint16_t rerunTestIndex = 0;
 
 // Inter-test delay state
 static bool inInterTestDelay = false;
 static uint32_t interTestDelayStart = 0;
 
+// Whether the current test (including its rerun) has opened its log with a separator
+static bool separatorPrinted = false;
+
+void TestSuite_LogSeparatorOnce(void) {
+    if (!separatorPrinted) {
+        LogU("[TEST] ----------------------\n");
+        separatorPrinted = true;
+    }
+}
+
+static void closeTestLog(void) {
+    if (separatorPrinted) {
+        LogU("[TEST] ----------------------\n");
+    }
+}
+
 static const test_t* getCurrentTest(void) {
     return &AllTestModules[currentModuleIndex]->tests[currentTestIndex];
 }
 
-static bool advanceToNextTest(void) {
+// Link tests need the left-right bridge, which only the UHK80 has.
+static bool isSkipped(const test_t *test) {
+    return !DEVICE_IS_UHK80 && test->linkTestId != 0;
+}
+
+static uint16_t runnableTestCount(const test_module_t *module) {
+    uint16_t count = 0;
+    for (uint16_t i = 0; i < module->testCount; i++) {
+        if (!isSkipped(&module->tests[i])) {
+            count++;
+        }
+    }
+    return count;
+}
+
+static bool stepToNextTest(void) {
     currentTestIndex++;
     if (currentTestIndex >= AllTestModules[currentModuleIndex]->testCount) {
         currentModuleIndex++;
@@ -61,141 +110,388 @@ static bool advanceToNextTest(void) {
     return currentModuleIndex < lastModuleIndexExclusive;
 }
 
+// Stays on the current test if this device can run it, otherwise moves on to the first one it can.
+static bool seekRunnableTest(void) {
+    bool inRange = currentModuleIndex < lastModuleIndexExclusive;
+    while (inRange && isSkipped(getCurrentTest())) {
+        inRange = stepToNextTest();
+    }
+    return inRange;
+}
+
+static bool advanceToNextTest(void) {
+    return stepToNextTest() && seekRunnableTest();
+}
+
 extern hid_keyboard_report_t *ActiveKeyboardReport;
 
+// The inactive buffer: reports are captured on confirmation, so it is the state the host last
+// saw. The active one may already hold the report before it, or be mid-rebuild.
+static const hid_keyboard_report_t *lastConfirmedReport(void) {
+    return ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0];
+}
+
+static bool reportIsEmpty(const hid_keyboard_report_t *report) {
+    return report->modifiers == 0 && UsbBasicKeyboard_ScancodeCount(report) == 0;
+}
+
+// Repeats are re-runs of the whole test, not a wrap of the action index, so that each pass
+// re-sends StartTest to the left half. Both halves therefore restart their timelines together
+// every pass; wrapping the index instead let their independent delay timers drift apart over
+// hundreds of steps, until a left change landed after a right one scripted later.
+static const test_t *repeatingTest = NULL;
+static uint16_t repeatsLeft = 0;
+static uint16_t repetitionsPassed = 0;
+static uint16_t repetitionsFailed = 0;
+
+// A long repeated test logs its standing this often, at the end of a repetition.
+#define REPEATED_TEST_PROGRESS_MS 5000
+static uint32_t lastProgressTime = 0;
+
 static void startTest(const test_t *test, const test_module_t *module) {
+    if (test != repeatingTest) {
+        repeatingTest = test;
+        repeatsLeft = test->repeatCount > 0 ? test->repeatCount - 1 : 0;
+        repetitionsPassed = 0;
+        repetitionsFailed = 0;
+        lastProgressTime = Timer_GetCurrentTime();
+    }
+
     Macros_StopAllMacros();
-    ConfigManager_ResetConfiguration(false, false);
+    ConfigManager_ResetConfiguration(false, false, false);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
+    if (!isRerunning) {
+        separatorPrinted = false;
+    }
     if (TestSuite_Verbose) {
-        LogU("[TEST] ----------------------\n");
+        TestSuite_LogSeparatorOnce();
         LogU("[TEST] Running: %s/%s\n", module->name, test->name);
     }
+#ifdef __ZEPHYR__
+    if (DEVICE_IS_UHK80_RIGHT && test->linkTestId != 0) {
+        Messenger_Send2(DeviceId_Uhk80_Left, MessageId_Command, MessengerCommand_StartTest, &test->linkTestId, sizeof(test->linkTestId));
+    }
+#endif
+
     InputMachine_Start(test);
     OutputMachine_Start(test);
-    OutputMachine_OnReportChange(ActiveKeyboardReport);
+    OutputMachine_OnReportChange(lastConfirmedReport());
 }
 
 void TestHooks_CaptureReport(const hid_keyboard_report_t *report) {
-    if (!TestHooks_Active) {
+    if (!TestHooks_Active || TestHooks_AwaitingRelease) {
         return;
     }
     OutputMachine_OnReportChange(report);
 }
 
+static bool anyKeyHeld(void) {
+    bool held = false;
+    for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            held |= KeyStates[slotId][keyId].hardwareSwitchState;
+        }
+    }
+    return held;
+}
+
+// The suite is typically started by a key - e.g., Enter of a shell command - which is still
+// held at that point. Tests take over KeyStates, so it would stay pressed through all of them.
+static void beginSuite(void) {
+    TestHooks_AwaitingRelease = true;
+    awaitingReleaseStart = Timer_GetCurrentTime();
+    TestHooks_Active = true;
+}
+
+static void waitForRelease(void) {
+    bool released = !anyKeyHeld() && reportIsEmpty(lastConfirmedReport());
+    bool timedOut = Timer_GetElapsedTime(&awaitingReleaseStart) >= RELEASE_TIMEOUT_MS;
+
+    if (released) {
+        TestHooks_AwaitingRelease = false;
+        startTest(getCurrentTest(), AllTestModules[currentModuleIndex]);
+    } else if (timedOut) {
+        LogU("[TEST] Aborted: keys still held or report not empty after %d ms\n", RELEASE_TIMEOUT_MS);
+        TestHooks_AwaitingRelease = false;
+        TestHooks_Active = false;
+    }
+}
+
+// True once the inter-test pause has elapsed and the next test has been started.
+static bool waitOutInterTestDelay(void) {
+    if (Timer_GetElapsedTime(&interTestDelayStart) < INTER_TEST_DELAY___MS) {
+        return false;
+    }
+
+    inInterTestDelay = false;
+    const test_t *nextTest = getCurrentTest();
+    const test_module_t *module = AllTestModules[currentModuleIndex];
+    startTest(nextTest, module);
+    return true;
+}
+
+#if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
+// Set while the left half plays its part in a link test the right half is running. Otherwise
+// the left half runs whatever suite it was asked to, like any other device.
+static bool isLinkTestPeer = false;
+
+// StartTest arrives on the messenger's receive path, while the input machine is ticked by the
+// key scanner. The right restarts the left just as the left finishes its previous run, so
+// starting from the receive path raced the finish: the scanner, having just seen the old run
+// end, switched the freshly started one off and the left sat out the repetition. The receive
+// path only posts the id; the scanner thread does the starting.
+static atomic_t pendingLinkTestId = ATOMIC_INIT(0);
+
+static void startPendingLinkTest(void) {
+    uint8_t linkTestId = (uint8_t)atomic_set(&pendingLinkTestId, 0);
+
+    if (linkTestId != 0) {
+        const test_t *test = Tests_FindLinkTest(linkTestId);
+        bool known = test != NULL;
+
+        if (known) {
+            InputMachine_Start(test);
+        }
+        isLinkTestPeer = known;
+    }
+}
+
+// The left half has no USB reports to validate, so it runs the input machine only. The key
+// scanner then sends the keys it pressed, the way it sends scanned ones.
+static void tickLinkTestPeer(void) {
+    startPendingLinkTest();
+
+    if (isLinkTestPeer) {
+        InputMachine_Tick();
+
+        if (InputMachine_IsDone()) {
+            isLinkTestPeer = false;
+        }
+    }
+
+    // Re-checked after clearing, so a StartTest landing in between keeps the scanner coming.
+    TestHooks_Active = isLinkTestPeer;
+    if (atomic_get(&pendingLinkTestId) != 0) {
+        TestHooks_Active = true;
+    }
+}
+#endif
+
+typedef enum {
+    TestOutcome_Running,
+    TestOutcome_Passed,
+    TestOutcome_Failed,
+    TestOutcome_TimedOut,
+} test_outcome_t;
+
+// Whether the current test (or repetition) has ended, and how. With input and output both done
+// but macros still running it waits for them: they end, or the input machine times out.
+static test_outcome_t evaluateCurrentTest(void) {
+    bool inputDone = InputMachine_IsDone();
+    bool outputDone = OutputMachine_IsDone();
+    bool failed = InputMachine_Failed || OutputMachine_Failed;
+    bool timedOut = InputMachine_TimedOut && !outputDone;
+    bool waitingForMacros = outputDone && Macros_AnyMacroRunning() && !timedOut && !failed;
+    bool ended = inputDone && (outputDone || timedOut || failed) && !waitingForMacros;
+
+    test_outcome_t outcome = TestOutcome_Running;
+    if (ended && failed) {
+        outcome = TestOutcome_Failed;
+    } else if (ended && timedOut) {
+        outcome = TestOutcome_TimedOut;
+    } else if (ended) {
+        outcome = TestOutcome_Passed;
+    }
+    return outcome;
+}
+
+static void finishSuite(void) {
+    Macros_StopAllMacros();
+    if (!separatorPrinted) {
+        // Otherwise the last test has already closed its log with a separator
+        LogU("[TEST] ----------------------\n");
+    }
+    LogU("[TEST] Complete:\n");
+    LogU("[TEST] Discrete tests: %d passed, %d partial, %d failed\n", passedCount, partialCount, failedCount);
+    uint16_t repeated = TestStatistics_RepeatedTestCount();
+    uint16_t repeatedFailed = TestStatistics_FailedRepeatedTestCount();
+    uint16_t repeatedSucceeded = repeated - repeatedFailed;
+    if (repeated > 0) {
+        LogU("[TEST] Repeated tests: %u passed, %u failed\n", (unsigned)repeatedSucceeded, (unsigned)repeatedFailed);
+    }
+    LogU("[TEST] ----------------------\n");
+    TestHooks_Active = false;
+    ConfigManager_ResetConfiguration(true, true, true);
+    LayerStack_Reset();
+    PostponerExtended_ResetPostponer();
+}
+
+// Closes the test's log and goes on: to the next test after the inter-test delay, or to the
+// summary when there is none or only one test was asked for.
+static void moveToNextTest(void) {
+    closeTestLog();
+    bool anotherTest = !singleTestMode && advanceToNextTest();
+    if (anotherTest) {
+        inInterTestDelay = true;
+        interTestDelayStart = Timer_GetCurrentTime();
+    } else {
+        finishSuite();
+    }
+}
+
+// Logs a repeated test's standing after the repetitions so far, `stage` naming the point it is
+// at; returns whether the test is broken likely enough to fail.
+static bool logRepetitions(const test_t *test, const test_module_t *module, const char *stage) {
+    uint16_t repetitions = repetitionsPassed + repetitionsFailed;
+    bool failed = false;
+
+    if (repetitionsFailed > 0) {
+        double broken = TestStatistics_BrokenProbability(repetitionsFailed, repetitions, test->spuriousFailureRate);
+        unsigned expectedHundredths = TestStatistics_AsPercent(repetitions * test->spuriousFailureRate);
+        failed = broken >= TEST_FAIL_PROBABILITY;
+        LogU("[TEST] %s: %s/%s - %s (%u/%u failed, %u.%02u expected, %u%% likely broken)\n", stage, module->name, test->name,
+                failed ? "FAIL" : "PASS", (unsigned)repetitionsFailed, (unsigned)repetitions,
+                expectedHundredths / 100, expectedHundredths % 100, TestStatistics_AsPercent(broken));
+    } else {
+        LogU("[TEST] %s: %s/%s - PASS (0/%u failed)\n", stage, module->name, test->name, (unsigned)repetitions);
+    }
+    return failed;
+}
+
+static void concludeRepeatedTest(const test_t *test, const test_module_t *module) {
+    bool failed = logRepetitions(test, module, "Finished");
+    TestStatistics_AddRepeatedTest(failed);
+    repeatingTest = NULL;
+    moveToNextTest();
+}
+
+// A repeated test is a run of independent trials. Every repetition is played out, a failed
+// one is counted rather than ending the run, and nothing is re-run verbosely: a rerun's pass
+// would only blur the failure rate the repetitions exist to measure.
+static void concludeRepetition(const test_t *test, const test_module_t *module, test_outcome_t outcome) {
+    if (outcome == TestOutcome_Passed) {
+        repetitionsPassed++;
+    } else {
+        repetitionsFailed++;
+        // A mismatch is logged by the output machine; a timeout would pass silently.
+        const test_action_t *pending = &test->actions[OutputMachine_ActionIndex];
+        bool pendingIsExpect = pending->type == TestAction_Expect || pending->type == TestAction_CheckNow;
+        if (outcome == TestOutcome_TimedOut && pendingIsExpect) {
+            LOG_FAILURE("[TEST] <   TIMEOUT: still expecting '%s'\n", pending->expectShortcuts);
+        }
+    }
+
+    if (repeatsLeft > 0) {
+        if (Timer_GetElapsedTime(&lastProgressTime) >= REPEATED_TEST_PROGRESS_MS) {
+            char stage[24];
+            snprintf(stage, sizeof(stage), "Progress(%u/%u)", (unsigned)(repetitionsPassed + repetitionsFailed),
+                    (unsigned)test->repeatCount);
+            logRepetitions(test, module, stage);
+            lastProgressTime = Timer_GetCurrentTime();
+        }
+        repeatsLeft--;
+        startTest(test, module);
+    } else {
+        concludeRepeatedTest(test, module);
+    }
+}
+
+static void endVerboseRerun(void) {
+    isRerunning = false;
+    TestSuite_Verbose = false;
+}
+
+// A test's first failure: run it again, verbosely, to log what went wrong.
+static void scheduleVerboseRerun(const test_t *test, const test_module_t *module, const char *failure) {
+    LOG_FAILURE("[TEST] Finished: %s/%s - %s (rerunning verbose)\n", module->name, test->name, failure);
+    isRerunning = true;
+    TestSuite_Verbose = true;
+    inInterTestDelay = true;
+    interTestDelayStart = Timer_GetCurrentTime();
+}
+
+static void concludeTest(const test_t *test, const test_module_t *module, test_outcome_t outcome) {
+    const char *failure = outcome == TestOutcome_Failed ? "FAIL" : "TIMEOUT";
+    bool lastAttempt = isRerunning || singleTestMode;
+
+    if (outcome == TestOutcome_Passed && isRerunning) {
+        LogU("[TEST] Finished: %s/%s - PARTIAL (passed on rerun)\n", module->name, test->name);
+        partialCount++;
+        endVerboseRerun();
+        moveToNextTest();
+    } else if (outcome == TestOutcome_Passed) {
+        LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
+        passedCount++;
+        moveToNextTest();
+    } else if (lastAttempt) {
+        LOG_FAILURE("[TEST] Finished: %s/%s - %s\n", module->name, test->name, failure);
+        failedCount++;
+        endVerboseRerun();
+        moveToNextTest();
+    } else {
+        scheduleVerboseRerun(test, module, failure);
+    }
+}
+
+// One tick of the suite: waits out the gap between tests, or drives the current test and,
+// once it has ended, concludes it.
+static void stepSuite(void) {
+    if (TestHooks_AwaitingRelease) {
+        waitForRelease();
+    } else if (inInterTestDelay) {
+        waitOutInterTestDelay();
+    } else {
+        InputMachine_Tick();
+        test_outcome_t outcome = evaluateCurrentTest();
+
+        if (outcome != TestOutcome_Running) {
+            const test_t *test = getCurrentTest();
+            const test_module_t *module = AllTestModules[currentModuleIndex];
+            bool timedOut = InputMachine_TimedOut && !OutputMachine_IsDone();
+
+            if (timedOut) {
+                Macros_StopAllMacros();
+            }
+            if (test->repeatCount > 1) {
+                concludeRepetition(test, module, outcome);
+            } else {
+                concludeTest(test, module, outcome);
+            }
+        }
+    }
+}
+
+// Routes to whichever side of a test this device is responsible for. In a link test the right
+// half owns the suite - sequencing, expectations, verdicts - while the left only produces keys.
 void TestHooks_Tick(void) {
     if (!TestHooks_Active) {
         return;
     }
 
-    // Handle inter-test delay
-    if (inInterTestDelay) {
-        if (Timer_GetElapsedTime(&interTestDelayStart) >= INTER_TEST_DELAY___MS) {
-            inInterTestDelay = false;
-            const test_t *nextTest = getCurrentTest();
-            const test_module_t *module = AllTestModules[currentModuleIndex];
-            startTest(nextTest, module);
-        }
-        return;
+#if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
+    if (isLinkTestPeer || atomic_get(&pendingLinkTestId) != 0) {
+        tickLinkTestPeer();
+    } else {
+        stepSuite();
     }
-
-    InputMachine_Tick();
-
-    // Check for completion or failure
-    bool inputDone = InputMachine_IsDone();
-    bool outputDone = OutputMachine_IsDone();
-    bool failed = InputMachine_Failed || OutputMachine_Failed;
-    bool timedOut = InputMachine_TimedOut && !outputDone;
-    bool macrosRunning = Macros_AnyMacroRunning();
-
-    // If input/output done but macros still running, wait for timeout
-    if (inputDone && outputDone && macrosRunning && !timedOut && !failed) {
-        return;
-    }
-
-    if (inputDone && (outputDone || timedOut || failed)) {
-        const test_t *test = getCurrentTest();
-        const test_module_t *module = AllTestModules[currentModuleIndex];
-
-        // On timeout, kill all running macros
-        if (timedOut) {
-            Macros_StopAllMacros();
-        }
-
-        if (failed || timedOut) {
-            if (isRerunning || singleTestMode) {
-                // Already rerunning with verbose (or single test mode), log final result
-                if (failed) {
-                    LogU("[TEST] Finished: %s/%s - FAIL\n", module->name, test->name);
-                } else {
-                    LogU("[TEST] Finished: %s/%s - TIMEOUT\n", module->name, test->name);
-                }
-                LogU("[TEST] ----------------------\n");
-                failedCount++;
-                isRerunning = false;
-                TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
-
-                if (singleTestMode) {
-                    goto finish;
-                }
-
-                // Continue from where we left off
-                currentModuleIndex = rerunModuleIndex;
-                currentTestIndex = rerunTestIndex;
-                if (advanceToNextTest()) {
-                    inInterTestDelay = true;
-                    interTestDelayStart = Timer_GetCurrentTime();
-                } else {
-                    goto finish;
-                }
-            } else {
-                // First failure - log and save position for rerun with verbose
-                if (failed) {
-                    LogU("[TEST] Finished: %s/%s - FAIL (rerunning verbose)\n", module->name, test->name);
-                } else {
-                    LogU("[TEST] Finished: %s/%s - TIMEOUT (rerunning verbose)\n", module->name, test->name);
-                }
-                rerunModuleIndex = currentModuleIndex;
-                rerunTestIndex = currentTestIndex;
-                isRerunning = true;
-                TestSuite_Verbose = true;
-
-                inInterTestDelay = true;
-                interTestDelayStart = Timer_GetCurrentTime();
-            }
-        } else {
-            LogU("[TEST] Finished: %s/%s - PASS\n", module->name, test->name);
-            passedCount++;
-            if (isRerunning) {
-                isRerunning = false;
-                TestSuite_Verbose = false;  // Reset to non-verbose for remaining tests
-            }
-
-            if (singleTestMode) {
-                goto finish;
-            }
-
-            // Move to next test
-            if (advanceToNextTest()) {
-                inInterTestDelay = true;
-                interTestDelayStart = Timer_GetCurrentTime();
-            } else {
-                goto finish;
-            }
-        }
-    }
-    return;
-
-finish:
-    Macros_StopAllMacros();
-    LogU("[TEST] ----------------------\n");
-    LogU("[TEST] Complete: %d passed, %d failed\n", passedCount, failedCount);
-    TestHooks_Active = false;
-    ConfigManager_ResetConfiguration(false, false);
-    LayerStack_Reset();
-    PostponerExtended_ResetPostponer();
+#else
+    stepSuite();
+#endif
 }
+
+// Entry point for the StartTest bridge command. Resolving and switching happens here rather
+// than in the messenger, which should not know what a test is. A zero or unknown id stops
+// whatever was running.
+void TestHooks_StartLinkTest(uint8_t linkTestId) {
+#if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
+    atomic_set(&pendingLinkTestId, linkTestId);
+    TestHooks_Active = true;
+#else
+    (void)linkTestId;
+#endif
+}
+
 
 void TestSuite_Init(void) {
     TestHooks_Active = false;
@@ -205,7 +501,9 @@ uint8_t TestSuite_RunAll(void) {
     currentModuleIndex = 0;
     currentTestIndex = 0;
     passedCount = 0;
+    partialCount = 0;
     failedCount = 0;
+    TestStatistics_Reset();
     inInterTestDelay = false;
     isRerunning = false;
     singleTestMode = false;
@@ -215,7 +513,7 @@ uint8_t TestSuite_RunAll(void) {
     // Count total tests
     totalTestCount = 0;
     for (uint16_t i = 0; i < AllTestModulesCount; i++) {
-        totalTestCount += AllTestModules[i]->testCount;
+        totalTestCount += runnableTestCount(AllTestModules[i]);
     }
 
     LogU("[TEST] Running custom unit tests...\n");
@@ -232,11 +530,8 @@ uint8_t TestSuite_RunAll(void) {
         return 0;
     }
 
-    // Start first test
-    const test_t *firstTest = getCurrentTest();
-    const test_module_t *module = AllTestModules[currentModuleIndex];
-    startTest(firstTest, module);
-    TestHooks_Active = true;
+    seekRunnableTest();
+    beginSuite();
 
     return totalTestCount;
 }
@@ -258,19 +553,27 @@ uint8_t TestSuite_RunSingle(const char *moduleStart, const char *moduleEnd, cons
             const test_t *test = &module->tests[ti];
             if (!streq(testStart, testEnd, test->name)) continue;
 
-            // Found it - run with verbose logging
+            if (isSkipped(test)) {
+                LogU("[TEST] Test not supported on this device: %s/%s\n", module->name, test->name);
+                return 255;
+            }
+
+            // Found it - run with verbose logging, unless it is a repeated test: those run
+            // hundreds of repetitions, so they log as in the full suite whichever way they are
+            // started.
             currentModuleIndex = mi;
             currentTestIndex = ti;
             passedCount = 0;
+            partialCount = 0;
             failedCount = 0;
+            TestStatistics_Reset();
             inInterTestDelay = false;
             isRerunning = false;
             singleTestMode = true;
-            TestSuite_Verbose = true;  // Always verbose for single test
+            TestSuite_Verbose = test->repeatCount <= 1;
 
             LogU("[TEST] Running single test: %s/%s\n", module->name, test->name);
-            startTest(test, module);
-            TestHooks_Active = true;
+            beginSuite();
 
             return 0;
         }
@@ -292,14 +595,16 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
         currentModuleIndex = mi;
         currentTestIndex = 0;
         passedCount = 0;
+        partialCount = 0;
         failedCount = 0;
+        TestStatistics_Reset();
         inInterTestDelay = false;
         isRerunning = false;
         singleTestMode = false;
         lastModuleIndexExclusive = mi + 1;
         TestSuite_Verbose = false;
 
-        totalTestCount = module->testCount;
+        totalTestCount = runnableTestCount(module);
 
         LogU("[TEST] Running module: %s (%d tests)\n", module->name, totalTestCount);
 
@@ -307,9 +612,8 @@ static uint8_t TestSuite_RunModule(const char *moduleStart, const char *moduleEn
             return 0;
         }
 
-        const test_t *firstTest = getCurrentTest();
-        startTest(firstTest, module);
-        TestHooks_Active = true;
+        seekRunnableTest();
+        beginSuite();
 
         return 0;
     }

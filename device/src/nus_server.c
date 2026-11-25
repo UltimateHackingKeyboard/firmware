@@ -17,6 +17,8 @@
 LOG_MODULE_REGISTER(NusServer, LOG_LEVEL_INF);
 
 #define NUS_SLOTS 2
+// A link that doesn't free a slot within this time is considered stalled and gets torn down.
+#define NUS_SLOT_TIMEOUT_MS 1000
 
 static K_SEM_DEFINE(nusBusy, NUS_SLOTS, NUS_SLOTS);
 
@@ -85,6 +87,20 @@ void NusServer_Disconnected() {
     }
 }
 
+static bool takeSlot(struct bt_conn* conn) {
+    bool taken = k_sem_take(&nusBusy, K_MSEC(NUS_SLOT_TIMEOUT_MS)) == 0;
+    if (!taken) {
+        LOG_ERR("No NUS send slot freed within %d ms.", NUS_SLOT_TIMEOUT_MS);
+        if (conn) {
+            BtConn_DisconnectOneByConn(conn);
+        } else {
+            // NULL means all clients; only the left half sends that way, to the right half.
+            BtConn_DisconnectOne(ConnectionId_NusClientRight);
+        }
+    }
+    return taken;
+}
+
 static int send_raw_buffer(const uint8_t *data, uint16_t len, struct bt_conn* conn) {
     int err = bt_nus_send(conn, data, len);
     if (err) {
@@ -107,7 +123,9 @@ int NusServer_SendMessageTo(message_t* msg, struct bt_conn* conn) {
     }
 
     Trace_Printc("c1");
-    SEM_TAKE(&nusBusy);
+    if (!takeSlot(conn)) {
+        return -ETIMEDOUT;
+    }
     Trace_Printc("c2");
 
     // From here on every exit path must release the semaphore: send_raw_buffer

@@ -11,6 +11,7 @@
 #include "event_scheduler.h"
 #include "power_mode.h"
 #include "dongle_leds.h"
+#include "stubs.h"
 
 static connection_id_t targetsConnection[ConnectionTarget_Count] = {};
 
@@ -32,6 +33,7 @@ void handleStateTransition(connection_target_t remote, connection_id_t connectio
 #if DEVICE_HAS_OLED
                         Widget_Refresh(&StatusWidget);
 #endif
+                        LockHints_RestartLeftHalfGracePeriod();
                         if (connected) {
                             StateSync_ResetRightLeftLink(true);
                             ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId = ModuleId_LeftKeyboardHalf;

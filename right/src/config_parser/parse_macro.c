@@ -157,7 +157,7 @@ parser_error_t ParseMacroAction(config_buffer_t *buffer, macro_action_t *macroAc
 void FindMacroName(const macro_reference_t* macro, const char** name, const char** nameEnd)
 {
     uint16_t nameLen;
-    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    config_buffer_t buffer = AppliedUserConfigBuffer;
     buffer.offset = macro->firstMacroActionOffset - macro->macroNameOffset;
     *name = ReadString(&buffer, &nameLen);
     *nameEnd = *name + nameLen;

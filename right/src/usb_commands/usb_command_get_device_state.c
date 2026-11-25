@@ -35,6 +35,7 @@
     #include "slave_scheduler.h"
     #define BtPair_OobPairingInProgress false
     #define Bt_NewPairedDevice 0
+    #define BtConn_AnyBondBroken() false
 #endif
 
 static void detectFreezes() {
@@ -84,7 +85,8 @@ void UsbCommand_GetKeyboardState(const uint8_t *GenericHidOutBuffer, uint8_t *Ge
         | (MergeSensor_IsMerged() == MergeSensorState_Joined ? GetDeviceStateByte2_HalvesMerged : 0)
         | (BtPair_OobPairingInProgress ? GetDeviceStateByte2_PairingInProgress : 0)
         | (Bt_NewPairedDevice ? GetDeviceStateByte2_NewPairedDevice : 0)
-        | (UsbLogBuffer_HasLog ? GetDeviceStateByte2_ZephyrLog : 0);
+        | (UsbLogBuffer_HasLog ? GetDeviceStateByte2_ZephyrLog : 0)
+        | (BtConn_AnyBondBroken() ? GetDeviceStateByte2_PeerBondBroken : 0);
     SetUsbTxBufferUint8(2, byte2);
     SetUsbTxBufferUint8(3, ModuleConnectionStates[UhkModuleDriverId_LeftKeyboardHalf].moduleId);
     SetUsbTxBufferUint8(4, ModuleConnectionStates[UhkModuleDriverId_LeftModule].moduleId);

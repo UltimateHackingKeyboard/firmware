@@ -14,6 +14,7 @@
 #include "debug.h"
 #include "bt_pair.h"
 #include "bt_manager.h"
+#include "usb_commands/usb_command_get_new_pairings.h"
 
 
 #define HOST_CONNECTION_SELECT_TIMEOUT 30000
@@ -259,6 +260,15 @@ uint8_t HostConnections_AllocateConnectionIdForUnregisteredHid(const bt_addr_le_
     // TODO: free connections that are not bonded anymore?
 
     return ConnectionId_Invalid;
+}
+
+// Must run after every config application, including the factory fallback; otherwise bonded hosts
+// that are not in the config have no slot and get disconnected as unknown.
+void HostConnections_ApplyBonds(const char* reason) {
+    BtPair_AllocateUnregisteredBonds();
+    BtConn_UpdateHostConnectionPeerAllocations();
+    UsbCommand_UpdateNewPairingsFlag();
+    BtManager_StartScanningAndAdvertisingAsync(false, reason);
 }
 
 

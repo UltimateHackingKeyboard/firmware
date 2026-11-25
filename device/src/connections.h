@@ -69,6 +69,7 @@
     typedef struct {
         uint8_t rxIdx;
         uint8_t txIdx;
+        bool rxIdxValid;
     } ATTR_PACKED connection_watermarks_t;
 
     typedef struct {

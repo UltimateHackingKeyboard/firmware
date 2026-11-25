@@ -196,6 +196,11 @@ static void invalidateProperty(state_sync_prop_id_t propId) {
 }
 
 void StateSync_UpdateProperty(state_sync_prop_id_t propId, void *data) {
+    if (propId >= StateSyncPropertyId_Count) {
+        LOG_WRN("Ignoring unknown state sync property id %d.", propId);
+        return;
+    }
+
     state_sync_prop_t *prop = &stateSyncProps[propId];
 
     if (DEVICE_ID == DeviceId_Uhk80_Left && prop->leftData && data) {
@@ -234,9 +239,12 @@ void StateSync_UpdateProperty(state_sync_prop_id_t propId, void *data) {
     }
 }
 
+// Same result as a full update of an empty layer: no actions, colors or overrides on the left half and its module.
 void receiveLayerActionsClear(layer_id_t layerId) {
     memset(&CurrentKeymap[layerId][SlotId_LeftKeyboardHalf][0], 0,
-        sizeof(key_action_t) * MAX_KEY_COUNT_PER_MODULE);
+        sizeof(key_definition_t) * MAX_KEY_COUNT_PER_MODULE);
+    memset(&CurrentKeymap[layerId][SlotId_LeftModule][0], 0,
+        sizeof(key_definition_t) * MAX_BACKLIT_KEY_COUNT_PER_LEFT_MODULE);
 }
 
 void receiveLayerModuleActions(sync_command_action_t* actions, uint8_t layerId, uint8_t slotId, uint8_t bufferOffset, uint8_t actionOffset, uint8_t count) {
@@ -547,7 +555,7 @@ static void receiveProperty(device_id_t src, state_sync_prop_id_t propId, const 
     default:
         LOG_ERR("Property %i ('%s') has no receive handler. If this is correct, please add a "
                "separate empty case...",
-            propId, prop->name);
+            propId, StateSync_PropertyIdToString(propId));
         break;
     }
 }
@@ -594,7 +602,10 @@ void StateSync_ReceiveStateUpdate(device_id_t src, const uint8_t *data, uint8_t 
 
 static void submitPreparedData(device_id_t dst, state_sync_prop_id_t propId, const uint8_t *data, uint8_t len) {
     STATE_SYNC_LOG("    Sending %s data to %s\n", stateSyncProps[propId].name, Utils_DeviceIdToString(dst));
-    Messenger_Send2(dst, MessageId_StateSync, propId, data, len);
+    int err = Messenger_Send2(dst, MessageId_StateSync, propId, data, len);
+    if (err != 0) {
+        invalidateProperty(propId);
+    }
 }
 
 static void prepareLayerActions(layer_id_t layerId, uint8_t slotId, uint8_t bufferOffset, uint8_t actionOffset, uint8_t count, sync_command_layer_t *buffer) {
@@ -711,7 +722,7 @@ static void prepareData(device_id_t dst, const uint8_t *propDataPtr, state_sync_
 
     STATE_SYNC_LOG("<<< Preparing %s data for %s\n", prop->name, Utils_DeviceIdToString(dst));
 
-    uint8_t oldState = DirtyState_Clean;
+    uint8_t oldState = prop->dirtyState;
     prop->dirtyState = DirtyState_Clean;
 
     switch (propId) {
@@ -1050,5 +1061,10 @@ void StateSync_ResetConfig() {
 }
 
 const char* StateSync_PropertyIdToString(state_sync_prop_id_t propId) {
-    return stateSyncProps[propId].name;
+    if (propId < StateSyncPropertyId_Count) {
+        return stateSyncProps[propId].name;
+    } else {
+        return "OutOfRangeStateSyncPropertyId";
+    }
+
 }

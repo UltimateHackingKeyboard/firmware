@@ -30,6 +30,7 @@ All actions are defined as macros in `test_actions.h`. The struct backing them i
 | `TEST_SET_EMPTY(key_id)` | Base only |
 | `TEST_SET_CONFIG(config_text)` | Runs a `set` command (no key mapping) |
 | `TEST_SET_BOOL(bool_ptr, bool_value)` | Writes `bool_value` to the `bool` at `bool_ptr` (e.g. toggling a test-mode flag) |
+| `TEST_CALL(fn)` | Calls `bool fn(void)`; `false` fails the test, so `fn` logs the reason with `LOG_FAILURE` |
 
 `shortcut` strings go through `MacroShortcutParser_Parse` — same syntax as in macros (e.g. `"LS-i"`, `"sLA-tab"`, `"tab"`).
 
@@ -50,12 +51,24 @@ This matters when you want a base-layer macro to run while a layer is held (e.g.
 ## Key Timing
 
 - **Debouncing**: 50ms on press and another 50ms on release.
-- Always `TEST_DELAY__(50)` (or more) after a press/release to let the key register.
+- Delays run on one schedule from the test's start (start + all delays so far), not from when
+  each delay began - so ticks spent on other actions do not add up. A delay therefore separates
+  two actions by its length *minus* the ticks of the actions between them: a key held or released
+  across exactly `TEST_DELAY__(50)` can land inside the debounce window. Use `TEST_DELAY__(60)`
+  where a phase has to clear debouncing.
 
 ## Key Selection
 
 - **Always use right-half keys**: j, k, l, ;, p, o, i, u, m, n, h, y, 7, 8, 9, 0, etc.
 - Never use left-half keys (a, s, d, f, q, w, e, r, etc.) — the test rig only drives the right half.
+
+### Exception: link tests
+
+A test with a nonzero `linkTestId` is a *link test* and may use left-half keys. The left half
+runs the same script and presses those keys itself, so they genuinely traverse the bridge;
+the right half skips them locally (`skipLocally` in `test_input_machine.c`). See
+`tests/test_link.c`. Such tests must space input actions by debounce + margin, not the usual
+50ms, because both halves run independent timelines.
 
 ## Macro Formatting
 
@@ -99,5 +112,12 @@ TEST_SET_MACRO("j", "ifShortcut k final tapKey n\n holdKey j")
 - `TestSuite_Verbose` controls logging.
 - `LOG_VERBOSE(fmt, ...)` is conditional.
 - `TEST_EXPECT___________MAYBE` only logs in verbose mode.
-- Failures are always logged immediately; failed tests are auto-rerun with verbose enabled.
+- Failures are always logged immediately via `LOG_FAILURE(fmt, ...)`, which prints a separator before the first failure of a test; failed tests are auto-rerun with verbose enabled.
+- Tests with `repeatCount > 1` are never verbose, even when run as a single test, and never auto-rerun: every repetition runs, a repetition with any
+  failure counts as one failed repetition, and the verdict line reports `M/N failed` with the expected count and how likely the test is broken.
+  Every 5 s, at the end of a repetition, a `Progress(done/total):` line reports the same standing so far.
+- A repeated test sets `spuriousFailureRate`: how often one repetition fails in a healthy run, a hard-wired constant, not derived from
+  `repeatCount`. The probability it is broken weighs that rate against a broken rate log-uniform in [2x the rate, 0.5], at a 50% prior
+  (`test_statistics.c`); the test FAILs at `TEST_FAIL_PROBABILITY` (95%) or above.
+- The left half (link tests) logs no test actions; its log stays reserved for bridge diagnostics.
 - Reset `TestSuite_Verbose = false` after a verbose rerun.

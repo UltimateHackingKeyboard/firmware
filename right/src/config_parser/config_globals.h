@@ -42,6 +42,7 @@
     extern config_buffer_t HardwareConfigBuffer;
     extern config_buffer_t StagingUserConfigBuffer;
     extern config_buffer_t ValidatedUserConfigBuffer;
+    extern config_buffer_t AppliedUserConfigBuffer;
     extern hardware_config_t *HardwareConfig;
 
 // Functions:

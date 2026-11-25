@@ -41,7 +41,7 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
             Macros_ReportErrorTok(ctx, "Could not resolve:");
             return 0;
         }
-        SegmentDisplay_SerializeVar(str, value);
+        SegmentDisplay_SerializeVar(str, len, value);
         textLen = 3;
 #else
         Macros_SerializeVar(str, len, Macros_ConsumeAnyValue(ctx));
@@ -57,7 +57,7 @@ static uint8_t consumeDisplayString(parser_context_t* ctx, char* str, uint8_t le
             if (c == '\0') {
                 break;
             }
-            if (i < len) {
+            if (i + 1 < len) {
                 str[i] = c;
                 textLen++;
             }
@@ -157,7 +157,7 @@ static void showStringInSlot(bool show, display_string_slot_t slotId, char* text
     switch (slotId) {
         case DisplayStringSlot_Notify:
             if (show) {
-                NotificationScreen_NotifyFor(text, time);
+                NotificationScreen_NotifyFor(text, time, false);
             }
             break;
         case DisplayStringSlot_LeftStatus:
@@ -204,14 +204,14 @@ void processList(parser_context_t* ctx, bool show, uint16_t time) {
             getDisplayStringBuffer(slotId, &bufPtr, &bufLen);
         }
 
-        consumeDisplayString(ctx, bufPtr, bufLen);
+        uint8_t textLen = consumeDisplayString(ctx, bufPtr, bufLen);
 
         if (!show) {
             bufPtr[0] = 0;
         }
 
         if (!Macros_DryRun && !Macros_ParserError) {
-            showStringInSlot(show, slotId, bufPtr, bufLen, time);
+            showStringInSlot(show, slotId, bufPtr, textLen, time);
         }
     }
 }
@@ -244,6 +244,10 @@ macro_result_t Macros_ProcessSetLedTxtCommand(parser_context_t* ctx)
     }
 }
 
+#if DEVICE_HAS_OLED
+static uint8_t notifyPrintfId = NotificationId_Invalid;
+#endif
+
 void NotifyPrintf(const char *fmt, ...)
 {
 #if DEVICE_HAS_OLED
@@ -259,27 +263,35 @@ void NotifyPrintf(const char *fmt, ...)
 
     buf[bufLen - 1] = '\0';
 
-    NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
+    notifyPrintfId = NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT, false);
 #endif
 }
 
 void UnNotify()
 {
 #if DEVICE_HAS_OLED
-    NotificationScreen_Hide();
+    NotificationScreen_Hide(notifyPrintfId);
 #endif
 }
 
 macro_result_t Macros_ProcessNotifyCommand(parser_context_t* ctx)
 {
-    char* buf;
-    uint8_t bufLen;
+    char dummy[1];
+    char* bufPtr = NULL;
+    uint8_t bufLen = 0;
 
-    getDisplayStringBuffer(DisplayStringSlot_Notify, &buf, &bufLen);
-    consumeDisplayString(ctx, buf, bufLen);
-    if (!Macros_DryRun) {
+    if (Macros_DryRun) {
+        bufPtr = dummy;
+        bufLen = sizeof(dummy);
+    } else {
+        getDisplayStringBuffer(DisplayStringSlot_Notify, &bufPtr, &bufLen);
+    }
+
+    consumeDisplayString(ctx, bufPtr, bufLen);
+
+    if (!Macros_DryRun && !Macros_ParserError) {
 #if DEVICE_HAS_OLED
-        NotificationScreen_NotifyFor(buf, SCREEN_NOTIFICATION_TIMEOUT);
+        NotificationScreen_NotifyFor(bufPtr, SCREEN_NOTIFICATION_TIMEOUT, false);
 #endif
     }
 

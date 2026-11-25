@@ -21,6 +21,10 @@
     };
 };
 
+&timer1 {
+    status = "reserved"; // RX byte counting for uart1
+};
+
 &uart1 {
     compatible = "nordic,nrf-uarte";
     status = "okay";
@@ -28,6 +32,7 @@
     pinctrl-0 = <&uart1_default>;
     pinctrl-1 = <&uart1_sleep>;
     pinctrl-names = "default", "sleep";
+    timer = <&timer1>;
 };
 
 &i2c0 {

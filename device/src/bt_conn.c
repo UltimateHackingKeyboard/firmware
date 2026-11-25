@@ -337,7 +337,6 @@ static void setLatency(struct bt_conn* conn, const struct bt_le_conn_param* para
     int err = bt_conn_le_param_update(conn, params);
     if (err) {
         LOG_WRN("LE latencies update failed: %d", err);
-        Bt_HandleError("bt_conn_le_param_update", err);
     }
 }
 
@@ -670,6 +669,42 @@ static void connectedCallback(struct bt_conn *conn, uint8_t err) {
     return;
 }
 
+// Resolved by address, since security failures happen before a peer is assigned.
+static peer_t* getUhkPeerByAddr(const bt_addr_le_t* addr) {
+    peer_t* result = NULL;
+    for (uint8_t peerId = PeerIdFirst; peerId < PeerIdFirstHost; peerId++) {
+        if (BtAddrEq(addr, &Peers[peerId].addr)) {
+            result = &Peers[peerId];
+        }
+    }
+    return result;
+}
+
+void BtConn_SetBondBroken(const bt_addr_le_t* addr, bool broken) {
+    peer_t* peer = getUhkPeerByAddr(addr);
+    if (peer && peer->bondBroken != broken) {
+        peer->bondBroken = broken;
+        DongleLeds_SetAuthorizationFailed(broken);
+    }
+}
+
+bool BtConn_IsBondBroken(const bt_addr_le_t* addr) {
+    peer_t* peer = getUhkPeerByAddr(addr);
+    return peer && peer->bondBroken;
+}
+
+bool BtConn_AnyBondBroken(void) {
+    bool result = false;
+    for (uint8_t peerId = PeerIdFirst; peerId < PeerIdFirstHost; peerId++) {
+        result |= Peers[peerId].bondBroken;
+    }
+    return result;
+}
+
+static void setPeerBondBroken(struct bt_conn *conn, bool broken) {
+    BtConn_SetBondBroken(bt_conn_get_dst(conn), broken);
+}
+
 static void disconnected(struct bt_conn *conn, uint8_t reason) {
     BT_TRACE_AND_ASSERT("bc2");
     int8_t peerId = GetPeerIdByConn(conn);
@@ -683,7 +718,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         || reason == BT_HCI_ERR_PIN_OR_KEY_MISSING
         || reason == BT_HCI_ERR_INSUFFICIENT_SECURITY;
     if (rejectedForSecurityReasons) {
-        DongleLeds_SetAuthorizationFailed(true);
+        setPeerBondBroken(conn, true);
     }
 
     securityEstablished(conn);
@@ -713,7 +748,7 @@ static void disconnected(struct bt_conn *conn, uint8_t reason) {
         }
     }
 
-    if (!BtManager_Restarting) {
+    if (!BtManager_Stopped) {
         BtManager_StartScanningAndAdvertisingAsync(true, "disconnected");
     }
 
@@ -899,7 +934,7 @@ void BtConn_CheckConnectionSecurity(void) {
         if (now >= pendingSecurityDeadlines[i]) {
             LOG_WRN("No security established within timeout - disconnecting %s", GetPeerStringByConn(conn));
             pendingSecurityConns[i] = NULL;
-            DongleLeds_SetAuthorizationFailed(true);
+            setPeerBondBroken(conn, true);
             bt_conn_disconnect(conn, BT_REASON_TEMPORARY);
         } else {
             EventScheduler_Reschedule(pendingSecurityDeadlines[i], EventSchedulerEvent_CheckConnectionSecurity, "security establishment timeout");
@@ -911,7 +946,7 @@ void BtConn_CheckConnectionSecurity(void) {
 // not get to finish. The latter is normal: the right half advertises while filtering for a
 // specific host, accepts our link, then drops it (BT_REASON_NOT_SELECTED) - the aborted SMP
 // exchange surfaces as UNSPECIFIED, which says nothing about our bond. Only errors that are
-// an actual verdict on our keys turn the dongle red.
+// an actual verdict on our keys mark the bond as broken.
 static bool isAuthorizationFailure(enum bt_security_err err) {
     switch (err) {
         case BT_SECURITY_ERR_AUTH_FAIL:
@@ -942,13 +977,13 @@ static void securityChanged(struct bt_conn *conn, bt_security_t level, enum bt_s
     if (err || level < BT_SECURITY_L4) {
         LOG_WRN("Bt security not established: %s, level %u, err %d", GetPeerStringByConn(conn), level, err);
         if (isAuthorizationFailure(err)) {
-            DongleLeds_SetAuthorizationFailed(true);
+            setPeerBondBroken(conn, true);
         }
         return;
     }
 
     securityEstablished(conn);
-    DongleLeds_SetAuthorizationFailed(false);
+    setPeerBondBroken(conn, false);
 
 
     // Ignore connection that is being paired. At this point, the central is
@@ -1152,6 +1187,10 @@ void BtConn_DisconnectOne(connection_id_t connectionId) {
     safeDisconnect(conn, BT_REASON_NOT_SELECTED);
 }
 
+void BtConn_DisconnectOneByConn(struct bt_conn *conn) {
+    safeDisconnect(conn, BT_REASON_NOT_SELECTED);
+}
+
 void BtConn_KickHid(void) {
 #if DEVICE_IS_UHK80_RIGHT
      LOG_INF("Kicking HID connections to check if HOGP is healthy.");
@@ -1180,7 +1219,7 @@ void BtConn_DisconnectAllUnidentified() {
 
 static void pairing_failed(struct bt_conn *conn, enum bt_security_err reason) {
     if (isAuthorizationFailure(reason)) {
-        DongleLeds_SetAuthorizationFailed(true);
+        setPeerBondBroken(conn, true);
     }
 
     if (!auth_conn) {

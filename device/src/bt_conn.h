@@ -46,6 +46,8 @@
         struct bt_conn* conn;
         uint32_t lastSwitchover;
         uint32_t bleReportIntervalMs;
+        // The peer rejected our bond; needs re-pairing. Tracked for left/right peers only.
+        bool bondBroken;
     } peer_t;
 
 typedef enum {
@@ -73,6 +75,7 @@ typedef enum {
     void BtConn_Init(void);
     void BtConn_DisconnectAll();
     void BtConn_DisconnectOne(connection_id_t connectionId);
+    void BtConn_DisconnectOneByConn(struct bt_conn *conn);
 
     void BtConn_UpdateConnectionLatencies(void);
 
@@ -87,6 +90,10 @@ typedef enum {
 
     uint8_t BtConn_ConnectedHidCount(const bt_addr_le_t* excludeAddr);
     void BtConn_KickHid(void);
+
+    void BtConn_SetBondBroken(const bt_addr_le_t* addr, bool broken);
+    bool BtConn_IsBondBroken(const bt_addr_le_t* addr);
+    bool BtConn_AnyBondBroken(void);
 
     static inline bool BtAddrEq(const bt_addr_le_t *a, const bt_addr_le_t *b) {
         return 0 == memcmp(a->a.val, b->a.val, sizeof(a->a.val));

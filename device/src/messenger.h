@@ -29,6 +29,7 @@
 
     typedef enum {
         MessengerCommand_Reboot = 0,
+        MessengerCommand_StartTest = 1,
         MessengerCommand_Count,
     } messenger_command_t;
 

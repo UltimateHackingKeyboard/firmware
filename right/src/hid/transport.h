@@ -30,6 +30,9 @@ typedef enum
 } rollover_t;
 
 extern float HidReportBleLatencyAvgMs;
+// In UnreliableTransportTestMode, one in this many sends, and of the rest one in this many
+// sent-callbacks, are dropped.
+#define UNRELIABLE_TRANSPORT_DROP_RECIPROCAL 7
 extern bool UnreliableTransportTestMode;
 void Hid_DumpTransportState(void);
 
@@ -37,8 +40,6 @@ void Hid_DumpTransportState(void);
 errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t* report);
 errno_t Hid_SendMouseReport(const hid_mouse_report_t* report);
 errno_t Hid_SendControlsReport(const hid_controls_report_t* report);
-
-void Hid_KeyboardReportSentCallback(report_sink_t transport);
 
 // Called from NUS server 'sent' callback on UHK80 right half to feed
 // dongle-bound reports into the same latency EMA as BLE HID. Assumes any

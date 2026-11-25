@@ -31,10 +31,8 @@ LOG_MODULE_REGISTER(UsbReportSender, LOG_LEVEL_INF);
 #include "stubs.h"
 #endif
 
-// Backoff sizing. MAX_RETRIES is sized so that the cumulative wait from
-// GetResendThrottleDelay() is ~255 ms (1+2+4+8+16+32 + 6*32 = 1023).
-#define THROTTLE_MAX_RETRIES 12
-#define THROTTLE_MAX_SHIFT 5 // 1 << 5 == 32 ms
+// Backoff sizing: 1 << 5 == 32 ms. THROTTLE_MAX_RETRIES is in the header.
+#define THROTTLE_MAX_SHIFT 5
 #define THROTTLE_MAX_DELAY_MS 32
 
 bool Resending = false;
@@ -42,6 +40,23 @@ static uint32_t lastBasicReportTime = 0;
 static uint32_t retryThrottleTime = 0;
 
 bool UsbReportSender_GivenUp = false;
+
+// Reports sent while the bus is suspended are dropped, see dropIfBusDown in transport.cpp. Once the
+// bus is awake, send the current state instead. Main thread only; other threads schedule
+// EventSchedulerEvent_ResendUsbState.
+void UsbReportSender_RequestStateResend(void) {
+    if (DEVICE_IS_MASTER) {
+        uint8_t* keyboard = (uint8_t*)(ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0]);
+        uint8_t* controls = (uint8_t*)(ActiveControlsReport == &controlsReports[0] ? &controlsReports[1] : &controlsReports[0]);
+        uint8_t* mouse = (uint8_t*)(ActiveMouseReport == &mouseReports[0] ? &mouseReports[1] : &mouseReports[0]);
+
+        keyboard[0] = ~((uint8_t*)ActiveKeyboardReport)[0];
+        controls[0] = ~((uint8_t*)ActiveControlsReport)[0];
+        mouse[0] = ~((uint8_t*)ActiveMouseReport)[0];
+
+        EventVector_Set(EventVector_SendUsbReports);
+    }
+}
 
 // Should we resend, or give up?
 bool UsbReportSender_ShouldGiveUp(int err, uint8_t* counter) {
@@ -94,20 +109,36 @@ static void handleUltimateFail(errno_t errorCode) {
 
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
-        LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode));
+        WATCH(LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode)));
     } else {
-        LOG_ERR("Send failed (gave up resending): %d (%s)", errorCode, ErrToStr(errorCode));
+        WATCH(LOG_ERR("Send failed (gave up resending): %d (%s)", errorCode, ErrToStr(errorCode)));
         if (Timer_GetCurrentTime() - Bt_LastConnectedTime > 10*1000) {
             // If we are failing to resend a report and it has been at least 10 seconds since the connection was established, try to reconnect.
             if (!WormCfg->devMode && Connections_Type(CurrentHostConnectionId) != ConnectionType_UsbHidRight) {
-                LOG_ERR("Send failed. Trying to reconnect.");
+                WATCH(LOG_ERR("Send failed. Trying to reconnect."));
                 HostConnections_Reconnect();
             }
         }
     }
 #else
-    LOG_ERR("Send failed: %d (%s)", errorCode, ErrToStr(errorCode));
+    WATCH(LOG_ERR("Send failed: %d (%s)", errorCode, ErrToStr(errorCode)));
 #endif
+}
+
+// The report was accepted but never confirmed: the link stopped taking data while staying up.
+// Its queued reports hold shared BLE buffers until the link goes down, so take it down.
+void UsbReportSender_TearDownStalledLink(report_send_state_t* st) {
+#ifdef __ZEPHYR__
+    connection_id_t connectionId = st->connectionId;
+    WATCH(LOG_ERR("Report unconfirmed for %d ms, disconnecting %s.", USB_SEMAPHORE_STALL_TIMEOUT, GetPeerStringByConnId(connectionId)));
+    if (connectionId != ConnectionId_Invalid && Connections_IsReady(connectionId)) {
+        BtConn_DisconnectOne(connectionId);
+    }
+#endif
+    st->retries = 0;
+    st->needsResending = false;
+    // The report wasn't released, so the current state goes out again once a link is up.
+    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "stalled-link");
 }
 
 bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay) {
@@ -138,7 +169,13 @@ static void clearMouseMovement(void) {
     }
 }
 
+static bool mouseButtonsChanged(void) {
+    return mouseReports[0].buttons != mouseReports[1].buttons;
+}
+
 static void sendActiveReports(bool resending) {
+    bool usbReportsChangedByAction = false;
+    bool usbReportsChangedByAnything = false;
     errno_t ret;
 
     // in case of usb error, this gets set back again
@@ -159,12 +196,11 @@ static void sendActiveReports(bool resending) {
                 //just switch reports without sending the report
                 UsbReportUpdater_SwitchActiveKeyboardReport();
             } else {
-                //The semaphore has to be set before the call. Assume what happens if a bus reset happens asynchronously here. (Deadlock.)
-                UsbSemaphore.keyboard.inFlight = true;
+                // Hid_SendKeyboardReport marks the report in flight (UsbSemaphore_NoteSendTarget).
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
                 // On success the report is accepted by the transport, but NOT yet confirmed
                 // delivered. We advance the baseline (switchActiveKeyboardReport) only once
-                // delivery is confirmed: USB/BLE asynchronously via Hid_KeyboardReportSentCallback,
+                // delivery is confirmed: USB/BLE asynchronously via the sent callback in transport.cpp,
                 // NUS/dongle synchronously inside Hid_SendKeyboardReport. If a USB/BLE confirmation
                 // never arrives, the IsReadyForTransfers timeout re-arms the resend - the baseline
                 // was not advanced, so HasChange stays true and we re-send the current state instead
@@ -174,23 +210,27 @@ static void sendActiveReports(bool resending) {
                     UsbReportSender_ResendOrGiveUp(&UsbSemaphore.keyboard, ret, true);
                 }
             }
+            usbReportsChangedByAction = true;
+            usbReportsChangedByAnything = true;
             lastBasicReportTime = Timer_GetCurrentTime();
             UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         }
     }
 
     if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending)) {
-        UsbSemaphore.controls.inFlight = true;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
             UsbSemaphore.controls.inFlight = false;
             UsbReportSender_ResendOrGiveUp(&UsbSemaphore.controls, ret, true);
         }
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+        usbReportsChangedByAction = true;
+        usbReportsChangedByAnything = true;
     }
 
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
-        UsbSemaphore.mouse.inFlight = true;
+        bool usbMouseButtonsChanged = mouseButtonsChanged();
+
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
             UsbSemaphore.mouse.inFlight = false;
@@ -203,18 +243,22 @@ static void sendActiveReports(bool resending) {
 
         UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
         UsbReportUpdater_LastMouseActivityTime = resending ? UsbReportUpdater_LastMouseActivityTime : Timer_GetCurrentTime();
+        usbReportsChangedByAction |= usbMouseButtonsChanged;
+        usbReportsChangedByAnything = true;
+    }
+
+    // If anything changed, trigger one more update to send zero reports
+    if (usbReportsChangedByAnything && !UsbReportSender_GivenUp) {
+        EventVector_Set(EventVector_SendUsbReports);
     }
 
     if (UsbSemaphore_AnyInFlight()) {
         // Schedule semaphore timeout. Don't spam if we given up though - consider report as delivered.
         if (UsbReportSender_GivenUp) {
-            UsbSemaphore_Clear();
+            UsbSemaphore_ClearResendable();
         } else {
             EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
         }
-
-        // If anything changed, trigger one more update to send zero reports
-        EventVector_Set(EventVector_SendUsbReports);
     }
 }
 

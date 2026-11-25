@@ -297,17 +297,15 @@ static macro_variable_t* consumeVarAndAllocate(parser_context_t* ctx)
         return NULL;
     }
 
-
-    macro_variable_t* res = &macroVariables[macroVariableCount];
-    macroVariables[macroVariableCount].name = (string_ref_t) {
-        .offset = ctx->at - (const char*)ValidatedUserConfigBuffer.buffer,
-        .len = len
-    };
+    macro_variable_t* allocatedMacroVariable = &macroVariables[macroVariableCount];
     macroVariableCount++;
-    ctx->at += len;
 
+    allocatedMacroVariable->name = createStringRef(ctx->at, ctx->at + len);
+
+    ctx->at += len;
     ConsumeWhite(ctx);
-    return res;
+
+    return allocatedMacroVariable;
 }
 
 static macro_variable_t reportUnexpectedVariableType(parser_context_t* ctx, macro_variable_type_t type)
@@ -1290,15 +1288,15 @@ bool TryExpandMacroTemplateOnce(parser_context_t* ctx) {
 
 static string_ref_t createStringRef(const char *start, const char *end) {
     return (string_ref_t) {
-        .offset = start - (const char*)ValidatedUserConfigBuffer.buffer,
+        .offset = start - (const char*)AppliedUserConfigBuffer.buffer,
         .len = (uint8_t)(end - start),
     };
 }
 
 static string_segment_t stringRefToSegment(string_ref_t ref) {
     return (string_segment_t) {
-        .start = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset),
-        .end = (const char*)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len),
+        .start = (const char*)(AppliedUserConfigBuffer.buffer + ref.offset),
+        .end = (const char*)(AppliedUserConfigBuffer.buffer + ref.offset + ref.len),
     };
 }
 
@@ -1308,12 +1306,12 @@ string_segment_t StringRefToSegment(string_ref_t ref) {
 
 // currently unused:
 //static const char *stringRefStart(string_ref_t ref) {
-//    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset);
+//    return (const char *)(AppliedUserConfigBuffer.buffer + ref.offset);
 //}
 
 // currently unused:
 //static const char *stringRefEnd(string_ref_t ref) {
-//    return (const char *)(ValidatedUserConfigBuffer.buffer + ref.offset + ref.len);
+//    return (const char *)(AppliedUserConfigBuffer.buffer + ref.offset + ref.len);
 //}
 
 // Allocates a macro argument in the pool and returns a reference to it. 

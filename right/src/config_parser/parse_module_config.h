@@ -21,6 +21,7 @@
         SerializedModuleProperty_CaretAxisLock,
         SerializedModuleProperty_InvertScrollDirectionY,
         SerializedModuleProperty_InvertScrollDirectionX,
+        SerializedModuleProperty_Angle,
 
         // module specific
 
@@ -29,6 +30,8 @@
         SerializedModuleProperty_Keycluster_InvertScrollDirectionX = 255,
 
         // Touchpad
+        SerializedModuleProperty_Touchpad_DoubleTapAndHoldTimeout = 251,
+        SerializedModuleProperty_Touchpad_DragStyle = 252,
         SerializedModuleProperty_Touchpad_PinchZoomSpeedDivisor = 253,
         SerializedModuleProperty_Touchpad_PinchZoomMode = 254,
         SerializedModuleProperty_Touchpad_HoldContinuationTimeout = 255,

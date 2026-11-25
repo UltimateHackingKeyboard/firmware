@@ -5,6 +5,11 @@
 
     #include "widgets/widget.h"
 
+// Macros:
+
+    #define OLED_FADE_TIME (2*255)
+    #define OLED_FADE_TIME_WITH_MARGIN (2*255)+5
+
 // Variables:
 
     extern const struct gpio_dt_spec oledEn;

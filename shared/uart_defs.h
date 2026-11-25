@@ -34,6 +34,14 @@
     #define UART_BRIDGE_PING_INTERVAL 200
     #define UART_BRIDGE_TIMEOUT 700
 
+    // One byte-time on the wire at 115200-8N1 (~87us), rounded up. A physical property of the
+    // link, so it outlives any particular power scheme.
+    #define UART_BYTE_TIME_US 90
+    #define UART_FRAME_WIRE_TIME_MS(BYTES) (((BYTES) * UART_BYTE_TIME_US + 999) / 1000)
+
+    #define UART_RESEND_DELAY 7
+    #define UART_RESEND_COUNT 5
+
     #define UART_MODULE_PING_INTERVAL_MS 500
     #define UART_MODULE_TIMEOUT_MS (UART_MODULE_PING_INTERVAL_MS*4)
 

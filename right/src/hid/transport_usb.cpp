@@ -5,6 +5,7 @@ extern "C" {
 #include "logger.h"
 #include "power_mode.h"
 #include "timer.h"
+#include "event_scheduler.h"
 #include "usb_report_updater.h"
 #include "usb_semaphore.h"
 #include "usb_state.h"
@@ -19,15 +20,16 @@ extern "C" {
 #endif
 }
 #ifdef __ZEPHYR__
-    #include "port/zephyr/udc_mac.hpp"
+    #include "usb/df/vendor/zephyr/udc_mac.hpp"
 #else
-    #include "port/nxp/mcux_mac.hpp"
+    #include "usb/df/vendor/nxp/mcux_mac.hpp"
 #endif
 #include "command_app.hpp"
 #include "controls_app.hpp"
 #include "keyboard_app.hpp"
 #include "mouse_app.hpp"
 #include "usb/df/class/hid.hpp"
+#include "usb/df/config_factory.hpp"
 #include "usb/df/device.hpp"
 #include "usb/df/vendor/microsoft/os_extension.hpp"
 #include "usb/df/vendor/microsoft/xinput.hpp"
@@ -68,6 +70,8 @@ struct usb_manager {
 #endif
         }
 
+        using namespace usb::df;
+
         static constexpr auto speed = usb::speed::FULL;
         static usb::df::hid::function usb_kb{
             keyboard_app::usb_handle(), usb::hid::boot_protocol_mode::KEYBOARD};
@@ -76,15 +80,13 @@ struct usb_manager {
         static usb::df::hid::function usb_controls{controls_app::usb_handle()};
 
         constexpr auto config_header =
-            usb::df::config::header(usb::df::config::power::bus(500, true));
-        const auto shared_config_elems = usb::df::config::join_elements(
-            usb::df::hid::config(usb_kb, speed, usb::endpoint::address(0x81), 1),
-            usb::df::hid::config(usb_mouse, speed, usb::endpoint::address(0x82), 1),
-            usb::df::hid::config(usb_command, speed, usb::endpoint::address(0x83), 8),
-            usb::df::hid::config(usb_controls, speed, usb::endpoint::address(0x84), 1));
+            config::header(config::power::bus(500, config::remote_wakeup));
 
-        static const auto base_config =
-            usb::df::config::make_config(config_header, shared_config_elems);
+        static const auto base_config = config::make_config(config_header,
+            usb_kb.config_entry(speed, usb::endpoint::address(0x81), 1),
+            usb_mouse.config_entry(speed, usb::endpoint::address(0x82), 1),
+            usb_command.config_entry(speed, usb::endpoint::address(0x83), 8),
+            usb_controls.config_entry(speed, usb::endpoint::address(0x84), 1));
 
         device_.set_config(base_config);
         device_.open();
@@ -107,6 +109,9 @@ struct usb_manager {
                     break;
                 case usb::power::state::L0_ON:
                     UsbState_SetHostSuspended(false);
+                    if (dev.configured()) {
+                        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "usb awake");
+                    }
                     break;
                 case usb::power::state::L3_OFF:
                     // Detached - there is no host to be suspended. Leaving the flag set
@@ -120,7 +125,7 @@ struct usb_manager {
             }
             if ((ev & event::CONFIGURATION_CHANGE) != event::NONE) {
                 // reset the semaphore on USB configuration or reset
-                UsbSemaphore_Clear();
+                UsbSemaphore_ClearSink(ReportSink_Usb);
 
                 if (dev.configured()) {
                     // A host that just selected a configuration is awake and listening.
@@ -134,7 +139,7 @@ struct usb_manager {
     }
 
 #ifdef __ZEPHYR__
-    usb::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256,
+    usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256,
         (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED)
             ? usb::power::state::L2_SUSPEND
             : usb::power::state::L3_OFF};

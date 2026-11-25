@@ -586,7 +586,7 @@ string_segment_t ParseMacroArgument(uint16_t offset, uint8_t argumentNumber)
 {
     // Create a config buffer reference with the given offset
     // The offset points to the start of the PlayMacro action data (after the action type byte)
-    config_buffer_t buffer = ValidatedUserConfigBuffer;
+    config_buffer_t buffer = AppliedUserConfigBuffer;
     buffer.offset = offset;
 
     // Dry run parse the PlayMacro action

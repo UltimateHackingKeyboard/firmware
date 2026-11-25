@@ -90,6 +90,8 @@ void ModuleUart_OnTime(void) {
 static void processDeserializedRxData(void *state, uart_control_t messageKind, const uint8_t* data, uint16_t len) {
     switch (messageKind) {
         case UartControl_Ack:
+        case UartControl_Ack0:
+        case UartControl_Ack1:
         case UartControl_Nack:
         case UartControl_Ping:
         case UartControl_InvalidMessage:

@@ -33,13 +33,17 @@ static int peerAddressSet(const char *name, size_t len, settings_read_cb read_cb
     for (uint8_t i=0; i<PeerCount; i++) {
         if (strcmp(name, Peers[i].name) == 0) {
             printk("Settings: Found peer '%s' with address ", name);
-            bt_addr_le_t *addr = &Peers[i].addr;
-            addr->type = BT_ADDR_LE_RANDOM;
+            bt_addr_le_t addr = { .type = BT_ADDR_LE_RANDOM };
             for (uint8_t j=0; j<BT_ADDR_SIZE; j++) {
-                addr->a.val[j] = foo_val[BT_ADDR_SIZE-1-j];
-                printk("%02x", addr->a.val[j]);
+                addr.a.val[j] = foo_val[BT_ADDR_SIZE-1-j];
+                printk("%02x", addr.a.val[j]);
             }
             printk("\n");
+            bool addressChanged = !BtAddrEq(&addr, &Peers[i].addr);
+            Peers[i].addr = addr;
+            if (addressChanged) {
+                BtConn_SetBondBroken(&addr, false);
+            }
             if (i == PeerIdRight) {
                 setRightAddressIsSet(true);
             }

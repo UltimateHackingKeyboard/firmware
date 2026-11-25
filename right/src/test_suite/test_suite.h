@@ -8,6 +8,12 @@
 // Verbose logging mode - when true, logs each action
 extern bool TestSuite_Verbose;
 
+// Logs a failure. The first failure of a test is preceded by a separator.
+#define LOG_FAILURE(fmt, ...) do { TestSuite_LogSeparatorOnce(); LogU(fmt, ##__VA_ARGS__); } while(0)
+
+// Prints a separator unless the current test has already printed one.
+void TestSuite_LogSeparatorOnce(void);
+
 // Initialize the test suite. Call once at startup.
 void TestSuite_Init(void);
 

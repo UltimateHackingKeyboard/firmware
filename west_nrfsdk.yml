@@ -13,10 +13,15 @@ manifest:
     - submanifests/c2usb.yml
 
   projects:
+    - name: zephyrrtos-mcpp
+      remote: IntergatedCircuits
+      revision: 1055edd60a7862c963058ac267d188e9439614d3
+      path: modules/lib/zephyrrtos-mcpp
+
     - name: sdk-nrf
       remote: sdk
       path: nrf
-      revision: v3.3.0
+      revision: v3.4.2
       clone-depth: 1
       import:
         # path-prefix: nrfconnect

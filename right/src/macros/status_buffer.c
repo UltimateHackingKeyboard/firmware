@@ -320,6 +320,7 @@ static void reportError(
     Macros_SetStatusString(err, NULL);
 
     if (S != NULL) {
+        bool argIsCommand = AppliedUserConfigBuffer.buffer <= (uint8_t*)arg && (uint8_t*)arg < AppliedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
         if (arg != NULL && arg != argEnd) {
             Macros_SetStatusString(" ", NULL);
             Macros_SetStatusString(arg, TokEnd(arg, argEnd));
@@ -329,7 +330,6 @@ static void reportError(
         const char* endOfLine = S->ms.currentMacroAction.cmd.text + S->ls->ms.commandEnd;
         uint16_t line = findCurrentCommandLine();
         if (arg != NULL && argEnd != NULL && argEnd >= startOfLine && arg <= endOfLine) {
-            bool argIsCommand = (uint8_t*)arg >= ValidatedUserConfigBuffer.buffer && (uint8_t*)arg < ValidatedUserConfigBuffer.buffer + USER_CONFIG_SIZE;
             reportCommandLocation(line, arg - startOfLine, startOfLine, endOfLine, argIsCommand, 0);
         } else if (ctx != NULL) {
             reportLocationStack(ctx, line);
@@ -497,6 +497,22 @@ void MacroStatusBuffer_InitFromWormhole() {
 
 void MacroStatusBuffer_InitNormal() {
     Macros_ProcessClearStatusCommand(true);
+}
+
+void MacroStatusBuffer_LogToUart(void) {
+    uint16_t pos = 0;
+    while (pos < Buf.len) {
+        uint16_t lineLen = 0;
+        while (pos + lineLen < Buf.len && Buf.data[pos + lineLen] != '\n') {
+            lineLen++;
+        }
+        bool endsWithNewline = pos + lineLen < Buf.len;
+        LogWrn("%.*s\n", lineLen, &Buf.data[pos]);
+        pos += lineLen + (endsWithNewline ? 1 : 0);
+#ifdef __ZEPHYR__
+        k_sleep(K_MSEC(10));
+#endif
+    }
 }
 
 void MacroStatusBuffer_Validate(void) {

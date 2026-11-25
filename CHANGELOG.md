@@ -6,6 +6,48 @@ All notable changes to this project will be documented in this file.
 The format is loosely based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to the [UHK Versioning](VERSIONING.md) conventions.
 
+## [18.0.5] - 2026-11-12
+
+Device Protocol: 4.21.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.2
+
+- Always resync all data on configuration resets.
+- Add oled s+f, j+l hints on the oled for first time users.
+- Fix: sync cleared layer backlight to the left half efficiently.
+- Fix: restart macro engine on UserConfig load. `SMARTMACROS:PATCH`
+- Fix: pause/insert/scrLk/del keyids to match production layout. `SMARTMACROS:PATCH`
+- Fix: disable bluetooth when in deep sleep. Broken since 18.0.0.
+- Fix: improve native kboot flashing process, and support flashing progress usb commands. `DEVICEPROTOCOL:MINOR`
+- Fix: bridge cable reliability: alter conditions for uart recovery. 
+- Fix: bridge cable reliability: upstream race that caused permanently shifted byte counts.
+- Fix: temporary hotfix for stuck bluetooth interfaces.
+- Fix: temporary hotfix connect/disconnect-related bluetooth crash.
+- Fix: refactor right-to-left backlight sync.
+- Fix: after a usb wake, do not deliver the waking key.
+
+## [18.0.4] - 2026-10-09
+
+Device Protocol: 4.20.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.1
+
+- Fix: uart / bridge cable reliability issues present since 17.2.0. on some units.
+- Fix: color corruptions in the zephyr shell.
+- Fix: crashes and a memory corruption caused by activateKeyPostponed prepend command. `SMARTMACROS:PATCH`
+- Add firmware-side support for autodetection of broken peer bonds. `DEVICEPROTOCOL:MINOR`
+
+## [18.0.3] - 2026-09-17
+
+Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
+
+- Disable bridge cable low-power mode for now.
+- Fix minor issues around uart.
+- Fix empty report semantics broken in 18.0.1.
+
+## [18.0.2] - 2026-09-10
+
+Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0
+
+- Decrease the bt_conn_le_param_update error severity - don't bother the user over it.
+- Merge c2usb upstream.
+
 ## [18.0.1] - 2026-08-12
 
 Device Protocol: 4.19.0 | Module Protocol: 4.3.0 | Dongle Protocol: 2.0.0 | User Config: 15.0.0 | Hardware Config: 1.0.0 | Smart Macros: 4.0.0

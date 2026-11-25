@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include "logger.h"
+#include "config_manager.h"
 #include "device.h"
 #include "macros/status_buffer.h"
 #include "macro_events.h"
@@ -23,6 +24,7 @@
     #include <zephyr/logging/log_ctrl.h>
     #include <zephyr/shell/shell.h>
     #include <zephyr/shell/shell_uart.h>
+    #include "logger_priority.h"
     #if DEVICE_IS_KEYBOARD
         #include "keyboard/uart_bridge.h"
         #ifdef DEVICE_HAS_OLED
@@ -47,6 +49,24 @@ char BUFFER[MAX_LOG_LENGTH]; \
     BUFFER[MAX_LOG_LENGTH-1] = '\0'; \
 }
 
+#ifdef __ZEPHYR__
+// With the logging thread at high priority, thread-context producers wait for the deferred
+// log buffer to drain instead of overflowing it (the buffer overwrites its oldest messages).
+// ISR-context producers cannot wait and may still drop. Bounded, so a stalled log thread
+// can't hang callers. Must not run inside a REENTRANCY_GUARD - it drops concurrent logs.
+#define LOG_BACKPRESSURE_MAX_BUFFERED 8
+#define LOG_BACKPRESSURE_MAX_WAIT_MS 50
+
+static void uartLogBackpressure(void) {
+    if (Logger_PriorityHigh && !k_is_in_isr()) {
+        for (uint8_t i = 0; i < LOG_BACKPRESSURE_MAX_WAIT_MS && log_buffered_cnt() > LOG_BACKPRESSURE_MAX_BUFFERED; i++) {
+            log_thread_trigger();
+            k_msleep(1);
+        }
+    }
+}
+#endif
+
 void Uart_LogConstant(const char* buffer) {
 #ifdef __ZEPHYR__
     printk("%s", buffer);
@@ -57,6 +77,7 @@ void Uart_Log(const char *fmt, ...) {
 #ifdef __ZEPHYR__
     EXPAND_STRING(buffer);
 
+    uartLogBackpressure();
     Uart_LogConstant(buffer);
 #endif
 }
@@ -73,7 +94,8 @@ void c2usb_log(const char *fmt, ...) {
     REENTRANCY_GUARD_BEGIN;
     EXPAND_STRING(buffer);
 
-    LogConstantTo(DEVICE_ID, LogTarget_Uart | LogTarget_ErrorBuffer, buffer);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
+
     REENTRANCY_GUARD_END;
 }
 
@@ -94,7 +116,7 @@ __attribute__((weak)) void c2usb_diag_dump(void) {
 void LogErr(const char *fmt, ...) {
     EXPAND_STRING(buffer);
 
-    LogConstantTo(DEVICE_ID, LogTarget_Uart, RED "WRN: " UNCOLOR);
+    LogConstantTo(DEVICE_ID, LogTarget_Uart, RED "ERR: " UNCOLOR);
     LogConstantTo(DEVICE_ID, LogTarget_Uart, buffer);
 }
 
@@ -165,6 +187,11 @@ void LogUSDO(const char *fmt, ...) {
 }
 
 void LogConstantTo(device_id_t deviceId, log_target_t logMask, const char* buffer) {
+#ifdef __ZEPHYR__
+    if ((logMask & LogTarget_Uart) && DEBUG_LOG_UART && (DEVICE_IS_UHK60 || DEVICE_ID == deviceId)) {
+        uartLogBackpressure();
+    }
+#endif
     REENTRANCY_GUARD_BEGIN;
     if (DEVICE_IS_UHK60 || DEVICE_ID == deviceId) {
 #if DEVICE_HAS_OLED

@@ -1,5 +1,6 @@
 #include "test_input_machine.h"
 #include "test_hooks.h"
+#include "device.h"
 #include "test_suite.h"
 #include "macros/keyid_parser.h"
 #include "macros/shortcut_parser.h"
@@ -7,6 +8,7 @@
 #include "str_utils.h"
 #include "key_action.h"
 #include "key_states.h"
+#include "slot.h"
 #include "keymap.h"
 #include "layer.h"
 #include "timer.h"
@@ -16,7 +18,9 @@
 #include "utils.h"
 #include "usb_report_updater.h"
 
-#define LOG_VERBOSE(fmt, ...) do { if (TestSuite_Verbose) LogU(fmt, ##__VA_ARGS__); } while(0)
+// The left half only produces keys for a link test and logs none of its actions - its log
+// is reserved for the bridge's own diagnostics.
+#define LOG_VERBOSE(fmt, ...) do { if (TestSuite_Verbose && !DEVICE_IS_UHK80_LEFT) LogU(fmt, ##__VA_ARGS__); } while(0)
 
 #define TEST_TIMEOUT_MS 100
 
@@ -30,10 +34,15 @@ static bool endReached = false;
 
 // Delay state
 static bool inDelay = false;
-static uint32_t delayStartTime = 0;
+
+// The test's schedule: its start plus every delay so far. A delay waits until this point
+// rather than for its length from whenever it happened to begin, so the ticks spent on other
+// actions don't accumulate into drift - which matters in link tests, where both halves run
+// the script and their timelines must stay in step.
+static uint32_t currentTestTime = 0;
 
 // Key ID parsing: convert string like "u" or "leftShift" to slot + keyId
-static bool parseKeyId(const char *keyIdStr, uint8_t *slotId, uint8_t *keyId) {
+bool TestInput_ParseKeyId(const char *keyIdStr, uint8_t *slotId, uint8_t *keyId) {
     if (keyIdStr == NULL) {
         return false;
     }
@@ -85,7 +94,7 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
 
         key_action_t keyAction = { 0 };
         if (!MacroShortcutParser_Parse(at, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-            if (logFailure) LogU("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
+            if (logFailure) LOG_FAILURE("[TEST] FAIL: invalid shortcut in '%s'\n", expectShortcuts);
             return false;
         }
 
@@ -107,7 +116,7 @@ static bool validateReport(const char *expectShortcuts, bool logFailure) {
     if (KeyboardReport_ScancodeCount(actual) != scancodeCount) match = false;
 
     if (!match && logFailure) {
-        LogU("[TEST] <   FAIL: Expect '%s', got '%s'\n",
+        LOG_FAILURE("[TEST] <   FAIL: Expect '%s', got '%s'\n",
             expectShortcuts, Utils_GetUsbReportString(actual));
     }
 
@@ -122,7 +131,27 @@ void InputMachine_Start(const test_t *test) {
     endReached = false;
     endReachedTime = 0;
     inDelay = false;
-    delayStartTime = 0;
+    currentTestTime = Timer_GetCurrentTime();
+}
+
+// Only the half that runs the user logic consumes this event. Setting it on the left leaves it
+// permanently pending, which user_logic reports on every pass - enough to flood the left's log
+// buffer and make its diagnostics unreadable.
+static void notifyStateMatrixChanged(void) {
+    bool consumedLocally = !DEVICE_IS_UHK80_LEFT;
+
+    if (consumedLocally) {
+        EventVector_Set(EventVector_StateMatrix);
+        EventVector_WakeMain();
+    }
+}
+
+// In a link test both halves run the same script and each presses only the keys it physically
+// owns, so the other half's presses are its job, not ours.
+static bool isForeignSlot(uint8_t slotId) {
+    return InputMachine_CurrentTest != NULL
+        && InputMachine_CurrentTest->linkTestId != 0
+        && slotId != CURRENT_SLOT_ID;
 }
 
 void InputMachine_Tick(void) {
@@ -144,13 +173,17 @@ void InputMachine_Tick(void) {
         switch (action->type) {
             case TestAction_Press: {
                 uint8_t slotId, keyId;
-                if (parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    if (isForeignSlot(slotId)) {
+                        LOG_VERBOSE("[TEST] > Press [%s] - other half's job\n", action->keyId);
+                        InputMachine_ActionIndex++;
+                        return;
+                    }
                     KeyStates[slotId][keyId].hardwareSwitchState = true;
                     LOG_VERBOSE("[TEST] > Press [%s]\n", action->keyId);
-                    EventVector_Set(EventVector_StateMatrix);
-                    EventVector_WakeMain();
+                    notifyStateMatrixChanged();
                 } else {
-                    LogU("[TEST] FAIL: Press [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: Press [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -160,13 +193,17 @@ void InputMachine_Tick(void) {
 
             case TestAction_Release: {
                 uint8_t slotId, keyId;
-                if (parseKeyId(action->keyId, &slotId, &keyId)) {
+                if (TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    if (isForeignSlot(slotId)) {
+                        LOG_VERBOSE("[TEST] > Release [%s] - other half's job\n", action->keyId);
+                        InputMachine_ActionIndex++;
+                        return;
+                    }
                     KeyStates[slotId][keyId].hardwareSwitchState = false;
                     LOG_VERBOSE("[TEST] > Release [%s]\n", action->keyId);
-                    EventVector_Set(EventVector_StateMatrix);
-                    EventVector_WakeMain();
+                    notifyStateMatrixChanged();
                 } else {
-                    LogU("[TEST] FAIL: Release [%s] - invalid key\n", action->keyId);
+                    LOG_FAILURE("[TEST] FAIL: Release [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -174,25 +211,25 @@ void InputMachine_Tick(void) {
                 return;
             }
 
-            case TestAction_Delay:
+            case TestAction_Delay: {
                 if (!inDelay) {
                     inDelay = true;
-                    delayStartTime = Timer_GetCurrentTime();
-                    return;
-                } else {
-                    if (Timer_GetElapsedTime(&delayStartTime) >= action->delayMs) {
-                        LOG_VERBOSE("[TEST] > Delay %dms\n", action->delayMs);
-                        inDelay = false;
-                        InputMachine_ActionIndex++;
-                        break;
-                    }
-                    return;
+                    currentTestTime += action->delayMs;
                 }
+                bool due = (int32_t)(Timer_GetCurrentTime() - currentTestTime) >= 0;
+                if (due) {
+                    LOG_VERBOSE("[TEST] > Delay %dms\n", action->delayMs);
+                    inDelay = false;
+                    InputMachine_ActionIndex++;
+                    break;
+                }
+                return;
+            }
 
             case TestAction_SetAction: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetAction [%s] - invalid key\n", action->keyId);
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    LOG_FAILURE("[TEST] FAIL: SetAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -203,7 +240,7 @@ void InputMachine_Tick(void) {
 
                 key_action_t keyAction = { 0 };
                 if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-                    LogU("[TEST] FAIL: SetAction [%s] = '%s' - invalid shortcut\n", action->keyId, action->shortcutStr);
+                    LOG_FAILURE("[TEST] FAIL: SetAction [%s] = '%s' - invalid shortcut\n", action->keyId, action->shortcutStr);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -216,8 +253,8 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetMacro: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetMacro [%s] - invalid key\n", action->keyId);
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    LOG_FAILURE("[TEST] FAIL: SetMacro [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -237,8 +274,8 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetLayerHold: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetLayerHold [%s] - invalid key\n", action->keyId);
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    LOG_FAILURE("[TEST] FAIL: SetLayerHold [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -260,8 +297,8 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetLayerAction: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetLayerAction [%s] - invalid key\n", action->keyId);
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    LOG_FAILURE("[TEST] FAIL: SetLayerAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -272,7 +309,7 @@ void InputMachine_Tick(void) {
 
                 key_action_t keyAction = { 0 };
                 if (!MacroShortcutParser_Parse(shortcut, shortcutEnd, MacroSubAction_Tap, NULL, &keyAction)) {
-                    LogU("[TEST] FAIL: SetLayerAction layer %d [%s] = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
+                    LOG_FAILURE("[TEST] FAIL: SetLayerAction layer %d [%s] = '%s' - invalid shortcut\n", action->layerId, action->keyId, action->shortcutStr);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -285,8 +322,8 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetSecondaryRole: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetSecondaryRole [%s] - invalid key\n", action->keyId);
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    LOG_FAILURE("[TEST] FAIL: SetSecondaryRole [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -310,8 +347,8 @@ void InputMachine_Tick(void) {
 
             case TestAction_SetGenericAction: {
                 uint8_t slotId, keyId;
-                if (!parseKeyId(action->keyId, &slotId, &keyId)) {
-                    LogU("[TEST] FAIL: SetGenericAction [%s] - invalid key\n", action->keyId);
+                if (!TestInput_ParseKeyId(action->keyId, &slotId, &keyId)) {
+                    LOG_FAILURE("[TEST] FAIL: SetGenericAction [%s] - invalid key\n", action->keyId);
                     InputMachine_Failed = true;
                     return;
                 }
@@ -347,6 +384,14 @@ void InputMachine_Tick(void) {
                     *action->boolPtr = action->boolValue;
                 }
                 LOG_VERBOSE("[TEST] > SetBool %s\n", action->boolValue ? "true" : "false");
+                InputMachine_ActionIndex++;
+                break;
+
+            case TestAction_Call:
+                if (!action->callFn()) {
+                    InputMachine_Failed = true;
+                    return;
+                }
                 InputMachine_ActionIndex++;
                 break;
 

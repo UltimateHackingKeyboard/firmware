@@ -68,6 +68,7 @@
     typedef enum {
         KbootCmdPhase_Tx = 240,
         KbootCmdPhase_CheckTx,
+        KbootCmdPhase_WaitForCommand,
         KbootCmdPhase_RxAck,
         KbootCmdPhase_CheckAck,
         KbootCmdPhase_RxResponse,

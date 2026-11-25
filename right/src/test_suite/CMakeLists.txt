@@ -1,5 +1,6 @@
 target_sources(${PROJECT_NAME} PRIVATE
     test_suite.c
+    test_statistics.c
     test_input_machine.c
     test_output_machine.c
     tests/tests.c
@@ -20,4 +21,7 @@ target_sources(${PROJECT_NAME} PRIVATE
     tests/test_playtime.c
     tests/test_transport.c
     tests/test_tapkeyseq.c
+    tests/test_fail.c
+    tests/test_link.c
+    tests/test_messenger_failure.c
 )
