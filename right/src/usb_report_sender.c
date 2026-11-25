@@ -36,6 +36,7 @@ LOG_MODULE_REGISTER(UsbReportSender, LOG_LEVEL_INF);
 #define THROTTLE_MAX_DELAY_MS 32
 
 bool Resending = false;
+bool UsbReportSender_TestConfirmsInFail = false;
 static uint32_t lastBasicReportTime = 0;
 static uint32_t retryThrottleTime = 0;
 
@@ -171,6 +172,14 @@ static bool resendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay)
 // withDelay: back off before the resend.
 bool UsbReportSender_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
     bool pending = true;
+
+    // Test only: the test sink confirms its held report right here, the way a callback preempts
+    // the main thread between a failure and its handling.
+    if (UsbReportSender_TestConfirmsInFail && st == &UsbSemaphore.keyboard) {
+        UsbReportSender_TestConfirmsInFail = false;
+        Hid_ResumeTestSink();
+    }
+
     if (UsbSemaphore_Release(st, SemaphoreRelease_Undelivered)) {
         // Not released: the baseline stays, so the same report goes out again.
         pending = resendOrGiveUp(st, result, withDelay);

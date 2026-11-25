@@ -14,6 +14,12 @@
     // UsbReportSender_ComputeResendDelay() is ~255 ms (1+2+4+8+16+32 + 6*32 = 255).
     #define THROTTLE_MAX_RETRIES 12
 
+// Variables:
+
+    // Test only: once, the test sink confirms its held report inside the next UsbReportSender_Fail
+    // of a keyboard report.
+    extern bool UsbReportSender_TestConfirmsInFail;
+
 // Functions:
 
     void UsbReportSender_UpdateAndSendUsbReports(void);

@@ -1,4 +1,6 @@
 #include "tests.h"
+#include "test_suite/test_suite.h"
+#include "logger.h"
 #include "hid/transport.h"
 #include "usb_report_sender.h"
 
@@ -396,12 +398,102 @@ static const test_action_t test_transport_unreliable_typing[] = {
     TEST_END()
 };
 
+// The host stops polling with a key down, the key is released meanwhile, and the host polls
+// again. The host gets the press late; it has to get the release as well.
+static const test_action_t test_transport_host_stops_polling[] = {
+    TEST_SET_ACTION("j", "j"),
+    TEST_SET_BOOL(&Hid_TestSinkStalled, true),
+    TEST_PRESS______("j"),
+
+    // The press times out (32 ms) and is resent until given up (255 ms of backoff).
+    TEST_DELAY__(400),
+    TEST_RELEASE__U("j"),
+    TEST_DELAY__(100),
+    TEST_CALL(Hid_ResumeTestSink),
+    TEST_EXPECT__________("j"),
+    TEST_EXPECT__________(""),
+    TEST_DELAY__(100),
+    TEST_END()
+};
+
+// Fails the test if no keyboard report failed since the hook was armed: then nothing was raced.
+static bool confirmedInFail(void) {
+    bool fired = !UsbReportSender_TestConfirmsInFail;
+    UsbReportSender_TestConfirmsInFail = false;
+    if (!fired) {
+        LOG_FAILURE("[TEST] FAIL: no failed keyboard report for the confirmation to race\n");
+    }
+    return fired;
+}
+
+// The host takes a report at the very moment its timeout is being handled. The report must not
+// be sent again from the switched buffer, which holds the state before it (a key release).
+static const test_action_t test_transport_confirmation_races_timeout[] = {
+    TEST_SET_ACTION("j", "j"),
+    TEST_SET_ACTION("k", "k"),
+    TEST_SET_BOOL(&Hid_TestSinkStalled, true),
+    TEST_SET_BOOL(&UsbReportSender_TestConfirmsInFail, true),
+    TEST_PRESS______("j"),
+    TEST_EXPECT__________("j"),
+
+    // The press times out after 32 ms.
+    TEST_DELAY__(100),
+    TEST_CALL(confirmedInFail),
+    TEST_PRESS______("k"),
+    TEST_EXPECT__________("j k"),
+    TEST_DELAY__(60),
+    TEST_RELEASE__U("k"),
+    TEST_EXPECT__________("j"),
+    TEST_DELAY__(60),
+    TEST_RELEASE__U("j"),
+    TEST_EXPECT__________(""),
+    TEST_DELAY__(60),
+    TEST_END()
+};
+
+// The host takes a report that was given up on, at the very moment the next report fails to be
+// sent. The confirmation advances the baseline to that next report, which the host never got.
+static const test_action_t test_transport_confirmation_races_failed_send[] = {
+    TEST_SET_ACTION("j", "j"),
+    TEST_SET_ACTION("k", "k"),
+    TEST_SET_BOOL(&Hid_TestSinkStalled, true),
+    TEST_PRESS______("j"),
+
+    // The press times out (32 ms) and is resent until given up (255 ms of backoff).
+    TEST_DELAY__(400),
+    TEST_SET_BOOL(&UsbReportSender_TestConfirmsInFail, true),
+    TEST_PRESS______("k"),
+    TEST_EXPECT__________("j"),
+    TEST_EXPECT__________("j k"),
+    TEST_DELAY__(100),
+    TEST_CALL(confirmedInFail),
+    TEST_RELEASE__U("k"),
+    TEST_EXPECT__________("j"),
+    TEST_DELAY__(60),
+    TEST_RELEASE__U("j"),
+    TEST_EXPECT__________(""),
+    TEST_DELAY__(60),
+    TEST_END()
+};
+
 static const test_t transport_tests[] = {
     {
         .name = "unreliable_typing",
         .actions = test_transport_unreliable_typing,
         .repeatCount = TRANSPORT_RUNS,
         .spuriousFailureRate = TRANSPORT_RUN_FAILURE_RATE,
+    },
+    {
+        .name = "host_stops_polling",
+        .actions = test_transport_host_stops_polling,
+    },
+    {
+        .name = "confirmation_races_timeout",
+        .actions = test_transport_confirmation_races_timeout,
+    },
+    {
+        .name = "confirmation_races_failed_send",
+        .actions = test_transport_confirmation_races_failed_send,
     },
 };
 

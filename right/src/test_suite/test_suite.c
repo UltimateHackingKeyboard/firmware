@@ -18,6 +18,7 @@
 #include "slot.h"
 #include "key_states.h"
 #include "module.h"
+#include "hid/transport.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -161,6 +162,9 @@ static void startTest(const test_t *test, const test_module_t *module) {
     ConfigManager_ResetConfiguration(false, false, false);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
+
+    // A failed test may have left the test sink stalled.
+    Hid_ResumeTestSink();
     if (!isRerunning) {
         separatorPrinted = false;
     }

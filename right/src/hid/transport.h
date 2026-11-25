@@ -34,6 +34,14 @@ extern float HidReportBleLatencyAvgMs;
 // sent-callbacks, are dropped.
 #define UNRELIABLE_TRANSPORT_DROP_RECIPROCAL 7
 extern bool UnreliableTransportTestMode;
+
+// The test sink as a host that stopped polling: while set, the sink takes one keyboard report,
+// holds it unconfirmed and rejects the following ones.
+extern bool Hid_TestSinkStalled;
+
+// The host polls again: it gets the held report, which is confirmed now. Always returns true, for
+// TEST_CALL.
+bool Hid_ResumeTestSink(void);
 void Hid_DumpTransportState(void);
 
 // report sending

@@ -277,6 +277,37 @@ static errno_t sendToDongle(report_send_state_t *st, std::span<const uint8_t> ra
 }
 #endif
 
+bool Hid_TestSinkStalled = false;
+static bool testSinkHolds = false;
+static hid_keyboard_report_t testSinkHeldReport;
+
+static errno_t sendToTestSink(report_send_state_t *st)
+{
+    errno_t err = 0;
+    if (st != &UsbSemaphore.keyboard || !Hid_TestSinkStalled) {
+        // Mouse and controls reports are confirmed like the keyboard ones, but not captured.
+        reportSentCallback(st, ReportSink_TestSuite, 0);
+    } else if (!testSinkHolds) {
+        testSinkHeldReport = *ActiveKeyboardReport;
+        testSinkHolds = true;
+    } else {
+        err = -EBUSY;
+    }
+    return err;
+}
+
+extern "C" bool Hid_ResumeTestSink(void)
+{
+    Hid_TestSinkStalled = false;
+    if (testSinkHolds) {
+        // The held report is what the host gets, whatever the active report is by now.
+        TestHooks_CaptureReport(&testSinkHeldReport);
+        reportSentCallback(&UsbSemaphore.keyboard, ReportSink_TestSuite, 0);
+        testSinkHolds = false;
+    }
+    return true;
+}
+
 // The part of Hid_Send*Report that doesn't depend on the kind of the report. payload goes to USB
 // and BLE, rawReport to the dongle.
 static errno_t sendToSink(report_sink_t sink, report_send_state_t *st, hid::session *usbSession,
@@ -298,13 +329,7 @@ static errno_t sendToSink(report_sink_t sink, report_send_state_t *st, hid::sess
     case ReportSink_BlackHole:
         break;
     case ReportSink_TestSuite:
-        // The test suite takes keyboard reports only.
-        if (st == &UsbSemaphore.keyboard) {
-            reportSentCallback(st, ReportSink_TestSuite, 0);
-            err = 0;
-        } else {
-            LOG_WRN("Unhandled and unexpected switch state!");
-        }
+        err = sendToTestSink(st);
         break;
     default:
         LOG_WRN("Unhandled and unexpected switch state!");
@@ -380,8 +405,9 @@ static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int 
     }
     if (result == 0) {
         // The test suite sees a report only once its delivery is confirmed, before the release
-        // switches the sent report out of ActiveKeyboardReport.
-        if (sink == ReportSink_TestSuite && st == &UsbSemaphore.keyboard) {
+        // switches the sent report out of ActiveKeyboardReport. A held report is captured by
+        // Hid_ResumeTestSink.
+        if (sink == ReportSink_TestSuite && st == &UsbSemaphore.keyboard && !testSinkHolds) {
             TestHooks_CaptureReport(ActiveKeyboardReport);
         }
         UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
