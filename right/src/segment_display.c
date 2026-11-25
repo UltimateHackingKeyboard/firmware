@@ -135,7 +135,7 @@ void SegmentDisplay_SerializeVar(char* buffer, uint8_t bufLen, macro_variable_t 
     }
 }
 
-void SegmentDisplay_SerializeString(char* buffer, uint8_t bufLen, ustring_ref_t strRef)
+void SegmentDisplay_SerializeString(char* buffer, uint8_t bufLen, string_ref_t strRef)
 {
     RETURN_IF_SEGMENT_NOT_PRESENT;
     RETURN_IF_TOO_SHORT(bufLen);
