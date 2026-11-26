@@ -476,6 +476,72 @@ static const test_action_t test_transport_confirmation_races_failed_send[] = {
     TEST_END()
 };
 
+// Fails the test if a mouse or controls report was attempted while their interfaces were down.
+static bool downInterfacesLeftAlone(void) {
+    report_send_state_t *controls = &UsbSemaphore.controls;
+    report_send_state_t *mouse = &UsbSemaphore.mouse;
+    bool leftAlone = controls->retries == 0 && !controls->inFlight && mouse->retries == 0 && !mouse->inFlight;
+    if (!leftAlone) {
+        LOG_FAILURE("[TEST] FAIL: report sent to a down interface (inFlight/retries): controls=%d/%d mouse=%d/%d\n",
+            controls->inFlight, controls->retries, mouse->inFlight, mouse->retries);
+    }
+    return leftAlone;
+}
+
+// A host in boot mode starts the keyboard interface only, so the mouse and controls reports of
+// the held keys can't be delivered. Typing has to arrive anyway, over the unreliable transport.
+static const test_action_t test_transport_boot_mode_typing[] = {
+    TEST_SET_BOOL(&Hid_TestSinkBootMode, true),
+    TEST_SET_BOOL(&UnreliableTransportTestMode, true),
+    TEST_SET_ACTION("u", "mediaVolumeUp"),
+    TEST_SET_ACTION("i", "mouseBtnLeft"),
+    TEST_SET_ACTION("h", "h"),
+    TEST_SET_ACTION("j", "j"),
+    TEST_SET_ACTION("k", "k"),
+    TEST_SET_ACTION("l", "l"),
+    TEST_SET_ACTION("n", "n"),
+    TEST_PRESS______("u"),
+    TEST_PRESS______("i"),
+    TEST_DELAY__(60),
+    TEST_PRESS______("l"),
+    TEST_DELAY__(10),
+    TEST_EXPECT__________("l"),
+    TEST_RELEASE__U("l"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("h"),
+    TEST_DELAY__(10),
+    TEST_EXPECT__________("h"),
+    TEST_RELEASE__U("h"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("k"),
+    TEST_DELAY__(10),
+    TEST_EXPECT__________("k"),
+    TEST_RELEASE__U("k"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("n"),
+    TEST_DELAY__(10),
+    TEST_EXPECT__________("n"),
+    TEST_RELEASE__U("n"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+    TEST_PRESS______("j"),
+    TEST_DELAY__(10),
+    TEST_EXPECT__________("j"),
+    TEST_RELEASE__U("j"),
+    TEST_DELAY__(50),
+    TEST_EXPECT__________(""),
+    TEST_CALL(downInterfacesLeftAlone),
+    TEST_RELEASE__U("u"),
+    TEST_RELEASE__U("i"),
+    TEST_DELAY__(60),
+    TEST_SET_BOOL(&UnreliableTransportTestMode, false),
+    TEST_SET_BOOL(&Hid_TestSinkBootMode, false),
+    TEST_END()
+};
+
 static const test_t transport_tests[] = {
     {
         .name = "unreliable_typing",
@@ -494,6 +560,14 @@ static const test_t transport_tests[] = {
     {
         .name = "confirmation_races_failed_send",
         .actions = test_transport_confirmation_races_failed_send,
+    },
+    {
+        .name = "boot_mode_typing",
+        .actions = test_transport_boot_mode_typing,
+        .repeatCount = TRANSPORT_RUNS,
+
+        // 10 keyboard reports in a run.
+        .spuriousFailureRate = TRANSPORT_RUN_FAILURE_RATE * 10 / TRANSPORT_REPORTS_PER_RUN,
     },
 };
 

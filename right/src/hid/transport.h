@@ -42,6 +42,10 @@ extern bool Hid_TestSinkStalled;
 // The host polls again: it gets the held report, which is confirmed now. Always returns true, for
 // TEST_CALL.
 bool Hid_ResumeTestSink(void);
+
+// The test sink as a host in boot mode, which starts the keyboard interface only: while set, the
+// mouse and controls interfaces are down and a report sent to them anyway fails.
+extern bool Hid_TestSinkBootMode;
 void Hid_DumpTransportState(void);
 
 // report sending

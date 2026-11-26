@@ -147,19 +147,43 @@ static report_sink_t determineSink()
 #endif
 }
 
-static bool isInterfaceUp(hid::session *usbSession)
+static hid::session *usbSessionOf(report_send_state_t *st)
 {
-    return determineSink() != ReportSink_Usb || usbSession != nullptr;
+    hid::session *session = keyboard_app::usb_handle().session();
+    if (st == &UsbSemaphore.mouse) {
+        session = mouse_app::usb_handle().session();
+    } else if (st == &UsbSemaphore.controls) {
+        session = controls_app::usb_handle().session();
+    }
+    return session;
+}
+
+// Whether the current sink takes reports of this kind. Over USB the host starts each interface on
+// its own. The test sink in boot mode has the keyboard interface only. Other sinks take all kinds.
+static bool isInterfaceUp(report_send_state_t *st)
+{
+    bool isUp = true;
+    switch (determineSink()) {
+    case ReportSink_Usb:
+        isUp = usbSessionOf(st) != nullptr;
+        break;
+    case ReportSink_TestSuite:
+        isUp = st == &UsbSemaphore.keyboard || !Hid_TestSinkBootMode;
+        break;
+    default:
+        break;
+    }
+    return isUp;
 }
 
 extern "C" bool Hid_IsMouseInterfaceUp(void)
 {
-    return isInterfaceUp(mouse_app::usb_handle().session());
+    return isInterfaceUp(&UsbSemaphore.mouse);
 }
 
 extern "C" bool Hid_IsControlsInterfaceUp(void)
 {
-    return isInterfaceUp(controls_app::usb_handle().session());
+    return isInterfaceUp(&UsbSemaphore.controls);
 }
 
 // Returns true if a remote wakeup was signaled. The caller then drops the report, so that the waking key doesn't reach the resumed host.
@@ -293,13 +317,17 @@ static errno_t sendToDongle(report_send_state_t *st, std::span<const uint8_t> ra
 #endif
 
 bool Hid_TestSinkStalled = false;
+bool Hid_TestSinkBootMode = false;
 static bool testSinkHolds = false;
 static hid_keyboard_report_t testSinkHeldReport;
 
 static errno_t sendToTestSink(report_send_state_t *st)
 {
     errno_t err = 0;
-    if (st != &UsbSemaphore.keyboard || !Hid_TestSinkStalled) {
+    if (!isInterfaceUp(st)) {
+        // What a USB interface that the host didn't start answers.
+        err = -ECONNRESET;
+    } else if (st != &UsbSemaphore.keyboard || !Hid_TestSinkStalled) {
         // Mouse and controls reports are confirmed like the keyboard ones, but not captured.
         reportSentCallback(st, ReportSink_TestSuite, 0);
     } else if (!testSinkHolds) {
