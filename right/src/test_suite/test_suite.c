@@ -19,6 +19,8 @@
 #include "key_states.h"
 #include "module.h"
 #include "hid/transport.h"
+#include "usb_report_sender.h"
+#include "uart_parser.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -66,6 +68,9 @@ static bool isRerunning = false;
 // Inter-test delay state
 static bool inInterTestDelay = false;
 static uint32_t interTestDelayStart = 0;
+
+// The last test has ended; the suite finishes after one more inter-test delay.
+static bool suiteEnding = false;
 
 // Whether the current test (including its rerun) has opened its log with a separator
 static bool separatorPrinted = false;
@@ -149,6 +154,21 @@ static uint16_t repetitionsFailed = 0;
 #define REPEATED_TEST_PROGRESS_MS 5000
 static uint32_t lastProgressTime = 0;
 
+// A failed test stops where it failed: its keys may still be pressed and its test modes set.
+static void resetTestState(void) {
+    for (uint8_t slotId = 0; slotId < SLOT_COUNT; slotId++) {
+        for (uint8_t keyId = 0; keyId < MAX_KEY_COUNT_PER_MODULE; keyId++) {
+            KeyStates[slotId][keyId].hardwareSwitchState = false;
+        }
+    }
+    Hid_ResumeTestSink();
+    Hid_TestSinkBootMode = false;
+    UnreliableTransportTestMode = false;
+    UsbReportSender_TestConfirmsInFail = false;
+    TestHooks_FailMessengerSends = false;
+    UartStress_Active = false;
+}
+
 static void startTest(const test_t *test, const test_module_t *module) {
     if (test != repeatingTest) {
         repeatingTest = test;
@@ -163,8 +183,7 @@ static void startTest(const test_t *test, const test_module_t *module) {
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
 
-    // A failed test may have left the test sink stalled.
-    Hid_ResumeTestSink();
+    resetTestState();
     if (!isRerunning) {
         separatorPrinted = false;
     }
@@ -203,9 +222,18 @@ static bool anyKeyHeld(void) {
 // The suite is typically started by a key - e.g., Enter of a shell command - which is still
 // held at that point. Tests take over KeyStates, so it would stay pressed through all of them.
 static void beginSuite(void) {
-    TestHooks_AwaitingRelease = true;
-    awaitingReleaseStart = Timer_GetCurrentTime();
-    TestHooks_Active = true;
+    suiteEnding = false;
+    if (TestHooks_Active && !TestHooks_AwaitingRelease) {
+        // Started while a test runs: that test is cut off like a failed one, and its keys get
+        // released into the test sink during the delay.
+        resetTestState();
+        inInterTestDelay = true;
+        interTestDelayStart = Timer_GetCurrentTime();
+    } else {
+        TestHooks_AwaitingRelease = true;
+        awaitingReleaseStart = Timer_GetCurrentTime();
+        TestHooks_Active = true;
+    }
 }
 
 static void waitForRelease(void) {
@@ -222,16 +250,22 @@ static void waitForRelease(void) {
     }
 }
 
-// True once the inter-test pause has elapsed and the next test has been started.
+static void finishSuite(void);
+
+// True once the inter-test pause has elapsed and the next test has been started, or the suite
+// finished.
 static bool waitOutInterTestDelay(void) {
     if (Timer_GetElapsedTime(&interTestDelayStart) < INTER_TEST_DELAY___MS) {
         return false;
     }
 
     inInterTestDelay = false;
-    const test_t *nextTest = getCurrentTest();
-    const test_module_t *module = AllTestModules[currentModuleIndex];
-    startTest(nextTest, module);
+    if (suiteEnding) {
+        suiteEnding = false;
+        finishSuite();
+    } else {
+        startTest(getCurrentTest(), AllTestModules[currentModuleIndex]);
+    }
     return true;
 }
 
@@ -336,12 +370,14 @@ static void finishSuite(void) {
 static void moveToNextTest(void) {
     closeTestLog();
     bool anotherTest = !singleTestMode && advanceToNextTest();
-    if (anotherTest) {
-        inInterTestDelay = true;
-        interTestDelayStart = Timer_GetCurrentTime();
-    } else {
-        finishSuite();
+    suiteEnding = !anotherTest;
+    if (suiteEnding) {
+        // The delay lets the keys of a failed test get released into the test sink. Released only
+        // by finishSuite, they would reach the host.
+        resetTestState();
     }
+    inInterTestDelay = true;
+    interTestDelayStart = Timer_GetCurrentTime();
 }
 
 // Logs a repeated test's standing after the repetitions so far, `stage` naming the point it is
