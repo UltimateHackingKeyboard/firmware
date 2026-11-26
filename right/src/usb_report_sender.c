@@ -263,7 +263,8 @@ static void sendActiveReports(bool resending) {
         }
     }
 
-    if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending)) {
+    // A report whose interface is down isn't sent. It goes out with the first pass after the interface starts.
+    if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending) && Hid_IsControlsInterfaceUp()) {
         UsbSemaphore.controls.needsResending = false;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
@@ -275,7 +276,7 @@ static void sendActiveReports(bool resending) {
         usbReportsChangedByAnything = true;
     }
 
-    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
+    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending) && Hid_IsMouseInterfaceUp()) {
         UsbSemaphore.mouse.needsResending = false;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {

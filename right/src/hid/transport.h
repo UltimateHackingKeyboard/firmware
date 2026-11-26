@@ -49,6 +49,11 @@ errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t* report);
 errno_t Hid_SendMouseReport(const hid_mouse_report_t* report);
 errno_t Hid_SendControlsReport(const hid_controls_report_t* report);
 
+// Over USB each kind of report has its own interface, which the host starts on its own, or
+// never. A report isn't sent while its interface is down. Other sinks take all the kinds.
+bool Hid_IsMouseInterfaceUp(void);
+bool Hid_IsControlsInterfaceUp(void);
+
 // Called from NUS server 'sent' callback on UHK80 right half to feed
 // dongle-bound reports into the same latency EMA as BLE HID. Assumes any
 // right-half NUS send corresponds to a USB report being relayed to the dongle.

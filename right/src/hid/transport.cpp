@@ -147,6 +147,21 @@ static report_sink_t determineSink()
 #endif
 }
 
+static bool isInterfaceUp(hid::session *usbSession)
+{
+    return determineSink() != ReportSink_Usb || usbSession != nullptr;
+}
+
+extern "C" bool Hid_IsMouseInterfaceUp(void)
+{
+    return isInterfaceUp(mouse_app::usb_handle().session());
+}
+
+extern "C" bool Hid_IsControlsInterfaceUp(void)
+{
+    return isInterfaceUp(controls_app::usb_handle().session());
+}
+
 // Returns true if a remote wakeup was signaled. The caller then drops the report, so that the waking key doesn't reach the resumed host.
 static bool wakeUsbHostIfNeeded()
 {
