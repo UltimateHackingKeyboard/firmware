@@ -126,9 +126,29 @@ void SegmentDisplay_SerializeVar(char* buffer, uint8_t bufLen, macro_variable_t 
         case MacroVariableType_Bool:
             SegmentDisplay_SerializeInt(buffer, bufLen, var.asBool);
             break;
+        case MacroVariableType_String:
+            SegmentDisplay_SerializeString(buffer, bufLen, var.asStringRef);
+            break;
         default:
             Macros_ReportErrorNum("Unexpected variable type:", var.type, NULL);
             break;
+    }
+}
+
+void SegmentDisplay_SerializeString(char* buffer, uint8_t bufLen, string_ref_t strRef)
+{
+    RETURN_IF_SEGMENT_NOT_PRESENT;
+    RETURN_IF_TOO_SHORT(bufLen);
+
+    string_segment_t strSeg = StringRefToSegment(strRef);
+
+    // copy the first 3 chars of the string, pad with spaces if shorter.
+    for (uint8_t i = 0; i < 3; i++) {
+        if (i < strRef.len) {
+            buffer[i] = strSeg.start[i];
+        } else {
+            buffer[i] = ' ';
+        }
     }
 }
 

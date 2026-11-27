@@ -452,6 +452,18 @@ static macro_action_t decodeKeyAndConsume(parser_context_t* ctx, macro_sub_actio
     return action;
 }
 
+void dequoteContext(parser_context_t* ctx)
+{
+    if (ctx->at < ctx->end && (*ctx->at == '\'' || *ctx->at == '"')) {
+        char limiter = *ctx->at++;         // remember starting quote and skip it
+        if (ctx->end > ctx->at && *(ctx->end - 1) == limiter) {  // check if ending quote matches starting quote
+            ctx->end--;                    // if yes, skip the ending quote as well
+        } else {
+            ctx->at--;                     // if not, step back and keep quotes
+        }
+    }
+}
+
 macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_sub_action_t type, macro_usb_keyboard_reports_t* reports)
 {
     if (reports == NULL) {
@@ -461,7 +473,38 @@ macro_result_t Macros_ProcessKeyCommandAndConsume(parser_context_t* ctx, macro_s
         reports = &Macros_PersistentReports;
     }
 
-    macro_action_t action = decodeKeyAndConsume(ctx, type);
+    macro_action_t action;
+
+    // Allow $macroArg.xxx for type scancode ("modded scancode") here as well.
+    // - check for $
+    // - if found, call Macros_ConsumeString() to get a string segment (uses consumeValue())
+    // - Macros_ConsumeString() is new (in vars.c) and should coalesceType to string
+    // - parse that string segment as a shortcut (with MacroShortcutParser_Parse) to get the scancode and modifiers
+
+    if (*ctx->at == '$') {
+        string_segment_t segment = Macros_ConsumeString(ctx);
+        if (segment.start == NULL) {
+            Macros_ReportErrorTok(ctx, "Expected shortcut string but found:");
+            return MacroResult_Finished;
+        }
+        parser_context_t stringCtx = (parser_context_t) {
+            .begin = segment.start,
+            .at = segment.start,
+            .end = segment.end,
+            .macroState = ctx->macroState,
+            .nestingLevel = ctx->nestingLevel,
+            .nestingBound = ctx->nestingBound,
+        };
+        dequoteContext(&stringCtx); // remove enclosing quotes if they exist (hack to allow simple strings)
+        action = decodeKeyAndConsume(&stringCtx, type);
+        // the next part should not be necessary, because dequoteContext should have already removed the quotes.
+        if (stringCtx.at < stringCtx.end && (*stringCtx.at == '\'' || *stringCtx.at == '"')) {
+            stringCtx.at++;
+        }
+    }
+    else {
+        action = decodeKeyAndConsume(ctx, type);
+    }
 
     if (Macros_DryRun) {
         return MacroResult_Finished;
