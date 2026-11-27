@@ -46,6 +46,7 @@ bool TestHooks_Active = false;
 bool TestHooks_AwaitingRelease = false;
 static uint32_t awaitingReleaseStart = 0;
 bool TestHooks_FailMessengerSends = false;
+uint16_t TestHooks_CapturedReports = 0;
 bool TestSuite_Verbose = false;
 
 // Test tracking
@@ -206,6 +207,7 @@ void TestHooks_CaptureReport(const hid_keyboard_report_t *report) {
     if (!TestHooks_Active || TestHooks_AwaitingRelease) {
         return;
     }
+    TestHooks_CapturedReports++;
     OutputMachine_OnReportChange(report);
 }
 

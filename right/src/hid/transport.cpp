@@ -317,8 +317,11 @@ static errno_t sendToDongle(report_send_state_t *st, std::span<const uint8_t> ra
 #endif
 
 bool Hid_TestSinkStalled = false;
+bool Hid_TestSinkMouseStalled = false;
+uint16_t Hid_TestSinkMouseSends = 0;
 bool Hid_TestSinkBootMode = false;
 static bool testSinkHolds = false;
+static bool testSinkHoldsMouse = false;
 static hid_keyboard_report_t testSinkHeldReport;
 
 static errno_t sendToTestSink(report_send_state_t *st)
@@ -327,6 +330,11 @@ static errno_t sendToTestSink(report_send_state_t *st)
     if (!isInterfaceUp(st)) {
         // What a USB interface that the host didn't start answers.
         err = -ECONNRESET;
+    } else if (st == &UsbSemaphore.mouse && Hid_TestSinkMouseStalled) {
+        // Held like a keyboard report below, but not kept: nothing looks at mouse reports here.
+        err = testSinkHoldsMouse ? -EBUSY : 0;
+        testSinkHoldsMouse = true;
+        Hid_TestSinkMouseSends++;
     } else if (st != &UsbSemaphore.keyboard || !Hid_TestSinkStalled) {
         // Mouse and controls reports are confirmed like the keyboard ones, but not captured.
         reportSentCallback(st, ReportSink_TestSuite, 0);
@@ -347,6 +355,12 @@ extern "C" bool Hid_ResumeTestSink(void)
         TestHooks_CaptureReport(&testSinkHeldReport);
         reportSentCallback(&UsbSemaphore.keyboard, ReportSink_TestSuite, 0);
         testSinkHolds = false;
+    }
+    Hid_TestSinkMouseStalled = false;
+    Hid_TestSinkMouseSends = 0;
+    if (testSinkHoldsMouse) {
+        reportSentCallback(&UsbSemaphore.mouse, ReportSink_TestSuite, 0);
+        testSinkHoldsMouse = false;
     }
     return true;
 }

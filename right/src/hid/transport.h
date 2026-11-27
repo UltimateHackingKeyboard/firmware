@@ -39,8 +39,15 @@ extern bool UnreliableTransportTestMode;
 // holds it unconfirmed and rejects the following ones.
 extern bool Hid_TestSinkStalled;
 
-// The host polls again: it gets the held report, which is confirmed now. Always returns true, for
-// TEST_CALL.
+// The same for mouse reports: a host that started the mouse interface and doesn't poll it.
+extern bool Hid_TestSinkMouseStalled;
+
+// How many mouse reports the stalled test sink was offered since it was resumed, rejected ones
+// included.
+extern uint16_t Hid_TestSinkMouseSends;
+
+// The host polls again: it gets the held reports, which are confirmed now. Always returns true,
+// for TEST_CALL.
 bool Hid_ResumeTestSink(void);
 
 // The test sink as a host in boot mode, which starts the keyboard interface only: while set, the
