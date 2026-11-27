@@ -23,6 +23,10 @@
 
 #ifdef __ZEPHYR__
 #include "messenger.h"
+#include "main.h"
+#include "event_scheduler.h"
+#include "config_parser/config_globals.h"
+#include "usb_commands/usb_command_apply_config.h"
 #endif
 
 #if defined(__ZEPHYR__) && DEVICE_IS_UHK80_LEFT
@@ -306,6 +310,19 @@ static test_outcome_t evaluateCurrentTest(void) {
     return outcome;
 }
 
+// The tests replace only the running config; the validated user config is still in RAM, so it is
+// applied again, as boot would do it.
+static void restoreUserConfig(void) {
+#ifdef __ZEPHYR__
+    if (ValidatedUserConfigBuffer.isValid) {
+        EventVector_Set(EventVector_ApplyConfig);
+        Main_Wake();
+    } else {
+        UsbCommand_ApplyFactory(NULL, NULL);
+    }
+#endif
+}
+
 static void finishSuite(void) {
     Macros_StopAllMacros();
     if (!separatorPrinted) {
@@ -325,6 +342,7 @@ static void finishSuite(void) {
     ConfigManager_ResetConfiguration(true, true, true);
     LayerStack_Reset();
     PostponerExtended_ResetPostponer();
+    restoreUserConfig();
 }
 
 // Closes the test's log and goes on: to the next test after the inter-test delay, or to the
