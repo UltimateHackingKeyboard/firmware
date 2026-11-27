@@ -170,7 +170,7 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
         Connections_ResetWatermarks(connectionId);
 
         if (state == ConnectionState_Disconnected) {
-            UsbSemaphore_ClearConnection(connectionId);
+            UsbSemaphore_ReleaseConnection(connectionId);
         }
 
         if (Connections_Target(connectionId) == ConnectionTarget_Host && DEVICE_IS_UHK80_RIGHT) {
@@ -182,6 +182,9 @@ void Connections_SetState(connection_id_t connectionId, connection_state_t state
 
         if (connectionId == CurrentHostConnectionId) {
             WIDGET_REFRESH(&TargetWidget);
+            if (state == ConnectionState_Ready) {
+                EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "current host ready");
+            }
         }
     }
 }
@@ -516,6 +519,7 @@ static void switchOver(connection_id_t connectionId, bool explicitlySelected) {
 
     Hid_UpdateKeyboardProtocol();
     Hid_UpdateKeyboardLedsState();
+    EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "host switch");
 
     WIDGET_REFRESH(&TargetWidget);
     // The advertising icon depends on the current connection's type.

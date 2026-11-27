@@ -78,11 +78,10 @@ extern "C" void Hid_DumpTransportState(void)
         now - KeyLifeTimes.forceQueued, now - KeyLifeTimes.applied, now - KeyLifeTimes.action,
         now - KeyLifeTimes.delivered);
     c2usb_log("  inactive kb report: %s\n", Utils_GetUsbReportString(GetInactiveKeyboardReport()));
-    c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d givenUp=%d\n",
+    c2usb_log("  semaphore (inFlight/retries/needsResend): kb=%d/%d/%d ctl=%d/%d/%d mouse=%d/%d/%d\n",
         (int)UsbSemaphore.keyboard.inFlight, (int)UsbSemaphore.keyboard.retries, (int)UsbSemaphore.keyboard.needsResending,
         (int)UsbSemaphore.controls.inFlight, (int)UsbSemaphore.controls.retries, (int)UsbSemaphore.controls.needsResending,
-        (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending,
-        (int)UsbReportSender_GivenUp);
+        (int)UsbSemaphore.mouse.inFlight, (int)UsbSemaphore.mouse.retries, (int)UsbSemaphore.mouse.needsResending);
     c2usb_log("  throttle: %u ms ago blocked=%d reasons=0x%x until=in %d ms postponed=0x%x\n",
         now - MainLifeTimes.throttleTime,
         (int)MainLifeTimes.throttleBlocked, MainLifeTimes.throttleBlockReasons,
@@ -148,6 +147,45 @@ static report_sink_t determineSink()
 #endif
 }
 
+static hid::session *usbSessionOf(report_send_state_t *st)
+{
+    hid::session *session = keyboard_app::usb_handle().session();
+    if (st == &UsbSemaphore.mouse) {
+        session = mouse_app::usb_handle().session();
+    } else if (st == &UsbSemaphore.controls) {
+        session = controls_app::usb_handle().session();
+    }
+    return session;
+}
+
+// Whether the current sink takes reports of this kind. Over USB the host starts each interface on
+// its own. The test sink in boot mode has the keyboard interface only. Other sinks take all kinds.
+static bool isInterfaceUp(report_send_state_t *st)
+{
+    bool isUp = true;
+    switch (determineSink()) {
+    case ReportSink_Usb:
+        isUp = usbSessionOf(st) != nullptr;
+        break;
+    case ReportSink_TestSuite:
+        isUp = st == &UsbSemaphore.keyboard || !Hid_TestSinkBootMode;
+        break;
+    default:
+        break;
+    }
+    return isUp;
+}
+
+extern "C" bool Hid_IsMouseInterfaceUp(void)
+{
+    return isInterfaceUp(&UsbSemaphore.mouse);
+}
+
+extern "C" bool Hid_IsControlsInterfaceUp(void)
+{
+    return isInterfaceUp(&UsbSemaphore.controls);
+}
+
 // Returns true if a remote wakeup was signaled. The caller then drops the report, so that the waking key doesn't reach the resumed host.
 static bool wakeUsbHostIfNeeded()
 {
@@ -162,12 +200,27 @@ static bool wakeUsbHostIfNeeded()
 
 // -ENETDOWN: the bus is suspended, or our wakeup is still in progress. Drop the report instead of
 // retrying it into a later resume; the current state is sent once the bus is awake, see
-// UsbReportSender_RequestStateResend. The dongle only relays reports it can't rebuild, so it retries.
+// UsbReportSender_RequestStateResend. On the dongle, UsbReportSender_ShouldGiveUp gives up on it at once.
 static errno_t dropIfBusDown(errno_t err, report_send_state_t *st)
 {
     if (DEVICE_IS_MASTER && err == -ENETDOWN) {
-        UsbSemaphore_Release(st);
+        UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
         return 0;
+    }
+    return err;
+}
+
+static errno_t sendUsb(hid::session *session, std::span<const uint8_t> payload, report_send_state_t *st, bool mayWakeHost)
+{
+    errno_t err = -ECONNRESET;
+    if (session) {
+        if (mayWakeHost && wakeUsbHostIfNeeded()) {
+            LOG_INF("USB host is suspended; waking it, dropping report.");
+            UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
+            err = 0;
+        } else {
+            err = dropIfBusDown(session->send_report(payload).to_int(), st);
+        }
     }
     return err;
 }
@@ -238,7 +291,114 @@ static void noteSendTarget(report_send_state_t *st, report_sink_t sink)
 #else
     uint8_t connectionId = 0;
 #endif
-    UsbSemaphore_NoteSendTarget(st, sink, connectionId);
+    UsbSemaphore_Take(st, sink, connectionId);
+}
+
+#if DEVICE_IS_UHK80_RIGHT
+static errno_t sendBle(std::span<const uint8_t> payload)
+{
+    hid::session *session = currentHostBleSession();
+    return session ? session->send_report(payload).to_int() : -ECONNRESET;
+}
+
+static errno_t sendToDongle(report_send_state_t *st, std::span<const uint8_t> rawReport)
+{
+    bool isKeyboard = st == &UsbSemaphore.keyboard;
+    bool isMouse = st == &UsbSemaphore.mouse;
+    uint8_t propertyId = isKeyboard ? SyncablePropertyId_KeyboardReport : isMouse ? SyncablePropertyId_MouseReport : SyncablePropertyId_ControlsReport;
+    errno_t err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty, propertyId, rawReport.data(), rawReport.size());
+    if (err != 0) {
+        LOG_WRN("Failed to send %s report to dongle: %d", isKeyboard ? "keyboard" : isMouse ? "mouse" : "controls", err);
+    } else {
+        UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
+    }
+    return err;
+}
+#endif
+
+bool Hid_TestSinkStalled = false;
+bool Hid_TestSinkMouseStalled = false;
+uint16_t Hid_TestSinkMouseSends = 0;
+bool Hid_TestSinkBootMode = false;
+static bool testSinkHolds = false;
+static bool testSinkHoldsMouse = false;
+static hid_keyboard_report_t testSinkHeldReport;
+
+static errno_t sendToTestSink(report_send_state_t *st)
+{
+    errno_t err = 0;
+    if (!isInterfaceUp(st)) {
+        // What a USB interface that the host didn't start answers.
+        err = -ECONNRESET;
+    } else if (st == &UsbSemaphore.mouse && Hid_TestSinkMouseStalled) {
+        // Held like a keyboard report below, but not kept: nothing looks at mouse reports here.
+        err = testSinkHoldsMouse ? -EBUSY : 0;
+        testSinkHoldsMouse = true;
+        Hid_TestSinkMouseSends++;
+    } else if (st != &UsbSemaphore.keyboard || !Hid_TestSinkStalled) {
+        // Mouse and controls reports are confirmed like the keyboard ones, but not captured.
+        reportSentCallback(st, ReportSink_TestSuite, 0);
+    } else if (!testSinkHolds) {
+        testSinkHeldReport = *ActiveKeyboardReport;
+        testSinkHolds = true;
+    } else {
+        err = -EBUSY;
+    }
+    return err;
+}
+
+extern "C" bool Hid_ResumeTestSink(void)
+{
+    Hid_TestSinkStalled = false;
+    if (testSinkHolds) {
+        // The held report is what the host gets, whatever the active report is by now.
+        TestHooks_CaptureReport(&testSinkHeldReport);
+        reportSentCallback(&UsbSemaphore.keyboard, ReportSink_TestSuite, 0);
+        testSinkHolds = false;
+    }
+    Hid_TestSinkMouseStalled = false;
+    Hid_TestSinkMouseSends = 0;
+    if (testSinkHoldsMouse) {
+        reportSentCallback(&UsbSemaphore.mouse, ReportSink_TestSuite, 0);
+        testSinkHoldsMouse = false;
+    }
+    return true;
+}
+
+// The part of Hid_Send*Report that doesn't depend on the kind of the report. payload goes to USB
+// and BLE, rawReport to the dongle.
+static errno_t sendToSink(report_sink_t sink, report_send_state_t *st, hid::session *usbSession,
+    std::span<const uint8_t> payload, std::span<const uint8_t> rawReport, bool mayWakeHost)
+{
+    errno_t err = -EHOSTUNREACH;
+    switch (sink) {
+    case ReportSink_Usb:
+        err = sendUsb(usbSession, payload, st, mayWakeHost);
+        break;
+#if DEVICE_IS_UHK80_RIGHT
+    case ReportSink_BleHid:
+        err = sendBle(payload);
+        break;
+    case ReportSink_Dongle:
+        err = sendToDongle(st, rawReport);
+        break;
+#endif
+    case ReportSink_BlackHole:
+        break;
+    case ReportSink_TestSuite:
+        err = sendToTestSink(st);
+        break;
+    default:
+        LOG_WRN("Unhandled and unexpected switch state!");
+        break;
+    }
+    return err;
+}
+
+template <typename T>
+static std::span<const uint8_t> rawBytes(const T *report)
+{
+    return { (const uint8_t *)report, sizeof(*report) };
 }
 
 extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
@@ -250,63 +410,22 @@ extern "C" errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t *report)
     noteSendTarget(&UsbSemaphore.keyboard, sink);
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z11,%d", sink);
-    errno_t err = -ECONNRESET;
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return -EAGAIN;
     }
-    switch (sink) {
-    case ReportSink_Usb:
-        if (auto session = keyboard_app::usb_handle().session(); session) {
-            if (wakeUsbHostIfNeeded()) {
-                LOG_INF("USB host is suspended; waking it, dropping report.");
-                UsbSemaphore_Release(&UsbSemaphore.keyboard);
-                err = 0;
-            } else {
-                err = dropIfBusDown(session->send_report(payload).to_int(), &UsbSemaphore.keyboard);
-            }
-        }
-        break;
+    errno_t err = sendToSink(sink, &UsbSemaphore.keyboard, keyboard_app::usb_handle().session(), payload, rawBytes(report), true);
+
 #if DEVICE_IS_UHK80_RIGHT
-    case ReportSink_BleHid: {
-        hid::session *session = currentHostBleSession();
+    // -ENOMEM also means that the ATT buffer pool is empty; only an MTU too small for NKRO
+    // (seen on Android) calls for the fallback.
+    if (sink == ReportSink_BleHid && err == -ENOMEM && !fitsBleMtu(payload.size())) {
+        LOG_WRN("keyboard NKRO mode fails, falling back to 6KRO");
 
-        if (!session) {
-            break;
-        }
-        err = session->send_report(payload).to_int();
-        // -ENOMEM also means that the ATT buffer pool is empty; only an MTU too small for NKRO
-        // (seen on Android) calls for the fallback.
-        if (err == -ENOMEM && !fitsBleMtu(payload.size())) {
-            LOG_WRN("keyboard NKRO mode fails, falling back to 6KRO");
-
-            keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_6_KEY);
-            payload = keyboard_buffer.insert(*report);
-            err = session->send_report(payload).to_int();
-        }
-        break;
+        keyboard_buffer.reset_to(hid::protocol::REPORT, rollover_t::ROLLOVER_6_KEY);
+        payload = keyboard_buffer.insert(*report);
+        err = sendBle(payload);
     }
-    case ReportSink_Dongle:
-        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
-            SyncablePropertyId_KeyboardReport, (const uint8_t *)report, sizeof(*report));
-        if (err != 0) {
-            LOG_WRN("Failed to send keyboard report to dongle: %d", err);
-        } else {
-            UsbSemaphore_Release(&UsbSemaphore.keyboard);
-        }
-        break;
 #endif
-    case ReportSink_TestSuite:
-        err = 0;
-        reportSentCallback(&UsbSemaphore.keyboard, ReportSink_TestSuite, 0);
-        break;
-    case ReportSink_BlackHole:
-        err = -EHOSTUNREACH;
-        break;
-    default:
-        LOG_WRN("Unhandled and unexpected switch state!");
-        err = -EHOSTUNREACH;
-        break;
-    }
     Trace_Printf("z12,%d", err);
     if (err == 0) {
         // not needed when dongle is sink
@@ -326,25 +445,32 @@ static void reportSentCallback(report_send_state_t *st, report_sink_t sink, int 
     if (UnreliableTransportTestMode && Utils_Random() % UNRELIABLE_TRANSPORT_DROP_RECIPROCAL == 0) {
         return;
     }
+    // Any confirmation, even a stale one, shows that the host takes reports of this kind again.
+    if (result == 0) {
+        st->retries = 0;
+    }
     // A late callback of a report the semaphore no longer waits for (cleared, timed out, or sent
     // over the other transport since) would release the wrong report.
     if (!st->inFlight || st->sink != sink) {
-        LOG_WRN("Ignoring a stale report sent callback, result %d.", result);
+        LOG_WRN("Ignoring a stale sent_cb(%d)", result);
+        // The host took a report that was given up on, so the baseline no longer matches what the
+        // host has. Send the current state.
+        if (result == 0) {
+            EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "late confirmation");
+        }
         return;
     }
     if (result == 0) {
         // The test suite sees a report only once its delivery is confirmed, before the release
-        // switches the sent report out of ActiveKeyboardReport.
-        if (sink == ReportSink_TestSuite && st == &UsbSemaphore.keyboard) {
+        // switches the sent report out of ActiveKeyboardReport. A held report is captured by
+        // Hid_ResumeTestSink.
+        if (sink == ReportSink_TestSuite && st == &UsbSemaphore.keyboard && !testSinkHolds) {
             TestHooks_CaptureReport(ActiveKeyboardReport);
         }
-        UsbSemaphore_Release(st);
+        UsbSemaphore_Release(st, SemaphoreRelease_Delivered);
         UsbScheduler_ReportDelivered(sink);
-        if (sink == ReportSink_Usb) {
-            UsbState_Delivered();
-        }
     } else {
-        UsbSemaphore_Fail(st, result);
+        UsbReportSender_Fail(st, result, true);
     }
 #if DEVICE_IS_UHK_DONGLE
     Dongle_SignalUsbReportSent();
@@ -365,47 +491,10 @@ extern "C" errno_t Hid_SendMouseReport(const hid_mouse_report_t *report)
     noteSendTarget(&UsbSemaphore.mouse, sink);
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z21,%d", sink);
-    errno_t err = -ECONNRESET;
-    switch (sink) {
-    case ReportSink_Usb:
-        if (auto session = mouse_app::usb_handle().session(); session) {
-            if (report->buttons != 0 && wakeUsbHostIfNeeded()) {
-                LOG_INF("USB host is suspended; waking it, dropping report.");
-                UsbSemaphore_Release(&UsbSemaphore.mouse);
-                err = 0;
-            } else {
-                err = dropIfBusDown(session->send_report(payload).to_int(), &UsbSemaphore.mouse);
-            }
-        }
-        break;
-#if DEVICE_IS_UHK80_RIGHT
-    case ReportSink_BleHid: {
-        hid::session *session = currentHostBleSession();
 
-        if (!session) {
-            break;
-        }
-        err = session->send_report(payload).to_int();
-        break;
-    }
-    case ReportSink_Dongle:
-        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
-            SyncablePropertyId_MouseReport, (const uint8_t *)report, sizeof(*report));
-        if (err != 0) {
-            LOG_WRN("Failed to send mouse report to dongle: %d", err);
-        } else {
-            UsbSemaphore_Release(&UsbSemaphore.mouse);
-        }
-        break;
-#endif
-    case ReportSink_BlackHole:
-        err = -EHOSTUNREACH;
-        break;
-    default:
-        LOG_WRN("Unhandled and unexpected switch state!");
-        err = -EHOSTUNREACH;
-        break;
-    }
+    // Only a button wakes the host, not a movement.
+    bool mayWakeHost = report->buttons != 0;
+    errno_t err = sendToSink(sink, &UsbSemaphore.mouse, mouse_app::usb_handle().session(), payload, rawBytes(report), mayWakeHost);
     Trace_Printf("z22,%d", err);
     if (err == 0) {
         JitterTest_RecordMouseX(report->x);
@@ -429,47 +518,7 @@ extern "C" errno_t Hid_SendControlsReport(const hid_controls_report_t *report)
     noteSendTarget(&UsbSemaphore.controls, sink);
     UsbScheduler_ReportAcceptedByTransport(sink);
     Trace_Printf("z31,%d", sink);
-    errno_t err = -ECONNRESET;
-    switch (sink) {
-    case ReportSink_Usb:
-        if (auto session = controls_app::usb_handle().session(); session) {
-            if (wakeUsbHostIfNeeded()) {
-                LOG_INF("USB host is suspended; waking it, dropping report.");
-                UsbSemaphore_Release(&UsbSemaphore.controls);
-                err = 0;
-            } else {
-                err = dropIfBusDown(session->send_report(payload).to_int(), &UsbSemaphore.controls);
-            }
-        }
-        break;
-#if DEVICE_IS_UHK80_RIGHT
-    case ReportSink_BleHid: {
-        hid::session *session = currentHostBleSession();
-
-        if (!session) {
-            break;
-        }
-        err = session->send_report(payload).to_int();
-        break;
-    }
-    case ReportSink_Dongle:
-        err = Messenger_Send2(DeviceId_Uhk_Dongle, MessageId_SyncableProperty,
-            SyncablePropertyId_ControlsReport, (const uint8_t *)report, sizeof(*report));
-        if (err != 0) {
-            LOG_WRN("Failed to send controls report to dongle: %d", err);
-        } else {
-            UsbSemaphore_Release(&UsbSemaphore.controls);
-        }
-        break;
-#endif
-    case ReportSink_BlackHole:
-        err = -EHOSTUNREACH;
-        break;
-    default:
-        LOG_WRN("Unhandled and unexpected switch state!");
-        err = -EHOSTUNREACH;
-        break;
-    }
+    errno_t err = sendToSink(sink, &UsbSemaphore.controls, controls_app::usb_handle().session(), payload, rawBytes(report), true);
     Trace_Printf("z32,%d", err);
     if (err == 0) {
         // not needed when dongle is sink

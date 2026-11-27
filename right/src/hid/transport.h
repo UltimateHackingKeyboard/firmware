@@ -34,12 +34,36 @@ extern float HidReportBleLatencyAvgMs;
 // sent-callbacks, are dropped.
 #define UNRELIABLE_TRANSPORT_DROP_RECIPROCAL 7
 extern bool UnreliableTransportTestMode;
+
+// The test sink as a host that stopped polling: while set, the sink takes one keyboard report,
+// holds it unconfirmed and rejects the following ones.
+extern bool Hid_TestSinkStalled;
+
+// The same for mouse reports: a host that started the mouse interface and doesn't poll it.
+extern bool Hid_TestSinkMouseStalled;
+
+// How many mouse reports the stalled test sink was offered since it was resumed, rejected ones
+// included.
+extern uint16_t Hid_TestSinkMouseSends;
+
+// The host polls again: it gets the held reports, which are confirmed now. Always returns true,
+// for TEST_CALL.
+bool Hid_ResumeTestSink(void);
+
+// The test sink as a host in boot mode, which starts the keyboard interface only: while set, the
+// mouse and controls interfaces are down and a report sent to them anyway fails.
+extern bool Hid_TestSinkBootMode;
 void Hid_DumpTransportState(void);
 
 // report sending
 errno_t Hid_SendKeyboardReport(const hid_keyboard_report_t* report);
 errno_t Hid_SendMouseReport(const hid_mouse_report_t* report);
 errno_t Hid_SendControlsReport(const hid_controls_report_t* report);
+
+// Over USB each kind of report has its own interface, which the host starts on its own, or
+// never. A report isn't sent while its interface is down. Other sinks take all the kinds.
+bool Hid_IsMouseInterfaceUp(void);
+bool Hid_IsControlsInterfaceUp(void);
 
 // Called from NUS server 'sent' callback on UHK80 right half to feed
 // dongle-bound reports into the same latency EMA as BLE HID. Assumes any

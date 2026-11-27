@@ -36,26 +36,39 @@ LOG_MODULE_REGISTER(UsbReportSender, LOG_LEVEL_INF);
 #define THROTTLE_MAX_DELAY_MS 32
 
 bool Resending = false;
+bool UsbReportSender_TestConfirmsInFail = false;
 static uint32_t lastBasicReportTime = 0;
 static uint32_t retryThrottleTime = 0;
-
-bool UsbReportSender_GivenUp = false;
 
 // Reports sent while the bus is suspended are dropped, see dropIfBusDown in transport.cpp. Once the
 // bus is awake, send the current state instead. Main thread only; other threads schedule
 // EventSchedulerEvent_ResendUsbState.
 void UsbReportSender_RequestStateResend(void) {
     if (DEVICE_IS_MASTER) {
+        UsbSemaphore.keyboard.retries = 0;
+        UsbSemaphore.controls.retries = 0;
+        UsbSemaphore.mouse.retries = 0;
+
         uint8_t* keyboard = (uint8_t*)(ActiveKeyboardReport == &keyboardReports[0] ? &keyboardReports[1] : &keyboardReports[0]);
         uint8_t* controls = (uint8_t*)(ActiveControlsReport == &controlsReports[0] ? &controlsReports[1] : &controlsReports[0]);
         uint8_t* mouse = (uint8_t*)(ActiveMouseReport == &mouseReports[0] ? &mouseReports[1] : &mouseReports[0]);
 
-        keyboard[0] = ~((uint8_t*)ActiveKeyboardReport)[0];
-        controls[0] = ~((uint8_t*)ActiveControlsReport)[0];
-        mouse[0] = ~((uint8_t*)ActiveMouseReport)[0];
+        // A first byte no real report is likely to have: all modifiers, the first eight mouse
+        // buttons. The baselines then differ from the current state, whatever it is by the next
+        // pass. Not derived from the active reports: between a delivery and the next pass they are
+        // stale. A state that does have this first byte isn't resent.
+        keyboard[0] = 0xff;
+        controls[0] = 0xff;
+        mouse[0] = 0xff;
 
         EventVector_Set(EventVector_SendUsbReports);
     }
+}
+
+// No host takes the report and retrying won't change it; the current state is sent once a host is
+// up, see UsbReportSender_RequestStateResend.
+static bool isHostGone(int err) {
+    return err == -ENETDOWN || err == -ECONNRESET || err == -ENOTCONN || err == -EPIPE || err == -EHOSTUNREACH;
 }
 
 // Should we resend, or give up?
@@ -64,18 +77,14 @@ bool UsbReportSender_ShouldGiveUp(int err, uint8_t* counter) {
 
     if (statusOk) {
         *counter = 0;
-        UsbReportSender_GivenUp = false;
-        return true;
-    }
-
-    if (UsbReportSender_GivenUp) {
         return true;
     }
 
     (*counter)++;
-    if (*counter > THROTTLE_MAX_RETRIES) {
-        *counter = 0;
-        UsbReportSender_GivenUp = true;
+    if (*counter > THROTTLE_MAX_RETRIES || isHostGone(err)) {
+        // Stays exhausted until a send succeeds or a host is up, so that the following reports of
+        // this kind get a single attempt each.
+        *counter = THROTTLE_MAX_RETRIES;
         return true;
     }
 
@@ -101,12 +110,6 @@ uint16_t UsbReportSender_ComputeResendDelay(uint8_t counter) {
 }
 
 static void handleUltimateFail(errno_t errorCode) {
-    // In any case, make the keyboard wake up, compare the usb reports, and possibly send them (those that are up-to-date at that time)
-    // This way, we loose some reports along the way, but at least don't produce stuck keys
-    //
-    // TODO: do this from device_state? (send all reports after any switch.
-    EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-resend");
-
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
         WATCH(LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode)));
@@ -141,7 +144,7 @@ void UsbReportSender_TearDownStalledLink(report_send_state_t* st) {
     EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "stalled-link");
 }
 
-bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay) {
+static bool resendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay) {
     if (!UsbReportSender_ShouldGiveUp(ret, &st->retries)) {
         st->needsResending = true;
         // The semaphore timeout path already waited out its own delay, so resend now.
@@ -150,11 +153,48 @@ bool UsbReportSender_ResendOrGiveUp(report_send_state_t* st, errno_t ret, bool w
         return true;
     } else {
         if (ret != 0) {
+            // The report is dropped: the baseline advances as if the host had it. The host's state
+            // is put right by the next report of this kind, or without one:
+            // - host gone: by the state resend once a host is up.
+            // - the transport still holds an earlier report (e.g. USB stopped polling the
+            //   endpoint): by the state resend on its late confirmation, see reportSentCallback.
+            // - neither (the link rejects reports while holding none): by nothing. A dropped key
+            //   release then leaves the key pressed until the next key event.
+            st->switchActiveReport();
             handleUltimateFail(ret);
         }
         st->needsResending = false;
         return false;
     }
+}
+
+// The report wasn't sent or delivered: resend it, or give up. Returns false if it was given up.
+// withDelay: back off before the resend.
+bool UsbReportSender_Fail(report_send_state_t* st, errno_t result, bool withDelay) {
+    bool pending = true;
+
+    // Test only: the test sink confirms its held report right here, the way a callback preempts
+    // the main thread between a failure and its handling.
+    if (UsbReportSender_TestConfirmsInFail && st == &UsbSemaphore.keyboard) {
+        UsbReportSender_TestConfirmsInFail = false;
+        Hid_ResumeTestSink();
+    }
+
+    if (UsbSemaphore_Release(st, SemaphoreRelease_Undelivered)) {
+        // Not released: the baseline stays, so the same report goes out again, unless it is given up.
+        pending = resendOrGiveUp(st, result, withDelay);
+    } else if (DEVICE_IS_MASTER) {
+        // Something released or cleared the report first (a confirmation, a bus reset), so the
+        // active report is no longer the one that failed. A confirmation may have been that of
+        // an older report though, so send the current state.
+        LOG_WRN("Report resolved during a failure (%d)", result);
+        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_ResendUsbState, "confirmation raced a failure");
+    } else {
+        // The dongle relays one message at a time and has no state to send: send it again.
+        LOG_WRN("Report resolved during a failure (%d)", result);
+        st->needsResending = true;
+    }
+    return pending;
 }
 
 static void clearMouseMovement(void) {
@@ -169,19 +209,17 @@ static void clearMouseMovement(void) {
     }
 }
 
-static bool mouseButtonsChanged(void) {
-    return mouseReports[0].buttons != mouseReports[1].buttons;
-}
-
 static void sendActiveReports(bool resending) {
-    bool usbReportsChangedByAction = false;
     bool usbReportsChangedByAnything = false;
     errno_t ret;
 
-    // in case of usb error, this gets set back again
-    EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
+    // In case of usb error, the resend request gets set back again. A resend pass leaves the
+    // request for a normal pass alone: it doesn't do that pass's work.
+    EventVector_Unset(resending ? EventVector_ResendUsbReports : EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     if (KeyboardReport_HasChange(keyboardReports) && (!resending || UsbSemaphore.keyboard.needsResending)) {
+        bool givenUp = false;
+        ret = 0;
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
             UsbReportUpdater_SwitchActiveKeyboardReport();
@@ -196,7 +234,11 @@ static void sendActiveReports(bool resending) {
                 //just switch reports without sending the report
                 UsbReportUpdater_SwitchActiveKeyboardReport();
             } else {
-                // Hid_SendKeyboardReport marks the report in flight (UsbSemaphore_NoteSendTarget).
+                // The resend is happening. Left set, a resend pass of another kind would send
+                // this kind's active report again, which after a release is the previous state.
+                UsbSemaphore.keyboard.needsResending = false;
+
+                // Hid_SendKeyboardReport marks the report in flight (UsbSemaphore_Take).
                 ret = Hid_SendKeyboardReport(ActiveKeyboardReport);
                 // On success the report is accepted by the transport, but NOT yet confirmed
                 // delivered. We advance the baseline (switchActiveKeyboardReport) only once
@@ -206,59 +248,60 @@ static void sendActiveReports(bool resending) {
                 // was not advanced, so HasChange stays true and we re-send the current state instead
                 // of losing it (the stuck-key bug).
                 if (ret != 0) {
-                    UsbSemaphore.keyboard.inFlight = false;
-                    UsbReportSender_ResendOrGiveUp(&UsbSemaphore.keyboard, ret, true);
+                    givenUp = !UsbReportSender_Fail(&UsbSemaphore.keyboard, ret, true);
                 }
             }
-            usbReportsChangedByAction = true;
-            usbReportsChangedByAnything = true;
+            usbReportsChangedByAnything |= !givenUp;
             lastBasicReportTime = Timer_GetCurrentTime();
-            UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
+            if (!resending && ret == 0) {
+                UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            }
         }
     }
 
-    if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending)) {
+    // A report whose interface is down isn't sent. It goes out with the first pass after the interface starts.
+    if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending) && Hid_IsControlsInterfaceUp()) {
+        bool givenUp = false;
+        UsbSemaphore.controls.needsResending = false;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
-            UsbSemaphore.controls.inFlight = false;
-            UsbReportSender_ResendOrGiveUp(&UsbSemaphore.controls, ret, true);
+            givenUp = !UsbReportSender_Fail(&UsbSemaphore.controls, ret, true);
         }
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
-        usbReportsChangedByAction = true;
-        usbReportsChangedByAnything = true;
+        if (!resending && ret == 0) {
+            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+        }
+        usbReportsChangedByAnything |= !givenUp;
     }
 
-    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending)) {
-        bool usbMouseButtonsChanged = mouseButtonsChanged();
-
+    if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending) && Hid_IsMouseInterfaceUp()) {
+        bool givenUp = false;
+        UsbSemaphore.mouse.needsResending = false;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
-            UsbSemaphore.mouse.inFlight = false;
-            if(!UsbReportSender_ResendOrGiveUp(&UsbSemaphore.mouse, ret, true)) {
-                clearMouseMovement(); // Don't make cursor jump if we have connection issues.
-            }
+            givenUp = !UsbReportSender_Fail(&UsbSemaphore.mouse, ret, true);
+        }
+        if (givenUp) {
+            clearMouseMovement(); // Don't make cursor jump if we have connection issues.
         }
 
         Debug_RecordBleSendResult(ret);
 
-        UsbReportUpdater_LastActivityTime = resending ? UsbReportUpdater_LastActivityTime : Timer_GetCurrentTime();
-        UsbReportUpdater_LastMouseActivityTime = resending ? UsbReportUpdater_LastMouseActivityTime : Timer_GetCurrentTime();
-        usbReportsChangedByAction |= usbMouseButtonsChanged;
-        usbReportsChangedByAnything = true;
+        if (!resending && ret == 0) {
+            UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
+            UsbReportUpdater_LastMouseActivityTime = Timer_GetCurrentTime();
+        }
+        usbReportsChangedByAnything |= !givenUp;
     }
 
-    // If anything changed, trigger one more update to send zero reports
-    if (usbReportsChangedByAnything && !UsbReportSender_GivenUp) {
+    // If anything changed, trigger one more update to send zero reports. A report that was given up
+    // doesn't count: the sends of its kind fail at once instead of waiting for the host, so its
+    // passes would follow each other without a pause.
+    if (usbReportsChangedByAnything) {
         EventVector_Set(EventVector_SendUsbReports);
     }
 
     if (UsbSemaphore_AnyInFlight()) {
-        // Schedule semaphore timeout. Don't spam if we given up though - consider report as delivered.
-        if (UsbReportSender_GivenUp) {
-            UsbSemaphore_ClearResendable();
-        } else {
-            EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
-        }
+        EventScheduler_Schedule(UpdateUsbReports_LastUpdateTime + USB_SEMAPHORE_TIMEOUT, EventSchedulerEvent_Postponer, "usb-semaphore-timeout");
     }
 }
 

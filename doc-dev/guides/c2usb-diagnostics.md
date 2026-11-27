@@ -59,7 +59,7 @@ A remote wakeup that the host ignores shows as `wakeup-result err=0`, then `bus 
 - `usbUp` reports whether the USB transport is up; `usbSuspended` reports the host-suspended flag.
 - `key life` gives the age of the last observed key-pipeline activity at each stage. `scan(N)` is the last scanned switch state (`1` press, `0` release); `queued` and `forceQueued` are key changes sent through the postponer, `applied` is an immediately applied key change, `action` is when the key action was processed, and `delivered` is when a keyboard report was acknowledged by the transport. These are last-seen timestamps, not durations or counts. A large age can simply mean no key activity occurred.
 - `inactive kb report` is the keyboard report buffer not currently active for sending; an empty report is a valid all-keys-released state.
-- Each `semaphore` triplet is `inFlight/retries/needsResend` for keyboard, controls, or mouse reports. `givenUp=1` means the sender exhausted its retry budget for a failed report. It schedules a later report attempt; it does not permanently disable sending.
+- Each `semaphore` triplet is `inFlight/retries/needsResend` for keyboard, controls, or mouse reports. Older builds also print `givenUp=1`, which means the sender exhausted its retry budget for a failed report.
 - `throttle` shows the age of the last report-throttle check, whether it blocked processing, its reason bitmask, the time remaining until unblock, and postponed event bits. Reason bits are `0x1` semaphore, `0x2` configured key delay, `0x4` retry backoff, and `0x8` USB report-window timing. A negative `until` value means that deadline is already in the past.
 
 ## Trace
