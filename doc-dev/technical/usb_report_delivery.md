@@ -105,7 +105,7 @@ Who puts the host right after each failure:
 |---|---|---|---|
 | W1 | No stuck key, ever. | **Can't** (I3) | Takes a periodic retry, which I3 excludes. Gap accepted by Karel, see note. |
 | W2 | A state resend always takes effect. | **Can, not done** | Takes a flag per kind instead of the mark. Karel chose the mark: it fails rarely, see note. |
-| W3 | A tap during a short outage (bus reset) is replayed. | Keyboard: **can, not done**. Dongle: **can't** (R7) | Takes retrying a host-gone error like a temporary one. Measure a bus reset first. |
+| W3 | A tap during a short outage (bus reset) is replayed. | Keyboard: **can, not done**. Dongle: **can't** (R7) | Takes retrying a host-gone error like a temporary one. Kept as it is for now (Karel), see note. |
 | W4 | No attempts and no error lines towards an unpolled interface (R2). | **Can, not done** | Takes "the endpoint still holds our report" as a known state. See note. |
 | W5 | Kinds don't delay each other. | **Can't** (I9) | The shared gate is what keeps the sequence. The delay is bounded by I1. |
 | W6 | Every invariant has a test that fails without it. | **Can, partly done** | No test: I1, I2, I8, I10, I12. In part: I9. |
@@ -127,6 +127,9 @@ Notes:
   - its real state starts with `0xff` (all eight modifiers, or the first eight mouse buttons), or
   - the mark is overwritten before the kind is sent: by a confirmation of a report in flight, by a give-up, or by
     pairing and blind macro recording, which switch the keyboard buffers.
+- **W3:** host-gone errors keep giving up at once for now (Karel, 2026-11-27). His plan for later: the dongle's
+  sending loop gets a report queue of its own, which would probably accumulate mouse reports and be part of the
+  standard loop. That removes the blocking in the messenger queue (R7), and with it the reason for failing fast.
 - **W4:** today an unpolled interface costs one stall of 290 ms, then one error line per report. Each state resend
   clears the latch, so the 290 ms come again.
 - **W7:** UHK60 has "usb awake" but no "host ready". After a re-enumeration without suspend, a held key is not sent
@@ -171,7 +174,7 @@ flowchart TD
 | S9 | 2026-11-24 | A rewrite as a state machine was too large to review. | Not for the user. A process problem. | Rejected; small steps instead. | Not applicable. Its "a resend pass leaves a pending send request alone" (mine) was lost with it and came back as S14. |
 | S10 | 2026-11-25 | Every boot gave up on mouse and controls with `-104`: their interfaces start after the keyboard's. | Noise: error lines at every boot, and per mouse or controls report on a boot loader. Nothing waits: those sends fail at once. Measured. | No send to an interface that is down. | No (I4). |
 | S11 | 2026-11-26 | A send triggered when the interface starts stalled every boot for 290 ms (R3). | Small: all kinds wait 290 ms, once per boot. Measured, 3 of 3 boots. | Trigger removed (my deviation, approved). | No. |
-| S12 | 2026-11-26 | Linux text console (R2): the kept mouse report was retried every second and at every key press, forever. | Noise: an error line per second and per key press. No lost or late input seen. Power cost of the timer not measured. | Drop on give-up; 1024 ms resend removed. | Partly. Idle: no, it is silent (I3). While the mouse moves: yes, an error line per mouse report (W4). Final build not measured. |
+| S12 | 2026-11-26 | Linux text console (R2): the kept mouse report was retried every second and at every key press, forever. | Noise: an error line per second and per key press. No lost or late input seen. Power cost of the timer not measured. | Drop on give-up; 1024 ms resend removed. | Partly. Idle: no, it is silent (I3). While the mouse moves: yes, an error line per mouse report (W4). Final build checked by Karel on 2026-11-27. |
 | S13 | 2026-11-26 | On that console the given-up mouse switched the trailing pass off for the keyboard too. | Unknown: no test and no host shows what needs the trailing pass. | Trailing-pass rule per kind. | No, by reading (I10); no test. |
 | S14 | 2026-11-26 | Test sink: a state resend requested while the mouse was being retried never reached the host when no key was held. The resend passes erased the request, and the give-up pass didn't put it back. The 1024 ms resend used to hide this. | Yes: the host misses its state after coming up. Test sink only; needs no key held. | A resend pass leaves the request for a normal pass alone. | No (I11). |
 | S15 | 2026-11-26 | The same test still failed: the "unknown" mark of the second state resend undid itself. It was the complement of the active report, which is stale between a delivery and the next normal pass and then holds the previous mark. | As S14; needs two state resends in a row. | A constant mark, `0xff` (Karel's proposal). | No (I11), except the rare cases in W2. |
@@ -210,8 +213,7 @@ flowchart TD
 | 2026-11-26 | Linux text console, before the drop | mouse started and not polled; "gave up resending -16" every second without input |
 | 2026-11-26 | Linux text console, after the drop | two timeouts, one late confirmation, a give-up; one error per mouse report while moving; then no pass for 73 s |
 | 2026-11-26 | bench host | a report sent right when an interface starts is not taken for more than 290 ms |
-
-Not measured: the final build on the Linux text console. The run above had the drop only, without I10 and I11.
+| 2026-11-27 | Linux text console, final build | Karel: "looks good" (a letter, mouse movement, 10 s idle, shifted letters) |
 
 What breaks which test (mutation runs on the test sink, 2026-11-25 and 2026-11-26):
 
