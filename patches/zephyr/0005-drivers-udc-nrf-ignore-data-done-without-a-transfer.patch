@@ -1,0 +1,30 @@
+From: Benedek Kupper <kupper.benedek@gmail.com>
+Date: Sat, 21 Nov 2026 22:00:00 +0100
+Subject: [PATCH] drivers: udc: nrf: ignore data done without a transfer
+
+The USBD interrupt handler dereferenced the IN endpoint's first queued
+buffer on every data done event (EPDATA or EP0DATADONE). When the driver
+thread cancels the transfer after the host acknowledged its last packet,
+but before the interrupt handler processes the event, the queue is empty
+and the handler faults on a NULL buffer.
+
+Seen on nRF52840 while the threads were starved for 400 ms and the host
+reset the bus and issued control transfers: MPU fault, data access at
+0x10, in usbd_in_packet_sent(). The event belongs to a transfer that no
+longer exists: ignore it.
+---
+diff --git a/drivers/usb/udc/udc_nrf.c b/drivers/usb/udc/udc_nrf.c
+index 50417eaab7d..deb0ea8901e 100644
+--- a/drivers/usb/udc/udc_nrf.c
++++ b/drivers/usb/udc/udc_nrf.c
+@@ -471,6 +471,10 @@ static void usbd_in_packet_sent(uint8_t ep)
+ 	struct udc_ep_config *ep_cfg = udc_get_ep_cfg(udc_nrf_dev, ep);
+ 	struct net_buf *buf = udc_buf_peek(ep_cfg);
+ 
++	if (buf == NULL) {
++		return;
++	}
++
+ 	net_buf_pull(buf, usbd_ep_amount_get(ep));
+ 
+ 	if (buf->len) {

@@ -1,18 +1,17 @@
 extern "C" {
 #include "debug.h"
 #include "device.h"
+#include "event_scheduler.h"
 #include "key_states.h"
 #include "logger.h"
 #include "power_mode.h"
 #include "timer.h"
-#include "event_scheduler.h"
 #include "usb_report_updater.h"
 #include "usb_semaphore.h"
 #include "usb_state.h"
 #include "user_logic.h"
 #ifdef __ZEPHYR__
     #include "device_state.h"
-    #include <nrfx_power.h>
     #include <zephyr/kernel.h>
 #else
     #include "buspal/bus_pal_hardware.h"
@@ -90,6 +89,7 @@ struct usb_manager {
 
         device_.set_config(base_config);
         device_.open();
+        UsbState_SetHostSuspended(mac_.power_state() == usb::power::state::L2_SUSPEND);
     }
 
     usb_manager()
@@ -139,10 +139,7 @@ struct usb_manager {
     }
 
 #ifdef __ZEPHYR__
-    usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256,
-        (nrfx_power_usbstatus_get() == NRFX_POWER_USB_STATE_CONNECTED)
-            ? usb::power::state::L2_SUSPEND
-            : usb::power::state::L3_OFF};
+    usb::df::zephyr::udc_mac mac_{DEVICE_DT_GET(DT_NODELABEL(zephyr_udc0)), 256};
 #else
     std::array<uint8_t, 128> ctrl_buffer;
     usb::df::nxp::mcux_mac mac_{usb::df::nxp::mcux_mac::khci(ctrl_buffer)};
@@ -183,8 +180,10 @@ extern "C" void USB_Reconfigure()
 extern "C" bool USB_RemoteWakeup()
 {
     auto err = usb_manager::instance().device().remote_wakeup();
-    if (err.to_int() == -1 /* not permitted; treat it as awake */) {
-        UsbState_SetHostSuspended(false);
+    if (err.to_int() == -1 /* not permitted */) {
+        if (usb_manager::mac().power_state() == usb::power::state::L0_ON) {
+            UsbState_SetHostSuspended(false);
+        }
         LogInf("USB: remote wakeup not permitted, usb suspended: %d\n", UsbState_HostIsSuspended);
     } else if (err != usb::result::ok) {
         LogErr("USB: remote wakeup request failed: %d\n", err.to_int());
