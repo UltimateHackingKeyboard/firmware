@@ -53,9 +53,13 @@ void UsbReportSender_RequestStateResend(void) {
         uint8_t* controls = (uint8_t*)(ActiveControlsReport == &controlsReports[0] ? &controlsReports[1] : &controlsReports[0]);
         uint8_t* mouse = (uint8_t*)(ActiveMouseReport == &mouseReports[0] ? &mouseReports[1] : &mouseReports[0]);
 
-        keyboard[0] = ~((uint8_t*)ActiveKeyboardReport)[0];
-        controls[0] = ~((uint8_t*)ActiveControlsReport)[0];
-        mouse[0] = ~((uint8_t*)ActiveMouseReport)[0];
+        // A first byte no real report is likely to have: all modifiers, the first eight mouse
+        // buttons. The baselines then differ from the current state, whatever it is by the next
+        // pass. Not derived from the active reports: between a delivery and the next pass they are
+        // stale. A state that does have this first byte isn't resent.
+        keyboard[0] = 0xff;
+        controls[0] = 0xff;
+        mouse[0] = 0xff;
 
         EventVector_Set(EventVector_SendUsbReports);
     }
@@ -106,18 +110,6 @@ uint16_t UsbReportSender_ComputeResendDelay(uint8_t counter) {
 }
 
 static void handleUltimateFail(errno_t errorCode) {
-    // The report is kept: the baseline isn't advanced, so a later pass sends the then current state.
-    // While its kind is exhausted (see UsbReportSender_ShouldGiveUp), each pass makes a single
-    // attempt and sendActiveReports doesn't trigger its trailing pass, so the kept report doesn't
-    // loop. It goes out with the next input, or:
-    // - host gone: once a host is up, see UsbReportSender_RequestStateResend.
-    // - otherwise: the link is up but doesn't take reports (e.g. USB stops polling the endpoint
-    //   without suspending). Nothing would resend the state, so if the report released a key, the
-    //   host would keep it pressed. Try again in a while.
-    if (!isHostGone(errorCode)) {
-        EventScheduler_Schedule(Timer_GetCurrentTime() + USB_GIVEUP_RESEND_DELAY_MS, EventSchedulerEvent_SendUsbReports, "usb-giveup-resend");
-    }
-
 #ifdef __ZEPHYR__
     if (CurrentHostConnectionId == ConnectionId_Invalid) {
         WATCH(LOG_WRN("Send failed: no connection selected: %d (%s)", errorCode, ErrToStr(errorCode)));
@@ -161,6 +153,14 @@ static bool resendOrGiveUp(report_send_state_t* st, errno_t ret, bool withDelay)
         return true;
     } else {
         if (ret != 0) {
+            // The report is dropped: the baseline advances as if the host had it. The host's state
+            // is put right by the next report of this kind, or without one:
+            // - host gone: by the state resend once a host is up.
+            // - the transport still holds an earlier report (e.g. USB stopped polling the
+            //   endpoint): by the state resend on its late confirmation, see reportSentCallback.
+            // - neither (the link rejects reports while holding none): by nothing. A dropped key
+            //   release then leaves the key pressed until the next key event.
+            st->switchActiveReport();
             handleUltimateFail(ret);
         }
         st->needsResending = false;
@@ -181,7 +181,7 @@ bool UsbReportSender_Fail(report_send_state_t* st, errno_t result, bool withDela
     }
 
     if (UsbSemaphore_Release(st, SemaphoreRelease_Undelivered)) {
-        // Not released: the baseline stays, so the same report goes out again.
+        // Not released: the baseline stays, so the same report goes out again, unless it is given up.
         pending = resendOrGiveUp(st, result, withDelay);
     } else if (DEVICE_IS_MASTER) {
         // Something released or cleared the report first (a confirmation, a bus reset), so the
@@ -209,20 +209,16 @@ static void clearMouseMovement(void) {
     }
 }
 
-static bool anyExhausted(void) {
-    return UsbSemaphore.keyboard.retries >= THROTTLE_MAX_RETRIES
-        || UsbSemaphore.controls.retries >= THROTTLE_MAX_RETRIES
-        || UsbSemaphore.mouse.retries >= THROTTLE_MAX_RETRIES;
-}
-
 static void sendActiveReports(bool resending) {
     bool usbReportsChangedByAnything = false;
     errno_t ret;
 
-    // in case of usb error, this gets set back again
-    EventVector_Unset(EventVector_SendUsbReports | EventVector_ResendUsbReports);
+    // In case of usb error, the resend request gets set back again. A resend pass leaves the
+    // request for a normal pass alone: it doesn't do that pass's work.
+    EventVector_Unset(resending ? EventVector_ResendUsbReports : EventVector_SendUsbReports | EventVector_ResendUsbReports);
 
     if (KeyboardReport_HasChange(keyboardReports) && (!resending || UsbSemaphore.keyboard.needsResending)) {
+        bool givenUp = false;
         ret = 0;
 #ifdef __ZEPHYR__
         if (InputInterceptor_RegisterReport(ActiveKeyboardReport)) {
@@ -252,10 +248,10 @@ static void sendActiveReports(bool resending) {
                 // was not advanced, so HasChange stays true and we re-send the current state instead
                 // of losing it (the stuck-key bug).
                 if (ret != 0) {
-                    UsbReportSender_Fail(&UsbSemaphore.keyboard, ret, true);
+                    givenUp = !UsbReportSender_Fail(&UsbSemaphore.keyboard, ret, true);
                 }
             }
-            usbReportsChangedByAnything = true;
+            usbReportsChangedByAnything |= !givenUp;
             lastBasicReportTime = Timer_GetCurrentTime();
             if (!resending && ret == 0) {
                 UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
@@ -265,24 +261,27 @@ static void sendActiveReports(bool resending) {
 
     // A report whose interface is down isn't sent. It goes out with the first pass after the interface starts.
     if (ControlsReport_HasChanges(controlsReports) && (!resending || UsbSemaphore.controls.needsResending) && Hid_IsControlsInterfaceUp()) {
+        bool givenUp = false;
         UsbSemaphore.controls.needsResending = false;
         ret = Hid_SendControlsReport(ActiveControlsReport);
         if (ret != 0) {
-            UsbReportSender_Fail(&UsbSemaphore.controls, ret, true);
+            givenUp = !UsbReportSender_Fail(&UsbSemaphore.controls, ret, true);
         }
         if (!resending && ret == 0) {
             UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
         }
-        usbReportsChangedByAnything = true;
+        usbReportsChangedByAnything |= !givenUp;
     }
 
     if (MouseReport_HasChanges(mouseReports, ActiveMouseReport) && (!resending || UsbSemaphore.mouse.needsResending) && Hid_IsMouseInterfaceUp()) {
+        bool givenUp = false;
         UsbSemaphore.mouse.needsResending = false;
         ret = Hid_SendMouseReport(ActiveMouseReport);
         if (ret != 0) {
-            if (!UsbReportSender_Fail(&UsbSemaphore.mouse, ret, true)) {
-                clearMouseMovement(); // Don't make cursor jump if we have connection issues.
-            }
+            givenUp = !UsbReportSender_Fail(&UsbSemaphore.mouse, ret, true);
+        }
+        if (givenUp) {
+            clearMouseMovement(); // Don't make cursor jump if we have connection issues.
         }
 
         Debug_RecordBleSendResult(ret);
@@ -291,12 +290,13 @@ static void sendActiveReports(bool resending) {
             UsbReportUpdater_LastActivityTime = Timer_GetCurrentTime();
             UsbReportUpdater_LastMouseActivityTime = Timer_GetCurrentTime();
         }
-        usbReportsChangedByAnything = true;
+        usbReportsChangedByAnything |= !givenUp;
     }
 
-    // If anything changed, trigger one more update to send zero reports. Not while a kind is
-    // exhausted: the pass would resend its kept report right away, see handleUltimateFail.
-    if (usbReportsChangedByAnything && !anyExhausted()) {
+    // If anything changed, trigger one more update to send zero reports. A report that was given up
+    // doesn't count: the sends of its kind fail at once instead of waiting for the host, so its
+    // passes would follow each other without a pause.
+    if (usbReportsChangedByAnything) {
         EventVector_Set(EventVector_SendUsbReports);
     }
 

@@ -29,7 +29,8 @@
     // How `UsbSemaphore_Release` resolves a report.
     //
     // - `Delivered`: the baseline advances to the report and its retries are reset.
-    // - `Undelivered`: the baseline stays, so the report still differs from it and goes out again.
+    // - `Undelivered`: the baseline stays, so the report still differs from it and goes out again,
+    //   unless the sender gives up on it and drops it.
     typedef enum {
         SemaphoreRelease_Delivered,
         SemaphoreRelease_Undelivered,
