@@ -4,6 +4,7 @@
 #include "usb_semaphore.h"
 #include "usb_report_sender.h"
 #include "usb_report_updater.h"
+#include "atomicity.h"
 #include "timer.h"
 #include "power_mode.h"
 #include "event_scheduler.h"
@@ -54,25 +55,7 @@ static bool resendsOnTimeout(const report_send_state_t* st) {
     return st->sink != ReportSink_BleHid;
 }
 
-static void clearIf(report_send_state_t* st, bool clear) {
-    if (clear) {
-        st->inFlight = false;
-    }
-}
-
-void UsbSemaphore_ClearSink(report_sink_t sink) {
-    clearIf(&UsbSemaphore.keyboard, UsbSemaphore.keyboard.sink == sink);
-    clearIf(&UsbSemaphore.controls, UsbSemaphore.controls.sink == sink);
-    clearIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.sink == sink);
-}
-
-void UsbSemaphore_ClearResendable(void) {
-    clearIf(&UsbSemaphore.keyboard, resendsOnTimeout(&UsbSemaphore.keyboard));
-    clearIf(&UsbSemaphore.controls, resendsOnTimeout(&UsbSemaphore.controls));
-    clearIf(&UsbSemaphore.mouse, resendsOnTimeout(&UsbSemaphore.mouse));
-}
-
-void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId) {
+void UsbSemaphore_Take(report_send_state_t* st, report_sink_t sink, uint8_t connectionId) {
     st->sink = sink;
     st->connectionId = connectionId;
     st->sentTime = Timer_GetCurrentTime();
@@ -80,43 +63,45 @@ void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, ui
     st->inFlight = true;
 }
 
-static bool clearIfSentTo(report_send_state_t* st, uint8_t connectionId) {
-    bool clear = st->inFlight && !resendsOnTimeout(st) && st->connectionId == connectionId;
-    if (clear) {
-        st->inFlight = false;
-    }
-    return clear;
-}
-
-void UsbSemaphore_ClearConnection(uint8_t connectionId) {
-    bool cleared = clearIfSentTo(&UsbSemaphore.keyboard, connectionId);
-    cleared |= clearIfSentTo(&UsbSemaphore.controls, connectionId);
-    cleared |= clearIfSentTo(&UsbSemaphore.mouse, connectionId);
-    if (cleared) {
-        // The unconfirmed reports were not released, so the current state goes out again.
-        EventVector_Set(EventVector_SendUsbReports);
-        EventVector_WakeMain();
-    }
-}
-
-void UsbSemaphore_Release(report_send_state_t* st) {
-    if (st == &UsbSemaphore.keyboard) {
-        DEBUG_KEY_LIFE(delivered);
-    }
-
-    st->switchActiveReport();
-    st->retries = 0;
+bool UsbSemaphore_Release(report_send_state_t* st, semaphore_release_t how) {
+    // In one step, so that a report is released only once, whoever gets here first.
+    DISABLE_IRQ();
+    bool wasInFlight = st->inFlight;
+    bool delivered = wasInFlight && how == SemaphoreRelease_Delivered;
     st->inFlight = false;
-    UsbReportSender_GivenUp = false;
-    if (DEVICE_IS_MASTER) {
-        EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
+    if (delivered) {
+        st->switchActiveReport();
+        st->retries = 0;
+    }
+    ENABLE_IRQ();
+
+    if (delivered) {
+        if (st == &UsbSemaphore.keyboard) {
+            DEBUG_KEY_LIFE(delivered);
+        }
+        if (DEVICE_IS_MASTER) {
+            EventScheduler_Schedule(Timer_GetCurrentTime(), EventSchedulerEvent_Postponer, "Usb semaphore released. Recalculate throttle delay.");
+        }
+    }
+    return wasInFlight;
+}
+
+static void releaseIf(report_send_state_t* st, bool condition, semaphore_release_t how) {
+    if (condition) {
+        UsbSemaphore_Release(st, how);
     }
 }
 
-void UsbSemaphore_Fail(report_send_state_t* st, errno_t result) {
-    // Not released: the baseline stays, so the same report goes out again.
-    st->inFlight = false;
-    UsbReportSender_ResendOrGiveUp(st, result, true);
+void UsbSemaphore_ClearSink(report_sink_t sink) {
+    releaseIf(&UsbSemaphore.keyboard, UsbSemaphore.keyboard.sink == sink, SemaphoreRelease_Undelivered);
+    releaseIf(&UsbSemaphore.controls, UsbSemaphore.controls.sink == sink, SemaphoreRelease_Undelivered);
+    releaseIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.sink == sink, SemaphoreRelease_Undelivered);
+}
+
+void UsbSemaphore_ReleaseConnection(uint8_t connectionId) {
+    releaseIf(&UsbSemaphore.keyboard, UsbSemaphore.keyboard.connectionId == connectionId, SemaphoreRelease_Delivered);
+    releaseIf(&UsbSemaphore.controls, UsbSemaphore.controls.connectionId == connectionId, SemaphoreRelease_Delivered);
+    releaseIf(&UsbSemaphore.mouse, UsbSemaphore.mouse.connectionId == connectionId, SemaphoreRelease_Delivered);
 }
 
 // NOTE: if we retry too soon, we might get a double report confirmation, confirming this report and the next one, which would make us loose the next one if its transport failes. Low probability in practice.
@@ -127,11 +112,11 @@ static bool recalculateReport(report_send_state_t* st) {
         if (Timer_GetElapsedTime(&st->sentTime) < USB_SEMAPHORE_TIMEOUT) {
             blocks = true;
         } else if (resendsOnTimeout(st)) {
-            st->inFlight = false;
-            UsbReportSender_ResendOrGiveUp(st, -ETIMEDOUT, false);
+            UsbReportSender_Fail(st, -ETIMEDOUT, false);
         } else if (Timer_GetElapsedTime(&st->sentTime) >= USB_SEMAPHORE_STALL_TIMEOUT) {
-            st->inFlight = false;
-            UsbReportSender_TearDownStalledLink(st);
+            if (UsbSemaphore_Release(st, SemaphoreRelease_Undelivered)) {
+                UsbReportSender_TearDownStalledLink(st);
+            }
         } else {
             blocks = true;
         }

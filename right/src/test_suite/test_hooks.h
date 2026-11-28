@@ -20,6 +20,9 @@ extern bool TestHooks_FailMessengerSends;
 // Called by USB code to capture reports for validation
 void TestHooks_CaptureReport(const hid_keyboard_report_t *report);
 
+// How many keyboard reports the test host got so far, repeated ones included.
+extern uint16_t TestHooks_CapturedReports;
+
 // Called each update cycle to advance the test state machine
 void TestHooks_Tick(void);
 

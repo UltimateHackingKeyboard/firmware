@@ -19,7 +19,6 @@
 
 bool UsbState_TransportUp = false;
 bool UsbState_HostIsSuspended = false;
-bool UsbState_ProvablyAwake = false;
 
 static void recalculateConnectionState(void) {
 #if DEVICE_IS_UHK_DONGLE
@@ -55,20 +54,10 @@ static ATTR_UNUSED void probeHostWithReport(void) {
 void UsbState_SetHostSuspended(bool suspended) {
     if (UsbState_HostIsSuspended != suspended) {
         UsbState_HostIsSuspended = suspended;
-        if (suspended) {
-            UsbState_ProvablyAwake = false;
-        } else {
+        if (!suspended) {
             // Nothing to probe when the host is gone (detach) or hasn't enumerated us yet.
             // probeHostWithReport();
         }
-        recalculateConnectionState();
-    }
-}
-
-// Remote wakeup doesn't work on some devices. Require a delivered report as a witness.
-void UsbState_Delivered(void) {
-    if (UsbState_ProvablyAwake) {
-        UsbState_ProvablyAwake = true;
         recalculateConnectionState();
     }
 }

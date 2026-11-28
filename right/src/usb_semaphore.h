@@ -10,13 +10,15 @@
 // Macros:
 
     #define USB_SEMAPHORE_TIMEOUT 32 // ms
+
     #define USB_GIVEUP_RESEND_DELAY_MS 1024 // ms; don't spam logs or host
+
     // A link that doesn't confirm a report within this time is considered stalled and gets torn down.
     #define USB_SEMAPHORE_STALL_TIMEOUT 1000 // ms
 
 // Typedefs:
 
-    // Bits of the legacy in-flight bitfield (see UsbSemaphore_Get).
+    // Bits of the legacy in-flight bitfield (see `UsbSemaphore_Get`).
     typedef enum {
         UsbReportUpdate_None = 0,
         UsbReportUpdate_Keyboard = 1,
@@ -24,19 +26,33 @@
         UsbReportUpdate_Mouse = 4,
     } UsbReportUpdateFlags_t;
 
-    // Per-report send/resend bookkeeping. Bundles the retry counter and resend flag with
-    // the report's double-buffer switch, so the send path can treat all three reports uniformly.
+    // How `UsbSemaphore_Release` resolves a report.
     //
-    // inFlight replaces the old shared UsbReportUpdateSemaphore bitfield: each report owns its
-    // own byte, so setting/clearing one is a single whole-byte store (STRB on ARMv7-M) with no
-    // read-modify-write, and therefore can't clobber another report's flag from an ISR. It is
-    // volatile because it is written from the async transport sent callbacks. The legacy uint8
-    // bitfield view (for the bus-reset reset and the debug get/set-variable command) is
-    // reassembled on demand by UsbSemaphore_Get() & co.
+    // - `Delivered`: the baseline advances to the report and its retries are reset.
+    // - `Undelivered`: the baseline stays, so the report still differs from it and goes out again,
+    //   unless the sender gives up on it and drops it.
+    typedef enum {
+        SemaphoreRelease_Delivered,
+        SemaphoreRelease_Undelivered,
+    } semaphore_release_t;
+
+    // Per-report send/resend bookkeeping, so that the send path can treat all three reports
+    // uniformly.
     //
-    // sink is where the report in flight went. HOGP keeps an accepted report queued until it is
-    // delivered: resending there only duplicates the report and grows the queue. Such a report
-    // is waited for instead, and its connection is torn down after USB_SEMAPHORE_STALL_TIMEOUT.
+    // - `retries`: failed attempts of the current report. Stays at the maximum after a give-up,
+    //   until a confirmation or a state resend.
+    // - `needsResending`: the report goes out again in the next resend pass.
+    // - `inFlight`: the transport took the report and hasn't confirmed it yet.
+    //   - Replaces the old shared `UsbReportUpdateSemaphore` bitfield: each report owns its own
+    //     byte, so setting one is a single whole-byte store (STRB on ARMv7-M) with no
+    //     read-modify-write, and can't clobber another report's flag from an ISR.
+    //   - `volatile`, because the transport's sent callbacks write it.
+    // - `sink`, `connectionId`: where the report in flight went.
+    //   - HOGP keeps an accepted report queued until it is delivered: resending there only
+    //     duplicates the report and grows the queue. Such a report is waited for instead, and its
+    //     connection is torn down after `USB_SEMAPHORE_STALL_TIMEOUT`.
+    // - `sentTime`: when the report was handed to the transport.
+    // - `switchActiveReport`: the report's double-buffer switch; advances the baseline.
     typedef struct {
         uint8_t retries;
         bool needsResending;
@@ -55,43 +71,60 @@
 
 // Variables:
 
-    // Exposed so the every-cycle report-construction gate can read needsResending / write
-    // inFlight as direct field accesses, without a function call on the idle path.
+    // Exposed so the every-cycle report-construction gate can read `needsResending` as a direct
+    // field access, without a function call on the idle path.
     extern report_send_states_t UsbSemaphore;
 
 // Functions:
 
-    // Release a report's in-flight latch: the report has been successfully sent (handed to /
-    // accepted by the transport), so unblock report processing - advance the baseline to the
-    // just-sent report and reset the resend state. Note this means "sent", not "delivered":
-    // for USB/BLE the actual delivery confirmation is a separate, later event.
-    void UsbSemaphore_Release(report_send_state_t* st);
-
-    // The transport reports that the report wasn't delivered: resend it, or give up.
-    void UsbSemaphore_Fail(report_send_state_t* st, errno_t result);
-
-    // Recompute the in-flight gate: returns false while a report is in flight within its
-    // confirmation grace window (caller should not send), and re-arms resends for any report
-    // that has timed out. Returns true when clear to construct/send.
-    bool UsbSemaphore_RecalculateIsReady(void);
-    bool UsbSemaphore_AnyInFlight(void);
-
-    // Legacy uint8 bitfield view of the per-report in-flight flags (bits = UsbReportUpdateFlags_t).
-    uint8_t UsbSemaphore_Get(void);
-    void UsbSemaphore_Set(uint8_t bits);
-    void UsbSemaphore_Clear(void);
-
-    // Consider the reports sent to this sink delivered.
-    void UsbSemaphore_ClearSink(report_sink_t sink);
-
-    // Consider all reports delivered, except HOGP ones, which stay for the stall teardown.
-    void UsbSemaphore_ClearResendable(void);
+    // ## Taking
 
     // Note where a report is being sent and mark it in flight, right before handing it to the
     // transport. Before, not after: a bus reset clearing the semaphore in between would deadlock it.
-    void UsbSemaphore_NoteSendTarget(report_send_state_t* st, report_sink_t sink, uint8_t connectionId);
+    void UsbSemaphore_Take(report_send_state_t* st, report_sink_t sink, uint8_t connectionId);
 
-    // The connection went down: its unconfirmed reports will never be confirmed.
-    void UsbSemaphore_ClearConnection(uint8_t connectionId);
+    // ## Querying
+
+    // Recompute the in-flight gate.
+    //
+    // - Returns false while a report is in flight within its confirmation grace window: the
+    //   caller should not send.
+    // - Fails any report that has timed out, which re-arms its resend.
+    // - Returns true when clear to construct and send.
+    bool UsbSemaphore_RecalculateIsReady(void);
+
+    bool UsbSemaphore_AnyInFlight(void);
+
+    // ## Releasing
+
+    // Stop waiting for the report and unblock report processing.
+    //
+    // - Returns whether the report was in flight. A report is released only once: a callback can
+    //   release it at any moment, so act on the release only if this returns true.
+    // - Does nothing to a report that isn't in flight.
+    // - `SemaphoreRelease_Delivered` is used:
+    //   - USB, BLE: when the transport confirms the delivery.
+    //   - Dongle link: once the link accepts the report.
+    //   - For a report that is dropped on purpose (suspended USB bus).
+    // - `SemaphoreRelease_Undelivered` is used when the send failed or timed out.
+    bool UsbSemaphore_Release(report_send_state_t* st, semaphore_release_t how);
+
+    // The connection went down: its unconfirmed reports will never be confirmed. Release them as
+    // delivered; the current state is sent once a host is up, see
+    // `UsbReportSender_RequestStateResend`.
+    void UsbSemaphore_ReleaseConnection(uint8_t connectionId);
+
+    // Release the reports sent to this sink as undelivered.
+    void UsbSemaphore_ClearSink(report_sink_t sink);
+
+    // ## Legacy
+
+    // The in-flight flags as a `uint8_t` bitfield of `UsbReportUpdateFlags_t` - for uhk60 and for
+    // usb commands.
+    uint8_t UsbSemaphore_Get(void);
+
+    void UsbSemaphore_Set(uint8_t bits);
+
+    void UsbSemaphore_Clear(void);
 
 #endif

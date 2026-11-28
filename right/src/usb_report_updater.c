@@ -70,6 +70,7 @@ bool TestUsbStack = false;
 
 static key_action_cached_t actionCache[SLOT_COUNT][MAX_KEY_COUNT_PER_MODULE];
 
+// This has to be bumped only as a result of a user action - it wakes the keyboard up from sleep.
 uint32_t UsbReportUpdater_LastActivityTime;
 uint32_t UsbReportUpdater_LastMouseActivityTime;
 
