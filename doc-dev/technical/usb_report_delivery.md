@@ -90,7 +90,7 @@ Who puts the host right after each failure:
 | R2 | Some hosts start an interface and never poll it. A Linux text console does it to the mouse. | I1, I2, I3 | measured |
 | R3 | A started interface isn't polled right away. Bench host: over 290 ms. | no send at interface start (S11) | measured |
 | R4 | A USB endpoint holds one report and can't take it back. The host gets it at its next poll, however late. | I6 | measured |
-| R5 | Confirmation callbacks get lost. Zephyr dropped one once, and HOGP stayed stuck for good. | I1: no wait without a bound | Karel's report |
+| R5 | Assume that any confirmation callback can get lost. (Added after an abrupt link loss: Zephyr never confirmed the notifications cut off with the link, and c2usb's busy flag, which only that confirmation cleared, locked HOGP until reboot.) | I1: no wait without a bound | field report; measured once (port cut) |
 | R6 | BLE HID keeps an accepted report queued. Resending only duplicates it. | I1: wait, then tear the link down | read |
 | R7 | The dongle relays one report at a time in a blocking loop, and has no state to resend. | I2, fail fast on host gone; blocks W3 | read |
 | R8 | A report sent into a suspended bus arrives at resume: the wake-up key would be typed. | drop while suspended; I8 | read |
